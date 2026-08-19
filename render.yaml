@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: symbulator
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 2 --timeout 60
+    envVars:
+      - key: SYMBULATOR_TIMEOUT
+        value: "25"
+      - key: PYTHON_VERSION
+        value: "3.12.0"
