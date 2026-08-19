@@ -783,10 +783,10 @@ $('limitVars').addEventListener('change', () => {
 let last = null;
 
 // Turn on the Evaluate, Solve-equations and Download cards, plus
-// "update this circuit in the input file" (which requires a circuit that
-// has actually been parsed and solved, not just typed) -- all start
-// disabled/hidden because they need a completed solve's answers to be
-// useful. Called once a solve has actually succeeded.
+// "Save to input file" (which requires a circuit that has actually been
+// parsed and solved, not just typed) -- all start disabled/hidden because
+// they need a completed solve's answers to be useful. Called once a
+// solve has actually succeeded.
 function activatePostSolve() {
   $('resultsCard').classList.remove('inactive');
   $('addToFileBtn').hidden = false;
@@ -807,9 +807,9 @@ function activatePostSolve() {
 }
 
 // ---- Circuit picker: built-in examples, or an opened file ----------
-// `builtIn` is kept so "back to examples" costs no second round trip.
-// `picker` doubles as the live Input File described in "About the format
-// of input files":
+// `builtIn` is kept so "Reload Examples" costs no second round trip.
+// `picker` doubles as the live Input File described in "About input file
+// (.cir) format":
 // uploading a file replaces it, "add this circuit to the file" appends
 // or updates an entry in it, and "download the file" writes it out.
 let builtIn = [], picker = [], liveFileName = null;
@@ -894,8 +894,8 @@ $('examples').addEventListener('change', ev => {
 });
 
 // Fetch the built-in example circuits from the server and populate the
-// picker with them; called once on page load, and again by "back to
-// examples" after a file has been loaded (see the button handler below).
+// picker with them; called once on page load, and again by "Reload
+// Examples" after a file has been loaded (see the button handler below).
 async function loadExamples() {
   try {
     const r = await fetch('/api/examples');
@@ -1019,6 +1019,8 @@ function linesOf(text) {
   return String(text || '').split(/[\r\n]+/).map(s => s.trim()).filter(Boolean);
 }
 
+// Save (or, if the name matches an existing entry, update) the currently
+// described circuit into the live Input File, prompting for a name.
 $('addToFileBtn').addEventListener('click', () => {
   const desc = $('desc').value.trim();
   if (!desc) { showNote('Enter a circuit first.', true); return; }
@@ -1047,6 +1049,8 @@ $('addToFileBtn').addEventListener('click', () => {
   showNote(`${verb} '${trimmedName}' in the Input File (${picker.length} circuit${picker.length === 1 ? '' : 's'} now). Download it any time.`, false);
 });
 
+// Render the live Input File (picker) to .cir text via the server and
+// trigger a browser download.
 $('downloadFileBtn').addEventListener('click', async () => {
   if (!picker.length) { showNote('The Input File is empty — add a circuit to it first.', true); return; }
   try {
