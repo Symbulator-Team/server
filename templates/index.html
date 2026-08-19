@@ -113,8 +113,6 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   details:not([open]) > summary.section-toggle { margin-bottom: 0; }
   details:not([open]) > summary.section-toggle::before { transform: rotate(-90deg); }
   summary.section-toggle:hover::before { color: var(--accent); }
-  details[open] > summary.section-toggle,
-  details[open] > summary.section-toggle::before { color: var(--accent-open); }
   .section-cap { font-size: .82rem; font-weight: 600; color: var(--muted);
                  text-transform: uppercase; letter-spacing: .06em; margin: 1.1rem 0 .45rem; }
   .section-cap:first-child { margin-top: 0; }
@@ -150,8 +148,8 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   }
   details:not([open]) > summary::before { transform: rotate(-90deg); }
   summary:hover::before { color: var(--accent); }
-  details[open] > summary,
-  details[open] > summary::before { color: var(--accent-open); }
+  details[open] > summary:not(.section-toggle),
+  details[open] > summary:not(.section-toggle)::before { color: var(--accent-open); }
   table { border-collapse: collapse; width: 100%; margin-top: .6rem; font-size: .88rem; }
   th, td { text-align: left; padding: .3rem .5rem; border-bottom: 1px solid var(--line); }
   td:first-child, code { font-family: var(--mono); }
