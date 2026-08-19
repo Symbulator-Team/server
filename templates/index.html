@@ -513,7 +513,7 @@ c1,2,0,4.7e-6</pre>
     </details>
 
     <details id="expertBox" style="margin-top:.9rem">
-      <summary>Expert Mode — add equations, unknowns, conditions</summary>
+      <summary>Expert Mode — add equations, unknowns, conditions<span id="expertEqFlag" class="hint" style="display:none"> — (equations entered)</span></summary>
       <div class="row">
         <div>
           <label for="eqs">Add equations <span class="hint">(one per line, e.g. <code>v_2 = 6</code>;
@@ -700,15 +700,16 @@ c1,2,0,4.7e-6</pre>
         Instrument calculators. In contrast, Roberto created this
         long-dreamed port of Symbulator to Python and SymPy without
         writing a single line of code: Claude, Anthropic's AI assistant,
-        took care of the coding, working to the author's design and
-        instructions during a single week in August.
+        took care of coding, per Roberto's design and
+        instructions during a single week of collaboration in August.
       </p>
       <p style="font-size:.92rem">
         Symbulator Py is free and open-source software, released under the
         MIT licence: you may use, study, modify and share it, including
         commercially. The solver is published as the
         <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">symbulator</a>
-        package on PyPI, and the project lives on
+        package on PyPI, and the project for the solver and this interface
+        lives on
         <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a>.
         Contributions, bug reports and circuits that break it are all welcome.
       </p>
@@ -755,6 +756,19 @@ function syncFields() {
 domainSel.addEventListener('change', () => { syncFields(); syncSettings(); });
 toolSel.addEventListener('change', syncFields);
 syncFields();
+
+// Expert Mode has real impact on the solution but hides its own equations
+// once collapsed, so show a small "(equations entered)" flag next to the
+// summary heading whenever there's text in the equations box and the
+// details panel is closed (no need for the flag once it's open -- the
+// equations are right there).
+function updateExpertFlag() {
+  const has = $('eqs').value.trim() !== '';
+  $('expertEqFlag').style.display = (has && !$('expertBox').open) ? 'inline' : 'none';
+}
+$('eqs').addEventListener('input', updateExpertFlag);
+$('expertBox').addEventListener('toggle', updateExpertFlag);
+updateExpertFlag();
 
 // The "limit the results" checkbox reveals the actual variables field only
 // when checked, and clears it when unchecked so an unchecked toggle never
@@ -854,6 +868,7 @@ function applyCircuit(c) {
   if ((c.equations || []).length || (c.conditions || []).length || c.unknowns) {
     $('expertBox').open = true;
   }
+  updateExpertFlag();
   syncFields();
   showNote(c.note || '', false);
   autoGrowDesc();
