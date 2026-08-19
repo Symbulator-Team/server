@@ -161,8 +161,12 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
                   align-items: center; gap: .45rem; margin: 0; cursor: pointer; }
   .dl-row input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
   .card.inactive { opacity: .55; }
-  .group-h { font-size: 1.35rem; font-weight: 700; color: var(--ink); margin: 2rem 0 .6rem; }
+  .group-h {
+    font-size: 1.3rem; font-weight: 800; color: var(--ink);
+    text-align: center; white-space: nowrap; margin: 2rem 0 .6rem;
+  }
   .group-h:first-of-type { margin-top: 0; }
+  .group-h .bracket { color: var(--accent); }
   .group-intro { margin: 0 0 1.2rem; max-width: 68ch; }
   #evalOut, #solveqOut { margin-top: .9rem; display: none; }
   .disamb {
@@ -220,7 +224,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 </header>
 
 <main class="wrap">
-  <h2 class="group-h">Inputs</h2>
+  <h2 class="group-h"><span class="bracket">[</span> I N P U T S <span class="bracket">]</span></h2>
   <p class="group-intro">
     Describe your circuit below, or upload an Input File.
   </p>
@@ -418,14 +422,6 @@ c1,2,0,4.7e-6</pre>
           <option value="tr">TR — transient (time domain)</option>
         </select>
       </div>
-      <div id="n1Field">
-        <label for="n1">Node 1 <span class="hint">(port terminal)</span></label>
-        <input type="text" id="n1" placeholder="2">
-      </div>
-      <div id="n2Field">
-        <label for="n2">Node 2 <span class="hint">(port terminal / ground)</span></label>
-        <input type="text" id="n2" placeholder="0">
-      </div>
       <div id="kindField">
         <label for="kind">Parameters</label>
         <select id="kind">
@@ -436,6 +432,17 @@ c1,2,0,4.7e-6</pre>
           <option value="a">a — transmission</option>
           <option value="b">b — inverse transmission</option>
         </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div id="n1Field">
+        <label for="n1">Node 1 <span class="hint">(port terminal)</span></label>
+        <input type="text" id="n1" placeholder="2">
+      </div>
+      <div id="n2Field">
+        <label for="n2">Node 2 <span class="hint">(port terminal / ground)</span></label>
+        <input type="text" id="n2" placeholder="0">
       </div>
     </div>
 
@@ -533,7 +540,7 @@ c1,2,0,4.7e-6</pre>
 
   <hr class="section-divider">
 
-  <h2 class="group-h">Outputs</h2>
+  <h2 class="group-h"><span class="bracket">[</span> O U T P U T S <span class="bracket">]</span></h2>
 
   <div class="card inactive" id="resultsCard">
     <details id="resultsBox">
