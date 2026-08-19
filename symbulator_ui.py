@@ -627,6 +627,18 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         _notes = _hijack_notes(_guard_elements)
         _notes += _impulse_notes(_guard_elements, domain)
 
+        # Expert mode: let "ir5" mean "i_r5" the same way Evaluate and
+        # the Solve panel already do, by rewriting equations/conditions
+        # against this circuit's real symbol names before they're parsed.
+        if extra_equations or extra_conditions:
+            _canon = _circuit_canonical_names(_guard_elements)
+            if extra_equations:
+                extra_equations = [_normalize_underscore_names(e, _canon)
+                                    for e in extra_equations]
+            if extra_conditions:
+                extra_conditions = [_normalize_underscore_names(c, _canon)
+                                     for c in extra_conditions]
+
         # ---- Special tools: th / er / port ------------------------------
         if tool != "solve":
             tkw = {"domain": domain}
@@ -835,6 +847,51 @@ def _norm_name(name: str) -> str:
     case-insensitive and underscore-optional, so `i_r1`, `i_R1`, `iR1`
     and `IR1` all collapse to the same key."""
     return name.replace("_", "").lower()
+
+
+_IDENT_TOKEN = re.compile(r"[A-Za-z_]\w*")
+
+
+def _circuit_canonical_names(elements):
+    """Every name solve_circuit() will actually generate for this
+    circuit: `i_<name>` for each element's current (every kind gets
+    one), `v_<name>` for the branch voltage of "rlcejs"-kind elements
+    (matching the same test used when building the flat results map),
+    and `v_<node>` for every non-ground node. Used to translate an
+    expert-mode equation/condition written the calculator's casual way
+    ("ir5") back to the real symbol ("i_r5") before it reaches the
+    solver -- see _normalize_underscore_names below."""
+    names = set()
+    for el in elements:
+        names.add(f"i_{el.name}")
+        if el.kind in "rlcejs":
+            names.add(f"v_{el.name}")
+        for n in (getattr(el, "n1", None), getattr(el, "n2", None)):
+            if n and n != "0":
+                names.add(f"v_{n}")
+    return names
+
+
+def _normalize_underscore_names(text, canonical):
+    """Rewrite identifiers in `text` that match a canonical circuit
+    symbol once case/underscores are ignored (_norm_name) to that
+    symbol's real, underscored spelling -- e.g. "ir5" -> "i_r5" -- so an
+    expert-mode "Add equations"/"Add conditions" line can refer to a
+    circuit quantity the same casual way Evaluate and the Solve panel
+    already accept (both already alias-match through _alias_mapping;
+    this is the equivalent for text that gets parsed *before* any
+    circuit values exist to alias against). A name with no canonical
+    match -- a genuinely new symbol like an unknown resistor's value --
+    passes through untouched."""
+    by_norm = {}
+    for n in canonical:
+        by_norm.setdefault(_norm_name(n), n)
+
+    def repl(m):
+        tok = m.group(0)
+        return by_norm.get(_norm_name(tok), tok)
+
+    return _IDENT_TOKEN.sub(repl, text)
 
 
 def _alias_mapping(values: dict, exclude=(), expr=None):
