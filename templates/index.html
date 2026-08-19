@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Symbulator — symbolic circuit analysis online</title>
+<meta name="description" content="Symbulator: symbolic simulation of linear electrical circuits (DC, AC, Laplace, transient) online, created by Roberto Perez-Franco. Powered by Python and SymPy.">
+<script>
+window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'global' } };
+</script>
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<script defer src="/static/mathjax/tex-svg.js"></script>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --ink: #1c2330;
+    --muted: #5b6472;
+    --accent: #0f6b5c;
+    --accent-ink: #ffffff;
+    --line: #e2e5ea;
+    --lcd-bg: #10241c;
+    --lcd-ink: #9ff2c8;
+    --lcd-dim: #4e7a63;
+    --err-bg: #fdf1f1;
+    --err-ink: #a13030;
+    --mono: "Consolas", "Menlo", "DejaVu Sans Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  header {
+    background: linear-gradient(135deg, #0d1f2d 0%, #123c33 100%);
+    color: #fff; padding: 2.2rem 1rem 2rem;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 1rem; }
+  header h1 { margin: 0; font-size: 2rem; letter-spacing: .5px; }
+  header h1 .tm { color: #7fd7b8; }
+  header p { margin: .4rem 0 0; color: #b9c6c2; max-width: 60ch; }
+  .nowrap { white-space: nowrap; }
+  a.toplinks { color: #7fd7b8; font-weight: 600; text-decoration: none;
+                border-bottom: 1px solid rgba(127,215,184,.45); padding-bottom: 1px;
+                margin-left: .3rem; }
+  a.toplinks:hover { color: #a9e8cf; }
+  main { padding: 1.6rem 0 3rem; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 1.3rem 1.4rem; margin: 0 0 1.2rem; box-shadow: 0 1px 3px rgba(16,24,40,.05);
+  }
+  label { display: block; font-weight: 600; font-size: .9rem; margin: 0 0 .3rem; }
+  .hint { font-weight: 400; color: var(--muted); }
+  textarea, select, input[type=text], input[type=number] {
+    width: 100%; font-family: var(--mono); font-size: .95rem;
+    border: 1px solid var(--line); border-radius: 7px; padding: .55rem .7rem;
+    background: #fbfcfd; color: var(--ink);
+  }
+  textarea { min-height: 5.2rem; resize: vertical; }
+  textarea:focus, select:focus, input:focus { outline: 2px solid #1a8b77; border-color: transparent; }
+  .row { display: flex; gap: .9rem; flex-wrap: wrap; margin-top: .9rem; }
+  .row > div { flex: 1 1 180px; }
+  .actions { display: flex; align-items: center; gap: 1rem; margin-top: 1.1rem; flex-wrap: wrap; }
+  button {
+    background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px;
+    font-size: 1rem; font-weight: 600; padding: .6rem 1.6rem; cursor: pointer;
+  }
+  button:hover { background: #0c5a4d; }
+  button:disabled { background: #9db3ae; cursor: wait; }
+  #solveBtn { padding: .6rem 2.8rem; }
+  .examples { font-size: .88rem; color: var(--muted); }
+  .examples select { width: auto; font-family: inherit; font-size: .88rem; background: #fff; }
+  #status { font-size: .88rem; color: var(--muted); }
+  .lcd {
+    background: var(--lcd-bg); border-radius: 10px; padding: 1.1rem 1.3rem;
+    border: 1px solid #0a1a13; box-shadow: inset 0 2px 12px rgba(0,0,0,.5);
+    color: var(--lcd-ink); min-height: 3rem;
+  }
+  .lcd .placeholder { color: var(--lcd-dim); font-family: var(--mono); font-size: .9rem; }
+  .result-row {
+    display: flex; align-items: baseline; gap: 1rem; padding: .45rem .2rem;
+    border-bottom: 1px solid #1c3a2c; flex-wrap: wrap;
+  }
+  .result-row:last-child { border-bottom: 0; }
+  .result-name { font-family: var(--mono); color: #6fdfae; min-width: 5.5rem; font-size: .9rem; }
+  .result-math { flex: 1; overflow-x: auto; overflow-y: hidden;
+                 padding: .25rem 0; }
+  .result-math mjx-container svg { color: var(--lcd-ink); }
+  .lcd-meta { color: var(--lcd-dim); font-family: var(--mono); font-size: .78rem; margin-top: .7rem; }
+  .results-h { font-size: 1.35rem; font-weight: 700; margin: 0 0 .9rem; }
+  .results-h.section-h2 { margin-top: 1.5rem; padding-top: 1.2rem;
+                          border-top: 1px solid var(--line); }
+  label.hint-only { font-weight: 400; color: var(--muted); font-size: .9rem; }
+  summary.section-toggle {
+    font-size: 1.35rem; font-weight: 700; color: var(--ink);
+    list-style: none; cursor: pointer; display: flex; align-items: center;
+    gap: .5rem; margin: 0 0 .9rem;
+  }
+  summary.section-toggle::-webkit-details-marker { display: none; }
+  summary.section-toggle::before {
+    content: "▾"; font-size: 1.2rem; line-height: 1; color: var(--muted);
+    transition: transform .15s ease;
+  }
+  details:not([open]) > summary.section-toggle { margin-bottom: 0; }
+  details:not([open]) > summary.section-toggle::before { transform: rotate(-90deg); }
+  summary.section-toggle:hover::before { color: var(--accent); }
+  .section-cap { font-size: .82rem; font-weight: 600; color: var(--muted);
+                 text-transform: uppercase; letter-spacing: .06em; margin: 1.1rem 0 .45rem; }
+  .section-cap:first-child { margin-top: 0; }
+  .elgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: .8rem; }
+  .elcard {
+    background: var(--lcd-bg); border: 1px solid #0a1a13; border-radius: 10px;
+    padding: .75rem .95rem; color: var(--lcd-ink);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,.45);
+  }
+  .elcard .el-title { font-family: var(--mono); color: #6fdfae; font-size: .95rem; }
+  .elcard .el-kind { color: var(--lcd-dim); font-size: .78rem; font-family: var(--mono); margin-left: .4rem; }
+  .el-item { padding: .35rem 0; border-bottom: 1px solid #1c3a2c;
+             overflow-x: auto; overflow-y: hidden; }
+  .el-item:last-child { border-bottom: 0; }
+  .el-item .el-label { color: var(--lcd-dim); font-size: .72rem; font-family: var(--mono);
+                       display: block; letter-spacing: .04em; }
+  .el-item mjx-container svg { color: var(--lcd-ink); }
+  .result-math, .el-item { scrollbar-width: thin; scrollbar-color: #2c5344 transparent; }
+  .result-math::-webkit-scrollbar, .el-item::-webkit-scrollbar { height: 7px; }
+  .result-math::-webkit-scrollbar-track, .el-item::-webkit-scrollbar-track { background: transparent; }
+  .result-math::-webkit-scrollbar-thumb, .el-item::-webkit-scrollbar-thumb {
+    background: #2c5344; border-radius: 4px; }
+  .result-math::-webkit-scrollbar-button, .el-item::-webkit-scrollbar-button { display: none; }
+  .error { background: var(--err-bg); color: var(--err-ink); border: 1px solid #ecc8c8;
+           border-radius: 8px; padding: .7rem 1rem; font-size: .92rem; }
+  details { margin-top: .4rem; }
+  summary { cursor: pointer; font-weight: 600; font-size: .92rem; color: var(--accent); }
+  table { border-collapse: collapse; width: 100%; margin-top: .6rem; font-size: .88rem; }
+  th, td { text-align: left; padding: .3rem .5rem; border-bottom: 1px solid var(--line); }
+  td:first-child, code { font-family: var(--mono); }
+  code { background: #eef1f4; border-radius: 4px; padding: .05rem .35rem; font-size: .86em; }
+  footer { color: var(--muted); font-size: .84rem; text-align: center; padding: 0 1rem 2rem; }
+  #omegaField, #varsField, #n1Field, #n2Field, #kindField { display: none; }
+  .eval-row { display: flex; gap: .8rem; flex-wrap: wrap; align-items: flex-end; }
+  .eval-row > div:first-child { flex: 1 1 260px; }
+  .dl-row { display: flex; gap: 1.4rem; flex-wrap: wrap; align-items: center; }
+  .dl-row label { font-weight: 400; font-size: .92rem; display: flex;
+                  align-items: center; gap: .45rem; margin: 0; cursor: pointer; }
+  .dl-row input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
+  .card.inactive { opacity: .55; }
+  .group-h { font-size: 1.35rem; font-weight: 700; color: var(--ink); margin: 2rem 0 .6rem; }
+  .group-h:first-of-type { margin-top: 0; }
+  .group-intro { margin: 0 0 1.2rem; max-width: 68ch; }
+  #evalOut, #solveqOut { margin-top: .9rem; display: none; }
+  .disamb {
+    background: #fff9ec; border: 1px solid #eadfc0; border-radius: 10px;
+    padding: 1rem 1.2rem;
+  }
+  .disamb h3 { margin: 0 0 .3rem; font-size: 1rem; }
+  .disamb p { margin: .2rem 0 .8rem; font-size: .9rem; color: var(--muted); }
+  .disamb-item { padding: .55rem 0; border-top: 1px solid #eee3c8; }
+  .disamb-item code { background: #f4ead2; }
+  .disamb-item label { display: inline-flex; align-items: center; gap: .4rem;
+    font-weight: 400; font-size: .92rem; margin: .3rem 1.4rem .1rem 0; cursor: pointer; }
+  .disamb-item input[type=radio] { accent-color: var(--accent); }
+  .disamb button { margin-top: .8rem; }
+  .uploadlbl {
+    display: inline-block; font-size: .88rem; font-weight: 500; cursor: pointer;
+    color: var(--accent); border: 1px dashed #9fc4bb; border-radius: 7px;
+    padding: .28rem .7rem; background: #f4fbf9;
+  }
+  .uploadlbl:hover { background: #e8f5f1; }
+  button.linkish {
+    background: none; border: 0; color: var(--accent); font-size: .84rem;
+    padding: .1rem .3rem; text-decoration: underline; cursor: pointer;
+    font-weight: 500;
+  }
+  button.linkish:hover { background: none; color: #0c5a4d; }
+  button.linkish:disabled { background: none; color: var(--muted);
+                             text-decoration: none; cursor: not-allowed; }
+  a.btnlink {
+    display: inline-block; background: var(--accent); color: var(--accent-ink);
+    border: 0; border-radius: 8px; font-size: 1rem; font-weight: 600;
+    padding: .6rem 1.6rem; cursor: pointer; text-decoration: none;
+  }
+  a.btnlink:hover { background: #0c5a4d; }
+  .booknote {
+    font-size: .84rem; color: var(--muted); margin-top: .6rem;
+    background: #f4fbf9; border-left: 3px solid #9fc4bb;
+    padding: .4rem .7rem; border-radius: 0 6px 6px 0;
+  }
+  .booknote.warn { background: #fff9ec; border-left-color: #e0c98a; }
+  label.checkline { display: flex; align-items: flex-start; gap: .45rem;
+    font-weight: 400; font-size: .92rem; cursor: pointer; padding: .35rem 0; }
+  label.checkline > input { margin-top: .2rem; flex: none; }
+  label.checkline input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Symbulator <span class="tm">Py</span></h1>
+    <p>Symbolic simulator of linear circuits, by
+       <span class="nowrap">Roberto Perez-Franco</span>. <a class="toplinks" href="https://learn.symbulator.com"
+       target="_blank" rel="noopener">Learn how to use</a></p>
+  </div>
+</header>
+
+<main class="wrap">
+  <h2 class="group-h">Inputs</h2>
+  <p class="group-intro">
+    You can provide the input for Symbulator manually via the
+    <em>Manual Input</em> fields below, or you can upload an
+    Input File.
+  </p>
+
+  <div class="card" id="fileInputCard">
+    <details>
+      <summary class="results-h section-toggle">File Input</summary>
+
+      <div class="dl-row">
+        <label for="fileInput" class="uploadlbl" title="Upload an Input File of circuit descriptions">Upload Input File</label>
+        <input type="file" id="fileInput" accept=".cir,.txt,.sym,.circuits,text/plain" hidden>
+        <button type="button" id="addToFileBtn" class="linkish" disabled
+          title="Run a circuit successfully first">Add this circuit to the input file</button>
+        <button type="button" id="downloadFileBtn" class="linkish" disabled
+          title="Upload an input file first">Download this input file</button>
+      </div>
+
+      <span class="examples" style="display:block;margin-top:.9rem">
+        <span id="pickerLabel" style="margin-right:.8rem">Want to try an example? </span>
+        <select id="examples">
+          <option value="">— loading… —</option>
+        </select>
+        <button type="button" id="backToExamples" class="linkish" hidden>back to examples</button>
+      </span>
+
+    <details id="fileFormatBox" style="margin-top:1.1rem">
+      <summary>About the format of input files</summary>
+      <p style="font-size:.9rem;color:var(--muted);margin-top:.5rem">
+        A plain text Input File can hold as many circuits as you like. Each one
+        starts with its name in square brackets, followed by optional
+        settings and then the element lines. Save it with a
+        <code>.cir</code> or <code>.txt</code> extension.
+      </p>
+<pre style="background:#f6f8fa;border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;font-size:.84rem;overflow-x:auto"># comments start with a hash
+
+[Problem 1 — divider]
+analysis: dc
+e1,1,0,20
+r1,1,2,5'k
+r2,2,0,15'k
+
+[Problem 2 — RC transient]
+analysis: tr
+variables: v_2
+e1,1,0,10/s
+r1,1,2,2200
+c1,2,0,4.7e-6</pre>
+      <p style="font-size:.88rem;color:var(--muted)">
+        Settings are all optional:
+        <code>analysis</code> (dc/ac/fd/tr), <code>omega</code>,
+        <code>variables</code>, <code>tool</code> (th/er/port) with
+        <code>n1</code>/<code>n2</code>/<code>kind</code>, and the
+        expert-mode <code>equation</code>, <code>condition</code> and
+        <code>unknowns</code>.
+      </p>
+      <p style="font-size:.88rem;color:var(--muted)">
+        <em>Upload Input File</em>, above, reads a file like this — its
+        circuits become the live Input File in your browser, replacing
+        whatever was there before (nothing is stored on the server).
+        <em>Add this circuit to the input file</em> adds the circuit
+        you're describing in Manual Input to it, and
+        <em>Download this input file</em> saves a copy — once you've
+        uploaded one to begin with.
+      </p>
+    </details>
+    </details>
+  </div>
+
+  <div class="card" id="manualInputCard">
+    <details>
+      <summary class="results-h section-toggle">Manual Input</summary>
+
+      <div class="section-cap" style="margin-top:0">Circuit Description</div>
+    <label for="desc" class="hint-only">Describe the linear electric circuit
+      in the space below.</label>
+    <textarea id="desc" spellcheck="false"
+      placeholder="e1,1,0,5&#10;r1,1,2,1'k&#10;r2,2,0,1'k"></textarea>
+
+    <details id="syntaxBox" style="margin-top:.9rem">
+      <summary>Circuit syntax reference</summary>
+
+      <p class="hint" style="margin:.6rem 0 0">
+        One element per line (or separated by <code>:</code>), fields
+        separated by <code>,</code>; node <code>0</code> is ground. See
+        the <a href="https://learn.symbulator.com" target="_blank"
+        rel="noopener">documentation</a> for a full walkthrough, or pick
+        an example circuit above to see it in practice.
+      </p>
+
+      <div class="section-cap" style="margin-top:.9rem">Elements</div>
+      <p class="hint" style="margin:.2rem 0 0">
+        The first letter of an element's name selects its type. Element
+        letters, element names and node names are <strong>not</strong>
+        case-sensitive: <code>R1</code> and <code>r1</code> are the same
+        resistor, and node <code>A</code> is node <code>a</code>.
+      </p>
+      <table>
+        <tr><th>Letter</th><th>Element</th><th>Fields</th></tr>
+        <tr><td>j</td><td>current source</td><td>name,n1,n2,value</td></tr>
+        <tr><td>e</td><td>voltage source</td><td>name,n+,n−,value</td></tr>
+        <tr><td>r</td><td>resistor</td><td>name,n1,n2,value</td></tr>
+        <tr><td>s</td><td>short circuit</td><td>name,n1,n2</td></tr>
+        <tr><td>c</td><td>capacitor</td><td>name,n1,n2,value[,initial voltage]</td></tr>
+        <tr><td>l</td><td>inductor</td><td>name,n1,n2,value[,initial current]</td></tr>
+        <tr><td>m</td><td>mutual inductance</td><td>name,L1,L2,M</td></tr>
+        <tr><td>t</td><td>ideal transformer</td><td>name,n1,n2,N1,N2</td></tr>
+        <tr><td>o</td><td>ideal op-amp</td><td>name,n+,n−,n_out</td></tr>
+        <tr><td>z y h g a b</td><td>two-port block</td><td>name,n1,n2</td></tr>
+      </table>
+      <p class="hint">
+        A value can be a number, a symbol (<code>r_load</code>,
+        <code>vin</code>) or an expression — and an expression referring
+        to another answer, like <code>2*v_2</code>, makes a dependent
+        (controlled) source. For FD and TR analysis give source values in
+        the s-domain: <code>5/s</code> for a 5 V step, <code>1</code> for a
+        unit impulse.
+      </p>
+
+      <div class="section-cap">SI prefixes</div>
+      <p class="hint" style="margin:.2rem 0 0">
+        Write the apostrophe — <code>1'k</code> — to say plainly that you
+        mean an SI prefix. A bare <code>1k</code> also works, but it is
+        ambiguous (one kilo, or one times a variable named k?) and
+        Symbulator will stop and ask.
+      </p>
+      <table>
+        <tr><th>Prefix</th><th>Means</th><th>Example</th></tr>
+        <tr><td>'P</td><td>peta, ×10<sup>15</sup></td><td>2'P</td></tr>
+        <tr><td>'T</td><td>tera, ×10<sup>12</sup></td><td>2'T</td></tr>
+        <tr><td>'G</td><td>giga, ×10<sup>9</sup></td><td>2'G</td></tr>
+        <tr><td>'M</td><td>mega, ×10<sup>6</sup></td><td>4.7'M</td></tr>
+        <tr><td>'k or 'K</td><td>kilo, ×10<sup>3</sup></td><td>1'k</td></tr>
+        <tr><td>'m</td><td>milli, ×10<sup>−3</sup></td><td>5'm</td></tr>
+        <tr><td>'u or 'µ</td><td>micro, ×10<sup>−6</sup></td><td>4.7'u</td></tr>
+        <tr><td>'n</td><td>nano, ×10<sup>−9</sup></td><td>10'n</td></tr>
+        <tr><td>'p</td><td>pico, ×10<sup>−12</sup></td><td>33'p</td></tr>
+        <tr><td>'f</td><td>femto, ×10<sup>−15</sup></td><td>100'f</td></tr>
+        <tr><td>'a</td><td>atto, ×10<sup>−18</sup></td><td>5'a</td></tr>
+      </table>
+      <p class="hint">
+        <strong>Case matters here.</strong> <code>'M</code> is mega and
+        <code>'m</code> is milli — a factor of a billion apart. (Both
+        <code>'k</code> and <code>'K</code> mean kilo.) Micro accepts
+        either <code>u</code> or <code>µ</code>, so a value pasted from a
+        datasheet works as typed. There is no prefix for exa:
+        <code>E</code> is reserved for scientific notation, where
+        <code>8E3</code> means 8000.
+      </p>
+
+      <div class="section-cap">Numbers, constants and the imaginary unit</div>
+      <p class="hint" style="margin:.2rem 0 0">
+        <code>8000</code>, <code>8000.</code> and <code>8E3</code> all mean
+        the same number; the last two are read as approximate rather than
+        exact.
+      </p>
+      <p class="hint">
+        <code>i</code>, <code>I</code>, <code>j</code> and <code>J</code>
+        <strong>all mean the imaginary unit</strong> and cannot be used as
+        variable names — write <code>3j</code>, <code>3*j</code> or
+        <code>3*i</code> and you get the same thing, shown as
+        <code>3j</code>. Complex values belong to AC analysis only; in DC,
+        FD and TR they are rejected. <code>pi</code> is π. Every other name
+        you write is an ordinary variable, so <code>Q</code>,
+        <code>S</code> and <code>beta</code> mean what you intend rather
+        than something out of SymPy. Euler's number is <code>exp(1)</code>.
+      </p>
+      <p class="hint">
+        In FD analysis <code>s</code> is the complex frequency and in TR
+        <code>t</code> is time; elsewhere both are ordinary variables.
+      </p>
+
+      <div class="section-cap">Expressions</div>
+      <p class="hint" style="margin:.2rem 0 0">
+        In <em>Evaluate</em> and <em>Solve</em> you can refer to any answer
+        with or without its underscore, in any capitalisation — so
+        <code>i_r1</code>, <code>ir1</code>, <code>i_R1</code> and
+        <code>IR1</code> all mean the current through <code>r1</code>.
+        Answers are named <code>v_&lt;node&gt;</code> for node voltages and,
+        per element, <code>i_</code> current, <code>v_</code> voltage drop,
+        <code>p_</code> power, <code>s_</code> complex power,
+        <code>z_</code>/<code>r_</code> impedance seen by a source.
+      </p>
+    </details>
+
+      <div class="section-cap">Type of Analysis</div>
+    <div class="row">
+      <div>
+        <label for="tool">Tool</label>
+        <select id="tool">
+          <option value="solve">Solve circuit</option>
+          <option value="th">Thévenin / Norton equivalent</option>
+          <option value="er">Equivalent impedance</option>
+          <option value="port">Two-port parameters</option>
+        </select>
+      </div>
+      <div>
+        <label for="domain">Analysis</label>
+        <select id="domain">
+          <option value="dc">DC — steady state</option>
+          <option value="ac">AC — phasor (needs ω)</option>
+          <option value="fd">FD — s-domain (Laplace)</option>
+          <option value="tr">TR — transient (time domain)</option>
+        </select>
+      </div>
+      <div id="varsField">
+        <label for="vars">Variables <span class="hint">(optional, comma-separated — limits the slow inverse-Laplace step)</span></label>
+        <input type="text" id="vars" placeholder="v_2, i_l1">
+      </div>
+      <div id="n1Field">
+        <label for="n1">Node 1 <span class="hint">(port terminal)</span></label>
+        <input type="text" id="n1" placeholder="2">
+      </div>
+      <div id="n2Field">
+        <label for="n2">Node 2 <span class="hint">(port terminal / ground)</span></label>
+        <input type="text" id="n2" placeholder="0">
+      </div>
+      <div id="kindField">
+        <label for="kind">Parameters</label>
+        <select id="kind">
+          <option value="z">z — impedance</option>
+          <option value="y">y — admittance</option>
+          <option value="h">h — hybrid</option>
+          <option value="g">g — inverse hybrid</option>
+          <option value="a">a — transmission</option>
+          <option value="b">b — inverse transmission</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div id="omegaField">
+        <label for="omega">ω — angular frequency <span class="hint">(rad/s, number or symbol)</span></label>
+        <input type="text" id="omega" placeholder="1000">
+      </div>
+    </div>
+
+    <details id="settingsBox" style="margin-top:.9rem">
+      <summary>Settings — how answers are shown</summary>
+
+      <div class="row">
+        <div style="flex: 0 1 24rem">
+          <label for="digits">Rounding</label>
+          <select id="digits">
+            <option value="exact">exact</option>
+            <option value="approx">approximate</option>
+            <option value="n">approximate to n significant digits</option>
+          </select>
+        </div>
+        <div id="nField" style="flex: 0 1 14rem">
+          <label for="nDigits">n</label>
+          <input type="number" id="nDigits" min="2" max="12" step="1" value="4">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Display</label>
+          <label class="checkline"><input type="checkbox" id="siUnits"><span>use
+            SI prefixes <span class="hint">— 0.002 becomes 2 m, 1200 becomes 1.2 k</span></span></label>
+          <label class="checkline"><input type="checkbox" id="showUnits" checked><span>show
+            units <span class="hint">— V, A, W, VA, Ω</span></span></label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="useRms">AC power convention</label>
+          <label class="checkline" id="rmsLine"><input type="checkbox" id="useRms"><span>RMS
+            phasors <span class="hint">— off means peak amplitude (the ÷2 convention);
+            affects AC power only</span></span></label>
+        </div>
+      </div>
+
+      <div class="hint" id="settingsNote" style="margin-top:.5rem">
+        SI prefixes apply to numeric answers only; a symbolic answer such as
+        <code>x·vin/(r1 + x)</code> is left as it is. A prefixed value is a
+        decimal, so SI prefixes and <em>exact</em> can't both apply.
+      </div>
+    </details>
+
+    <details id="expertBox" style="margin-top:.9rem">
+      <summary>Expert Mode — add equations, unknowns, conditions</summary>
+      <div class="row">
+        <div>
+          <label for="eqs">Add equations <span class="hint">(one per line, e.g. <code>v_2 = 6</code>)</span></label>
+          <textarea id="eqs" spellcheck="false" style="min-height:3.2rem"></textarea>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="conds">Add conditions <span class="hint">(one per line, substitutions like <code>vin = 12</code>)</span></label>
+          <textarea id="conds" spellcheck="false" style="min-height:3.2rem"></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="unks">Add unknowns <span class="hint">(comma-separated — needed when an equation constrains a symbolic component value, e.g. <code>x</code>)</span></label>
+          <input type="text" id="unks" placeholder="x">
+        </div>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button id="solveBtn">Run</button>
+      <span id="status"></span>
+    </div>
+    </details>
+  </div>
+
+  <h2 class="group-h">Symbulator Outputs</h2>
+
+  <div class="card inactive" id="resultsCard">
+    <details id="resultsBox">
+      <summary class="results-h section-toggle">Results</summary>
+      <div id="out">
+        <div class="lcd"><div class="placeholder">— no analysis run yet —</div></div>
+      </div>
+    </details>
+  </div>
+
+  <div class="card inactive" id="evalCard">
+    <details>
+      <summary class="results-h section-toggle">Evaluate</summary>
+      <label for="evalExpr">Evaluate an expression in terms of the results</label>
+      <details class="exhelp">
+        <summary>Examples</summary>
+        <p class="hint" style="margin:.5rem 0 0">
+          <code>v2 - v3</code> or <code>v_2 - v_3</code>,
+          <code>pr1 + pr2</code> or <code>p_r1 + p_r2</code>
+        </p>
+      </details>
+      <div class="eval-row" style="margin-top:.7rem">
+        <div><input type="text" id="evalExpr" placeholder="solve a circuit first…" disabled></div>
+        <div><button id="evalBtn" disabled>Evaluate</button></div>
+      </div>
+      <div id="evalOut" class="lcd"></div>
+    </details>
+  </div>
+
+  <div class="card inactive" id="solveqCard">
+    <details>
+      <summary class="results-h section-toggle">Solve</summary>
+      <label for="solveqEqs">Solve one or more equations in terms of the results
+        <span class="hint">— one per line. Works backwards:
+        <code>pr2 = 0.05</code> finds what makes that true.</span>
+      </label>
+      <details class="exhelp">
+        <summary>Examples</summary>
+        <p class="hint" style="margin:.5rem 0 0">
+          <code>v2 = 6</code> or <code>v_2 = 6</code>
+        </p>
+      </details>
+      <textarea id="solveqEqs" spellcheck="false" style="min-height:3.4rem;margin-top:.7rem"
+        placeholder="solve a circuit first…" disabled></textarea>
+      <div class="eval-row" style="margin-top:.7rem">
+        <div>
+          <label for="solveqUnks">Solve for
+            <span class="hint">— comma-separated; leave blank to solve for whatever is left</span>
+          </label>
+          <input type="text" id="solveqUnks" placeholder="x" disabled>
+        </div>
+        <div><button id="solveqBtn" disabled>Solve equations</button></div>
+      </div>
+      <label class="checkline" style="margin-top:.6rem"><input type="checkbox"
+        id="solveqReal" disabled><span>real solutions only <span class="hint">—
+        off searches the complex plane too (the calculator's <code>cSolve</code>);
+        on keeps the unknowns real (its <code>solve</code>)</span></span></label>
+      <div id="solveqOut" class="lcd"></div>
+    </details>
+  </div>
+
+  <div class="card inactive" id="dlCard">
+    <details>
+      <summary class="results-h section-toggle">Download</summary>
+      <p class="hint" style="margin:0 0 .9rem">
+        Download an output file with the elements you decide to include.
+      </p>
+      <label>What to include
+        <span class="hint">— saved as an Output File</span>
+      </label>
+      <div class="dl-row">
+        <label><input type="checkbox" id="dlDesc" checked disabled> circuit description</label>
+        <label><input type="checkbox" id="dlEqs" checked disabled> equations generated</label>
+        <label><input type="checkbox" id="dlAns" checked disabled> answers found</label>
+        <button id="dlBtn" disabled>Download</button>
+      </div>
+    </details>
+  </div>
+
+  <!-- /server-only -->
+</main>
+
+  <!-- server-only: this card offers the offline download; it makes no
+       sense inside the offline build itself, so build_local.py strips
+       everything between these two markers. -->
+  <div class="card">
+    <details>
+      <summary>Run it offline, with no internet needed</summary>
+      <p style="font-size:.92rem;margin-top:.7rem">
+        This page needs a connection every time you use it. There is
+        also an <strong>offline version</strong> that runs entirely
+        inside your own browser — nothing is sent to any server — so
+        once you've downloaded it, it keeps working with no internet at
+        all, and your browser can install it like an ordinary app.
+      </p>
+      <div class="actions" style="margin-top:.9rem">
+        <a class="btnlink" href="https://py.symbulator.com/local.zip"
+           download="symbulator-local.zip">Download the offline version</a>
+        <span class="hint">— one .zip, about 13 MB, works on Windows, macOS and Linux</span>
+      </div>
+      <div class="section-cap" style="margin-top:1.1rem">How to run it</div>
+      <p class="hint" style="margin:.2rem 0 0">
+        Unzip the download, then start it one of these ways — you only
+        need to do this once per computer (see “install it as an app”,
+        below):
+      </p>
+      <table>
+        <tr><th>System</th><th>What to do</th></tr>
+        <tr><td>Windows</td><td>double-click <code>start.bat</code></td></tr>
+        <tr><td>macOS</td><td>double-click <code>start.command</code>
+          <span class="hint">(the first time, right-click it and choose
+          “Open” — macOS blocks downloaded scripts by default)</span></td></tr>
+        <tr><td>Linux</td><td>open a terminal in the folder and run
+          <code>sh start.sh</code></td></tr>
+      </table>
+      <p class="hint">
+        Any of these starts a small local web server and opens
+        Symbulator Py in your browser automatically — leave that
+        window open while you use it. Prefer to do it by hand? Open a
+        terminal in the unzipped folder and run
+        <code>python3 -m http.server 8000</code>, then visit
+        <code>http://localhost:8000/</code>.
+      </p>
+      <p class="hint">
+        <strong>Install it as an app:</strong> once it's open in your
+        browser, look for an “Install” icon in the address bar (or
+        “Install Symbulator Py” / “Add to Home Screen” in the browser's
+        menu). After installing, it opens like any other app, with no
+        internet needed and no more running start scripts. Requires
+        Python 3 only to run the one-time local server above — get it
+        free from <a href="https://python.org" target="_blank"
+        rel="noopener">python.org</a> if you don't have it; nothing
+        else needs installing, since the maths engine itself (Python,
+        SymPy and the <code>symbulator</code> package) runs inside your
+        browser.
+      </p>
+    </details>
+  </div>
+  <!-- /server-only -->
+
+  <div class="card">
+    <details>
+      <summary>About Symbulator Py</summary>
+      <p style="font-size:.92rem;margin-top:.7rem">
+        Symbulator Py was created in August 2026 by Roberto Perez-Franco,
+        realising a long-held wish to port Symbulator to Python and SymPy.
+        Every version for the TI calculators — from the first in 1999 to
+        version 8 in 2023 — was hand-written by the author. This Python
+        version was written entirely by Claude, Anthropic's AI assistant,
+        working to the author's design and instructions.
+      </p>
+      <p style="font-size:.92rem">
+        Symbulator Py is free and open-source software, released under the
+        MIT licence: you may use, study, modify and share it, including
+        commercially. The solver is published as the
+        <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">symbulator</a>
+        package on PyPI, and the project lives on
+        <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a>.
+        Contributions, bug reports and circuits that break it are all welcome.
+      </p>
+    </details>
+  </div>
+
+<footer>
+  Symbulator © 1999–2026 Roberto Perez-Franco ·
+  <a href="https://symbulator.com" target="_blank" rel="noopener">symbulator.com</a> ·
+  <a href="https://www.facebook.com/Symbulator/" target="_blank" rel="noopener">Facebook</a> ·
+  <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
+  Free and open-source software under the MIT licence · results are symbolic, powered by SymPy
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const domainSel = $('domain');
+const toolSel = $('tool');
+
+// Show/hide/enable the form fields that only make sense for the current
+// tool + domain combination (omega only for AC, the two port-node fields
+// only for th/er/port, "kind" only for port, etc.), and lock th/er/port
+// to DC/AC since those tools don't support fd/tr.
+function syncFields() {
+  const tool = toolSel.value;
+  if (tool !== 'solve') {
+    // th/er/port work in DC or AC only
+    if (domainSel.value === 'fd' || domainSel.value === 'tr') domainSel.value = 'dc';
+    for (const opt of domainSel.options) {
+      opt.disabled = (opt.value === 'fd' || opt.value === 'tr');
+    }
+  } else {
+    for (const opt of domainSel.options) opt.disabled = false;
+  }
+  $('omegaField').style.display = domainSel.value === 'ac' ? 'block' : 'none';
+  $('varsField').style.display  = (domainSel.value === 'tr' && tool === 'solve') ? 'block' : 'none';
+  $('n1Field').style.display = tool !== 'solve' ? 'block' : 'none';
+  $('n2Field').style.display = tool !== 'solve' ? 'block' : 'none';
+  $('kindField').style.display = tool === 'port' ? 'block' : 'none';
+  $('expertBox').style.display = tool === 'solve' ? 'block' : 'none';
+}
+domainSel.addEventListener('change', () => { syncFields(); syncSettings(); });
+toolSel.addEventListener('change', syncFields);
+syncFields();
+
+// Last successful solve -- feeds the evaluator and the download builder.
+let last = null;
+
+// Turn on the Evaluate, Solve-equations and Download cards, plus
+// "add this circuit to the input file" (which requires a circuit that has
+// actually been parsed and solved, not just typed) -- all start
+// disabled/greyed out because they need a completed solve's answers to be
+// useful. Called once a solve has actually succeeded.
+function activatePostSolve() {
+  $('resultsCard').classList.remove('inactive');
+  $('addToFileBtn').disabled = false;
+  $('addToFileBtn').title = '';
+  $('evalExpr').disabled = false;
+  $('evalExpr').placeholder = 'e.g. v2 - v3, or p_r1 + p_r2';
+  $('evalBtn').disabled = false;
+  $('evalCard').classList.remove('inactive');
+  $('solveqEqs').disabled = false;
+  $('solveqEqs').placeholder = 'e.g. p_r2 = 0.05';
+  $('solveqUnks').disabled = false;
+  $('solveqReal').disabled = false;
+  $('solveqBtn').disabled = false;
+  $('solveqCard').classList.remove('inactive');
+  for (const id of ['dlDesc', 'dlEqs', 'dlAns']) $(id).disabled = false;
+  $('dlBtn').disabled = false;
+  $('dlCard').classList.remove('inactive');
+}
+
+// ---- Circuit picker: built-in examples, or an opened file ----------
+// `builtIn` is kept so "back to examples" costs no second round trip.
+// `picker` doubles as the live Input File described in "About the format
+// of input files":
+// uploading a file replaces it, "add this circuit to the file" appends
+// or updates an entry in it, and "download the file" writes it out.
+let builtIn = [], picker = [], liveFileName = null;
+
+// Rebuild the circuit-picker <select> from a fresh list of circuits
+// (the built-in examples, or a just-uploaded file's contents), with
+// `label` and `placeholder` describing where the list came from.
+function populatePicker(circuits, label, placeholder) {
+  picker = circuits;
+  const sel = $('examples');
+  sel.innerHTML = '';
+  const first = document.createElement('option');
+  first.value = '';
+  first.textContent = placeholder;
+  sel.appendChild(first);
+  circuits.forEach((c, i) => {
+    const o = document.createElement('option');
+    o.value = String(i);
+    o.textContent = c.name;
+    sel.appendChild(o);
+  });
+  $('pickerLabel').textContent = label;
+}
+
+// Show (or, if `text` is falsy, clear) a small note under the circuit
+// textarea -- used for a picked circuit's own "note:" metadata and for
+// upload/parse feedback ("Loaded 3 circuits…", or a warning in red).
+function showNote(text, isWarning) {
+  const old = document.getElementById('bookNote');
+  if (old) old.remove();
+  if (!text) return;
+  const div = document.createElement('div');
+  div.id = 'bookNote';
+  div.className = 'booknote' + (isWarning ? ' warn' : '');
+  div.textContent = text;
+  $('desc').parentNode.appendChild(div);
+}
+
+// Fill every input from a picked circuit. Circuit lines are shown one
+// per line even when the file wrote them colon-separated, since that's
+// how the textarea reads best.
+function applyCircuit(c) {
+  $('desc').value = (c.desc || '').replace(/:/g, '\n');
+  domainSel.value = c.domain || 'dc';
+  toolSel.value = c.tool || 'solve';
+  $('omega').value = c.omega || '';
+  $('vars').value = c.vars || '';
+  $('n1').value = c.n1 || '';
+  $('n2').value = c.n2 || '';
+  $('kind').value = c.kind || 'z';
+  $('eqs').value = (c.equations || []).join('\n');
+  $('conds').value = (c.conditions || []).join('\n');
+  $('unks').value = c.unknowns || '';
+  if ((c.equations || []).length || (c.conditions || []).length || c.unknowns) {
+    $('expertBox').open = true;
+  }
+  syncFields();
+  showNote(c.note || '', false);
+  autoGrowDesc();
+}
+
+// Grows the description textarea to fit what's typed or pasted into it
+// (up to 60% of the viewport height), so a longer circuit doesn't force
+// scrolling inside a small box.
+function autoGrowDesc() {
+  const el = $('desc');
+  el.style.height = 'auto';
+  const max = window.innerHeight * 0.6;
+  el.style.height = Math.min(el.scrollHeight, max) + 'px';
+}
+$('desc').addEventListener('input', autoGrowDesc);
+autoGrowDesc();
+
+$('examples').addEventListener('change', ev => {
+  const idx = ev.target.value;
+  updateAddBtnLabel();
+  if (idx === '') return;
+  const c = picker[Number(idx)];
+  if (c) applyCircuit(c);
+});
+
+// Fetch the built-in example circuits from the server and populate the
+// picker with them; called once on page load, and again by "back to
+// examples" after a file has been loaded (see the button handler below).
+async function loadExamples() {
+  try {
+    const r = await fetch('/api/examples');
+    const data = await r.json();
+    builtIn = data.circuits || [];
+    populatePicker(builtIn, 'Want to try an example? ',
+                   builtIn.length ? '— choose —' : '— none defined —');
+  } catch (e) {
+    populatePicker([], 'Want to try an example? ', '— unavailable —');
+  }
+  updateAddBtnLabel();
+}
+loadExamples();
+
+$('fileInput').addEventListener('change', async ev => {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  showNote('reading ' + file.name + '…', false);
+  try {
+    const r = await fetch('/api/upload', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (!data.ok) {
+      showNote(data.error || 'Could not read that file.', true);
+      return;
+    }
+    populatePicker(data.circuits, 'From ' + data.filename + ':', '— choose —');
+    liveFileName = data.filename;
+    $('backToExamples').hidden = false;
+    // "Download this input file" only makes sense once an input file has
+    // actually been uploaded to build on -- a solved-but-never-uploaded
+    // circuit isn't an input file yet, just a description in the textarea.
+    $('downloadFileBtn').disabled = false;
+    $('downloadFileBtn').title = '';
+    const n = data.circuits.length;
+    let msg = `Loaded ${n} circuit${n === 1 ? '' : 's'} from ${data.filename}.`;
+    if (data.warnings && data.warnings.length) msg += ' ' + data.warnings.join(' ');
+    showNote(msg, !!(data.warnings && data.warnings.length));
+    if (n === 1) { applyCircuit(data.circuits[0]); $('examples').value = '0'; }
+    updateAddBtnLabel();
+  } catch (e) {
+    showNote('Could not upload that file.', true);
+  } finally {
+    ev.target.value = '';   // let the same file be re-opened after editing
+  }
+});
+
+// ---- Settings: rounding, SI prefixes, units, AC convention ----------
+// The three rounding states map onto what the solver already accepts:
+//   exact          -> digits 0, approx off
+//   approximate    -> digits 0, approx on
+//   approximate to n -> digits n
+function roundingState() {
+  const mode = $('digits').value;
+  if (mode === 'n') {
+    let n = parseInt($('nDigits').value, 10);
+    if (!Number.isFinite(n)) n = 4;
+    n = Math.min(12, Math.max(2, n));
+    return { digits: n, approx: false };
+  }
+  return { digits: 0, approx: mode === 'approx' };
+}
+
+// Prepend a bold note (or, if `text` is falsy, restore the original
+// wording) to the settings card's help text -- used to explain in place
+// why a setting is currently disabled, e.g. "digits" while "approximate"
+// is off, rather than just greying it out with no explanation.
+function settingsNote(text) {
+  const el = $('settingsNote');
+  if (!el.dataset.original) el.dataset.original = el.innerHTML;
+  el.innerHTML = text
+    ? '<strong>' + text + '</strong><br>' + el.dataset.original
+    : el.dataset.original;
+}
+
+// Show/hide/disable the settings fields that only apply in certain
+// states (the "n" digits box only under "approximate to n digits", RMS
+// only in AC -- see the comment on $('useRms') below).
+function syncSettings() {
+  $('nField').style.display = $('digits').value === 'n' ? 'block' : 'none';
+  // The RMS convention only affects AC power, so it is inert elsewhere.
+  // Grey it out rather than hiding it: a setting that vanishes feels
+  // unstable, and greyed-out-with-a-reason teaches what it is for.
+  const isAc = domainSel.value === 'ac';
+  $('useRms').disabled = !isAc;
+  $('rmsLine').style.opacity = isAc ? '1' : '.5';
+  $('rmsLine').title = isAc ? '' : 'Applies to AC analysis only';
+}
+
+// SI prefixes and exact answers contradict each other -- a prefixed
+// value is a decimal. Whichever control the user touched last wins, and
+// the other visibly changes, so the page never shows a state it is not
+// honouring.
+$('siUnits').addEventListener('change', () => {
+  if ($('siUnits').checked && $('digits').value === 'exact') {
+    $('digits').value = 'approx';
+    syncSettings();
+    settingsNote('SI prefixes need decimal values, so rounding switched to approximate.');
+  } else {
+    settingsNote('');
+  }
+  if (last) solve();
+});
+$('digits').addEventListener('change', () => {
+  if ($('digits').value === 'exact' && $('siUnits').checked) {
+    $('siUnits').checked = false;
+    settingsNote('Exact answers can\'t carry SI prefixes, so SI prefixes were turned off.');
+  } else {
+    settingsNote('');
+  }
+  syncSettings();
+  if (last) solve();
+});
+$('nDigits').addEventListener('change', () => { if (last) solve(); });
+syncSettings();
+$('showUnits').addEventListener('change', () => { if (last) solve(); });
+$('useRms').addEventListener('change', () => { if (last) solve(); });
+
+// Turns a textarea's raw text into a clean list of non-blank lines --
+// used when building a circuit dict for the live Input File, matching how
+// applyCircuit() reads them back out.
+function linesOf(text) {
+  return String(text || '').split(/[\r\n]+/).map(s => s.trim()).filter(Boolean);
+}
+
+// "add this circuit" either creates a new Input File entry or updates the
+// one currently loaded -- reflect that in the button label itself, using
+// the same "is a picker entry selected" check addToFileBtn's own suggested
+// name is based on, so the label always matches what a click will do.
+function updateAddBtnLabel() {
+  const selIdx = $('examples').value;
+  $('addToFileBtn').textContent = selIdx !== ''
+    ? 'Update this circuit in the input file'
+    : 'Add this circuit to the input file';
+}
+
+$('addToFileBtn').addEventListener('click', () => {
+  const desc = $('desc').value.trim();
+  if (!desc) { showNote('Enter a circuit first.', true); return; }
+  const selIdx = $('examples').value;
+  const suggested = (selIdx !== '' && picker[Number(selIdx)]) ? picker[Number(selIdx)].name : 'My circuit';
+  const name = window.prompt('Name for this circuit:', suggested);
+  if (name === null) return;
+  const trimmedName = name.trim() || 'Circuit';
+  const circuit = {
+    name: trimmedName, desc: desc,
+    domain: domainSel.value, tool: toolSel.value === 'solve' ? '' : toolSel.value,
+    omega: $('omega').value, vars: $('vars').value,
+    n1: $('n1').value, n2: $('n2').value,
+    kind: toolSel.value === 'port' ? $('kind').value : '',
+    unknowns: $('unks').value,
+    equations: linesOf($('eqs').value),
+    conditions: linesOf($('conds').value)
+  };
+  const existingIdx = picker.findIndex(c => c.name === trimmedName);
+  let verb;
+  if (existingIdx >= 0) { picker[existingIdx] = circuit; verb = 'Updated'; }
+  else { picker.push(circuit); verb = 'Added'; }
+  populatePicker(picker, $('pickerLabel').textContent, picker.length ? '— choose —' : '— none defined —');
+  $('examples').value = String(picker.findIndex(c => c.name === trimmedName));
+  updateAddBtnLabel();
+  showNote(`${verb} '${trimmedName}' in the Input File (${picker.length} circuit${picker.length === 1 ? '' : 's'} now). Download it any time.`, false);
+});
+
+$('downloadFileBtn').addEventListener('click', async () => {
+  if (!picker.length) { showNote('The Input File is empty — add a circuit to it first.', true); return; }
+  try {
+    const r = await fetch('/api/export', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ circuits: picker })
+    });
+    const data = await r.json();
+    if (!data.ok) { showNote(data.error || 'Could not build that file.', true); return; }
+    const blob = new Blob([data.text], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const base = (liveFileName || 'circuits').replace(/\.[^./\\]+$/, '').replace(/[^A-Za-z0-9 _.-]/g, '') || 'circuits';
+    a.download = base + '.cir';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (e) {
+    showNote('Could not download the file.', true);
+  }
+});
+
+$('backToExamples').addEventListener('click', () => {
+  populatePicker(builtIn, 'Want to try an example? ', builtIn.length ? '— choose —' : '— none defined —');
+  liveFileName = null;
+  $('backToExamples').hidden = true;
+  updateAddBtnLabel();
+  showNote('', false);
+});
+
+const TEXNAME = { vth: 'v_{th}', ino: 'i_{no}', req: 'R_{eq}',
+                  zeq: 'Z_{eq}', pmax: 'p_{max}' };
+// Turn an answer's variable name (e.g. "v_2", "z11", "vth") into a LaTeX
+// subscript form (e.g. "v_{2}") for MathJax to render, so the page's
+// math matches how it would be written by hand rather than showing the
+// raw underscore-separated identifier the solver uses internally.
+function nameToTex(name) {
+  if (TEXNAME[name]) return TEXNAME[name];
+  const pp = name.match(/^([zyhgab])(\d\d)$/);      // two-port params
+  if (pp) return `${pp[1]}_{${pp[2]}}`;
+  const m = name.match(/^([A-Za-z]+)_(.+)$/);
+  return m ? `${m[1]}_{${m[2].replace(/_/g, '\\_')}}` : name;
+}
+const TOOL_CAPTION = { th: 'Thévenin / Norton equivalent',
+                       er: 'Equivalent impedance',
+                       port: 'Two-port parameters' };
+
+// Renders the "did you mean SI unit or variable?" question and, once
+// answered, re-runs the solve with those choices. Keeping the question
+// inline (rather than a browser dialog) means the user can still see
+// and edit their circuit while deciding.
+function askSuffix(groups) {
+  const out = $('out');
+  out.innerHTML = '';
+  const box = document.createElement('div');
+  box.className = 'disamb';
+  const plural = groups.length > 1;
+  box.innerHTML = `<h3>What do you mean by ${groups.map(g => `<code>${g.token}</code>`).join(', ')}?</h3>
+    <p>${plural ? 'These values are' : 'This value is'} ambiguous: the letter could be an SI
+    prefix or the name of a variable. Pick a meaning and I'll rewrite your circuit
+    with the explicit form so it never has to ask again.</p>`;
+  for (const g of groups) {
+    const item = document.createElement('div');
+    item.className = 'disamb-item';
+    const si = `${g.number}'${g.letter}`;
+    const va = `${g.number}*${g.letter}`;
+    const val = Number(g.number) * Math.pow(10, g.exponent);
+    item.innerHTML =
+      `<div><code>${g.token}</code> <span class="hint">in ${g.elements.join(', ')}</span></div>
+       <label><input type="radio" name="sfx_${g.token}" value="si" checked>
+         SI unit — <code>${si}</code> = ${val.toLocaleString('en-US', {maximumFractionDigits: 20})}</label>
+       <label><input type="radio" name="sfx_${g.token}" value="var">
+         variable — <code>${va}</code> (${g.number} times a symbol named ${g.letter})</label>`;
+    box.appendChild(item);
+  }
+  const go = document.createElement('button');
+  go.textContent = 'Use these meanings and solve';
+  go.addEventListener('click', () => {
+    const choices = {};
+    for (const g of groups) {
+      const picked = box.querySelector(`input[name="sfx_${g.token}"]:checked`);
+      choices[g.token] = picked ? picked.value : 'si';
+    }
+    solve(choices);
+  });
+  box.appendChild(go);
+  out.appendChild(box);
+  $('status').textContent = '';
+}
+
+// Read the whole form, send it to the solve endpoint, and render the response:
+// either the answers (handed off to whatever builds the results cards
+// further down), an ambiguous-suffix question (via askSuffix, which
+// calls back into solve() with the user's choices once answered), or an
+// error. `suffixChoices` is empty on the user's own click of "Solve",
+// and populated when this is a re-solve triggered by askSuffix.
+async function solve(suffixChoices) {
+  const btn = $('solveBtn'), out = $('out'), status = $('status');
+  btn.disabled = true;
+  status.textContent = 'solving…';
+  out.innerHTML = '<div class="lcd"><div class="placeholder">computing symbolically…</div></div>';
+  $('evalOut').style.display = 'none';
+  $('evalOut').innerHTML = '';
+  $('solveqOut').style.display = 'none';
+  $('solveqOut').innerHTML = '';
+  $('resultsBox').open = true;   // pressing Solve means you want to see them
+  $('resultsCard').classList.remove('inactive');   // no longer "no analysis run yet"
+  try {
+    const body = {
+      desc: $('desc').value,
+      domain: domainSel.value,
+      omega: $('omega').value,
+      variables: $('vars').value,
+      tool: toolSel.value,
+      n1: $('n1').value,
+      n2: $('n2').value,
+      kind: $('kind').value,
+      equations: $('eqs').value,
+      unknowns: $('unks').value,
+      conditions: $('conds').value,
+      ...roundingState(),
+      si: $('siUnits').checked,
+      units: $('showUnits').checked,
+      use_rms: $('useRms').checked,
+      suffix_choices: suffixChoices || {}
+    };
+    const r = await fetch('/api/solve', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (!data.ok && data.ambiguous) {
+      askSuffix(data.ambiguous);
+      return;
+    }
+    if (!data.ok) {
+      out.innerHTML = '';
+      // Notes first: "normalised '5*i' to '5j'" is usually the reason
+      // for the error printed underneath it.
+      if (data.notes && data.notes.length) {
+        const box = document.createElement('div');
+        box.className = 'booknote warn';
+        box.id = 'solveNotes';
+        box.style.margin = '0 0 .8rem';
+        data.notes.forEach((n, i) => {
+          const line = document.createElement('div');
+          if (i) line.style.marginTop = '.35rem';
+          line.textContent = n;
+          box.appendChild(line);
+        });
+        out.appendChild(box);
+      }
+      const div = document.createElement('div');
+      div.className = 'error';
+      // Errors may be several sentences on separate lines.
+      div.style.whiteSpace = 'pre-line';
+      div.textContent = data.error || 'Something went wrong.';
+      out.appendChild(div);
+      status.textContent = '';
+      return;
+    }
+    // The server rewrote ambiguous values to their explicit spelling --
+    // show that in the box so the choice is visible and permanent.
+    if (data.desc_used) $('desc').value = data.desc_used;
+    // If MathJax is ready we render TeX; otherwise fall back to the
+    // plain-text form so a slow/failed script load never shows raw \( \).
+    const mjReady = window.MathJax && MathJax.typesetPromise;
+    const tex = (t, plain) => {
+      const div = document.createElement('div');
+      if (mjReady) { div.innerHTML = `\\(${t}\\)`; }
+      else { div.style.fontFamily = 'var(--mono)'; div.style.fontSize = '.9rem'; div.textContent = plain; }
+      return div;
+    };
+    out.innerHTML = '';
+    let count = 0;
+
+    // ---- Anything the solver had to tell the user about their input ----
+    // Normalised spellings of the imaginary unit, names SymPy would
+    // otherwise have hijacked, s-domain sources written as constants:
+    // all resolved rather than refused, but never silently.
+    if (data.notes && data.notes.length) {
+      const box = document.createElement('div');
+      box.className = 'booknote warn';
+      box.id = 'solveNotes';
+      box.style.margin = '0 0 1rem';
+      data.notes.forEach((n, i) => {
+        const line = document.createElement('div');
+        if (i) line.style.marginTop = '.35rem';
+        line.textContent = n;
+        box.appendChild(line);
+      });
+      out.appendChild(box);
+    }
+
+    // ---- Tranche 1: node voltages (the dark screen) ----
+    if (data.nodes.length) {
+      const cap = document.createElement('div');
+      cap.className = 'section-cap';
+      cap.textContent = 'Node voltages';
+      out.appendChild(cap);
+      const lcd = document.createElement('div');
+      lcd.className = 'lcd';
+      for (const nv of data.nodes) {
+        const row = document.createElement('div');
+        row.className = 'result-row';
+        const nm = document.createElement('span');
+        nm.className = 'result-name';
+        nm.textContent = 'v' + nv.node;          // TI-style label
+        nm.title = 'v_' + nv.node;
+        const math = document.createElement('div');
+        math.className = 'result-math';
+        math.appendChild(tex(`v_{${nv.node}} = ${nv.latex}`, `v_${nv.node} = ${nv.plain}`));
+        row.appendChild(nm); row.appendChild(math);
+        lcd.appendChild(row);
+        count++;
+      }
+      out.appendChild(lcd);
+    }
+
+    // ---- Tranche 2: one card per element ----
+    if (data.elements.length) {
+      const cap = document.createElement('div');
+      cap.className = 'section-cap';
+      cap.textContent = 'Elements';
+      out.appendChild(cap);
+      const grid = document.createElement('div');
+      grid.className = 'elgrid';
+      for (const el of data.elements) {
+        const card = document.createElement('div');
+        card.className = 'elcard';
+        const title = document.createElement('div');
+        title.innerHTML = `<span class="el-title">${el.name}</span><span class="el-kind">${el.kind}</span>`;
+        card.appendChild(title);
+        for (const it of el.items) {
+          const item = document.createElement('div');
+          item.className = 'el-item';
+          const lab = document.createElement('span');
+          lab.className = 'el-label';
+          lab.textContent = it.label;
+          item.appendChild(lab);
+          item.appendChild(tex(`${it.sym}_{${el.name}} = ${it.latex}`,
+                               `${it.sym}_${el.name} = ${it.plain}`));
+          card.appendChild(item);
+          count++;
+        }
+        grid.appendChild(card);
+      }
+      out.appendChild(grid);
+    }
+
+    // ---- Special-tool answers, or anything else the solver reported ----
+    if (data.extras.length) {
+      const cap = document.createElement('div');
+      cap.className = 'section-cap';
+      cap.textContent = TOOL_CAPTION[data.tool] || 'Other results';
+      out.appendChild(cap);
+      const lcd = document.createElement('div');
+      lcd.className = 'lcd';
+      for (const ex of data.extras) {
+        const row = document.createElement('div');
+        row.className = 'result-row';
+        const nm = document.createElement('span');
+        nm.className = 'result-name';
+        nm.textContent = ex.name.replace('_', '');
+        nm.title = ex.name;
+        const math = document.createElement('div');
+        math.className = 'result-math';
+        math.appendChild(tex(`${nameToTex(ex.name)} = ${ex.latex}`, `${ex.name} = ${ex.plain}`));
+        row.appendChild(nm); row.appendChild(math);
+        lcd.appendChild(row);
+        count++;
+      }
+      out.appendChild(lcd);
+    }
+
+    if (!count) {
+      out.innerHTML = '<div class="lcd"><div class="placeholder">— solved, but no variables to report —</div></div>';
+      status.textContent = '';
+      return;
+    }
+    const meta = document.createElement('div');
+    meta.className = 'lcd-meta';
+    meta.textContent = `${data.domain.toUpperCase()} analysis · ${count} result(s) · ${data.elapsed}s`;
+    out.appendChild(meta);
+    status.textContent = '';
+
+    // Remember this solve for the evaluator + download area.
+    const shown = {};
+    for (const nv of data.nodes) shown['v_' + nv.node] = nv.plain;
+    for (const el of data.elements)
+      for (const it of el.items) shown[it.sym + '_' + el.name] = it.plain;
+    for (const ex2 of data.extras) shown[ex2.name] = ex2.plain;
+    last = {
+      desc: $('desc').value,
+      domain: data.domain,
+      tool: data.tool,
+      values: data.values || {},   // exact -- what the evaluator computes from
+      shown: shown,                // as displayed -- what the download records
+      digits: data.digits || 0,
+      si: !!data.si,
+      rms: !!data.use_rms,
+      approx: !!data.approx,
+      equations: data.equations || []
+    };
+    activatePostSolve();
+    if (mjReady) await MathJax.typesetPromise([out]);
+  } catch (e) {
+    out.innerHTML = '<div class="error">Could not reach the solver. Please try again.</div>';
+    status.textContent = '';
+  } finally {
+    btn.disabled = false;
+  }
+}
+// Note the arrow wrapper: a raw listener would pass the click Event as
+// the suffixChoices argument.
+$('solveBtn').addEventListener('click', () => solve());
+
+// ---- Expression evaluator -------------------------------------------
+async function evaluate() {
+  if (!last) return;
+  const btn = $('evalBtn'), box = $('evalOut');
+  btn.disabled = true;
+  box.style.display = 'block';
+  box.innerHTML = '<div class="placeholder">evaluating…</div>';
+  try {
+    const r = await fetch('/api/evaluate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ expr: $('evalExpr').value, values: last.values,
+                             ...roundingState(), si: $('siUnits').checked })
+    });
+    const data = await r.json();
+    box.innerHTML = '';
+    if (!data.ok) {
+      const div = document.createElement('div');
+      div.className = 'error';
+      div.textContent = data.error || 'Could not evaluate that expression.';
+      box.appendChild(div);
+      return;
+    }
+    const mjReady = window.MathJax && MathJax.typesetPromise;
+    const row = document.createElement('div');
+    row.className = 'result-row';
+    const math = document.createElement('div');
+    math.className = 'result-math';
+    if (mjReady) { math.innerHTML = `\\(${data.latex}\\)`; }
+    else { math.style.fontFamily = 'var(--mono)'; math.textContent = data.plain; }
+    row.appendChild(math);
+    box.appendChild(row);
+    if (mjReady) await MathJax.typesetPromise([box]);
+  } catch (e) {
+    box.innerHTML = '<div class="error">Could not reach the server.</div>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+$('evalBtn').addEventListener('click', evaluate);
+$('evalExpr').addEventListener('keydown', ev => { if (ev.key === 'Enter') evaluate(); });
+
+
+// ---- Equation solver ------------------------------------------------
+async function solveEquations() {
+  if (!last) return;
+  const btn = $('solveqBtn'), box = $('solveqOut');
+  btn.disabled = true;
+  box.style.display = 'block';
+  box.innerHTML = '<div class="placeholder">solving…</div>';
+  try {
+    const r = await fetch('/api/solveq', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        equations: $('solveqEqs').value,
+        unknowns: $('solveqUnks').value,
+        values: last.values,
+        ...roundingState(),
+        si: $('siUnits').checked,
+        units: $('showUnits').checked,
+        real_only: $('solveqReal').checked
+      })
+    });
+    const data = await r.json();
+    box.innerHTML = '';
+    if (!data.ok) {
+      const div = document.createElement('div');
+      div.className = 'error';
+      div.textContent = data.error || 'Could not solve those equations.';
+      box.appendChild(div);
+      return;
+    }
+    if (!data.solutions.length) {
+      const names = (data.unknowns || []).join(', ');
+      box.innerHTML = '<div class="placeholder">— no solution for ' +
+        (names || 'those unknowns') + ' —</div>';
+      (data.notes || []).forEach(n => {
+        const d = document.createElement('div');
+        d.className = 'lcd-meta';
+        d.style.marginTop = '.4rem';
+        d.textContent = n;
+        box.appendChild(d);
+      });
+      return;
+    }
+    const mjReady = window.MathJax && MathJax.typesetPromise;
+    data.solutions.forEach((sol, idx) => {
+      if (data.solutions.length > 1) {
+        const cap = document.createElement('div');
+        cap.className = 'lcd-meta';
+        cap.style.margin = idx ? '.7rem 0 .2rem' : '0 0 .2rem';
+        cap.textContent = `solution ${idx + 1} of ${data.solutions.length}`;
+        box.appendChild(cap);
+      }
+      for (const v of sol) {
+        const row = document.createElement('div');
+        row.className = 'result-row';
+        const nm = document.createElement('span');
+        nm.className = 'result-name';
+        nm.textContent = v.name.replace('_', '');
+        nm.title = v.name;
+        const math = document.createElement('div');
+        math.className = 'result-math';
+        if (mjReady) {
+          math.innerHTML = `\\(${nameToTex(v.name)} = ${v.latex}\\)`;
+        } else {
+          math.style.fontFamily = 'var(--mono)';
+          math.textContent = `${v.name} = ${v.plain}`;
+        }
+        row.appendChild(nm); row.appendChild(math);
+        box.appendChild(row);
+      }
+    });
+    if (mjReady) await MathJax.typesetPromise([box]);
+  } catch (e) {
+    box.innerHTML = '<div class="error">Could not reach the server.</div>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+$('solveqBtn').addEventListener('click', solveEquations);
+$('solveqUnks').addEventListener('keydown', ev => {
+  if (ev.key === 'Enter') solveEquations();
+});
+
+// ---- Download builder ------------------------------------------------
+$('dlBtn').addEventListener('click', () => {
+  if (!last) return;
+  const parts = [];
+  const toolName = TOOL_CAPTION[last.tool] || `${last.domain.toUpperCase()} analysis`;
+  parts.push(`Symbulator — ${toolName}`);
+  parts.push(`Generated: ${new Date().toLocaleString()}`);
+  parts.push('');
+  if ($('dlDesc').checked) {
+    parts.push('=== Circuit description ===');
+    parts.push(last.desc.trim());
+    parts.push('');
+  }
+  if ($('dlEqs').checked) {
+    parts.push('=== Equations generated ===');
+    parts.push(last.equations.length ? last.equations.join('\n')
+                                     : '(not available for this tool)');
+    parts.push('');
+  }
+  if ($('dlAns').checked) {
+    let hdr = '=== Answers found ===';
+    if (last.digits) hdr += ` (${last.digits} significant digits)`;
+    if (last.si) hdr += ' (SI prefixes)';
+    if (last.rms) hdr += ' (RMS phasors)';
+    if (last.approx) hdr += ' (decimal)';
+    parts.push(hdr);
+    const answers = Object.keys(last.shown || {}).length ? last.shown : last.values;
+    for (const [k, v] of Object.entries(answers)) parts.push(`${k} = ${v}`);
+    parts.push('');
+  }
+  const blob = new Blob([parts.join('\n')], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `symbulator_${last.tool === 'solve' ? last.domain : last.tool}.sym`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+</script>
+</body>
+</html>
