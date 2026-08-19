@@ -586,14 +586,13 @@ c1,2,0,4.7e-6</pre>
       </label>
       <textarea id="solveqEqs" spellcheck="false" style="min-height:3.4rem;margin-top:.7rem"
         placeholder="solve a circuit first…" disabled></textarea>
-      <div class="eval-row" style="margin-top:.7rem">
+      <div class="row" style="margin-top:.7rem">
         <div>
           <label for="solveqUnks">Unknown(s) to solve for
             <span class="hint">— comma-separated; leave blank to solve for whatever is left</span>
           </label>
           <input type="text" id="solveqUnks" placeholder="x" disabled>
         </div>
-        <div><button id="solveqBtn" disabled>Solve equations</button></div>
       </div>
       <div class="row" style="margin-top:.7rem">
         <div>
@@ -604,6 +603,7 @@ c1,2,0,4.7e-6</pre>
           <textarea id="solveqConds" spellcheck="false" style="min-height:2.4rem" disabled></textarea>
         </div>
       </div>
+      <p style="margin:.7rem 0 0"><button id="solveqBtn" disabled>Solve equations</button></p>
       <label class="checkline" style="margin-top:.6rem"><input type="checkbox"
         id="solveqReal" disabled><span>real solutions only <span class="hint">—
         off searches the complex plane too (the calculator's <code>cSolve</code>);
