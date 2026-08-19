@@ -58,6 +58,39 @@ _VARNAME = re.compile(r"^[A-Za-z0-9_]{1,40}$")
 MAX_EXTRA = 20
 MAX_EXTRA_LEN = 300
 
+# Expert-mode equations/conditions are parsed the same way circuit values
+# are -- imaginary units (i/I/j/J) and the calculator's apostrophe SI-unit
+# shorthand (4.7'k) both work, because the engine's extra-equation/condition
+# parsing already runs the same expand_shorthand()+safe_sympify() a circuit
+# value goes through. What it can't do is a *bare* engineering suffix with
+# no apostrophe (4.7k) the way a lone circuit field value can: that bare
+# form is only ever auto-resolved when it's the *entire* field (so it can't
+# accidentally rewrite part of a longer expression), and an equation is
+# never just one field. So a bare suffix inside an equation/condition is
+# caught here and rejected with a message pointing at the two forms that
+# *are* always unambiguous, rather than left to fail deep in the solver as
+# a raw sympify SyntaxError.
+_BARE_SI_HINT = re.compile(
+    r"(?<![\w'])\d+\.?\d*[kKMGTPmuµμnpfa](?![A-Za-z0-9_])")
+
+
+def _bare_si_suffix_error(label, items):
+    """None, or an error message naming the first added equation/condition
+    that uses a bare SI suffix (see _BARE_SI_HINT above)."""
+    for it in items:
+        m = _BARE_SI_HINT.search(it)
+        if m:
+            tok = m.group(0)
+            return (f"Added {label} {it!r} uses {tok!r} as a bare unit "
+                     f"suffix, which isn't allowed here (unlike a circuit "
+                     f"value field, an equation can't ask which meaning "
+                     f"you intend). Write the SI-unit meaning explicitly "
+                     f"with an apostrophe -- {tok[:-1]}'{tok[-1]} -- "
+                     f"matching circuit syntax, or the variable meaning "
+                     f"with a star -- {tok[:-1]}*{tok[-1]}.")
+    return None
+
+
 VALID_DOMAINS = {"dc", "ac", "fd", "tr"}
 
 
@@ -116,6 +149,9 @@ def _validate_extras(equations, unknowns, conditions) -> str | None:
             if (not isinstance(it, str) or len(it) > MAX_EXTRA_LEN
                     or not rx.match(it) or "__" in it):
                 return f"Added {label} contains invalid characters: {it!r}"
+        bare_err = _bare_si_suffix_error(label, items)
+        if bare_err:
+            return bare_err
     if unknowns:
         if len(unknowns) > MAX_EXTRA:
             return f"Too many added unknowns (max {MAX_EXTRA})."
