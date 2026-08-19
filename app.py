@@ -54,10 +54,11 @@ SOLVE_TIMEOUT_S = float(os.environ.get("SYMBULATOR_TIMEOUT", "25"))
 # solving runs in a killable child process.
 from symbulator_ui import (                                   # noqa: E402
     solve_ui, evaluate_ui, solveq_ui, normalise_imaginary,
+    plot_time_ui, bode_ui,
     _validate, _validate_extras, _expand_and, _clean_digits, _exc_text,
     _ALLOWED, _ALLOWED_EQ, _ALLOWED_COND, _VARNAME,
     MAX_DESC_LEN, MAX_OMEGA_LEN, MAX_VARIABLES, MAX_EXTRA, MAX_EXTRA_LEN,
-    VALID_DOMAINS,
+    MAX_PLOT_POINTS, VALID_DOMAINS,
 )
 
 
@@ -193,7 +194,7 @@ def api_export():
         circuit = {"name": str(raw.get("name") or "Circuit")[:MAX_NAME_LEN],
                    "desc": str(raw.get("desc") or "")[:MAX_DESC_LEN]}
         for field in ("domain", "omega", "vars", "tool", "n1", "n2", "kind",
-                      "unknowns"):
+                      "unknowns", "plotkey", "plotmin", "plotmax", "plotpoints"):
             val = raw.get(field)
             if val:
                 circuit[field] = str(val)[:MAX_EXTRA_LEN]
@@ -440,6 +441,96 @@ def api_solve():
                     "values": payload["values"],
                     "equations": payload["equations"],
                     "notes": payload["notes"]})
+
+
+_VALID_PLOT_TOOLS = {"time", "bode"}
+_MAX_RANGE = 1e15  # generous ceiling; keeps a typo from hanging np.logspace/linspace
+
+
+def _clean_range(raw, lo_default, hi_default):
+    """Parse a plot range's min/max into floats, falling back to the
+    given defaults for blank input. Returns (lo, hi, error)."""
+    try:
+        lo = float(raw.get("min")) if raw.get("min") not in (None, "") else lo_default
+        hi = float(raw.get("max")) if raw.get("max") not in (None, "") else hi_default
+    except (TypeError, ValueError):
+        return None, None, "Range values must be numbers."
+    if not (-_MAX_RANGE < lo < _MAX_RANGE and -_MAX_RANGE < hi < _MAX_RANGE):
+        return None, None, "Range values are out of bounds."
+    return lo, hi, None
+
+
+@app.post("/api/plot")
+def api_plot():
+    """Plot endpoint for the two sampling-based tools: "Plot vs time"
+    (tr()'s response over a time range) and "Bode plot" (fd()'s
+    magnitude/phase over a frequency sweep). Separate from /api/solve
+    because the shape of both the request (a range + point count instead
+    of a domain) and the response (number arrays for a chart instead of
+    formatted equations) are different enough that folding them into the
+    same endpoint would complicate both."""
+    data = request.get_json(silent=True) or {}
+    desc = str(data.get("desc", "")).strip()
+    desc = re.sub(r"[\r\n]+", ":", desc)
+    desc = re.sub(r":{2,}", ":", desc).strip(":")
+    tool = str(data.get("tool", "")).strip().lower()
+    key = str(data.get("key", "")).strip()
+    try:
+        n = int(data.get("n", 200))
+    except (TypeError, ValueError):
+        n = -1
+
+    def _lines(field):
+        raw = data.get(field) or ""
+        if isinstance(raw, list):
+            return [str(x).strip() for x in raw if str(x).strip()]
+        return [ln.strip() for ln in re.split(r"[\r\n]+", str(raw)) if ln.strip()]
+
+    extra_equations = _lines("equations")
+    extra_conditions = _expand_and(_lines("conditions"))
+    extra_unknowns = [u.strip() for u in
+                      re.split(r"[,\s]+", str(data.get("unknowns") or ""))
+                      if u.strip()]
+
+    err = None
+    if not desc:
+        err = "Please enter a circuit description."
+    elif len(desc) > MAX_DESC_LEN:
+        err = f"Circuit description too long (max {MAX_DESC_LEN} characters)."
+    elif not _ALLOWED.match(desc) or "__" in desc:
+        err = "Circuit description contains characters that aren't used in Symbulator syntax."
+    elif tool not in _VALID_PLOT_TOOLS:
+        err = "Unknown plot tool."
+    elif not key or not _VARNAME.match(key):
+        err = "Give a variable to plot, e.g. v_2 or i_r1."
+    elif not (2 <= n <= MAX_PLOT_POINTS):
+        err = f"Number of points must be between 2 and {MAX_PLOT_POINTS}."
+    if not err:
+        err = _validate_extras(extra_equations, extra_unknowns, extra_conditions)
+    if err:
+        return jsonify({"ok": False, "error": err}), 400
+
+    if tool == "time":
+        t_min, t_max, rng_err = _clean_range(data, 0.0, 1.0)
+        if rng_err:
+            return jsonify({"ok": False, "error": rng_err}), 400
+        fn_name, args = "plot_time_ui", (desc, key, t_min, t_max, n,
+                                         extra_equations, extra_unknowns, extra_conditions)
+    else:
+        f_min, f_max, rng_err = _clean_range(data, 1.0, 1000.0)
+        if rng_err:
+            return jsonify({"ok": False, "error": rng_err}), 400
+        if f_min <= 0 or f_max <= 0:
+            return jsonify({"ok": False, "error": "Bode frequencies must be positive (Hz)."}), 400
+        fn_name, args = "bode_ui", (desc, key, f_min, f_max, n,
+                                    extra_equations, extra_unknowns, extra_conditions)
+
+    t0 = time.time()
+    ok, payload = _run_in_process(fn_name, args)
+    elapsed = round(time.time() - t0, 2)
+    if not ok:
+        return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
+    return jsonify({"ok": True, "tool": tool, "elapsed": elapsed, **payload})
 
 
 _EXPR_MAX = 500

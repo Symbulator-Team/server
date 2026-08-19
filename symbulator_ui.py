@@ -45,15 +45,17 @@ MAX_VARIABLES = 40
 
 # Everything a legitimate circuit description or omega value can contain:
 # element names, node numbers, values like 1e-6 / 4.7u / 'k / 5/s / 2*v_2,
-# separators, parentheses, and basic arithmetic. Deliberately excluded:
-# [ ] { } = ; " \ ` @ # $ % & ! ? < > | ~ and whitespace other than space.
-_ALLOWED = re.compile("^[A-Za-z0-9_,.:+\\-*/()'^ \u00b5\u03bc]*$")
+# the `[a,b,c]` parallel-impedance shortcut (expand_shorthand turns it
+# into pr(a,b,c) before it ever reaches sympify), separators, and basic
+# arithmetic. Deliberately excluded: { } = ; " \ ` @ # $ % & ! ? < > | ~
+# and whitespace other than space.
+_ALLOWED = re.compile("^[A-Za-z0-9_,.:+\\-*/()\\[\\]'^ \u00b5\u03bc]*$")
 # Expert-mode equations/conditions additionally need "=".
-_ALLOWED_EQ = re.compile("^[A-Za-z0-9_,.=+\\-*/()'^ \u00b5\u03bc]*$")
+_ALLOWED_EQ = re.compile("^[A-Za-z0-9_,.=+\\-*/()\\[\\]'^ \u00b5\u03bc]*$")
 # The Solve panel's "Conditions / constraints" (solveq_ui) also allow
 # < and > (and, via >=/<=, both together) -- a post-solve filter, not a
 # substitution, so an actual inequality is meaningful there.
-_ALLOWED_COND = re.compile("^[A-Za-z0-9_,.=<>+\\-*/()'^ \u00b5\u03bc]*$")
+_ALLOWED_COND = re.compile("^[A-Za-z0-9_,.=<>+\\-*/()\\[\\]'^ \u00b5\u03bc]*$")
 _VARNAME = re.compile(r"^[A-Za-z0-9_]{1,40}$")
 MAX_EXTRA = 20
 MAX_EXTRA_LEN = 300
@@ -890,6 +892,95 @@ def _normalize_underscore_names(text, canonical):
         return by_norm.get(_norm_name(tok), tok)
 
     return _IDENT_TOKEN.sub(repl, text)
+
+
+MAX_PLOT_POINTS = 2000
+
+
+def _resolve_plot_key(key: str, elements) -> str:
+    """Match a casually-typed plot variable ("vx", "ir5") to its real
+    solved name ("v_x", "i_r5"), the same underscore/case-insensitive
+    way expert-mode equations do (see _normalize_underscore_names) --
+    falls back to the typed name unchanged if nothing matches, so the
+    caller still gets a clear "not found" error instead of a silent
+    substitution."""
+    canonical = _circuit_canonical_names(elements)
+    by_norm = {_norm_name(n): n for n in canonical}
+    return by_norm.get(_norm_name(key), key)
+
+
+def plot_time_ui(desc: str, key: str, t_min: float, t_max: float, n: int,
+                 extra_equations, extra_unknowns, extra_conditions):
+    """Sample a circuit's transient (tr()) response for `key` over
+    `[t_min, t_max]`, for the "Plot vs time" tool. Returns
+    {"ok": True, "t": [...], "y": [...], "key": "<resolved name>"} --
+    plain lists of floats, ready for a chart -- or {"ok": False,
+    "error": ...}. Every value in the payload crosses a subprocess pipe
+    (app.py) or a Pyodide/JS boundary unchanged, same contract as
+    solve_ui."""
+    try:
+        from symbulator.elements import parse_circuit
+        from symbulator.plotting import time_samples, PlotError
+
+        elements = parse_circuit(desc)
+        _notes = _hijack_notes(elements)
+
+        if extra_equations or extra_conditions:
+            _canon = _circuit_canonical_names(elements)
+            if extra_equations:
+                extra_equations = [_normalize_underscore_names(e, _canon)
+                                    for e in extra_equations]
+            if extra_conditions:
+                extra_conditions = [_normalize_underscore_names(c, _canon)
+                                     for c in extra_conditions]
+        resolved = _resolve_plot_key(key, elements)
+
+        t_values, y_values = time_samples(
+            desc, resolved, t_max=t_max, t_min=t_min, n=n,
+            equations=extra_equations or None, unknowns=extra_unknowns or None,
+            conditions=extra_conditions or None)
+        return _ok({"t": t_values, "y": y_values, "key": resolved, "notes": _notes})
+    except PlotError as exc:
+        return _err(str(exc))
+    except Exception as exc:  # noqa: BLE001
+        return _err(_exc_text(exc))
+
+
+def bode_ui(desc: str, key: str, f_min: float, f_max: float, n: int,
+           extra_equations, extra_unknowns, extra_conditions):
+    """Sample a circuit's s-domain (fd()) response for `key` across a
+    frequency sweep from `f_min` to `f_max` Hz, for the "Bode plot"
+    tool. Returns {"ok": True, "freq": [...], "mag_db": [...],
+    "phase_deg": [...], "key": "<resolved name>"}, or {"ok": False,
+    "error": ...} -- same plain-list, cross-boundary contract as
+    plot_time_ui."""
+    try:
+        from symbulator.elements import parse_circuit
+        from symbulator.plotting import bode_samples, PlotError
+
+        elements = parse_circuit(desc)
+        _notes = _hijack_notes(elements)
+
+        if extra_equations or extra_conditions:
+            _canon = _circuit_canonical_names(elements)
+            if extra_equations:
+                extra_equations = [_normalize_underscore_names(e, _canon)
+                                    for e in extra_equations]
+            if extra_conditions:
+                extra_conditions = [_normalize_underscore_names(c, _canon)
+                                     for c in extra_conditions]
+        resolved = _resolve_plot_key(key, elements)
+
+        freq_values, mag_db, phase_deg = bode_samples(
+            desc, resolved, f_min=f_min, f_max=f_max, n=n,
+            equations=extra_equations or None, unknowns=extra_unknowns or None,
+            conditions=extra_conditions or None)
+        return _ok({"freq": freq_values, "mag_db": mag_db, "phase_deg": phase_deg,
+                    "key": resolved, "notes": _notes})
+    except PlotError as exc:
+        return _err(str(exc))
+    except Exception as exc:  # noqa: BLE001
+        return _err(_exc_text(exc))
 
 
 def _alias_mapping(values: dict, exclude=(), expr=None):

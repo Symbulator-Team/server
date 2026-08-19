@@ -16,12 +16,16 @@
 #   analysis:   dc | ac | fd | tr          (default dc)
 #   omega:      angular frequency, for ac  (e.g. 1000, or a symbol)
 #   variables:  which answers to transform, for tr (e.g. v_2, i_l1)
-#   tool:       th | er | port             (leave out for a normal solve)
-#   n1:, n2:    the two port nodes, for the tools above
+#   tool:       th | er | port | plot_time | bode   (leave out for a normal solve)
+#   n1:, n2:    the two port nodes, for th/er/port
 #   kind:       z | y | h | g | a | b      (for tool: port)
 #   equation:   an expert-mode added equation (repeat for more)
 #   condition:  an expert-mode substitution (repeat for more)
 #   unknowns:   extra symbols to solve for, comma-separated
+#   plotkey:    the variable to plot, for tool: plot_time | bode
+#   plotmin, plotmax:  time range in s (plot_time) or frequency range in
+#               Hz (bode)
+#   plotpoints: how many samples to take (default 300)
 #
 # TIP: write 1'k for "one kilo-ohm" and 1*k for "one times variable k".
 # A bare 1k is ambiguous and the site will stop to ask which you meant.
@@ -100,3 +104,23 @@ unknowns: r_b
 e1,1,0,12
 r1,1,2,4'k
 r2,2,0,r_b
+
+[RC step response, plotted (plot vs. time)]
+tool: plot_time
+plotkey: v_2
+plotmin: 0
+plotmax: 0.005
+plotpoints: 200
+e1,1,0,5/s
+r1,1,2,1'k
+c1,2,0,1'u
+
+[RC low-pass, Bode plot]
+tool: bode
+plotkey: v_2
+plotmin: 10
+plotmax: 100000
+plotpoints: 200
+e1,1,0,1
+r1,1,2,1'k
+c1,2,0,1'u

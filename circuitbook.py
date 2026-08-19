@@ -55,6 +55,10 @@ _KEYS = {
     "kind": "kind",
     "unknowns": "unknowns",
     "note": "note",
+    "plotkey": "plotkey",
+    "plotmin": "plotmin",
+    "plotmax": "plotmax",
+    "plotpoints": "plotpoints",
 }
 # Keys that may appear several times and accumulate into a list.
 _MULTI = {"equations": "equations", "equation": "equations",
@@ -148,7 +152,9 @@ def format_book(circuits: List[dict]) -> str:
         for key, field in (("analysis", "domain"), ("omega", "omega"),
                            ("variables", "vars"), ("tool", "tool"),
                            ("n1", "n1"), ("n2", "n2"), ("kind", "kind"),
-                           ("unknowns", "unknowns"), ("note", "note")):
+                           ("unknowns", "unknowns"), ("note", "note"),
+                           ("plotkey", "plotkey"), ("plotmin", "plotmin"),
+                           ("plotmax", "plotmax"), ("plotpoints", "plotpoints")):
             val = c.get(field)
             if val:
                 out.append(f"{key}: {val}")
