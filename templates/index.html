@@ -518,7 +518,10 @@ c1,2,0,4.7e-6</pre>
       <summary>Expert Mode — add equations, unknowns, conditions</summary>
       <div class="row">
         <div>
-          <label for="eqs">Add equations <span class="hint">(one per line, e.g. <code>v_2 = 6</code>)</span></label>
+          <label for="eqs">Add equations <span class="hint">(one per line, e.g. <code>v_2 = 6</code>;
+            parsed the same as circuit values — SI shorthand like <code>4.7'k</code>
+            and imaginary units (<code>i</code>/<code>j</code>) both work, but a bare
+            suffix like <code>4.7k</code> with no apostrophe doesn't)</span></label>
           <textarea id="eqs" spellcheck="false" style="min-height:3.2rem"></textarea>
         </div>
       </div>
@@ -597,7 +600,8 @@ c1,2,0,4.7e-6</pre>
       <div class="row" style="margin-top:.7rem">
         <div>
           <label for="solveqConds">Conditions / constraints
-            <span class="hint">— e.g. <code>pr1 > 0</code> and <code>v1 = 12</code></span>
+            <span class="hint">— e.g. <code>pr1 > 0</code> and <code>v1 = 12</code>;
+            use <code>>=</code> / <code>&lt;=</code>, not <code>=></code> / <code>=&lt;</code></span>
           </label>
           <textarea id="solveqConds" spellcheck="false" style="min-height:2.4rem" disabled></textarea>
         </div>
