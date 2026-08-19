@@ -54,8 +54,8 @@ SOLVE_TIMEOUT_S = float(os.environ.get("SYMBULATOR_TIMEOUT", "25"))
 # solving runs in a killable child process.
 from symbulator_ui import (                                   # noqa: E402
     solve_ui, evaluate_ui, solveq_ui, normalise_imaginary,
-    _validate, _validate_extras, _clean_digits, _exc_text,
-    _ALLOWED, _ALLOWED_EQ, _VARNAME,
+    _validate, _validate_extras, _expand_and, _clean_digits, _exc_text,
+    _ALLOWED, _ALLOWED_EQ, _ALLOWED_COND, _VARNAME,
     MAX_DESC_LEN, MAX_OMEGA_LEN, MAX_VARIABLES, MAX_EXTRA, MAX_EXTRA_LEN,
     VALID_DOMAINS,
 )
@@ -229,6 +229,14 @@ def api_solveq():
                 re.split(r"[,\s]+", str(data.get("unknowns") or "")) if u.strip()]
     values = data.get("values") or {}
 
+    raw_conds = data.get("conditions") or ""
+    if isinstance(raw_conds, list):
+        conditions = [str(x).strip() for x in raw_conds if str(x).strip()]
+    else:
+        conditions = [ln.strip() for ln in re.split(r"[\r\n]+", str(raw_conds))
+                      if ln.strip()]
+    conditions = _expand_and(conditions)
+
     if not equations:
         return jsonify({"ok": False,
                         "error": "Enter at least one equation to solve."}), 400
@@ -239,6 +247,13 @@ def api_solveq():
         if len(eq) > MAX_EXTRA_LEN or not _ALLOWED_EQ.match(eq) or "__" in eq:
             return jsonify({"ok": False,
                             "error": f"Equation contains invalid characters: {eq!r}"}), 400
+    if len(conditions) > _MAX_SOLVE_EQS:
+        return jsonify({"ok": False,
+                        "error": f"Too many conditions (max {_MAX_SOLVE_EQS})."}), 400
+    for c in conditions:
+        if len(c) > MAX_EXTRA_LEN or not _ALLOWED_COND.match(c) or "__" in c:
+            return jsonify({"ok": False,
+                            "error": f"Condition contains invalid characters: {c!r}"}), 400
     if len(unknowns) > MAX_EXTRA:
         return jsonify({"ok": False, "error": "Too many unknowns."}), 400
     for u in unknowns:
@@ -262,7 +277,8 @@ def api_solveq():
     t0 = time.time()
     ok, payload = _run_in_process(
         "solveq_ui",
-        (equations, unknowns, clean, digits, si, approx, units, real_only))
+        (equations, unknowns, clean, digits, si, approx, units, real_only,
+         conditions))
     elapsed = round(time.time() - t0, 2)
     if not ok:
         return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
@@ -326,7 +342,7 @@ def api_solve():
         return [ln.strip() for ln in re.split(r"[\r\n]+", str(raw)) if ln.strip()]
 
     extra_equations = _lines("equations")
-    extra_conditions = _lines("conditions")
+    extra_conditions = _expand_and(_lines("conditions"))
     extra_unknowns = [u.strip() for u in
                       re.split(r"[,\s]+", str(data.get("unknowns") or ""))
                       if u.strip()]

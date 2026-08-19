@@ -50,6 +50,10 @@ MAX_VARIABLES = 40
 _ALLOWED = re.compile("^[A-Za-z0-9_,.:+\\-*/()'^ \u00b5\u03bc]*$")
 # Expert-mode equations/conditions additionally need "=".
 _ALLOWED_EQ = re.compile("^[A-Za-z0-9_,.=+\\-*/()'^ \u00b5\u03bc]*$")
+# The Solve panel's "Conditions / constraints" (solveq_ui) also allow
+# < and > (and, via >=/<=, both together) -- a post-solve filter, not a
+# substitution, so an actual inequality is meaningful there.
+_ALLOWED_COND = re.compile("^[A-Za-z0-9_,.=<>+\\-*/()'^ \u00b5\u03bc]*$")
 _VARNAME = re.compile(r"^[A-Za-z0-9_]{1,40}$")
 MAX_EXTRA = 20
 MAX_EXTRA_LEN = 300
@@ -82,6 +86,22 @@ def _validate(desc: str, domain: str, omega: str, variables) -> str | None:
             if not isinstance(v, str) or not _VARNAME.match(v):
                 return f"Invalid variable name: {v!r}"
     return None
+
+
+_AND_SPLIT = re.compile(r"(?i)\s+and\s+")
+
+
+def _expand_and(items):
+    """Expand 'a and b' lines into separate clauses, so one line of
+    added conditions can list more than one -- 'vin = 12 and pr2 = 0'
+    becomes two clauses, each validated and applied on its own, rather
+    than being sympify'd as a single (invalid) expression."""
+    if not items:
+        return items
+    out = []
+    for raw in items:
+        out.extend(p.strip() for p in _AND_SPLIT.split(raw) if p.strip())
+    return out
 
 
 def _validate_extras(equations, unknowns, conditions) -> str | None:
@@ -821,6 +841,54 @@ def _parse_equation(text: str):
     return sp.Eq(sp.sympify(text), 0)
 
 
+def _parse_condition(text: str):
+    """Parse one "Conditions / constraints" clause into a sympy relational
+    -- '=' becomes an equality, the four comparisons become the matching
+    sympy relational. Used to filter multiple solve() branches down to
+    the physically sensible one(s), e.g. "pr1 > 0". Checked
+    longest-operator-first, so ">=" and "<=" aren't misread as a bare
+    ">"/"<" followed by a stray "="."""
+    import sympy as sp
+
+    ops = (
+        (">=", lambda l, r: l >= r),
+        ("<=", lambda l, r: l <= r),
+        (">", lambda l, r: l > r),
+        ("<", lambda l, r: l < r),
+        ("=", sp.Eq),
+    )
+    for op, make in ops:
+        if op in text:
+            lhs, rhs = text.split(op, 1)
+            return make(sp.sympify(lhs), sp.sympify(rhs))
+    return sp.sympify(text)
+
+
+def _conditions_hold(sol, conditions, values, wanted) -> bool:
+    """True if every parsed condition holds once the solved unknowns and
+    the circuit's known answers are substituted in. A condition that
+    still can't be reduced to a concrete True/False (it has free symbols
+    left over) is treated as satisfied -- there's nothing concrete to
+    judge it against, so it isn't grounds to discard an otherwise valid
+    solution."""
+    import sympy as sp
+
+    if not conditions:
+        return True
+    alias = _alias_mapping(values, exclude=[str(w) for w in wanted])
+    for cond in conditions:
+        try:
+            c = cond.subs(sol).subs(alias)
+            c = sp.simplify(c)
+        except Exception:
+            continue  # a condition that fails to evaluate isn't grounds to reject
+        if c in (sp.true, True):
+            continue
+        if c in (sp.false, False):
+            return False
+    return True
+
+
 def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
                  si: bool = False, approx: bool = False):
     """Evaluate a user expression against the solved values. Names match
@@ -857,7 +925,8 @@ _PREFIX_UNITS = {"v": "V", "i": "A", "p": "W", "ap": "W", "s": "VA",
 
 def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
                    si: bool = False, approx: bool = False,
-                   units: bool = False, real_only: bool = False):
+                   units: bool = False, real_only: bool = False,
+                   conditions=None):
     """Solve user equations against the circuit's answers -- the web
     counterpart of the calculator's solve()/cSolve(). Known answers are
     substituted in first, so an equation can be written directly in
@@ -865,7 +934,12 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
 
     `real_only` is the difference between the calculator's two verbs:
     off is cSolve() (every root, complex ones included), on is solve()
-    (the unknowns are declared real, so complex roots never appear)."""
+    (the unknowns are declared real, so complex roots never appear).
+
+    `conditions`: constraints ("pr1 > 0", "v1 = 12") that filter down
+    which of possibly several solve() branches to keep -- sp.solve()
+    happily returns every algebraic root (e.g. both signs of a squared
+    term) with no way on its own to prefer the physically sensible one."""
     try:
         import sympy as sp
 
@@ -912,7 +986,19 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
                     return True          # symbolic -- can't judge, keep it
                 return sp.im(sp.nsimplify(v)) == 0 or v.is_real is not False
             sols = [s for s in sols if all(_is_real(v) for v in s.values())]
+
+        had_sols = bool(sols)
+        if conditions:
+            parsed_conds = [_parse_condition(c) for c in conditions]
+            sols = [s for s in sols
+                    if _conditions_hold(s, parsed_conds, values, wanted)]
+
         if not sols:
+            if conditions and had_sols:
+                return _ok({"solutions": [],
+                            "unknowns": [str(w) for w in wanted],
+                            "notes": ["No solution satisfies the given "
+                                      "conditions / constraints."]})
             if real_only:
                 return _ok({"solutions": [],
                             "unknowns": [str(w) for w in wanted],
