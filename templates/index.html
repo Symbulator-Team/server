@@ -44,7 +44,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
                 border-bottom: 1px solid rgba(127,215,184,.45); padding-bottom: 1px;
                 margin-left: .3rem; }
   a.toplinks:hover { color: #a9e8cf; }
-  main { padding: 1.6rem 0 3rem; }
+  main { padding: 2.8rem 0 3rem; }
   .card {
     background: var(--card); border: 1px solid var(--line); border-radius: 10px;
     padding: 1.3rem 1.4rem; margin: 0 0 1.2rem; box-shadow: 0 1px 3px rgba(16,24,40,.05);
@@ -85,6 +85,11 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .result-name { font-family: var(--mono); color: #6fdfae; min-width: 5.5rem; font-size: .9rem; }
   .result-math { flex: 1; overflow-x: auto; overflow-y: hidden;
                  padding: .25rem 0; }
+  @media (max-width: 520px) {
+    .result-row { flex-direction: column; align-items: flex-start; gap: .15rem; }
+    .result-name { min-width: 0; }
+    .result-math { width: 100%; }
+  }
   .result-math mjx-container svg { color: var(--lcd-ink); }
   .lcd-meta { color: var(--lcd-dim); font-family: var(--mono); font-size: .78rem; margin-top: .7rem; }
   .results-h { font-size: 1.35rem; font-weight: 700; margin: 0 0 .9rem; }
@@ -161,11 +166,11 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .disamb-item input[type=radio] { accent-color: var(--accent); }
   .disamb button { margin-top: .8rem; }
   .uploadlbl {
-    display: inline-block; font-size: .88rem; font-weight: 500; cursor: pointer;
-    color: var(--accent); border: 1px dashed #9fc4bb; border-radius: 7px;
-    padding: .28rem .7rem; background: #f4fbf9;
+    display: inline-block; font-size: 1rem; font-weight: 600; cursor: pointer;
+    color: var(--accent-ink); border: 0; border-radius: 8px;
+    padding: .6rem 1.6rem; background: var(--accent);
   }
-  .uploadlbl:hover { background: #e8f5f1; }
+  .uploadlbl:hover { background: #0c5a4d; }
   button.linkish {
     background: none; border: 0; color: var(--accent); font-size: .84rem;
     padding: .1rem .3rem; text-decoration: underline; cursor: pointer;
@@ -205,9 +210,8 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 <main class="wrap">
   <h2 class="group-h">Inputs</h2>
   <p class="group-intro">
-    You can provide the input for Symbulator manually via the
-    <em>Manual Input</em> fields below, or you can upload an
-    Input File.
+    Provide the input for Symbulator via the <em>Manual Input</em>
+    or upload an Input File.
   </p>
 
   <div class="card" id="fileInputCard">
@@ -216,11 +220,8 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 
       <div class="dl-row">
         <label for="fileInput" class="uploadlbl" title="Upload an Input File of circuit descriptions">Upload Input File</label>
-        <input type="file" id="fileInput" accept=".cir,.txt,.sym,.circuits,text/plain" hidden>
-        <button type="button" id="addToFileBtn" class="linkish" disabled
-          title="Run a circuit successfully first">Add this circuit to the input file</button>
-        <button type="button" id="downloadFileBtn" class="linkish" disabled
-          title="Upload an input file first">Download this input file</button>
+        <input type="file" id="fileInput" accept=".cir" hidden>
+        <button type="button" id="downloadFileBtn" class="linkish" hidden>Download this input file</button>
       </div>
 
       <span class="examples" style="display:block;margin-top:.9rem">
@@ -237,7 +238,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
         A plain text Input File can hold as many circuits as you like. Each one
         starts with its name in square brackets, followed by optional
         settings and then the element lines. Save it with a
-        <code>.cir</code> or <code>.txt</code> extension.
+        <code>.cir</code> extension.
       </p>
 <pre style="background:#f6f8fa;border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;font-size:.84rem;overflow-x:auto"># comments start with a hash
 
@@ -265,10 +266,12 @@ c1,2,0,4.7e-6</pre>
         <em>Upload Input File</em>, above, reads a file like this — its
         circuits become the live Input File in your browser, replacing
         whatever was there before (nothing is stored on the server).
-        <em>Add this circuit to the input file</em> adds the circuit
-        you're describing in Manual Input to it, and
-        <em>Download this input file</em> saves a copy — once you've
-        uploaded one to begin with.
+        <em>Update this circuit in the input file when it already exists</em>,
+        under the Circuit Description box in Manual Input, adds the circuit
+        you're describing to it — or updates it, if a circuit by that name
+        is already there. <em>Download this input file</em>, above, appears
+        once you've made a change to it (uploaded a file, or added or
+        updated a circuit).
       </p>
     </details>
     </details>
@@ -283,6 +286,11 @@ c1,2,0,4.7e-6</pre>
       in the space below.</label>
     <textarea id="desc" spellcheck="false"
       placeholder="e1,1,0,5&#10;r1,1,2,1'k&#10;r2,2,0,1'k"></textarea>
+
+    <div class="actions" style="margin-top:.7rem">
+      <button type="button" id="addToFileBtn" class="linkish" disabled
+        title="Run a circuit successfully first">Update this circuit in the input file when it already exists</button>
+    </div>
 
     <details id="syntaxBox" style="margin-top:.9rem">
       <summary>Circuit syntax reference</summary>
@@ -410,10 +418,6 @@ c1,2,0,4.7e-6</pre>
           <option value="tr">TR — transient (time domain)</option>
         </select>
       </div>
-      <div id="varsField">
-        <label for="vars">Variables <span class="hint">(optional, comma-separated — limits the slow inverse-Laplace step)</span></label>
-        <input type="text" id="vars" placeholder="v_2, i_l1">
-      </div>
       <div id="n1Field">
         <label for="n1">Node 1 <span class="hint">(port terminal)</span></label>
         <input type="text" id="n1" placeholder="2">
@@ -439,6 +443,18 @@ c1,2,0,4.7e-6</pre>
       <div id="omegaField">
         <label for="omega">ω — angular frequency <span class="hint">(rad/s, number or symbol)</span></label>
         <input type="text" id="omega" placeholder="1000">
+      </div>
+    </div>
+
+    <div class="row">
+      <div id="varsField">
+        <label class="checkline"><input type="checkbox" id="limitVars"><span>Do you
+          want to limit the results to save time?</span></label>
+        <div id="varsSubfield" style="display:none;margin-top:.5rem">
+          <label for="vars">What results are you after? List the variables here:
+            <span class="hint">e.g. v_2, i_l1</span></label>
+          <input type="text" id="vars" placeholder="v_2, i_l1">
+        </div>
       </div>
     </div>
 
@@ -720,6 +736,15 @@ domainSel.addEventListener('change', () => { syncFields(); syncSettings(); });
 toolSel.addEventListener('change', syncFields);
 syncFields();
 
+// The "limit the results" checkbox reveals the actual variables field only
+// when checked, and clears it when unchecked so an unchecked toggle never
+// silently keeps limiting results behind the scenes.
+$('limitVars').addEventListener('change', () => {
+  const on = $('limitVars').checked;
+  $('varsSubfield').style.display = on ? 'block' : 'none';
+  if (!on) $('vars').value = '';
+});
+
 // Last successful solve -- feeds the evaluator and the download builder.
 let last = null;
 
@@ -798,6 +823,8 @@ function applyCircuit(c) {
   toolSel.value = c.tool || 'solve';
   $('omega').value = c.omega || '';
   $('vars').value = c.vars || '';
+  $('limitVars').checked = !!c.vars;
+  $('varsSubfield').style.display = c.vars ? 'block' : 'none';
   $('n1').value = c.n1 || '';
   $('n2').value = c.n2 || '';
   $('kind').value = c.kind || 'z';
@@ -826,7 +853,6 @@ autoGrowDesc();
 
 $('examples').addEventListener('change', ev => {
   const idx = ev.target.value;
-  updateAddBtnLabel();
   if (idx === '') return;
   const c = picker[Number(idx)];
   if (c) applyCircuit(c);
@@ -845,7 +871,6 @@ async function loadExamples() {
   } catch (e) {
     populatePicker([], 'Want to try an example? ', '— unavailable —');
   }
-  updateAddBtnLabel();
 }
 loadExamples();
 
@@ -868,14 +893,12 @@ $('fileInput').addEventListener('change', async ev => {
     // "Download this input file" only makes sense once an input file has
     // actually been uploaded to build on -- a solved-but-never-uploaded
     // circuit isn't an input file yet, just a description in the textarea.
-    $('downloadFileBtn').disabled = false;
-    $('downloadFileBtn').title = '';
+    $('downloadFileBtn').hidden = false;
     const n = data.circuits.length;
     let msg = `Loaded ${n} circuit${n === 1 ? '' : 's'} from ${data.filename}.`;
     if (data.warnings && data.warnings.length) msg += ' ' + data.warnings.join(' ');
     showNote(msg, !!(data.warnings && data.warnings.length));
     if (n === 1) { applyCircuit(data.circuits[0]); $('examples').value = '0'; }
-    updateAddBtnLabel();
   } catch (e) {
     showNote('Could not upload that file.', true);
   } finally {
@@ -961,17 +984,6 @@ function linesOf(text) {
   return String(text || '').split(/[\r\n]+/).map(s => s.trim()).filter(Boolean);
 }
 
-// "add this circuit" either creates a new Input File entry or updates the
-// one currently loaded -- reflect that in the button label itself, using
-// the same "is a picker entry selected" check addToFileBtn's own suggested
-// name is based on, so the label always matches what a click will do.
-function updateAddBtnLabel() {
-  const selIdx = $('examples').value;
-  $('addToFileBtn').textContent = selIdx !== ''
-    ? 'Update this circuit in the input file'
-    : 'Add this circuit to the input file';
-}
-
 $('addToFileBtn').addEventListener('click', () => {
   const desc = $('desc').value.trim();
   if (!desc) { showNote('Enter a circuit first.', true); return; }
@@ -996,7 +1008,7 @@ $('addToFileBtn').addEventListener('click', () => {
   else { picker.push(circuit); verb = 'Added'; }
   populatePicker(picker, $('pickerLabel').textContent, picker.length ? '— choose —' : '— none defined —');
   $('examples').value = String(picker.findIndex(c => c.name === trimmedName));
-  updateAddBtnLabel();
+  $('downloadFileBtn').hidden = false;
   showNote(`${verb} '${trimmedName}' in the Input File (${picker.length} circuit${picker.length === 1 ? '' : 's'} now). Download it any time.`, false);
 });
 
@@ -1025,7 +1037,7 @@ $('backToExamples').addEventListener('click', () => {
   populatePicker(builtIn, 'Want to try an example? ', builtIn.length ? '— choose —' : '— none defined —');
   liveFileName = null;
   $('backToExamples').hidden = true;
-  updateAddBtnLabel();
+  $('downloadFileBtn').hidden = true;
   showNote('', false);
 });
 
@@ -1223,7 +1235,7 @@ async function solve(suffixChoices) {
     if (data.elements.length) {
       const cap = document.createElement('div');
       cap.className = 'section-cap';
-      cap.textContent = 'Elements';
+      cap.textContent = 'Results by Element';
       out.appendChild(cap);
       const grid = document.createElement('div');
       grid.className = 'elgrid';
