@@ -156,7 +156,13 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   code { background: #eef1f4; border-radius: 4px; padding: .05rem .35rem; font-size: .86em; }
   footer { color: var(--muted); font-size: .84rem; text-align: center; padding: 0 1rem 2rem; }
   .section-divider { border: 0; border-top: 1px solid var(--line); margin: 2.4rem 0; }
-  #omegaField, #varsField, #n1Field, #n2Field, #kindField { display: none; }
+  #omegaField, #varsField, #n1Field, #n2Field, #kindField, #plotField { display: none; }
+  .chart-svg { width: 100%; height: auto; background: #fff; border-radius: 8px; }
+  .chart-svg text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
+  .chart-svg .chart-title { fill: var(--ink); font-weight: 600; font-size: 12px; }
+  .chart-svg .chart-line { fill: none; stroke: var(--accent); stroke-width: 1.6; }
+  .chart-svg .chart-axis { stroke: var(--line); stroke-width: 1; }
+  .chart-svg .chart-grid { stroke: var(--line); stroke-width: .5; opacity: .6; }
   .eval-row { display: flex; gap: .8rem; flex-wrap: wrap; align-items: flex-end; }
   .eval-row > div:first-child { flex: 1 1 260px; }
   .dl-row { display: flex; gap: 1.4rem; flex-wrap: wrap; align-items: center; }
@@ -414,9 +420,11 @@ c1,2,0,4.7e-6</pre>
           <option value="th">Find Thévenin / Norton equivalent</option>
           <option value="er">Find equivalent impedance</option>
           <option value="port">Find two-port parameters</option>
+          <option value="plot_time">Plot a variable vs. time</option>
+          <option value="bode">Bode plot (magnitude &amp; phase vs. frequency)</option>
         </select>
       </div>
-      <div>
+      <div id="domainField">
         <label for="domain">Analysis</label>
         <select id="domain">
           <option value="dc">DC — direct current</option>
@@ -446,6 +454,25 @@ c1,2,0,4.7e-6</pre>
       <div id="n2Field">
         <label for="n2">Node 2 <span class="hint">(port terminal / ground)</span></label>
         <input type="text" id="n2" placeholder="0">
+      </div>
+    </div>
+
+    <div class="row" id="plotField">
+      <div>
+        <label for="plotKey">Variable to plot <span class="hint">e.g. v_2 or i_r1</span></label>
+        <input type="text" id="plotKey" placeholder="v_2">
+      </div>
+      <div id="plotMinField">
+        <label for="plotMin"><span id="plotMinLabel">Start time (s)</span></label>
+        <input type="text" id="plotMin" placeholder="0">
+      </div>
+      <div id="plotMaxField">
+        <label for="plotMax"><span id="plotMaxLabel">End time (s)</span></label>
+        <input type="text" id="plotMax" placeholder="0.01">
+      </div>
+      <div id="plotNField" style="flex: 0 1 10rem">
+        <label for="plotN">Points</label>
+        <input type="number" id="plotN" min="2" max="2000" step="1" value="300">
       </div>
     </div>
 
@@ -735,9 +762,12 @@ const toolSel = $('tool');
 // tool + domain combination (omega only for AC, the two port-node fields
 // only for th/er/port, "kind" only for port, etc.), and lock th/er/port
 // to DC/AC since those tools don't support fd/tr.
+const PLOT_TOOLS = new Set(['plot_time', 'bode']);
+
 function syncFields() {
   const tool = toolSel.value;
-  if (tool !== 'solve') {
+  const isPlot = PLOT_TOOLS.has(tool);
+  if (tool !== 'solve' && !isPlot) {
     // th/er/port work in DC or AC only
     if (domainSel.value === 'fd' || domainSel.value === 'tr') domainSel.value = 'dc';
     for (const opt of domainSel.options) {
@@ -746,12 +776,24 @@ function syncFields() {
   } else {
     for (const opt of domainSel.options) opt.disabled = false;
   }
-  $('omegaField').style.display = domainSel.value === 'ac' ? 'block' : 'none';
-  $('varsField').style.display  = (domainSel.value === 'tr' && tool === 'solve') ? 'block' : 'none';
-  $('n1Field').style.display = tool !== 'solve' ? 'block' : 'none';
-  $('n2Field').style.display = tool !== 'solve' ? 'block' : 'none';
+  // Plot tools always run tr() or fd() internally -- there's no domain
+  // to choose, so the whole Analysis field (and everything that depends
+  // on which domain is picked) is hidden rather than shown-and-ignored.
+  $('domainField').style.display = isPlot ? 'none' : 'block';
+  $('omegaField').style.display = (!isPlot && domainSel.value === 'ac') ? 'block' : 'none';
+  $('varsField').style.display  = (!isPlot && domainSel.value === 'tr' && tool === 'solve') ? 'block' : 'none';
+  $('n1Field').style.display = (tool !== 'solve' && !isPlot) ? 'block' : 'none';
+  $('n2Field').style.display = (tool !== 'solve' && !isPlot) ? 'block' : 'none';
   $('kindField').style.display = tool === 'port' ? 'block' : 'none';
-  $('expertBox').style.display = tool === 'solve' ? 'block' : 'none';
+  $('plotField').style.display = isPlot ? 'flex' : 'none';
+  $('plotMinLabel').textContent = tool === 'bode' ? 'Start frequency (Hz)' : 'Start time (s)';
+  $('plotMaxLabel').textContent = tool === 'bode' ? 'End frequency (Hz)' : 'End time (s)';
+  $('plotMin').placeholder = tool === 'bode' ? '10' : '0';
+  $('plotMax').placeholder = tool === 'bode' ? '100000' : '0.01';
+  // Equations/conditions still make sense for a plot (e.g. pinning a
+  // symbolic component value before sampling it numerically); only
+  // th/er/port -- which don't accept expert-mode extras at all -- hide it.
+  $('expertBox').style.display = (tool === 'solve' || isPlot) ? 'block' : 'none';
 }
 domainSel.addEventListener('change', () => { syncFields(); syncSettings(); });
 toolSel.addEventListener('change', syncFields);
@@ -865,6 +907,10 @@ function applyCircuit(c) {
   $('eqs').value = (c.equations || []).join('\n');
   $('conds').value = (c.conditions || []).join('\n');
   $('unks').value = c.unknowns || '';
+  $('plotKey').value = c.plotkey || '';
+  $('plotMin').value = c.plotmin || '';
+  $('plotMax').value = c.plotmax || '';
+  $('plotN').value = c.plotpoints || 300;
   if ((c.equations || []).length || (c.conditions || []).length || c.unknowns) {
     $('expertBox').open = true;
   }
@@ -1029,6 +1075,7 @@ $('addToFileBtn').addEventListener('click', () => {
   const name = window.prompt('Name for this circuit:', suggested);
   if (name === null) return;
   const trimmedName = name.trim() || 'Circuit';
+  const isPlot = PLOT_TOOLS.has(toolSel.value);
   const circuit = {
     name: trimmedName, desc: desc,
     domain: domainSel.value, tool: toolSel.value === 'solve' ? '' : toolSel.value,
@@ -1037,7 +1084,11 @@ $('addToFileBtn').addEventListener('click', () => {
     kind: toolSel.value === 'port' ? $('kind').value : '',
     unknowns: $('unks').value,
     equations: linesOf($('eqs').value),
-    conditions: linesOf($('conds').value)
+    conditions: linesOf($('conds').value),
+    plotkey: isPlot ? $('plotKey').value : '',
+    plotmin: isPlot ? $('plotMin').value : '',
+    plotmax: isPlot ? $('plotMax').value : '',
+    plotpoints: isPlot ? $('plotN').value : ''
   };
   const existingIdx = picker.findIndex(c => c.name === trimmedName);
   let verb;
@@ -1364,9 +1415,162 @@ async function solve(suffixChoices) {
     btn.disabled = false;
   }
 }
+// ---- Plotting: shared SVG line-chart builder, plus the two chart tools ----
+//
+// No charting library -- one small function that lays out axes, a handful
+// of ticks and a polyline in an SVG, in the same no-CDN spirit as vendoring
+// MathJax locally instead of pulling it from a third party. `logX` draws
+// the x-axis on a log10 scale (decade gridlines), for the Bode plot.
+function svgLineChart(xs, ys, {width = 640, height = 260, xLabel = '', yLabel = '',
+                                title = '', logX = false} = {}) {
+  const pad = {l: 64, r: 32, t: title ? 24 : 10, b: 40};
+  const plotW = width - pad.l - pad.r, plotH = height - pad.t - pad.b;
+  const finiteYs = ys.filter(Number.isFinite);
+  let yMin = Math.min(...finiteYs), yMax = Math.max(...finiteYs);
+  if (!Number.isFinite(yMin) || !Number.isFinite(yMax)) { yMin = -1; yMax = 1; }
+  if (yMax - yMin < 1e-12) { yMax += 1; yMin -= 1; }
+  const yPad = (yMax - yMin) * 0.08;
+  yMin -= yPad; yMax += yPad;
+
+  const xVal = x => logX ? Math.log10(x) : x;
+  const xMin = xVal(xs[0]), xMax = xVal(xs[xs.length - 1]);
+  const xSpan = (xMax - xMin) || 1;
+  const px = x => pad.l + (xVal(x) - xMin) / xSpan * plotW;
+  const py = y => pad.t + plotH - (y - yMin) / (yMax - yMin) * plotH;
+
+  let path = '';
+  for (let i = 0; i < xs.length; i++) {
+    if (!Number.isFinite(ys[i])) continue;
+    path += (path ? 'L' : 'M') + px(xs[i]).toFixed(2) + ',' + py(ys[i]).toFixed(2) + ' ';
+  }
+
+  // X ticks: decades for a log axis, evenly spaced otherwise.
+  let xTicks = [];
+  if (logX) {
+    const d0 = Math.floor(xMin), d1 = Math.ceil(xMax);
+    for (let d = d0; d <= d1; d++) xTicks.push(Math.pow(10, d));
+    if (xTicks.length > 8) xTicks = xTicks.filter((_, i) => i % Math.ceil(xTicks.length / 8) === 0);
+  } else {
+    const n = 5;
+    for (let i = 0; i <= n; i++) xTicks.push(xs[0] + (xs[xs.length - 1] - xs[0]) * i / n);
+  }
+  const yTicks = [];
+  for (let i = 0; i <= 4; i++) yTicks.push(yMin + (yMax - yMin) * i / 4);
+
+  const fmt = v => {
+    const av = Math.abs(v);
+    if (av !== 0 && (av < 1e-3 || av >= 1e5)) return v.toExponential(2);
+    return (Math.round(v * 1000) / 1000).toString();
+  };
+
+  let svg = `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`;
+  if (title) svg += `<text class="chart-title" x="${pad.l}" y="16">${title}</text>`;
+  for (const yt of yTicks) {
+    const y = py(yt);
+    svg += `<line class="chart-grid" x1="${pad.l}" y1="${y.toFixed(2)}" x2="${width - pad.r}" y2="${y.toFixed(2)}"/>`;
+    svg += `<text x="${pad.l - 8}" y="${(y + 3).toFixed(2)}" text-anchor="end">${fmt(yt)}</text>`;
+  }
+  for (const xt of xTicks) {
+    const x = px(xt);
+    // Clamp the label anchor near the plot's edges so a tick at the very
+    // start/end (a decade boundary on a log axis, or xs[0]/xs[last] on a
+    // linear one) doesn't center its text half outside the SVG viewBox.
+    const anchor = x < pad.l + 18 ? 'start' : x > width - pad.r - 18 ? 'end' : 'middle';
+    svg += `<line class="chart-grid" x1="${x.toFixed(2)}" y1="${pad.t}" x2="${x.toFixed(2)}" y2="${height - pad.b}"/>`;
+    svg += `<text x="${x.toFixed(2)}" y="${height - pad.b + 16}" text-anchor="${anchor}">${fmt(xt)}</text>`;
+  }
+  svg += `<line class="chart-axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${height - pad.b}"/>`;
+  svg += `<line class="chart-axis" x1="${pad.l}" y1="${height - pad.b}" x2="${width - pad.r}" y2="${height - pad.b}"/>`;
+  svg += `<path class="chart-line" d="${path.trim()}"/>`;
+  if (xLabel) svg += `<text x="${pad.l + plotW / 2}" y="${height - 4}" text-anchor="middle">${xLabel}</text>`;
+  if (yLabel) svg += `<text x="10" y="${pad.t + plotH / 2}" text-anchor="middle" transform="rotate(-90 10 ${pad.t + plotH / 2})">${yLabel}</text>`;
+  svg += '</svg>';
+  return svg;
+}
+
+// Run one of the two plotting tools (Plot vs. time / Bode plot): call
+// the plot endpoint and render the result as an SVG chart instead of
+// the MathJax equation cards solve() builds -- the response shape
+// (number arrays, not formatted answers) is different enough to
+// warrant its own small render path rather than shoehorning it into
+// solve()'s.
+async function plot() {
+  const btn = $('solveBtn'), out = $('out'), status = $('status');
+  const tool = toolSel.value;
+  btn.disabled = true;
+  status.textContent = 'sampling…';
+  out.innerHTML = '<div class="lcd"><div class="placeholder">computing symbolically…</div></div>';
+  $('evalOut').style.display = 'none'; $('evalOut').innerHTML = '';
+  $('solveqOut').style.display = 'none'; $('solveqOut').innerHTML = '';
+  $('resultsBox').open = true;
+  $('resultsCard').classList.remove('inactive');
+  try {
+    const body = {
+      desc: $('desc').value, tool: tool === 'bode' ? 'bode' : 'time',
+      key: $('plotKey').value, min: $('plotMin').value, max: $('plotMax').value,
+      n: $('plotN').value,
+      equations: $('eqs').value, unknowns: $('unks').value, conditions: $('conds').value
+    };
+    const r = await fetch('/api/plot', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    out.innerHTML = '';
+    if (!data.ok) {
+      const div = document.createElement('div');
+      div.className = 'error';
+      div.style.whiteSpace = 'pre-line';
+      div.textContent = data.error || 'Something went wrong.';
+      out.appendChild(div);
+      status.textContent = '';
+      return;
+    }
+    if (data.notes && data.notes.length) {
+      const box = document.createElement('div');
+      box.className = 'booknote warn';
+      box.style.margin = '0 0 1rem';
+      data.notes.forEach((n, i) => {
+        const line = document.createElement('div');
+        if (i) line.style.marginTop = '.35rem';
+        line.textContent = n;
+        box.appendChild(line);
+      });
+      out.appendChild(box);
+    }
+    const chartWrap = document.createElement('div');
+    chartWrap.className = 'lcd';
+    chartWrap.style.padding = '1rem';
+    if (tool === 'bode') {
+      chartWrap.innerHTML =
+        svgLineChart(data.freq, data.mag_db, {
+          title: `${data.key} — magnitude`, xLabel: 'frequency (Hz, log scale)',
+          yLabel: 'dB', logX: true}) +
+        svgLineChart(data.freq, data.phase_deg, {
+          title: `${data.key} — phase`, xLabel: 'frequency (Hz, log scale)',
+          yLabel: 'degrees', logX: true});
+    } else {
+      chartWrap.innerHTML = svgLineChart(data.t, data.y, {
+        title: data.key, xLabel: 'time (s)', yLabel: data.key});
+    }
+    out.appendChild(chartWrap);
+    const meta = document.createElement('div');
+    meta.className = 'lcd-meta';
+    const nPts = tool === 'bode' ? data.freq.length : data.t.length;
+    meta.textContent = `${tool === 'bode' ? 'Bode plot' : 'Time plot'} · ${nPts} point(s) · ${data.elapsed}s`;
+    out.appendChild(meta);
+    status.textContent = '';
+  } catch (e) {
+    out.innerHTML = '<div class="error">Could not reach the solver. Please try again.</div>';
+    status.textContent = '';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 // Note the arrow wrapper: a raw listener would pass the click Event as
 // the suffixChoices argument.
-$('solveBtn').addEventListener('click', () => solve());
+$('solveBtn').addEventListener('click', () => (PLOT_TOOLS.has(toolSel.value) ? plot() : solve()));
 
 // ---- Expression evaluator -------------------------------------------
 async function evaluate() {
