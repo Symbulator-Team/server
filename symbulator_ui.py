@@ -162,7 +162,7 @@ def _validate_extras(equations, unknowns, conditions) -> str | None:
 
 
 # ---------------------------------------------------------------------------
-# The solver child process
+# Answer formatting: rounding, decimal and SI-prefix notation
 # ---------------------------------------------------------------------------
 
 MAX_DIGITS = 15
@@ -354,7 +354,7 @@ def _latex_with_j(expr) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Guards on what a value may contain
+# Content checks, explanatory notes, and error-message formatting
 # ---------------------------------------------------------------------------
 
 def normalise_imaginary(desc: str):
@@ -574,10 +574,12 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                   digits: int = 0, si: bool = False,
                   units: bool = False, use_rms: bool = False,
                   approx: bool = False):
-    """Runs inside a separate process. Sends ("ok", payload) where
-    payload groups answers into node voltages and per-element results
-    (or, for the special tools, a single block of named answers), or
-    ("error", message). Only plain strings cross the pipe."""
+    """Solve a full circuit, or run the th/er/port tools. Returns
+    {"ok": True, ...} with the payload grouping answers into node voltages
+    and per-element results (or, for the special tools, one block of named
+    answers), or {"ok": False, "error": message} on failure. Every value
+    in the payload is a plain string, so it can cross a subprocess pipe
+    (as app.py does) or a Pyodide/JS boundary unchanged."""
     try:
         import sympy as sp
         from symbulator import ex, tr, th, er, port
@@ -585,17 +587,13 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
 
         def fmt0(expr, unit=""):
             """Format one answer from a special tool (th/er/port) as a
-            (plain-text, LaTeX) pair, trying SI-prefix notation first (if
-            `si`), then forced-decimal notation (if `approx`), falling
-            back to the exact symbolic form -- and attaching `unit` only
-            when the answer is a pure number the unit actually applies
-            to. Local to solve_ui() (rather than a top-level function)
-            because it closes over the digits/si/approx/units flags for
-            this one call, and is duplicated as `fmt` below rather than
-            factored out because the two are called in slightly
-            different contexts (special-tool answers vs. a normal
-            circuit solve's node/element answers) that evolved
-            separately -- they do the same job."""
+            (plain-text, LaTeX) pair: SI-prefix notation first (if `si`),
+            then forced-decimal (if `approx`), else the exact symbolic
+            form -- with `unit` attached only when the answer is a pure
+            number. Local to solve_ui() because it closes over this
+            call's digits/si/approx/units flags; duplicated as `fmt`
+            below (same job, different call site) rather than factored
+            out, since the two evolved separately."""
             try:
                 expr = sp.simplify(expr)
             except Exception:
@@ -684,9 +682,9 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         if extra_conditions:
             kwargs["conditions"] = extra_conditions
 
-        # Expert mode's ex() covers dc/ac/fd only -- the calculator's
-        # own prompt reads "1:DC 2:AC 3:FD". Transient has always been a
-        # separate verb, so call it directly.
+        # ex() covers dc/ac/fd only -- the calculator's own prompt reads
+        # "1:DC 2:AC 3:FD". Transient has always been a separate verb, so
+        # call it directly.
         if domain == "tr":
             res = tr(desc, **kwargs)
         else:
@@ -853,11 +851,11 @@ _IDENT_TOKEN = re.compile(r"[A-Za-z_]\w*")
 
 
 def _circuit_canonical_names(elements):
-    """Every name solve_circuit() will actually generate for this
-    circuit: `i_<name>` for each element's current (every kind gets
-    one), `v_<name>` for the branch voltage of "rlcejs"-kind elements
-    (matching the same test used when building the flat results map),
-    and `v_<node>` for every non-ground node. Used to translate an
+    """Every name a solved circuit can produce: `i_<name>` for each
+    element's current (every kind gets one), `v_<name>` for the branch
+    voltage of "rlcejs"-kind elements (matching the same test used when
+    building the flat results map), and `v_<node>` for every non-ground
+    node. Used to translate an
     expert-mode equation/condition written the calculator's casual way
     ("ir5") back to the real symbol ("i_r5") before it reaches the
     solver -- see _normalize_underscore_names below."""
@@ -895,13 +893,10 @@ def _normalize_underscore_names(text, canonical):
 
 
 def _alias_mapping(values: dict, exclude=(), expr=None):
-    """Map the symbols in `expr` onto the circuit's solved answers.
-
-    Matching ignores case and underscores, so every spelling of a name
-    finds its answer. Names in `exclude` are skipped: a variable the
-    user is solving *for* must stay unknown rather than being
-    substituted away.
-    """
+    """Map the symbols in `expr` onto the circuit's solved answers,
+    ignoring case and underscores so every spelling of a name finds its
+    answer. Names in `exclude` are skipped: a variable the user is
+    solving *for* must stay unknown rather than being substituted away."""
     import sympy as sp
 
     skip = {_norm_name(str(e)) for e in exclude}
