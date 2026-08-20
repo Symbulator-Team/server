@@ -401,6 +401,12 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     padding: .4rem .7rem; border-radius: 0 6px 6px 0;
   }
   .booknote.warn { background: var(--warn-bg); border-left-color: #e2c88f; }
+  .hostnotice { display: none; align-items: flex-start; gap: .6rem;
+    background: var(--warn-bg); border: 1px solid var(--disamb-border);
+    color: var(--warn-ink); border-radius: 10px; padding: .75rem 1rem;
+    margin: 0 0 1.2rem; font-size: .92rem; line-height: 1.45; }
+  .hostnotice.show { display: flex; }
+  .hostnotice a { color: inherit; font-weight: 600; }
   label.checkline { display: flex; align-items: flex-start; gap: .45rem;
     font-weight: 400; font-size: .92rem; cursor: pointer; padding: .35rem 0; }
   label.checkline > input { margin-top: .2rem; flex: none; }
@@ -421,6 +427,21 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 </header>
 
 <main class="wrap">
+  <!-- server-only: this notice only makes sense when the page has no
+       working backend to call -- the offline build always has its own
+       engine on board, so build_local.py strips this block entirely. -->
+  <div class="hostnotice" id="hostNotice" role="status">
+    <span aria-hidden="true">🧭</span>
+    <span>This copy of the page can't reach a maths engine, so the
+      calculator can't run from here. You can still use Symbulator by
+      running it entirely inside your own browser instead — see
+      “<a href="#runLocallyCard">Run Symbulator 9 locally</a>” near the
+      bottom of this page, or go straight to
+      <a href="https://install.symbulator.com" target="_blank"
+         rel="noopener">install.symbulator.com</a>.</span>
+  </div>
+  <!-- /server-only -->
+
   <h2 class="group-h"><span class="bracket">[</span>   I N P U T S   <span class="bracket">]</span></h2>
   <p class="group-intro">
     <strong>Describe a linear circuit and specify the analysis type</strong> —
@@ -890,7 +911,7 @@ c1,2,0,4.7e-6</pre>
        sense inside the offline build itself, so build_local.py strips
        everything between these two markers. -->
   <div class="card">
-    <details>
+    <details id="runLocallyCard">
       <summary>Run Symbulator 9 locally</summary>
       <p style="font-size:.92rem;margin-top:.7rem">
         This <strong>online version</strong> of Symbulator 9 is hosted
@@ -1315,6 +1336,17 @@ $('examples').addEventListener('change', ev => {
 // Fetch the built-in example circuits from the server and populate the
 // picker with them; called once on page load, and again by "Reload
 // Examples" after a file has been loaded (see the button handler below).
+// Shown the first time this page discovers it has no maths engine to
+// talk to -- e.g. because it was copied onto plain static hosting with
+// no Symbulator backend behind it, so every call to the backend comes
+// back as something other than the JSON it would normally send (a 404
+// page, an unrelated site, or no response at all). Harmless no-op in
+// the offline build, which has no #hostNotice element to find.
+function showHostNotice() {
+  const el = $('hostNotice');
+  if (el) el.classList.add('show');
+}
+
 async function loadExamples() {
   try {
     const r = await fetch('/api/examples');
@@ -1324,6 +1356,7 @@ async function loadExamples() {
                    builtIn.length ? '— choose —' : '— none defined —');
   } catch (e) {
     populatePicker([], 'Some examples you can try: ', '— unavailable —');
+    showHostNotice();
   }
 }
 loadExamples();
@@ -1795,6 +1828,7 @@ async function solve(suffixChoices) {
   } catch (e) {
     out.innerHTML = '<div class="error">Could not reach the solver. Please try again.</div>';
     status.textContent = '';
+    showHostNotice();
   } finally {
     btn.disabled = false;
   }
@@ -1997,6 +2031,7 @@ async function plot() {
   } catch (e) {
     out.innerHTML = '<div class="error">Could not reach the solver. Please try again.</div>';
     status.textContent = '';
+    showHostNotice();
   } finally {
     btn.disabled = false;
   }
@@ -2100,6 +2135,7 @@ async function evaluate() {
     if (mjReady) await MathJax.typesetPromise([box]);
   } catch (e) {
     box.innerHTML = '<div class="error">Could not reach the server.</div>';
+    showHostNotice();
   } finally {
     btn.disabled = false;
   }
@@ -2193,6 +2229,7 @@ async function solveEquations() {
     if (mjReady) await MathJax.typesetPromise([box]);
   } catch (e) {
     box.innerHTML = '<div class="error">Could not reach the server.</div>';
+    showHostNotice();
   } finally {
     btn.disabled = false;
   }
