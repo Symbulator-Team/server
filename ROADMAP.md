@@ -2,6 +2,26 @@
 
 Running notes so nothing is lost between sessions.
 
+## Next build TODO — Dark Mode toggle (20 Aug 2026)
+
+Roberto wants a toggle to switch to Dark Mode, across all three
+user-facing surfaces:
+
+* the server (Flask) interface — `server/templates/index.html`
+* the local (offline/Pyodide) interface — generated from the same
+  template by `build_local.py`, so implementing it once in the shared
+  template covers both automatically, same as every other UI change
+* the web version of the documentation (the CoderDocs tutorial/docs
+  site — `learn.symbulator.com` once that move happens; see the domain
+  note below for where those pages currently live)
+
+Not implemented yet — noted here per Roberto's explicit "put that in
+the To-Do list for the next build," not built this round. When it's
+picked up: check whether the docs site uses the same CSS system as the
+app template or a separate CoderDocs stylesheet, since the toggle will
+likely need two different implementations (app template vs. docs site)
+even though it's one feature from Roberto's point of view.
+
 ## Next build TODO — real domains are settling (19 Aug 2026)
 
 Roberto has named two subdomains for the live site, replacing the
