@@ -537,7 +537,7 @@ _KIND_LABEL = {
 
 # Per-element derived keys, in display order, with human labels.
 _ELEMENT_KEYS = [
-    ("p_{n}", "p", "power", "W"),
+    ("p_{n}", "p", "power consumed", "W"),
     ("ap_{n}", "p", "average power", "W"),
     # Complex power S = V*conj(I): its magnitude is apparent power in
     # volt-amperes, its real part watts, its imaginary part reactive var.
@@ -759,7 +759,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             ikey = f"i_{el.name}"
             if ikey in values:
                 plain, latex = fmt(values[ikey], "A")
-                items.append({"sym": "i", "label": "current",
+                items.append({"sym": "i", "label": "current through",
                               "plain": plain, "latex": latex})
                 used.add(ikey)
             # Voltage drop across the element: stored as v_<name> by
