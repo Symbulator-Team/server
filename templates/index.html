@@ -52,11 +52,19 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     border-bottom: 3px solid #8ec7f5;
   }
   .wrap { max-width: 880px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
-  .header-flex { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+  .header-flex { display: flex; align-items: center; gap: 1.2rem; flex-wrap: nowrap; }
   .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none; }
+  .header-title { min-width: 0; }
   header h1 { margin: 0; font-size: 2rem; letter-spacing: .5px; }
   header h1 .tm { color: #8ec7f5; }
   header p { margin: .4rem 0 0; color: #b7c3d6; }
+  @media (max-width: 520px) {
+    header { padding: 1.6rem 1rem 1.4rem; }
+    .header-flex { gap: .9rem; }
+    .header-logo { width: 56px; height: 56px; border-radius: 9px; }
+    header h1 { font-size: 1.4rem; letter-spacing: .3px; }
+    header p { font-size: .9rem; margin-top: .25rem; }
+  }
   .nowrap { white-space: nowrap; }
   a.toplinks { color: #8ec7f5; font-weight: 600; text-decoration: none;
                 border-bottom: 1px solid rgba(142,199,245,.45); padding-bottom: 1px;
@@ -298,7 +306,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 <header>
   <div class="wrap header-flex">
     <img src="/static/logo.png" alt="Symbulator logo" class="header-logo">
-    <div>
+    <div class="header-title">
       <h1>Symbulator <span class="tm">9</span></h1>
       <p>The best symbolic simulator of linear circuits, since 1999.</p>
     </div>
@@ -399,13 +407,14 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
         exact.
       </p>
       <p class="hint">
+        When conducting an AC analysis, or an analysis in the AC mode,
         <code>i</code>, <code>I</code>, <code>j</code> and <code>J</code>
         <strong>all mean the imaginary unit</strong> and cannot be used as
         variable names — write <code>3j</code>, <code>3*j</code> or
         <code>3*i</code> and you get the same thing, shown as
-        <code>3j</code>. Complex values belong to AC analysis only; in DC,
-        FD and TR they are rejected. <code>pi</code> is π. Every other name
-        you write is an ordinary variable, so <code>Q</code>,
+        <code>3j</code>. Outside AC, those four letters are ordinary
+        variable names like any other. <code>pi</code> is π. Every other
+        name you write is an ordinary variable, so <code>Q</code>,
         <code>S</code> and <code>beta</code> mean what you intend rather
         than something out of SymPy. Euler's number is <code>exp(1)</code>.
       </p>
@@ -610,7 +619,7 @@ c1,2,0,4.7e-6</pre>
         <div>
           <label for="eqs">Add equations — <span class="hint">one per line, e.g. <code>v_2 = 6</code>;
             parsed the same as circuit values — SI shorthand like <code>4.7'k</code>
-            and imaginary units (<code>i</code>/<code>j</code>) both work, but a bare
+            and, in AC, imaginary units (<code>i</code>/<code>j</code>) both work, but a bare
             suffix like <code>4.7k</code> with no apostrophe doesn't</span></label>
           <textarea id="eqs" spellcheck="false" style="min-height:3.2rem" disabled></textarea>
         </div>
