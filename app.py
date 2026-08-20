@@ -378,7 +378,7 @@ def api_solve():
 
     desc_used = None
     imaginary_notes = []
-    normalised, imaginary_notes = normalise_imaginary(desc)
+    normalised, imaginary_notes = normalise_imaginary(desc, domain)
     if normalised != desc:
         desc = normalised
     try:
