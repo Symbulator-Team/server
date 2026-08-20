@@ -6,6 +6,14 @@
 <title>Symbulator — symbolic circuit analysis online</title>
 <meta name="description" content="Symbulator: symbolic simulation of linear electrical circuits (DC, AC, Laplace, transient) online, created by Roberto Perez-Franco. Powered by Python and SymPy.">
 <script>
+// Applied as early as possible (before the stylesheet is even parsed) so a
+// saved Dark Mode preference takes effect before first paint -- otherwise
+// the page would flash light, then flip to dark, on every reload.
+(function () {
+  var saved = null;
+  try { saved = localStorage.getItem('symbulator-theme'); } catch (e) {}
+  if (saved === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+})();
 window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'global' } };
 </script>
 <link rel="icon" href="/static/icon.png" type="image/png">
@@ -20,11 +28,13 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     --accent-ink: #ffffff;
     --accent-open: #1277c9;
     --line: #e2e5ea;
+    --line-soft: #ecf0f4;
     --lcd-bg: #0d1e30;
     --lcd-ink: #8ecbff;
     --lcd-dim: #4a7098;
     --err-bg: #fdf1f1;
     --err-ink: #a13030;
+    --err-line: #ecc8c8;
     --placeholder: #a7b3c4;
     --focus-ring: 0 0 0 3px rgba(47, 111, 192, .18);
     /* Signal colours shared with the documentation (its DESIGN.md):
@@ -34,6 +44,20 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     --warn-bg: #fbf3e2;
     --ok-ink: #2f7d4f;
     --ok-bg: #ecf5ef;
+    /* Form fields, inline code, and the two callout boxes (.booknote,
+       .disamb) were hardcoded hex colours until Dark Mode (2026-08-21)
+       needed a second value for each -- pulled out into their own
+       variables so both themes can set them together. */
+    --field-bg: #fbfcfd;
+    --field-bg-focus: #ffffff;
+    --field-border: #cfd6df;
+    --field-border-hover: #aebaca;
+    --code-bg: #eaf0f7;
+    --note-bg: #eef4fb;
+    --note-line: #a9c6e0;
+    --disamb-border: #e9d8b4;
+    --disamb-item-line: #eee0c0;
+    --disamb-code-bg: #f5e9cc;
     /* IBM Plex first so the app matches the documentation wherever the
        reader's machine already has it installed — but no webfont is ever
        downloaded: the app stays self-contained and fully offline, and
@@ -41,10 +65,45 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     --sans: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --mono: "IBM Plex Mono", "Consolas", "Menlo", "DejaVu Sans Mono", monospace;
   }
+  /* Dark Mode -- a real, toggled theme (see the #themeToggle script near
+     the top of <head>), not just a prefers-color-scheme shadow. The LCD
+     "calculator screen" colours (--lcd-*) are deliberately left out: the
+     .lcd/.elcard panels are styled to look like a dark instrument display
+     in both themes, so they don't need a dark-mode variant. */
+  html[data-theme="dark"] {
+    --bg: #12161d;
+    --card: #1b212c;
+    --ink: #e4e8ee;
+    --muted: #97a3b6;
+    --accent: #5b96e0;
+    --accent-ink: #0d1420;
+    --accent-open: #6fc0ff;
+    --line: #2b3341;
+    --line-soft: #232a36;
+    --err-bg: #3a1f21;
+    --err-ink: #ff9c9c;
+    --err-line: #5c2b2e;
+    --placeholder: #5d6b80;
+    --warn-ink: #e3b567;
+    --warn-bg: #3a2f16;
+    --ok-ink: #7fd9a4;
+    --ok-bg: #16301f;
+    --field-bg: #11161e;
+    --field-bg-focus: #171d27;
+    --field-border: #38424f;
+    --field-border-hover: #4c5866;
+    --code-bg: #232b38;
+    --note-bg: #182534;
+    --note-line: #2f5170;
+    --disamb-border: #4a3f24;
+    --disamb-item-line: #40371f;
+    --disamb-code-bg: #2f2818;
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--bg); color: var(--ink);
     font: 16px/1.55 var(--sans);
+    transition: background-color .15s ease, color .15s ease;
   }
   header {
     background: #203864;
@@ -58,12 +117,24 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   header h1 { margin: 0; font-size: 2rem; letter-spacing: .5px; }
   header h1 .tm { color: #8ec7f5; }
   header p { margin: .4rem 0 0; color: #b7c3d6; }
+  .theme-toggle {
+    margin-left: auto; flex: none; width: 2.5rem; height: 2.5rem;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.12); color: #fff;
+    border: 1px solid rgba(255,255,255,.35); border-radius: 999px;
+    font-size: 1.2rem; line-height: 1; cursor: pointer;
+    transition: background-color .15s ease, transform .06s ease;
+  }
+  .theme-toggle:hover { background: rgba(255,255,255,.22); }
+  .theme-toggle:active { transform: translateY(1px); }
+  .theme-toggle:focus-visible { outline: 2px solid #8ec7f5; outline-offset: 2px; }
   @media (max-width: 520px) {
     header { padding: 1.6rem 1rem 1.4rem; }
     .header-flex { gap: .9rem; }
     .header-logo { width: 56px; height: 56px; border-radius: 9px; }
     header h1 { font-size: 1.4rem; letter-spacing: .3px; }
     header p { font-size: .9rem; margin-top: .25rem; }
+    .theme-toggle { width: 2.15rem; height: 2.15rem; font-size: 1.05rem; }
   }
   .nowrap { white-space: nowrap; }
   a.toplinks { color: #8ec7f5; font-weight: 600; text-decoration: none;
@@ -84,13 +155,13 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .hint { font-weight: 400; color: var(--muted); }
   textarea, select, input[type=text], input[type=number] {
     width: 100%; font-family: var(--mono); font-size: .95rem;
-    border: 1px solid #cfd6df; border-radius: 8px; padding: .55rem .7rem;
-    background: #fbfcfd; color: var(--ink);
+    border: 1px solid var(--field-border); border-radius: 8px; padding: .55rem .7rem;
+    background: var(--field-bg); color: var(--ink);
     transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
   }
   textarea:hover:not(:disabled):not(:focus), select:hover:not(:disabled):not(:focus),
   input[type=text]:hover:not(:disabled):not(:focus),
-  input[type=number]:hover:not(:disabled):not(:focus) { border-color: #aebaca; }
+  input[type=number]:hover:not(:disabled):not(:focus) { border-color: var(--field-border-hover); }
   textarea { min-height: 5.2rem; resize: vertical; }
   select {
     appearance: none; -webkit-appearance: none;
@@ -98,10 +169,15 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     background-repeat: no-repeat; background-position: right .7rem center;
     padding-right: 2.1rem;
   }
+  html[data-theme="dark"] select {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2397a3b6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
   textarea:focus, select:focus, input:focus {
-    outline: none; border-color: #2f6fc0; background-color: #fff;
+    outline: none; border-color: #2f6fc0; background-color: var(--field-bg-focus);
     box-shadow: var(--focus-ring);
   }
+  html[data-theme="dark"] textarea:focus, html[data-theme="dark"] select:focus,
+  html[data-theme="dark"] input:focus { border-color: var(--accent); }
   textarea::placeholder, input::placeholder { color: var(--placeholder); opacity: 1; }
   .row { display: flex; gap: .9rem; flex-wrap: wrap; margin-top: .9rem; }
   .row > div { flex: 1 1 180px; }
@@ -126,7 +202,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   #solveBtn:hover:not(:disabled) { box-shadow: 0 3px 12px rgba(32,56,100,.34); }
   .run-row #status, .run-row #plotStatus { display: block; margin-top: .6rem; }
   .examples { font-size: .88rem; color: var(--muted); }
-  .examples select { width: auto; font-family: inherit; font-size: .88rem; background-color: #fff; }
+  .examples select { width: auto; font-family: inherit; font-size: .88rem; background-color: var(--card); }
   #status, #plotStatus { font-size: .88rem; color: var(--muted); }
   .lcd {
     background: linear-gradient(180deg, #102338 0%, var(--lcd-bg) 55%);
@@ -142,12 +218,21 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   }
   .result-row:last-child { border-bottom: 0; }
   .result-name { font-family: var(--mono); color: #6fb8f0; min-width: 5.5rem; font-size: .9rem; }
-  .result-math { flex: 1; overflow-x: auto; overflow-y: hidden;
-                 padding: .25rem 0; }
+  /* Grow to fit long answers instead of scrolling (width-improvement,
+     2026-08-21) -- overflow stays visible on desktop, where the .lcd
+     card has room to widen with its content; the small scroll from
+     before is kept only as the phone-screen fallback below, since
+     there's no room to grow on a narrow viewport.
+     NOTE: overflow-x and overflow-y must be set to the SAME value here.
+     A mismatched pair (e.g. x:visible / y:hidden) is silently promoted
+     by the spec to x:auto -- which is exactly the scrollbar this rule
+     is trying to remove -- so "visible" only takes effect if both axes
+     say so. */
+  .result-math { flex: 1; overflow: visible; padding: .25rem 0; }
   @media (max-width: 520px) {
     .result-row { flex-direction: column; align-items: flex-start; gap: .15rem; }
     .result-name { min-width: 0; }
-    .result-math { width: 100%; }
+    .result-math { width: 100%; overflow-x: auto; overflow-y: hidden; }
   }
   .result-math mjx-container svg { color: var(--lcd-ink); }
   .lcd-meta { color: var(--muted); font-family: var(--mono); font-size: .78rem; margin-top: .7rem; }
@@ -172,28 +257,48 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .section-cap { font-size: .82rem; font-weight: 600; color: var(--muted);
                  text-transform: uppercase; letter-spacing: .06em; margin: 1.1rem 0 .45rem; }
   .section-cap:first-child { margin-top: 0; }
-  .elgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: .8rem; }
+  /* Flexbox, not CSS grid (width-improvement, 2026-08-21). Grid's
+     auto-fill + minmax(250px, max-content) was tried first, but grid
+     picks its column *count* using each track's 250px minimum, then
+     sizes tracks within that fixed budget -- so a genuinely wide answer
+     just overflowed its column and overlapped the next card instead of
+     making the column wider. A flex item with flex:0 0 auto and no
+     explicit width shrink-to-fits its own content instead (the same
+     algorithm floats/inline-blocks use), so each card is exactly as
+     wide as its widest answer, and wraps to a new line -- rather than
+     overlapping a neighbour -- whenever it doesn't fit the current row. */
+  .elgrid { display: flex; flex-wrap: wrap; align-items: flex-start; gap: .8rem; }
+  @media (max-width: 520px) {
+    .elgrid { flex-direction: column; }
+  }
   .elcard {
     background: linear-gradient(180deg, #102338 0%, var(--lcd-bg) 55%);
     border: 1px solid #081525; border-radius: 10px;
     padding: .85rem 1rem; color: var(--lcd-ink);
     box-shadow: inset 0 2px 10px rgba(0,0,0,.45), inset 0 0 34px rgba(30,80,130,.10);
+    flex: 0 0 auto; min-width: 250px; max-width: 100%;
+  }
+  @media (max-width: 520px) {
+    .elcard { width: 100%; min-width: 0; }
   }
   .elcard .el-title { font-family: var(--mono); color: #6fb8f0; font-size: .95rem; }
   .elcard .el-kind { color: var(--lcd-dim); font-size: .78rem; font-family: var(--mono); margin-left: .4rem; }
   .el-item { padding: .35rem 0; border-bottom: 1px solid #173352;
-             overflow-x: auto; overflow-y: hidden; }
+             overflow: visible; }
   .el-item:last-child { border-bottom: 0; }
   .el-item .el-label, .result-name .el-label { color: var(--lcd-dim); font-size: .72rem; font-family: var(--mono);
                        display: block; letter-spacing: .04em; }
   .el-item mjx-container svg { color: var(--lcd-ink); }
+  @media (max-width: 520px) {
+    .el-item { overflow-x: auto; overflow-y: hidden; }
+  }
   .result-math, .el-item { scrollbar-width: thin; scrollbar-color: #25517a transparent; }
   .result-math::-webkit-scrollbar, .el-item::-webkit-scrollbar { height: 7px; }
   .result-math::-webkit-scrollbar-track, .el-item::-webkit-scrollbar-track { background: transparent; }
   .result-math::-webkit-scrollbar-thumb, .el-item::-webkit-scrollbar-thumb {
     background: #25517a; border-radius: 4px; }
   .result-math::-webkit-scrollbar-button, .el-item::-webkit-scrollbar-button { display: none; }
-  .error { background: var(--err-bg); color: var(--err-ink); border: 1px solid #ecc8c8;
+  .error { background: var(--err-bg); color: var(--err-ink); border: 1px solid var(--err-line);
            border-radius: 8px; padding: .7rem 1rem; font-size: .92rem; }
   details { margin-top: .4rem; }
   summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; color: var(--accent);
@@ -215,12 +320,12 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
        text-transform: uppercase; letter-spacing: .05em;
        border-bottom: 2px solid var(--line); }
   td:first-child, code { font-family: var(--mono); }
-  code { background: #eaf0f7; border-radius: 4px; padding: .05rem .35rem; font-size: .86em; }
+  code { background: var(--code-bg); border-radius: 4px; padding: .05rem .35rem; font-size: .86em; }
   footer { color: var(--muted); font-size: .84rem; text-align: center;
            padding: 0 1rem 2.4rem; line-height: 1.8; }
   .section-divider { border: 0; border-top: 1px solid var(--line); margin: 2.4rem 0; }
   #omegaField, #varsField, #n1Field, #n2Field, #kindField { display: none; }
-  .chart-svg { width: 100%; height: auto; background: #fff; border-radius: 8px; }
+  .chart-svg { width: 100%; height: auto; background: var(--card); border-radius: 8px; }
   .chart-svg text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
   .chart-svg .chart-title { fill: var(--ink); font-weight: 600; font-size: 12px; }
   .chart-svg .chart-line { fill: none; stroke: var(--accent); stroke-width: 1.6; }
@@ -232,7 +337,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .dl-row label { font-weight: 400; font-size: .92rem; display: flex;
                   align-items: center; gap: .45rem; margin: 0; cursor: pointer; }
   .dl-row input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
-  .card.inactive { border-color: #ecf0f4; box-shadow: none; }
+  .card.inactive { border-color: var(--line-soft); box-shadow: none; }
   .card.inactive .results-h { color: var(--muted); }
   #expertBox textarea:disabled, #expertBox input[type=text]:disabled { opacity: .55; cursor: not-allowed; }
   .group-h {
@@ -254,13 +359,13 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .group-intro { margin: 0 0 1.2rem; }
   #evalOut, #solveqOut { margin-top: .9rem; display: none; }
   .disamb {
-    background: var(--warn-bg); border: 1px solid #e9d8b4; border-radius: 10px;
+    background: var(--warn-bg); border: 1px solid var(--disamb-border); border-radius: 10px;
     padding: 1rem 1.2rem;
   }
   .disamb h3 { margin: 0 0 .3rem; font-size: 1rem; }
   .disamb p { margin: .2rem 0 .8rem; font-size: .9rem; color: var(--muted); }
-  .disamb-item { padding: .55rem 0; border-top: 1px solid #eee0c0; }
-  .disamb-item code { background: #f5e9cc; }
+  .disamb-item { padding: .55rem 0; border-top: 1px solid var(--disamb-item-line); }
+  .disamb-item code { background: var(--disamb-code-bg); }
   .disamb-item label { display: inline-flex; align-items: center; gap: .4rem;
     font-weight: 400; font-size: .92rem; margin: .3rem 1.4rem .1rem 0; cursor: pointer; }
   .disamb-item input[type=radio] { accent-color: var(--accent); }
@@ -292,7 +397,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   a.btnlink:hover { background: #1f4a86; color: var(--accent-ink); }
   .booknote {
     font-size: .84rem; color: var(--muted); margin-top: .6rem;
-    background: #eef4fb; border-left: 3px solid #a9c6e0;
+    background: var(--note-bg); border-left: 3px solid var(--note-line);
     padding: .4rem .7rem; border-radius: 0 6px 6px 0;
   }
   .booknote.warn { background: var(--warn-bg); border-left-color: #e2c88f; }
@@ -310,6 +415,8 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
       <h1>Symbulator <span class="tm">9</span></h1>
       <p>The best symbolic simulator of linear circuits, since 1999.</p>
     </div>
+    <button type="button" id="themeToggle" class="theme-toggle"
+            aria-label="Switch to dark mode" title="Switch to dark mode">🌙</button>
   </div>
 </header>
 
@@ -440,7 +547,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
       placeholder="e1,1,0,5&#10;r1,1,2,1'k&#10;r2,2,0,1'k"></textarea>
 
     <div class="actions" style="margin-top:0">
-      <button type="button" id="addToFileBtn" class="linkish" hidden>Save to input file (update if exists)</button>
+      <button type="button" id="addToFileBtn" class="linkish" hidden>Save this circuit to the input file</button>
     </div>
 
     <details id="fileFormatBox" style="margin-top:.9rem">
@@ -800,6 +907,13 @@ c1,2,0,4.7e-6</pre>
            download="symbulator-local.zip">Download the offline version</a>
         <span class="hint">— one .zip, about 13 MB, works on Windows, macOS and Linux</span>
       </div>
+      <p class="hint" style="margin-top:.6rem">
+        If you'd rather not install from a zipped file — for example, to
+        install a local copy on your mobile phone — visit
+        <a href="https://install.symbulator.com" target="_blank"
+           rel="noopener">install.symbulator.com</a> instead. Once
+        prompted, tap “Install as app”.
+      </p>
       <details class="exhelp" style="margin-top:1.1rem">
         <summary>How to run and install as an app</summary>
 
@@ -2153,6 +2267,27 @@ $('dlBtn').addEventListener('click', () => {
   a.download = `symbulator_${last.tool === 'solve' ? last.domain : last.tool}.sym`;
   a.click();
   URL.revokeObjectURL(a.href);
+});
+
+// Dark Mode toggle. The early inline script in <head> already applied a
+// saved preference (if any) before first paint, so this only has to wire
+// up the button: flip the attribute, persist it, and update the icon/label.
+const themeToggleBtn = $('themeToggle');
+function isDarkTheme() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+function syncThemeToggleLabel() {
+  const dark = isDarkTheme();
+  themeToggleBtn.textContent = dark ? '☀️' : '🌙';
+  const label = dark ? 'Switch to light mode' : 'Switch to dark mode';
+  themeToggleBtn.setAttribute('aria-label', label);
+  themeToggleBtn.title = label;
+}
+syncThemeToggleLabel();
+themeToggleBtn.addEventListener('click', () => {
+  const nextDark = !isDarkTheme();
+  if (nextDark) { document.documentElement.setAttribute('data-theme', 'dark'); }
+  else { document.documentElement.removeAttribute('data-theme'); }
+  try { localStorage.setItem('symbulator-theme', nextDark ? 'dark' : 'light'); } catch (e) {}
+  syncThemeToggleLabel();
 });
 </script>
 </body>
