@@ -381,7 +381,6 @@ def api_solve():
     normalised, imaginary_notes = normalise_imaginary(desc)
     if normalised != desc:
         desc = normalised
-        desc_used = desc.replace(":", "\n")
     try:
         from symbulator.elements import (parse_circuit, ambiguous_in_elements,
                                          _VALUE_FIELD_IDX)
@@ -414,8 +413,14 @@ def api_solve():
                     tok = e.fields[idx].strip()
                     sep = "'" if choices[tok] == "si" else "*"
                     e.fields[idx] = f"{m[0]}{sep}{m[1]}"
-        desc = ":".join(e.name + "," + ",".join(e.fields) for e in elements)
-        desc_used = desc.replace(":", "\n")
+
+    # Always echo the circuit back one element per line, regardless of
+    # whether anything above needed fixing up -- easier to read/edit
+    # than a single ':'-joined line, and consistent every time you run,
+    # not just on the two occasions (imaginary-unit normalizing, an
+    # ambiguous suffix being resolved) that used to trigger it.
+    desc = ":".join(e.name + "," + ",".join(e.fields) for e in elements)
+    desc_used = desc.replace(":", "\n")
 
     t0 = time.time()
     ok, payload = _run_in_process(
