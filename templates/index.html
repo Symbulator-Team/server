@@ -18,7 +18,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     --muted: #5b6472;
     --accent: #2f5fa8;
     --accent-ink: #ffffff;
-    --accent-open: #b5540b;
+    --accent-open: #1277c9;
     --line: #e2e5ea;
     --lcd-bg: #0d1e30;
     --lcd-ink: #8ecbff;
@@ -26,20 +26,35 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     --err-bg: #fdf1f1;
     --err-ink: #a13030;
     --placeholder: #a7b3c4;
-    --mono: "Consolas", "Menlo", "DejaVu Sans Mono", monospace;
+    --focus-ring: 0 0 0 3px rgba(47, 111, 192, .18);
+    /* Signal colours shared with the documentation (its DESIGN.md):
+       warn = amber, ok = tip green; --err-* above already match its
+       "danger" pair exactly. Adopted 2026-08-20. */
+    --warn-ink: #b7791f;
+    --warn-bg: #fbf3e2;
+    --ok-ink: #2f7d4f;
+    --ok-bg: #ecf5ef;
+    /* IBM Plex first so the app matches the documentation wherever the
+       reader's machine already has it installed — but no webfont is ever
+       downloaded: the app stays self-contained and fully offline, and
+       otherwise falls back to the same system stacks as before. */
+    --sans: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: "IBM Plex Mono", "Consolas", "Menlo", "DejaVu Sans Mono", monospace;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--bg); color: var(--ink);
-    font: 16px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font: 16px/1.55 var(--sans);
   }
   header {
     background: #203864;
     color: #fff; padding: 2.2rem 1rem 2rem;
+    border-bottom: 3px solid #8ec7f5;
   }
   .wrap { max-width: 880px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
-  .header-flex { display: flex; align-items: center; gap: 1.1rem; }
-  .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none; }
+  .header-flex { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+  .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none;
+                 box-shadow: 0 0 0 3px rgba(142,199,245,.22); }
   header h1 { margin: 0; font-size: 2rem; letter-spacing: .5px; }
   header h1 .tm { color: #8ec7f5; }
   header p { margin: .4rem 0 0; color: #b7c3d6; }
@@ -50,19 +65,36 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   a.toplinks.plain { font-weight: 400; }
   a.toplinks:hover { color: #b8ddff; }
   main { padding: 2rem 0 3rem; }
+  main a, footer a { color: var(--accent); text-underline-offset: 2px;
+                     text-decoration-thickness: 1px; }
+  main a:hover, footer a:hover { color: #1f4a86; }
   .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
-    padding: 1.3rem 1.4rem; margin: 0 0 1.2rem; box-shadow: 0 1px 3px rgba(16,24,40,.05);
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 1.4rem 1.5rem; margin: 0 0 1.3rem;
+    box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 3px 10px rgba(16,24,40,.05);
   }
   label { display: block; font-weight: 600; font-size: .9rem; margin: 0 0 .3rem; }
   .hint { font-weight: 400; color: var(--muted); }
   textarea, select, input[type=text], input[type=number] {
     width: 100%; font-family: var(--mono); font-size: .95rem;
-    border: 1px solid var(--line); border-radius: 7px; padding: .55rem .7rem;
+    border: 1px solid #cfd6df; border-radius: 8px; padding: .55rem .7rem;
     background: #fbfcfd; color: var(--ink);
+    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
   }
+  textarea:hover:not(:disabled):not(:focus), select:hover:not(:disabled):not(:focus),
+  input[type=text]:hover:not(:disabled):not(:focus),
+  input[type=number]:hover:not(:disabled):not(:focus) { border-color: #aebaca; }
   textarea { min-height: 5.2rem; resize: vertical; }
-  textarea:focus, select:focus, input:focus { outline: 2px solid #2f6fc0; border-color: transparent; }
+  select {
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%235b6472' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right .7rem center;
+    padding-right: 2.1rem;
+  }
+  textarea:focus, select:focus, input:focus {
+    outline: none; border-color: #2f6fc0; background-color: #fff;
+    box-shadow: var(--focus-ring);
+  }
   textarea::placeholder, input::placeholder { color: var(--placeholder); opacity: 1; }
   .row { display: flex; gap: .9rem; flex-wrap: wrap; margin-top: .9rem; }
   .row > div { flex: 1 1 180px; }
@@ -70,24 +102,35 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   button {
     background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px;
     font-size: 1rem; font-weight: 600; padding: .6rem 1.6rem; cursor: pointer;
+    box-shadow: 0 1px 2px rgba(16,24,40,.15);
+    transition: background-color .15s ease, box-shadow .15s ease, transform .06s ease;
   }
   button:hover { background: #1f4a86; }
-  button:disabled { background: #9fb0c8; cursor: wait; }
+  button:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
+  button:disabled { background: #9fb0c8; cursor: wait; box-shadow: none; }
+  button:focus-visible, .uploadlbl:focus-visible, a.btnlink:focus-visible,
+  summary:focus-visible, a:focus-visible {
+    outline: 2px solid #2f6fc0; outline-offset: 2px;
+  }
   .run-row { text-align: center; margin: 1.6rem 0; }
   #solveBtn { display: inline-block; width: 92%; max-width: 820px;
-    padding: 1rem 1.6rem; font-size: 1.15rem; }
+    padding: 1rem 1.6rem; font-size: 1.15rem; letter-spacing: .02em;
+    box-shadow: 0 2px 8px rgba(32,56,100,.28); }
+  #solveBtn:hover:not(:disabled) { box-shadow: 0 3px 12px rgba(32,56,100,.34); }
   .run-row #status, .run-row #plotStatus { display: block; margin-top: .6rem; }
   .examples { font-size: .88rem; color: var(--muted); }
-  .examples select { width: auto; font-family: inherit; font-size: .88rem; background: #fff; }
+  .examples select { width: auto; font-family: inherit; font-size: .88rem; background-color: #fff; }
   #status, #plotStatus { font-size: .88rem; color: var(--muted); }
   .lcd {
-    background: var(--lcd-bg); border-radius: 10px; padding: 1.1rem 1.3rem;
-    border: 1px solid #081525; box-shadow: inset 0 2px 12px rgba(0,0,0,.5);
+    background: linear-gradient(180deg, #102338 0%, var(--lcd-bg) 55%);
+    border-radius: 10px; padding: 1.2rem 1.4rem;
+    border: 1px solid #081525;
+    box-shadow: inset 0 2px 12px rgba(0,0,0,.5), inset 0 0 46px rgba(30,80,130,.10);
     color: var(--lcd-ink); min-height: 3rem;
   }
   .lcd .placeholder { color: var(--lcd-dim); font-family: var(--mono); font-size: .9rem; }
   .result-row {
-    display: flex; align-items: baseline; gap: 1rem; padding: .45rem .2rem;
+    display: flex; align-items: baseline; gap: 1rem; padding: .55rem .2rem;
     border-bottom: 1px solid #173352; flex-wrap: wrap;
   }
   .result-row:last-child { border-bottom: 0; }
@@ -100,7 +143,8 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     .result-math { width: 100%; }
   }
   .result-math mjx-container svg { color: var(--lcd-ink); }
-  .lcd-meta { color: var(--lcd-dim); font-family: var(--mono); font-size: .78rem; margin-top: .7rem; }
+  .lcd-meta { color: var(--muted); font-family: var(--mono); font-size: .78rem; margin-top: .7rem; }
+  .lcd .lcd-meta { color: var(--lcd-dim); }
   .results-h { font-size: 1.35rem; font-weight: 700; margin: 0 0 .9rem; }
   .results-h.section-h2 { margin-top: 1.5rem; padding-top: 1.2rem;
                           border-top: 1px solid var(--line); }
@@ -123,9 +167,10 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .section-cap:first-child { margin-top: 0; }
   .elgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: .8rem; }
   .elcard {
-    background: var(--lcd-bg); border: 1px solid #081525; border-radius: 10px;
-    padding: .75rem .95rem; color: var(--lcd-ink);
-    box-shadow: inset 0 2px 10px rgba(0,0,0,.45);
+    background: linear-gradient(180deg, #102338 0%, var(--lcd-bg) 55%);
+    border: 1px solid #081525; border-radius: 10px;
+    padding: .85rem 1rem; color: var(--lcd-ink);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,.45), inset 0 0 34px rgba(30,80,130,.10);
   }
   .elcard .el-title { font-family: var(--mono); color: #6fb8f0; font-size: .95rem; }
   .elcard .el-kind { color: var(--lcd-dim); font-size: .78rem; font-family: var(--mono); margin-left: .4rem; }
@@ -145,7 +190,9 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
            border-radius: 8px; padding: .7rem 1rem; font-size: .92rem; }
   details { margin-top: .4rem; }
   summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; color: var(--accent);
-    list-style: none; display: flex; align-items: center; gap: .5rem; }
+    list-style: none; display: flex; align-items: center; gap: .5rem;
+    transition: color .15s ease; }
+  summary:not(.section-toggle):hover { color: #1f4a86; }
   summary::-webkit-details-marker { display: none; }
   summary::before {
     content: "▾"; font-size: 1rem; line-height: 1; color: var(--muted);
@@ -156,10 +203,14 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   details[open] > summary:not(.section-toggle),
   details[open] > summary:not(.section-toggle)::before { color: var(--accent-open); }
   table { border-collapse: collapse; width: 100%; margin-top: .6rem; font-size: .88rem; }
-  th, td { text-align: left; padding: .3rem .5rem; border-bottom: 1px solid var(--line); }
+  th, td { text-align: left; padding: .35rem .6rem; border-bottom: 1px solid var(--line); }
+  th { font-size: .76rem; font-weight: 600; color: var(--muted);
+       text-transform: uppercase; letter-spacing: .05em;
+       border-bottom: 2px solid var(--line); }
   td:first-child, code { font-family: var(--mono); }
   code { background: #eaf0f7; border-radius: 4px; padding: .05rem .35rem; font-size: .86em; }
-  footer { color: var(--muted); font-size: .84rem; text-align: center; padding: 0 1rem 2rem; }
+  footer { color: var(--muted); font-size: .84rem; text-align: center;
+           padding: 0 1rem 2.4rem; line-height: 1.8; }
   .section-divider { border: 0; border-top: 1px solid var(--line); margin: 2.4rem 0; }
   #omegaField, #varsField, #n1Field, #n2Field, #kindField { display: none; }
   .chart-svg { width: 100%; height: auto; background: #fff; border-radius: 8px; }
@@ -174,24 +225,35 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .dl-row label { font-weight: 400; font-size: .92rem; display: flex;
                   align-items: center; gap: .45rem; margin: 0; cursor: pointer; }
   .dl-row input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
-  .card.inactive { opacity: .55; }
+  .card.inactive { border-color: #ecf0f4; box-shadow: none; }
+  .card.inactive .results-h { color: var(--muted); }
   #expertBox textarea:disabled, #expertBox input[type=text]:disabled { opacity: .55; cursor: not-allowed; }
   .group-h {
-    font-size: 1.3rem; font-weight: 800; color: var(--ink);
-    text-align: center; white-space: nowrap; margin: 2rem 0 .6rem;
+    display: flex; align-items: center; justify-content: center; gap: 1rem;
+    font-size: 1.15rem; font-weight: 700; color: var(--ink);
+    letter-spacing: .02em; white-space: nowrap; margin: 2.4rem 0 .8rem;
   }
   .group-h:first-of-type { margin-top: 0; }
-  .group-h .bracket { color: var(--accent); }
+  .group-h::before, .group-h::after {
+    content: ""; flex: 1 1 0; max-width: 6rem; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--line) 40%, var(--line) 60%, transparent);
+  }
+  .group-h .bracket { color: var(--accent); font-weight: 800; font-size: 1.15em; }
+  /* Outputs has no intro paragraph between the heading and the first card
+     the way Inputs does, so it reads as cramped without a bit of its own
+     breathing room here -- Inputs is unaffected since .group-intro, not
+     .card, is what follows it. */
+  .group-h + .card { margin-top: .6rem; }
   .group-intro { margin: 0 0 1.2rem; max-width: 68ch; }
   #evalOut, #solveqOut { margin-top: .9rem; display: none; }
   .disamb {
-    background: #fff9ec; border: 1px solid #eadfc0; border-radius: 10px;
+    background: var(--warn-bg); border: 1px solid #e9d8b4; border-radius: 10px;
     padding: 1rem 1.2rem;
   }
   .disamb h3 { margin: 0 0 .3rem; font-size: 1rem; }
   .disamb p { margin: .2rem 0 .8rem; font-size: .9rem; color: var(--muted); }
-  .disamb-item { padding: .55rem 0; border-top: 1px solid #eee3c8; }
-  .disamb-item code { background: #f4ead2; }
+  .disamb-item { padding: .55rem 0; border-top: 1px solid #eee0c0; }
+  .disamb-item code { background: #f5e9cc; }
   .disamb-item label { display: inline-flex; align-items: center; gap: .4rem;
     font-weight: 400; font-size: .92rem; margin: .3rem 1.4rem .1rem 0; cursor: pointer; }
   .disamb-item input[type=radio] { accent-color: var(--accent); }
@@ -200,13 +262,16 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     display: inline-block; font-size: 1rem; font-weight: 600; cursor: pointer;
     color: var(--accent-ink); border: 0; border-radius: 8px;
     padding: .6rem 1.6rem; background: var(--accent);
+    box-shadow: 0 1px 2px rgba(16,24,40,.15);
+    transition: background-color .15s ease, box-shadow .15s ease;
   }
   .uploadlbl:hover { background: #1f4a86; }
   button.linkish {
     background: none; border: 0; color: var(--accent); font-size: .84rem;
     padding: .1rem .3rem; text-decoration: underline; cursor: pointer;
-    font-weight: 500;
+    font-weight: 500; box-shadow: none;
   }
+  button.linkish:active:not(:disabled) { transform: none; }
   button.linkish:hover { background: none; color: #1f4a86; }
   button.linkish:disabled { background: none; color: var(--muted);
                              text-decoration: none; cursor: not-allowed; }
@@ -214,14 +279,16 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     display: inline-block; background: var(--accent); color: var(--accent-ink);
     border: 0; border-radius: 8px; font-size: 1rem; font-weight: 600;
     padding: .6rem 1.6rem; cursor: pointer; text-decoration: none;
+    box-shadow: 0 1px 2px rgba(16,24,40,.15);
+    transition: background-color .15s ease, box-shadow .15s ease;
   }
-  a.btnlink:hover { background: #1f4a86; }
+  a.btnlink:hover { background: #1f4a86; color: var(--accent-ink); }
   .booknote {
     font-size: .84rem; color: var(--muted); margin-top: .6rem;
     background: #eef4fb; border-left: 3px solid #a9c6e0;
     padding: .4rem .7rem; border-radius: 0 6px 6px 0;
   }
-  .booknote.warn { background: #fff9ec; border-left-color: #e0c98a; }
+  .booknote.warn { background: var(--warn-bg); border-left-color: #e2c88f; }
   label.checkline { display: flex; align-items: flex-start; gap: .45rem;
     font-weight: 400; font-size: .92rem; cursor: pointer; padding: .35rem 0; }
   label.checkline > input { margin-top: .2rem; flex: none; }
@@ -233,7 +300,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   <div class="wrap header-flex">
     <img src="/static/logo.png" alt="Symbulator logo" class="header-logo">
     <div>
-      <h1>Symbulator <span class="tm">Py</span></h1>
+      <h1>Symbulator <span class="tm">9</span></h1>
       <p>The best symbolic simulator of linear circuits since 1999.</p>
     </div>
   </div>
@@ -637,7 +704,7 @@ c1,2,0,4.7e-6</pre>
 
   <div class="card inactive" id="dlCard">
     <details>
-      <summary>Download output</summary>
+      <summary class="results-h section-toggle">Download output</summary>
       <p class="hint" style="margin:0 0 .9rem">
         Download an output file with the information you decide to include.
       </p>
@@ -705,9 +772,9 @@ c1,2,0,4.7e-6</pre>
        everything between these two markers. -->
   <div class="card">
     <details>
-      <summary>Run Symbulator Py locally</summary>
+      <summary>Run Symbulator 9 locally</summary>
       <p style="font-size:.92rem;margin-top:.7rem">
-        This <strong>online version</strong> of Symbulator Py is hosted
+        This <strong>online version</strong> of Symbulator 9 is hosted
         remotely and needs an internet connection every time you use it.
         There is an identical <strong>offline version</strong> that runs
         entirely inside your own browser — nothing is sent to any server
@@ -752,9 +819,9 @@ c1,2,0,4.7e-6</pre>
 
         <div class="section-cap">Install as an app</div>
         <p class="hint" style="margin:.2rem 0 0">
-          Once Symbulator Py is open in your browser, you can install it
+          Once Symbulator 9 is open in your browser, you can install it
           as an app. To do this, look for an “Install” icon in the
-          address bar (or “Install Symbulator Py” / “Add to Home
+          address bar (or “Install Symbulator 9” / “Add to Home
           Screen” in the browser's menu). After installing, it opens
           like any other app, with no internet needed and no more
           running start scripts. Once you've finished this first
@@ -777,9 +844,24 @@ c1,2,0,4.7e-6</pre>
           still worth keeping the ZIP somewhere safe, though, in case
           you ever need to reinstall (for example, if you clear your
           browser's site data, switch browsers, or move to a different
-          computer). If a newer version of Symbulator Py comes out,
-          download the new ZIP and repeat this process to update your
-          installed app.
+          computer).
+        </p>
+
+        <div class="section-cap">Updating to a newer version</div>
+        <p class="hint" style="margin:.2rem 0 0">
+          If a newer version of Symbulator 9 comes out, download the
+          new ZIP and repeat the install process above with it. When
+          reinstalling, instead of “Install” you will see “Open in
+          app”: click on that.
+        </p>
+        <p class="hint">
+          The first time you open the app afterward, it may still show
+          the old version — that's expected. You may get a message
+          that there is a new version ready, with a button to review
+          and apply it. You can force your browser to fully reload it:
+          press <code>Ctrl+Shift+R</code> (Windows/Linux) or
+          <code>Cmd+Shift+R</code> (Mac). That clears out any leftover
+          cached copy and loads the new one.
         </p>
       </details>
     </details>
@@ -788,7 +870,7 @@ c1,2,0,4.7e-6</pre>
 
   <div class="card">
     <details>
-      <summary>About Symbulator Py</summary>
+      <summary>About Symbulator 9</summary>
 
       <div class="section-cap" style="margin-top:.9rem">What is Symbulator</div>
       <p style="font-size:.92rem;margin-top:.2rem">
@@ -815,7 +897,7 @@ c1,2,0,4.7e-6</pre>
         the TI-Nspire as version 8.
       </p>
 
-      <div class="section-cap">About Symbulator Py</div>
+      <div class="section-cap">About Symbulator 9</div>
       <p style="font-size:.92rem;margin-top:.2rem">
         This port of Symbulator to Python and SymPy is version 9 in
         that lineage. Whereas versions 1 through 8 were
@@ -854,7 +936,7 @@ c1,2,0,4.7e-6</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator Py version 2026-08-20
+  Symbulator 9 version 2026-08-20
 </footer>
 
 <script>
