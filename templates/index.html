@@ -34,7 +34,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     font: 16px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
   header {
-    background: linear-gradient(135deg, #142c4d 0%, #203864 100%);
+    background: #203864;
     color: #fff; padding: 2.2rem 1rem 2rem;
   }
   .wrap { max-width: 880px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
@@ -245,6 +245,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   <p class="group-intro">
     Describe a linear circuit and specify the analysis type. (See
     <a href="https://learn.symbulator.com" target="_blank" rel="noopener">Tutorial</a>.)
+    You can use an Input File.
   </p>
 
   <div class="card" id="inputsCard">
@@ -757,7 +758,9 @@ c1,2,0,4.7e-6</pre>
           address bar (or “Install Symbulator Py” / “Add to Home
           Screen” in the browser's menu). After installing, it opens
           like any other app, with no internet needed and no more
-          running start scripts.
+          running start scripts. Once you've finished this first
+          session, you can close that window — the installed app runs
+          on its own from now on.
         </p>
         <p class="hint">
           This process requires Python 3 only to run the one-time local
@@ -791,7 +794,7 @@ c1,2,0,4.7e-6</pre>
       <div class="section-cap" style="margin-top:.9rem">What is Symbulator</div>
       <p style="font-size:.92rem;margin-top:.2rem">
         Symbulator is a program to solve linear electric circuits
-        symbolically and numerically in a calculator. It accepts inputs
+        symbolically and numerically. It accepts inputs
         with numerical and symbolic values, and provides numerical and
         symbolic results. The name is a portmanteau of "symbolic
         simulator". Symbulator is widely regarded as the best symbolic
@@ -806,17 +809,17 @@ c1,2,0,4.7e-6</pre>
         <a href="https://roberto.perez-franco.com" target="_blank" rel="noopener">Roberto Perez-Franco</a>
         on a Texas Instruments TI-89 calculator, starting in April 1999
         as an engineering student at Universidad Tecnológica de Panamá
-        (UTP). An early version won 1st place in 2000 at the IEEE
-        Student Paper Contest for Latin America. Version 5 served as his
-        graduation thesis in January 2001. He released version 6 in 2013
-        and version 7 in 2023, along with a port to the TI-Nspire as
-        version 9.
+        (UTP). An early version won 1st place at the IEEE Student Paper
+        Contest for Latin America in 2000. Version 5 served as
+        Roberto's graduation thesis in January 2001. He released
+        version 6 in 2013 and version 7 in 2023, along with a port to
+        the TI-Nspire as version 8.
       </p>
 
       <div class="section-cap">About Symbulator Py</div>
       <p style="font-size:.92rem;margin-top:.2rem">
-        This long-dreamed port of Symbulator to Python and SymPy would
-        be version 9 in that sequence. Whereas versions 1 through 8 were
+        This port of Symbulator to Python and SymPy is version 9 in
+        that lineage. Whereas versions 1 through 8 were
         written by Roberto entirely by hand, this new version — in a
         sign of the times — was ported and developed using Anthropic's
         AI assistant. Claude took care of all the coding, while Roberto
@@ -828,13 +831,12 @@ c1,2,0,4.7e-6</pre>
       <div class="section-cap">Symbulator is free</div>
       <p style="font-size:.92rem;margin-top:.2rem">
         You do not have to pay anything to use Symbulator. It has
-        always been free of cost, and always will be. (You are
-        welcome!) Since June 2013, Symbulator is offered under a
-        Creative Commons License (CC) BY-NC-SA. If you want to port it
-        to other platforms, you are free to do so under the same
-        license. Since 2026, Symbulator is free and open-source
-        software, released under the MIT licence: you may use, study,
-        modify and share it, including commercially. The solver is
+        always been free of cost, and always will be. Since June 2013,
+        all versions of Symbulator were offered under a Creative
+        Commons License (CC) BY-NC-SA. Since 2026, all versions of
+        Symbulator are free and open-source software, released under
+        the MIT licence: you may use, study, modify and share it,
+        including commercially, with attribution. The solver is
         published as the
         <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">symbulator</a>
         package on PyPI, and the project for the solver and this interface
