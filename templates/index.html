@@ -53,8 +53,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   }
   .wrap { max-width: 880px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
   .header-flex { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
-  .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none;
-                 box-shadow: 0 0 0 3px rgba(142,199,245,.22); }
+  .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none; }
   header h1 { margin: 0; font-size: 2rem; letter-spacing: .5px; }
   header h1 .tm { color: #8ec7f5; }
   header p { margin: .4rem 0 0; color: #b7c3d6; }
@@ -310,8 +309,8 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   <h2 class="group-h"><span class="bracket">[</span>   I N P U T S   <span class="bracket">]</span></h2>
   <p class="group-intro">
     <strong>Describe a linear circuit and specify the analysis type</strong> —
-    You can use an Input File. Unsure how to use? Here's a
-    <a href="https://learn.symbulator.com" target="_blank" rel="noopener">Tutorial</a>.
+    You can use an Input File. Unsure how to use? Learn
+    <a href="https://learn.symbulator.com" target="_blank" rel="noopener">here</a>!
   </p>
 
   <div class="card" id="inputsCard">
@@ -596,26 +595,25 @@ c1,2,0,4.7e-6</pre>
     <details id="expertBox" style="margin-top:.9rem">
       <summary>Expert Mode<span id="expertEqFlag" class="hint" style="display:none"></span></summary>
       <p class="hint" style="margin:0 0 .8rem">
-        Enable Expert Mode if you want to provide Symbulator additional
-        equations, unknowns and/or conditions to be included as part of
-        the system.
+        Provide additional equations, unknowns and/or conditions to be
+        considered.
       </p>
       <label class="checkline"><input type="checkbox" id="expertEnabled"><span>Enable Expert Mode</span></label>
       <div id="expertWarn" class="booknote warn" style="display:none;margin-top:.7rem"></div>
 
       <div class="row" style="margin-top:.9rem">
         <div>
-          <label for="eqs">Add equations <span class="hint">(one per line, e.g. <code>v_2 = 6</code>;
+          <label for="eqs">Add equations — <span class="hint">one per line, e.g. <code>v_2 = 6</code>;
             parsed the same as circuit values — SI shorthand like <code>4.7'k</code>
             and imaginary units (<code>i</code>/<code>j</code>) both work, but a bare
-            suffix like <code>4.7k</code> with no apostrophe doesn't)</span></label>
+            suffix like <code>4.7k</code> with no apostrophe doesn't</span></label>
           <textarea id="eqs" spellcheck="false" style="min-height:3.2rem" disabled></textarea>
         </div>
       </div>
 
       <div class="row">
         <div>
-          <label for="unks">Add unknowns <span class="hint">(comma-separated)</span></label>
+          <label for="unks">Add unknowns — <span class="hint">comma-separated, e.g. <code>vx</code> or <code>v_x</code></span></label>
           <input type="text" id="unks" disabled>
         </div>
       </div>
@@ -729,7 +727,7 @@ c1,2,0,4.7e-6</pre>
         <div>
           <label for="plotTool">Plot type</label>
           <select id="plotTool">
-            <option value="plot_time">Plot a variable vs. time</option>
+            <option value="plot_time">Plot a function of time</option>
             <option value="bode">Bode plot (magnitude &amp; phase vs. frequency)</option>
           </select>
         </div>
@@ -783,7 +781,7 @@ c1,2,0,4.7e-6</pre>
         ordinary app.
       </p>
       <div class="actions" style="margin-top:.9rem">
-        <a class="btnlink" href="https://py.symbulator.com/local.zip"
+        <a class="btnlink" href="https://symbulator.com/9/local.zip"
            target="_blank" rel="noopener"
            download="symbulator-local.zip">Download the offline version</a>
         <span class="hint">— one .zip, about 13 MB, works on Windows, macOS and Linux</span>
