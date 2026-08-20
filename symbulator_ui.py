@@ -676,7 +676,14 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             if use_rms:
                 kwargs["use_rms"] = True
         if domain == "tr" and variables:
-            kwargs["variables"] = variables
+            # Accept the same casual, underscore/case-insensitive typing
+            # ("v2", "V_2", "IR1") that Evaluate, Solve and the Plot key
+            # already do, instead of requiring the literal solved name --
+            # a name with no match passes through unchanged, so a genuine
+            # typo still comes back as "nothing to report" rather than
+            # being silently swallowed here.
+            kwargs["variables"] = [_resolve_name(v, _guard_elements)
+                                    for v in variables]
         if extra_equations:
             kwargs["equations"] = extra_equations
         if extra_unknowns:
@@ -897,12 +904,13 @@ def _normalize_underscore_names(text, canonical):
 MAX_PLOT_POINTS = 2000
 
 
-def _resolve_plot_key(key: str, elements) -> str:
-    """Match a casually-typed plot variable ("vx", "ir5") to its real
-    solved name ("v_x", "i_r5"), the same underscore/case-insensitive
-    way expert-mode equations do (see _normalize_underscore_names) --
-    falls back to the typed name unchanged if nothing matches, so the
-    caller still gets a clear "not found" error instead of a silent
+def _resolve_name(key: str, elements) -> str:
+    """Match a casually-typed circuit quantity ("vx", "ir5") to its real
+    solved name ("v_x", "i_r5"), the same underscore/case-insensitive way
+    expert-mode equations do (see _normalize_underscore_names) -- used for
+    a plot's variable key and for the "limit results to..." variables
+    list. Falls back to the typed name unchanged if nothing matches, so
+    the caller still gets a clear "not found" error instead of a silent
     substitution."""
     canonical = _circuit_canonical_names(elements)
     by_norm = {_norm_name(n): n for n in canonical}
@@ -933,7 +941,7 @@ def plot_time_ui(desc: str, key: str, t_min: float, t_max: float, n: int,
             if extra_conditions:
                 extra_conditions = [_normalize_underscore_names(c, _canon)
                                      for c in extra_conditions]
-        resolved = _resolve_plot_key(key, elements)
+        resolved = _resolve_name(key, elements)
 
         t_values, y_values = time_samples(
             desc, resolved, t_max=t_max, t_min=t_min, n=n,
@@ -969,7 +977,7 @@ def bode_ui(desc: str, key: str, f_min: float, f_max: float, n: int,
             if extra_conditions:
                 extra_conditions = [_normalize_underscore_names(c, _canon)
                                      for c in extra_conditions]
-        resolved = _resolve_plot_key(key, elements)
+        resolved = _resolve_name(key, elements)
 
         freq_values, mag_db, phase_deg = bode_samples(
             desc, resolved, f_min=f_min, f_max=f_max, n=n,
