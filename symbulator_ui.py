@@ -359,16 +359,25 @@ def _latex_with_j(expr) -> str:
 # Content checks, explanatory notes, and error-message formatting
 # ---------------------------------------------------------------------------
 
-def normalise_imaginary(desc: str):
+def normalise_imaginary(desc: str, domain: str = "ac"):
     """Rewrite every spelling of the imaginary unit into the canonical
     engineering form, so `3*i`, `3*I`, `3*J` and a bare `j` all become
     `3j` / `1j` in the description the user can see. Returns
     (new_desc, [notes]); the description is returned unchanged when
     nothing needed rewriting, so we never reformat what the user typed
-    for no reason."""
+    for no reason.
+
+    i/I/j/J only mean the imaginary unit in AC (see
+    `symbulator.si_prefix._allowed_namespace`), so outside AC this is a
+    no-op: those letters are ordinary variable names there and nothing
+    should be rewritten. `domain` defaults to "ac" so any caller that
+    hasn't been updated to pass it keeps today's behaviour."""
     import sympy as sp
     from symbulator.elements import parse_circuit, _IDENTIFIER_FIELD_IDX
     from symbulator.si_prefix import safe_sympify
+
+    if domain != "ac":
+        return desc, []
 
     try:
         elements = parse_circuit(desc)
@@ -406,7 +415,14 @@ def _complex_value_error(elements, domain: str):
     values are real by definition, and FD/TR take their sources in the
     s-domain, where legitimate inputs have real coefficients and any
     complex behaviour comes from the poles of the solution. Returns an
-    error message, or None."""
+    error message, or None.
+
+    i/I/j/J are only reserved as the imaginary unit in AC (see
+    `symbulator.si_prefix._allowed_namespace`), so outside AC they parse
+    as ordinary variables and can no longer be the cause of a value
+    working out complex here -- the only way to reach this now is
+    genuine complex math (e.g. sqrt(-4)), so the message no longer needs
+    to guess between two possible mistakes."""
     import sympy as sp
     from symbulator.si_prefix import safe_sympify, expand_value
 
@@ -417,32 +433,24 @@ def _complex_value_error(elements, domain: str):
             if idx >= len(el.fields) or el.kind not in ("r", "l", "c", "e", "j", "m", "t"):
                 continue
             try:
-                expr = safe_sympify(expand_value(el.fields[idx], "si"))
+                expr = safe_sympify(expand_value(el.fields[idx], "si"),
+                                    reserve_imaginary=False)
             except Exception:
                 continue
             if getattr(expr, "has", None) and expr.has(sp.I):
-                # Two quite different mistakes land here, and the message
-                # has to serve both: someone who meant a complex source
-                # and picked the wrong analysis, and someone who meant
-                # 'i' as an ordinary variable and did not know it was
-                # reserved. Guessing between them would be worse than
-                # naming both.
                 return (
                     f"The value of '{el.name}' works out complex, and complex "
-                    f"values only apply to AC analysis.\n"
-                    f"If you meant a complex source, switch the analysis to "
-                    f"AC.\n"
-                    f"If you meant an ordinary variable: i, I, j and J are "
-                    f"reserved names in Symbulator — all four mean the "
-                    f"imaginary unit — so give the variable a different "
-                    f"name. Only the bare letters are reserved, so ix, i1 or "
-                    f"i_load are all fine.")
+                    f"values only apply to AC analysis. Switch the analysis "
+                    f"to AC, or rewrite the value so it stays real.")
     return None
 
 
-def _hijack_notes(elements):
+def _hijack_notes(elements, reserve_imaginary: bool = True):
     """One note per name that SymPy would have reinterpreted, so the user
-    learns it was read as an ordinary variable instead."""
+    learns it was read as an ordinary variable instead. `reserve_imaginary`
+    should match the domain the elements were parsed for (see
+    `symbulator.si_prefix.hijacked_names`) so i/I/j/J aren't reported as
+    "hijacked" when they were in fact read as ordinary variables."""
     from symbulator.si_prefix import hijacked_names
 
     seen, notes = set(), []
@@ -450,7 +458,7 @@ def _hijack_notes(elements):
         for idx in (2, 3):
             if idx >= len(el.fields):
                 continue
-            for name in hijacked_names(el.fields[idx]):
+            for name in hijacked_names(el.fields[idx], reserve_imaginary=reserve_imaginary):
                 if name not in seen:
                     seen.add(name)
                     notes.append(
@@ -476,7 +484,8 @@ def _impulse_notes(elements, domain: str):
         if el.kind not in ("e", "j") or len(el.fields) < 3:
             continue
         try:
-            expr = safe_sympify(el.fields[2])
+            # fd/tr are never AC, so i/I/j/J are ordinary variables here.
+            expr = safe_sympify(el.fields[2], reserve_imaginary=False)
         except Exception:  # noqa: BLE001
             continue
         if expr.is_number and expr != 0:
@@ -624,7 +633,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         _bad = _complex_value_error(_guard_elements, domain)
         if _bad:
             return _err(_bad)
-        _notes = _hijack_notes(_guard_elements)
+        _notes = _hijack_notes(_guard_elements, reserve_imaginary=(domain == "ac"))
         _notes += _impulse_notes(_guard_elements, domain)
 
         # Expert mode: let "ir5" mean "i_r5" the same way Evaluate and
@@ -931,7 +940,8 @@ def plot_time_ui(desc: str, key: str, t_min: float, t_max: float, n: int,
         from symbulator.plotting import time_samples, PlotError
 
         elements = parse_circuit(desc)
-        _notes = _hijack_notes(elements)
+        # Plot vs time runs tr() under the hood, which is never AC.
+        _notes = _hijack_notes(elements, reserve_imaginary=False)
 
         if extra_equations or extra_conditions:
             _canon = _circuit_canonical_names(elements)
@@ -967,7 +977,8 @@ def bode_ui(desc: str, key: str, f_min: float, f_max: float, n: int,
         from symbulator.plotting import bode_samples, PlotError
 
         elements = parse_circuit(desc)
-        _notes = _hijack_notes(elements)
+        # Bode plot runs fd() under the hood, which is never AC.
+        _notes = _hijack_notes(elements, reserve_imaginary=False)
 
         if extra_equations or extra_conditions:
             _canon = _circuit_canonical_names(elements)
