@@ -2,25 +2,33 @@
 
 Running notes so nothing is lost between sessions.
 
-## Next build TODO — Dark Mode toggle (20 Aug 2026)
+## Next build TODO — Dark Mode for the documentation site (21 Aug 2026)
 
-Roberto wants a toggle to switch to Dark Mode, across all three
-user-facing surfaces:
+Roberto wants a Dark Mode toggle across all three user-facing surfaces.
+Two of the three shipped in the 21 Aug 2026 build:
 
-* the server (Flask) interface — `server/templates/index.html`
+* the server (Flask) interface — `server/templates/index.html` — DONE
 * the local (offline/Pyodide) interface — generated from the same
-  template by `build_local.py`, so implementing it once in the shared
-  template covers both automatically, same as every other UI change
+  template by `build_local.py`, so it came along automatically — DONE
 * the web version of the documentation (the CoderDocs tutorial/docs
-  site — `learn.symbulator.com` once that move happens; see the domain
-  note below for where those pages currently live)
+  site — `learn.symbulator.com`) — NOT done yet, still open
 
-Not implemented yet — noted here per Roberto's explicit "put that in
-the To-Do list for the next build," not built this round. When it's
-picked up: check whether the docs site uses the same CSS system as the
-app template or a separate CoderDocs stylesheet, since the toggle will
-likely need two different implementations (app template vs. docs site)
-even though it's one feature from Roberto's point of view.
+The app-template implementation: a `#themeToggle` button in the header
+flips `data-theme="dark"` on `<html>`, persisted in
+`localStorage['symbulator-theme']`, defaulting to light (the site's
+actual authored theme — confirmed live, despite earlier screenshots
+that looked dark, which turned out to be a forced OS/browser dark-mode
+render, not the app's real design). An early inline `<script>` in
+`<head>` applies a saved preference before first paint so there's no
+light-then-dark flash on reload. All the app's colors are CSS custom
+properties on `:root`, overridden under `html[data-theme="dark"]` — the
+`.lcd`/`.elcard` "calculator screen" panels are deliberately excluded,
+since they're styled dark in both themes on purpose.
+
+Still open: the docs site. Check whether it uses the same CSS-variable
+system as the app template or a separate CoderDocs stylesheet, since
+the toggle will likely need its own implementation there even though
+it's one feature from Roberto's point of view.
 
 ## Next build TODO — real domains are settling (19 Aug 2026)
 
