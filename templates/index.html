@@ -39,8 +39,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   }
   .wrap { max-width: 880px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
   .header-flex { display: flex; align-items: center; gap: 1.1rem; }
-  .header-logo { width: 60px; height: 60px; border-radius: 12px; flex: none;
-                 box-shadow: 0 2px 10px rgba(0,0,0,.35); }
+  .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none; }
   header h1 { margin: 0; font-size: 2rem; letter-spacing: .5px; }
   header h1 .tm { color: #8ec7f5; }
   header p { margin: .4rem 0 0; color: #b7c3d6; }
@@ -232,7 +231,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 <body>
 <header>
   <div class="wrap header-flex">
-    <img src="/static/icon.png" alt="Symbulator logo" class="header-logo">
+    <img src="/static/logo.png" alt="Symbulator logo" class="header-logo">
     <div>
       <h1>Symbulator <span class="tm">Py</span></h1>
       <p>The best symbolic simulator of linear circuits since 1999.</p>
@@ -243,9 +242,9 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 <main class="wrap">
   <h2 class="group-h"><span class="bracket">[</span>   I N P U T S   <span class="bracket">]</span></h2>
   <p class="group-intro">
-    Describe a linear circuit and specify the analysis type. (See
-    <a href="https://learn.symbulator.com" target="_blank" rel="noopener">Tutorial</a>.)
-    You can use an Input File.
+    <strong>Describe a linear circuit and specify the analysis type</strong> —
+    You can use an Input File. Unsure how to use? Here's a
+    <a href="https://learn.symbulator.com" target="_blank" rel="noopener">Tutorial</a>.
   </p>
 
   <div class="card" id="inputsCard">
