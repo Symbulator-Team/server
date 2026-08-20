@@ -419,10 +419,10 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     <img src="/static/logo.png" alt="Symbulator logo" class="header-logo">
     <div class="header-title">
       <h1>Symbulator <span class="tm">9</span></h1>
-      <p>The best symbolic simulator of linear circuits, since 1999.</p>
+      <p>The best symbolic simulator of linear circuits since 1999.</p>
     </div>
     <button type="button" id="themeToggle" class="theme-toggle"
-            aria-label="Switch to dark mode" title="Switch to dark mode">🌙</button>
+            aria-label="Switch to dark mode" title="Switch to dark mode"><svg viewBox="0 0 24 24" style="width:1.2em;height:1.2em;flex:none" fill="#8ec7f5" aria-hidden="true"><path d="M20.4 14.7A8.5 8.5 0 1 1 9.3 3.6a7 7 0 1 0 11.1 11.1Z"/></svg></button>
   </div>
 </header>
 
@@ -1046,7 +1046,7 @@ c1,2,0,4.7e-6</pre>
         sign of the times — was ported and developed using Anthropic's
         AI assistant. Claude took care of all the coding, while Roberto
         provided instructions and feedback, during a week-long
-        collaboration session. It is the author's hope that this port
+        collaboration. It is the author's hope that this port
         will preserve Symbulator for a new generation and beyond.
       </p>
 
@@ -2310,10 +2310,16 @@ $('dlBtn').addEventListener('click', () => {
 // saved preference (if any) before first paint, so this only has to wire
 // up the button: flip the attribute, persist it, and update the icon/label.
 const themeToggleBtn = $('themeToggle');
+// Plain SVGs rather than the 🌙/☀️ emoji they replace: emoji glyphs are
+// full-colour and ignore CSS `color`, so there was no way to make them
+// match the app's own light-blue accent (#8ec7f5, already used for the
+// header's other highlights). These are that same colour instead.
+const ICON_MOON = '<svg viewBox="0 0 24 24" style="width:1.2em;height:1.2em;flex:none" fill="#8ec7f5" aria-hidden="true"><path d="M20.4 14.7A8.5 8.5 0 1 1 9.3 3.6a7 7 0 1 0 11.1 11.1Z"/></svg>';
+const ICON_SUN = '<svg viewBox="0 0 24 24" style="width:1.2em;height:1.2em;flex:none" fill="none" stroke="#8ec7f5" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>';
 function isDarkTheme() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
 function syncThemeToggleLabel() {
   const dark = isDarkTheme();
-  themeToggleBtn.textContent = dark ? '☀️' : '🌙';
+  themeToggleBtn.innerHTML = dark ? ICON_SUN : ICON_MOON;
   const label = dark ? 'Switch to light mode' : 'Switch to dark mode';
   themeToggleBtn.setAttribute('aria-label', label);
   themeToggleBtn.title = label;
