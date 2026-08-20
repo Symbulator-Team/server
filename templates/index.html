@@ -8,23 +8,24 @@
 <script>
 window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'global' } };
 </script>
-<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/static/icon.png" type="image/png">
 <script defer src="/static/mathjax/tex-svg.js"></script>
 <style>
   :root {
-    --bg: #f4f5f7;
+    --bg: #f4f6fa;
     --card: #ffffff;
     --ink: #1c2330;
     --muted: #5b6472;
-    --accent: #0f6b5c;
+    --accent: #2f5fa8;
     --accent-ink: #ffffff;
     --accent-open: #b5540b;
     --line: #e2e5ea;
-    --lcd-bg: #10241c;
-    --lcd-ink: #9ff2c8;
-    --lcd-dim: #4e7a63;
+    --lcd-bg: #0d1e30;
+    --lcd-ink: #8ecbff;
+    --lcd-dim: #4a7098;
     --err-bg: #fdf1f1;
     --err-ink: #a13030;
+    --placeholder: #a7b3c4;
     --mono: "Consolas", "Menlo", "DejaVu Sans Mono", monospace;
   }
   * { box-sizing: border-box; }
@@ -33,19 +34,22 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     font: 16px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
   header {
-    background: linear-gradient(135deg, #0d1f2d 0%, #123c33 100%);
+    background: linear-gradient(135deg, #142c4d 0%, #203864 100%);
     color: #fff; padding: 2.2rem 1rem 2rem;
   }
   .wrap { max-width: 880px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
+  .header-flex { display: flex; align-items: center; gap: 1.1rem; }
+  .header-logo { width: 60px; height: 60px; border-radius: 12px; flex: none;
+                 box-shadow: 0 2px 10px rgba(0,0,0,.35); }
   header h1 { margin: 0; font-size: 2rem; letter-spacing: .5px; }
-  header h1 .tm { color: #7fd7b8; }
-  header p { margin: .4rem 0 0; color: #b9c6c2; }
+  header h1 .tm { color: #8ec7f5; }
+  header p { margin: .4rem 0 0; color: #b7c3d6; }
   .nowrap { white-space: nowrap; }
-  a.toplinks { color: #7fd7b8; font-weight: 600; text-decoration: none;
-                border-bottom: 1px solid rgba(127,215,184,.45); padding-bottom: 1px;
+  a.toplinks { color: #8ec7f5; font-weight: 600; text-decoration: none;
+                border-bottom: 1px solid rgba(142,199,245,.45); padding-bottom: 1px;
                 margin-left: .3rem; }
   a.toplinks.plain { font-weight: 400; }
-  a.toplinks:hover { color: #a9e8cf; }
+  a.toplinks:hover { color: #b8ddff; }
   main { padding: 2rem 0 3rem; }
   .card {
     background: var(--card); border: 1px solid var(--line); border-radius: 10px;
@@ -59,7 +63,8 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     background: #fbfcfd; color: var(--ink);
   }
   textarea { min-height: 5.2rem; resize: vertical; }
-  textarea:focus, select:focus, input:focus { outline: 2px solid #1a8b77; border-color: transparent; }
+  textarea:focus, select:focus, input:focus { outline: 2px solid #2f6fc0; border-color: transparent; }
+  textarea::placeholder, input::placeholder { color: var(--placeholder); opacity: 1; }
   .row { display: flex; gap: .9rem; flex-wrap: wrap; margin-top: .9rem; }
   .row > div { flex: 1 1 180px; }
   .actions { display: flex; align-items: center; gap: 1rem; margin-top: 1.1rem; flex-wrap: wrap; }
@@ -67,8 +72,8 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px;
     font-size: 1rem; font-weight: 600; padding: .6rem 1.6rem; cursor: pointer;
   }
-  button:hover { background: #0c5a4d; }
-  button:disabled { background: #9db3ae; cursor: wait; }
+  button:hover { background: #1f4a86; }
+  button:disabled { background: #9fb0c8; cursor: wait; }
   .run-row { text-align: center; margin: 1.6rem 0; }
   #solveBtn { display: inline-block; width: 92%; max-width: 820px;
     padding: 1rem 1.6rem; font-size: 1.15rem; }
@@ -78,16 +83,16 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   #status, #plotStatus { font-size: .88rem; color: var(--muted); }
   .lcd {
     background: var(--lcd-bg); border-radius: 10px; padding: 1.1rem 1.3rem;
-    border: 1px solid #0a1a13; box-shadow: inset 0 2px 12px rgba(0,0,0,.5);
+    border: 1px solid #081525; box-shadow: inset 0 2px 12px rgba(0,0,0,.5);
     color: var(--lcd-ink); min-height: 3rem;
   }
   .lcd .placeholder { color: var(--lcd-dim); font-family: var(--mono); font-size: .9rem; }
   .result-row {
     display: flex; align-items: baseline; gap: 1rem; padding: .45rem .2rem;
-    border-bottom: 1px solid #1c3a2c; flex-wrap: wrap;
+    border-bottom: 1px solid #173352; flex-wrap: wrap;
   }
   .result-row:last-child { border-bottom: 0; }
-  .result-name { font-family: var(--mono); color: #6fdfae; min-width: 5.5rem; font-size: .9rem; }
+  .result-name { font-family: var(--mono); color: #6fb8f0; min-width: 5.5rem; font-size: .9rem; }
   .result-math { flex: 1; overflow-x: auto; overflow-y: hidden;
                  padding: .25rem 0; }
   @media (max-width: 520px) {
@@ -119,28 +124,28 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .section-cap:first-child { margin-top: 0; }
   .elgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: .8rem; }
   .elcard {
-    background: var(--lcd-bg); border: 1px solid #0a1a13; border-radius: 10px;
+    background: var(--lcd-bg); border: 1px solid #081525; border-radius: 10px;
     padding: .75rem .95rem; color: var(--lcd-ink);
     box-shadow: inset 0 2px 10px rgba(0,0,0,.45);
   }
-  .elcard .el-title { font-family: var(--mono); color: #6fdfae; font-size: .95rem; }
+  .elcard .el-title { font-family: var(--mono); color: #6fb8f0; font-size: .95rem; }
   .elcard .el-kind { color: var(--lcd-dim); font-size: .78rem; font-family: var(--mono); margin-left: .4rem; }
-  .el-item { padding: .35rem 0; border-bottom: 1px solid #1c3a2c;
+  .el-item { padding: .35rem 0; border-bottom: 1px solid #173352;
              overflow-x: auto; overflow-y: hidden; }
   .el-item:last-child { border-bottom: 0; }
   .el-item .el-label, .result-name .el-label { color: var(--lcd-dim); font-size: .72rem; font-family: var(--mono);
                        display: block; letter-spacing: .04em; }
   .el-item mjx-container svg { color: var(--lcd-ink); }
-  .result-math, .el-item { scrollbar-width: thin; scrollbar-color: #2c5344 transparent; }
+  .result-math, .el-item { scrollbar-width: thin; scrollbar-color: #25517a transparent; }
   .result-math::-webkit-scrollbar, .el-item::-webkit-scrollbar { height: 7px; }
   .result-math::-webkit-scrollbar-track, .el-item::-webkit-scrollbar-track { background: transparent; }
   .result-math::-webkit-scrollbar-thumb, .el-item::-webkit-scrollbar-thumb {
-    background: #2c5344; border-radius: 4px; }
+    background: #25517a; border-radius: 4px; }
   .result-math::-webkit-scrollbar-button, .el-item::-webkit-scrollbar-button { display: none; }
   .error { background: var(--err-bg); color: var(--err-ink); border: 1px solid #ecc8c8;
            border-radius: 8px; padding: .7rem 1rem; font-size: .92rem; }
   details { margin-top: .4rem; }
-  summary { cursor: pointer; font-weight: 600; font-size: .92rem; color: var(--accent);
+  summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; color: var(--accent);
     list-style: none; display: flex; align-items: center; gap: .5rem; }
   summary::-webkit-details-marker { display: none; }
   summary::before {
@@ -154,7 +159,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   table { border-collapse: collapse; width: 100%; margin-top: .6rem; font-size: .88rem; }
   th, td { text-align: left; padding: .3rem .5rem; border-bottom: 1px solid var(--line); }
   td:first-child, code { font-family: var(--mono); }
-  code { background: #eef1f4; border-radius: 4px; padding: .05rem .35rem; font-size: .86em; }
+  code { background: #eaf0f7; border-radius: 4px; padding: .05rem .35rem; font-size: .86em; }
   footer { color: var(--muted); font-size: .84rem; text-align: center; padding: 0 1rem 2rem; }
   .section-divider { border: 0; border-top: 1px solid var(--line); margin: 2.4rem 0; }
   #omegaField, #varsField, #n1Field, #n2Field, #kindField { display: none; }
@@ -197,13 +202,13 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     color: var(--accent-ink); border: 0; border-radius: 8px;
     padding: .6rem 1.6rem; background: var(--accent);
   }
-  .uploadlbl:hover { background: #0c5a4d; }
+  .uploadlbl:hover { background: #1f4a86; }
   button.linkish {
     background: none; border: 0; color: var(--accent); font-size: .84rem;
     padding: .1rem .3rem; text-decoration: underline; cursor: pointer;
     font-weight: 500;
   }
-  button.linkish:hover { background: none; color: #0c5a4d; }
+  button.linkish:hover { background: none; color: #1f4a86; }
   button.linkish:disabled { background: none; color: var(--muted);
                              text-decoration: none; cursor: not-allowed; }
   a.btnlink {
@@ -211,10 +216,10 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     border: 0; border-radius: 8px; font-size: 1rem; font-weight: 600;
     padding: .6rem 1.6rem; cursor: pointer; text-decoration: none;
   }
-  a.btnlink:hover { background: #0c5a4d; }
+  a.btnlink:hover { background: #1f4a86; }
   .booknote {
     font-size: .84rem; color: var(--muted); margin-top: .6rem;
-    background: #f4fbf9; border-left: 3px solid #9fc4bb;
+    background: #eef4fb; border-left: 3px solid #a9c6e0;
     padding: .4rem .7rem; border-radius: 0 6px 6px 0;
   }
   .booknote.warn { background: #fff9ec; border-left-color: #e0c98a; }
@@ -226,18 +231,20 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 </head>
 <body>
 <header>
-  <div class="wrap">
-    <h1>Symbulator <span class="tm">Py</span></h1>
-    <p>The best symbolic simulator of linear circuits since 1999
-       <a class="toplinks plain" href="https://learn.symbulator.com"
-       target="_blank" rel="noopener">Tutorial</a></p>
+  <div class="wrap header-flex">
+    <img src="/static/icon.png" alt="Symbulator logo" class="header-logo">
+    <div>
+      <h1>Symbulator <span class="tm">Py</span></h1>
+      <p>The best symbolic simulator of linear circuits since 1999.</p>
+    </div>
   </div>
 </header>
 
 <main class="wrap">
   <h2 class="group-h"><span class="bracket">[</span>   I N P U T S   <span class="bracket">]</span></h2>
   <p class="group-intro">
-    Describe a linear circuit and specify the analysis type. You can use an Input File.
+    Describe a linear circuit and specify the analysis type. (See
+    <a href="https://learn.symbulator.com" target="_blank" rel="noopener">Tutorial</a>.)
   </p>
 
   <div class="card" id="inputsCard">
@@ -364,7 +371,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
         settings and then the element lines. Save it with a
         <code>.cir</code> extension.
       </p>
-<pre style="background:#f6f8fa;border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;font-size:.84rem;overflow-x:auto"># comments start with a hash
+<pre style="background:#f2f6fb;border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;font-size:.84rem;overflow-x:auto"># comments start with a hash
 
 [Problem 1 — divider]
 analysis: dc
@@ -398,7 +405,7 @@ c1,2,0,4.7e-6</pre>
       </p>
     </details>
 
-      <div class="dl-row" style="margin-top:.9rem">
+      <div class="dl-row" id="uploadRow" style="margin-top:.9rem">
         <label for="fileInput" class="uploadlbl" title="Upload an Input File of circuit descriptions">Upload Input File</label>
         <input type="file" id="fileInput" accept=".cir" hidden>
         <button type="button" id="downloadFileBtn" class="linkish" hidden>Download this input file</button>
@@ -427,8 +434,8 @@ c1,2,0,4.7e-6</pre>
         <label for="domain">Analysis</label>
         <select id="domain">
           <option value="dc">DC — direct current</option>
-          <option value="ac">AC — phasor (needs ω)</option>
-          <option value="fd">FD — s-domain (Laplace)</option>
+          <option value="ac">AC — alternating current</option>
+          <option value="fd">FD — complex frequency domain</option>
           <option value="tr">TR — transient (time domain)</option>
         </select>
       </div>
@@ -710,15 +717,18 @@ c1,2,0,4.7e-6</pre>
       </p>
       <div class="actions" style="margin-top:.9rem">
         <a class="btnlink" href="https://py.symbulator.com/local.zip"
+           target="_blank" rel="noopener"
            download="symbulator-local.zip">Download the offline version</a>
         <span class="hint">— one .zip, about 13 MB, works on Windows, macOS and Linux</span>
       </div>
       <details class="exhelp" style="margin-top:1.1rem">
-        <summary>How to run it</summary>
-        <p class="hint" style="margin:.5rem 0 0">
-          Unzip the download, then start it one of these ways — you only
-          need to do this once per computer (see “install as an app”,
-          below):
+        <summary>How to run and install as an app</summary>
+
+        <div class="section-cap" style="margin-top:.9rem">How to run</div>
+        <p class="hint" style="margin:.2rem 0 0">
+          <strong>Running for the first time.</strong> Extract the
+          contents of this file, and run the program for the first
+          time. This is done according to your operating system:
         </p>
         <table>
           <tr><th>System</th><th>What to do</th></tr>
@@ -730,28 +740,44 @@ c1,2,0,4.7e-6</pre>
             <code>sh start.sh</code></td></tr>
         </table>
         <p class="hint">
-          Any of these starts a small local web server and opens
-          Symbulator Py in your browser automatically — leave that
-          window open while you use it. Prefer to do it by hand? Open a
-          terminal in the unzipped folder and run
-          <code>python3 -m http.server 8000</code>, then visit
-          <code>http://localhost:8000/</code>.
+          This will start a small local web server and open Symbulator
+          Py in your browser automatically. Leave that window open
+          while you use the software.
         </p>
-      </details>
-      <details class="exhelp">
-        <summary>Install as an app</summary>
-        <p class="hint" style="margin:.5rem 0 0">
-          Once it's open in your browser, look for an “Install” icon in
-          the address bar (or “Install Symbulator Py” / “Add to Home
+        <p class="hint">
+          Prefer to do it by hand? Open a terminal in the unzipped
+          folder and run <code>python3 -m http.server 8000</code>, then
+          visit <code>http://localhost:8000/</code>.
+        </p>
+
+        <div class="section-cap">Install as an app</div>
+        <p class="hint" style="margin:.2rem 0 0">
+          Once Symbulator Py is open in your browser, you can install it
+          as an app. To do this, look for an “Install” icon in the
+          address bar (or “Install Symbulator Py” / “Add to Home
           Screen” in the browser's menu). After installing, it opens
           like any other app, with no internet needed and no more
-          running start scripts. Requires Python 3 only to run the
-          one-time local server above — get it free from
+          running start scripts.
+        </p>
+        <p class="hint">
+          This process requires Python 3 only to run the one-time local
+          server above — get it free from
           <a href="https://python.org" target="_blank"
           rel="noopener">python.org</a> if you don't have it; nothing
           else needs installing, since the maths engine itself (Python,
           SymPy and the <code>symbulator</code> package) runs inside your
           browser.
+        </p>
+        <p class="hint">
+          Once you've installed it as an app, you can delete the ZIP and
+          the unzipped folder — the installed app now runs entirely from
+          your browser's own storage and won't need them again. It's
+          still worth keeping the ZIP somewhere safe, though, in case
+          you ever need to reinstall (for example, if you clear your
+          browser's site data, switch browsers, or move to a different
+          computer). If a newer version of Symbulator Py comes out,
+          download the new ZIP and repeat this process to update your
+          installed app.
         </p>
       </details>
     </details>
@@ -826,7 +852,8 @@ c1,2,0,4.7e-6</pre>
   <a href="https://www.facebook.com/Symbulator/" target="_blank" rel="noopener">Facebook</a> ·
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
-  Free and open-source software under the MIT licence · results are symbolic, powered by SymPy
+  Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
+  Symbulator Py version 2026-08-20
 </footer>
 
 <script>
@@ -1024,7 +1051,7 @@ function showNote(text, isWarning) {
   div.id = 'bookNote';
   div.className = 'booknote' + (isWarning ? ' warn' : '');
   div.textContent = text;
-  $('desc').parentNode.appendChild(div);
+  $('uploadRow').insertAdjacentElement('afterend', div);
 }
 
 // Fill every input from a picked circuit. Circuit lines are shown one
@@ -1664,7 +1691,7 @@ function svgLineChart(xs, ys, {width = 640, height = 260, xLabel = '', yLabel = 
   let svg = `<svg class="chart-svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`
     + `<style>text{font-family:Consolas,Menlo,"DejaVu Sans Mono",monospace;font-size:11px;fill:#5b6472}`
     + `.chart-title{fill:#1c2330;font-weight:600;font-size:12px}`
-    + `.chart-line{fill:none;stroke:#0f6b5c;stroke-width:1.6}`
+    + `.chart-line{fill:none;stroke:#2f5fa8;stroke-width:1.6}`
     + `.chart-axis{stroke:#e2e5ea;stroke-width:1}`
     + `.chart-grid{stroke:#e2e5ea;stroke-width:.5;opacity:.6}</style>`
     + `<rect x="0" y="0" width="${width}" height="${height}" fill="#ffffff"/>`;
