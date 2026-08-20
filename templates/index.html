@@ -171,6 +171,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
                   align-items: center; gap: .45rem; margin: 0; cursor: pointer; }
   .dl-row input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
   .card.inactive { opacity: .55; }
+  #expertBox textarea:disabled, #expertBox input[type=text]:disabled { opacity: .55; cursor: not-allowed; }
   .group-h {
     font-size: 1.3rem; font-weight: 800; color: var(--ink);
     text-align: center; white-space: nowrap; margin: 2rem 0 .6rem;
@@ -475,7 +476,7 @@ c1,2,0,4.7e-6</pre>
     </div>
 
     <details id="settingsBox" style="margin-top:.9rem">
-      <summary>Settings — how answers are shown</summary>
+      <summary>Settings</summary>
 
       <div class="row">
         <div style="flex: 0 1 24rem">
@@ -519,21 +520,29 @@ c1,2,0,4.7e-6</pre>
     </details>
 
     <details id="expertBox" style="margin-top:.9rem">
-      <summary>Expert Mode — add equations, unknowns, conditions<span id="expertEqFlag" class="hint" style="display:none"> — (equations entered)</span></summary>
-      <div class="row">
+      <summary>Expert Mode<span id="expertEqFlag" class="hint" style="display:none"></span></summary>
+      <p class="hint" style="margin:0 0 .8rem">
+        Enable Expert Mode if you want to provide Symbulator additional
+        equations, unknowns and/or conditions to be included as part of
+        the system.
+      </p>
+      <label class="checkline"><input type="checkbox" id="expertEnabled"><span>Enable Expert Mode</span></label>
+      <div id="expertWarn" class="booknote warn" style="display:none;margin-top:.7rem"></div>
+
+      <div class="row" style="margin-top:.9rem">
         <div>
           <label for="eqs">Add equations <span class="hint">(one per line, e.g. <code>v_2 = 6</code>;
             parsed the same as circuit values — SI shorthand like <code>4.7'k</code>
             and imaginary units (<code>i</code>/<code>j</code>) both work, but a bare
             suffix like <code>4.7k</code> with no apostrophe doesn't)</span></label>
-          <textarea id="eqs" spellcheck="false" style="min-height:3.2rem"></textarea>
+          <textarea id="eqs" spellcheck="false" style="min-height:3.2rem" disabled></textarea>
         </div>
       </div>
 
       <div class="row">
         <div>
           <label for="unks">Add unknowns <span class="hint">(comma-separated)</span></label>
-          <input type="text" id="unks">
+          <input type="text" id="unks" disabled>
         </div>
       </div>
       <div class="row">
@@ -542,7 +551,7 @@ c1,2,0,4.7e-6</pre>
             <span class="hint">— e.g. <code>pr1 > 0</code> and <code>v1 = 12</code>;
             use <code>>=</code> and <code>&lt;=</code>, not <code>=></code> and <code>=&lt;</code></span>
           </label>
-          <textarea id="conds" spellcheck="false" style="min-height:3.2rem"></textarea>
+          <textarea id="conds" spellcheck="false" style="min-height:3.2rem" disabled></textarea>
         </div>
       </div>
     </details>
@@ -675,6 +684,9 @@ c1,2,0,4.7e-6</pre>
       </div>
       <div id="plotOut">
         <div class="lcd"><div class="placeholder">— no plot run yet —</div></div>
+      </div>
+      <div class="actions" style="margin-top:.9rem">
+        <button type="button" id="plotDownloadBtn" class="linkish" hidden>Download chart</button>
       </div>
     </details>
   </div>
@@ -867,18 +879,68 @@ plotToolSel.addEventListener('change', syncPlotFields);
 syncPlotFields();
 syncFields();
 
-// Expert Mode has real impact on the solution but hides its own equations
-// once collapsed, so show a small "(equations entered)" flag next to the
-// summary heading whenever there's text in the equations box and the
-// details panel is closed (no need for the flag once it's open -- the
-// equations are right there).
-function updateExpertFlag() {
-  const has = $('eqs').value.trim() !== '';
-  $('expertEqFlag').style.display = (has && !$('expertBox').open) ? 'inline' : 'none';
+// Expert Mode is opt-in: the Enable checkbox gates whether the
+// equations/unknowns/conditions fields are live (and sent to the
+// solver) at all. Disabled greys the three fields out and warns if
+// they still hold text, so leftover content from an earlier session
+// can never silently reach the solver; enabled-but-empty warns too,
+// since a checked box with nothing in it is almost certainly not what
+// the user meant either.
+function hasExpertContent() {
+  return $('eqs').value.trim() !== '' || $('unks').value.trim() !== ''
+      || $('conds').value.trim() !== '';
 }
-$('eqs').addEventListener('input', updateExpertFlag);
+function syncExpertMode() {
+  const enabled = $('expertEnabled').checked;
+  for (const id of ['eqs', 'unks', 'conds']) $(id).disabled = !enabled;
+  const has = hasExpertContent();
+  const warn = $('expertWarn');
+  if (enabled && !has) {
+    warn.textContent = 'Expert Mode is enabled, but no equations, unknowns or conditions are set -- nothing extra will be added.';
+    warn.style.display = 'block';
+  } else if (!enabled && has) {
+    warn.textContent = 'Expert Mode is disabled -- the equations/unknowns/conditions below will not be used.';
+    warn.style.display = 'block';
+  } else {
+    warn.style.display = 'none';
+  }
+  updateExpertFlag();
+}
+// Expert Mode has real impact on the solution but hides its own fields
+// once collapsed, so show a small status flag next to the summary
+// heading whenever the details panel is closed and there's something
+// worth flagging (no need for it once open -- the warning above is
+// right there).
+function updateExpertFlag() {
+  const enabled = $('expertEnabled').checked;
+  const has = hasExpertContent();
+  const flag = $('expertEqFlag');
+  if ($('expertBox').open) { flag.style.display = 'none'; return; }
+  if (enabled && has) {
+    flag.textContent = ' — (equations entered)';
+  } else if (enabled && !has) {
+    flag.textContent = ' — (enabled, but empty)';
+  } else if (!enabled && has) {
+    flag.textContent = ' — (disabled, content ignored)';
+  } else {
+    flag.style.display = 'none';
+    return;
+  }
+  flag.style.display = 'inline';
+}
+// Returns the Expert Mode fields as the solver/save-to-file expect them,
+// or all-empty when Expert Mode is disabled -- so a disabled field's
+// leftover text never reaches the solver or a saved circuit.
+function expertFields() {
+  if (!$('expertEnabled').checked) return {equations: '', unknowns: '', conditions: ''};
+  return {equations: $('eqs').value, unknowns: $('unks').value, conditions: $('conds').value};
+}
+$('expertEnabled').addEventListener('change', syncExpertMode);
+$('eqs').addEventListener('input', syncExpertMode);
+$('unks').addEventListener('input', syncExpertMode);
+$('conds').addEventListener('input', syncExpertMode);
 $('expertBox').addEventListener('toggle', updateExpertFlag);
-updateExpertFlag();
+syncExpertMode();
 
 // The "limit the results" checkbox reveals the actual variables field only
 // when checked, and clears it when unchecked so an unchecked toggle never
@@ -992,10 +1054,10 @@ function applyCircuit(c) {
   $('plotN').value = c.plotpoints || 300;
   syncPlotFields();
   if (isPlotTool) $('plotBox').open = true;
-  if ((c.equations || []).length || (c.conditions || []).length || c.unknowns) {
-    $('expertBox').open = true;
-  }
-  updateExpertFlag();
+  const hasExpertData = !!((c.equations || []).length || (c.conditions || []).length || c.unknowns);
+  $('expertEnabled').checked = hasExpertData;
+  if (hasExpertData) $('expertBox').open = true;
+  syncExpertMode();
   syncFields();
   showNote(c.note || '', false);
   autoGrowDesc();
@@ -1160,15 +1222,16 @@ $('addToFileBtn').addEventListener('click', () => {
   // circuit still names only one tool -- if a plot variable is set, that's
   // what the user means for this circuit to run as.
   const hasPlot = $('plotKey').value.trim() !== '';
+  const expert = expertFields();
   const circuit = {
     name: trimmedName, desc: desc,
     domain: domainSel.value, tool: hasPlot ? plotToolSel.value : (toolSel.value === 'solve' ? '' : toolSel.value),
     omega: $('omega').value, vars: $('vars').value,
     n1: $('n1').value, n2: $('n2').value,
     kind: toolSel.value === 'port' ? $('kind').value : '',
-    unknowns: $('unks').value,
-    equations: linesOf($('eqs').value),
-    conditions: linesOf($('conds').value),
+    unknowns: expert.unknowns,
+    equations: linesOf(expert.equations),
+    conditions: linesOf(expert.conditions),
     plotkey: hasPlot ? $('plotKey').value : '',
     plotmin: hasPlot ? $('plotMin').value : '',
     plotmax: hasPlot ? $('plotMax').value : '',
@@ -1302,9 +1365,7 @@ async function solve(suffixChoices) {
       n1: $('n1').value,
       n2: $('n2').value,
       kind: $('kind').value,
-      equations: $('eqs').value,
-      unknowns: $('unks').value,
-      conditions: $('conds').value,
+      ...expertFields(),
       ...roundingState(),
       si: $('siUnits').checked,
       units: $('showUnits').checked,
@@ -1508,6 +1569,46 @@ async function solve(suffixChoices) {
     btn.disabled = false;
   }
 }
+// "Nice numbers for graph labels" (Heckbert): round a raw span to the
+// nearest 1/2/5 x a power of ten, so axis ticks land on values a person
+// would actually pick by hand instead of on whatever the min/max divide
+// evenly into (0.0023, 1.87e-4, ...).
+function niceNum(range, round) {
+  if (!(range > 0)) return 1;
+  const exponent = Math.floor(Math.log10(range));
+  const fraction = range / Math.pow(10, exponent);
+  let niceFraction;
+  if (round) {
+    niceFraction = fraction < 1.5 ? 1 : fraction < 3 ? 2 : fraction < 7 ? 5 : 10;
+  } else {
+    niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
+  }
+  return niceFraction * Math.pow(10, exponent);
+}
+
+// Ticks at nice round multiples of a nice step, clamped to [min, max] --
+// so a handful of them, not necessarily touching the very edges (the
+// plotted range keeps its own padding; only the tick *values* are nice).
+function niceTicks(min, max, targetCount) {
+  if (!(max - min > 1e-15)) return [min];
+  const step = niceNum((max - min) / Math.max(targetCount - 1, 1), true);
+  const start = Math.ceil(min / step) * step;
+  const ticks = [];
+  for (let v = start; v <= max + step / 2; v += step) {
+    ticks.push(Math.round(v / step) * step); // snap out float drift (0.1+0.2 etc.)
+  }
+  return ticks.length ? ticks : [min, max];
+}
+
+// Format a nice-tick value with just enough decimals for its step size
+// (so a step of 5 shows "0, 5, 10", a step of 0.05 shows "0.00, 0.05, ...").
+function fmtTick(v, step) {
+  const av = Math.abs(v);
+  if (av !== 0 && (av < 1e-3 || av >= 1e5)) return v.toExponential(2);
+  const decimals = Math.min(6, Math.max(0, -Math.floor(Math.log10(step))));
+  return (v.toFixed(decimals)).replace(/^-0(\.0+)?$/, '0$1');
+}
+
 // ---- Plotting: shared SVG line-chart builder, plus the two chart tools ----
 //
 // No charting library -- one small function that lays out axes, a handful
@@ -1537,31 +1638,41 @@ function svgLineChart(xs, ys, {width = 640, height = 260, xLabel = '', yLabel = 
     path += (path ? 'L' : 'M') + px(xs[i]).toFixed(2) + ',' + py(ys[i]).toFixed(2) + ' ';
   }
 
-  // X ticks: decades for a log axis, evenly spaced otherwise.
-  let xTicks = [];
+  // X ticks: decades for a log axis (already round), nice numbers otherwise.
+  let xTicks = [], xStep = 1;
   if (logX) {
     const d0 = Math.floor(xMin), d1 = Math.ceil(xMax);
     for (let d = d0; d <= d1; d++) xTicks.push(Math.pow(10, d));
     if (xTicks.length > 8) xTicks = xTicks.filter((_, i) => i % Math.ceil(xTicks.length / 8) === 0);
   } else {
-    const n = 5;
-    for (let i = 0; i <= n; i++) xTicks.push(xs[0] + (xs[xs.length - 1] - xs[0]) * i / n);
+    xStep = niceNum((xs[xs.length - 1] - xs[0]) / 5, true) || 1;
+    xTicks = niceTicks(xs[0], xs[xs.length - 1], 6);
   }
-  const yTicks = [];
-  for (let i = 0; i <= 4; i++) yTicks.push(yMin + (yMax - yMin) * i / 4);
+  const yStep = niceNum((yMax - yMin) / 4, true) || 1;
+  const yTicks = niceTicks(yMin, yMax, 5);
 
-  const fmt = v => {
-    const av = Math.abs(v);
-    if (av !== 0 && (av < 1e-3 || av >= 1e5)) return v.toExponential(2);
-    return (Math.round(v * 1000) / 1000).toString();
-  };
-
-  let svg = `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`;
+  // width/height (not just viewBox) so the SVG has a deterministic
+  // intrinsic size when rasterized for chart download -- an <img> loaded
+  // from an SVG with only a viewBox has no reliable natural size.
+  // Styling is inlined into the SVG itself (colors hard-coded to match
+  // the page's --ink/--muted/--accent/--line custom properties), not left
+  // to the page's stylesheet -- the page-level .chart-svg rules still
+  // apply harmlessly here too, but a self-contained SVG is what makes
+  // "download chart" possible: serialized and rasterized on its own, a
+  // detached copy has no page CSS around it, and without this its line
+  // and grid would fall back to SVG's default black fill/stroke.
+  let svg = `<svg class="chart-svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`
+    + `<style>text{font-family:Consolas,Menlo,"DejaVu Sans Mono",monospace;font-size:11px;fill:#5b6472}`
+    + `.chart-title{fill:#1c2330;font-weight:600;font-size:12px}`
+    + `.chart-line{fill:none;stroke:#0f6b5c;stroke-width:1.6}`
+    + `.chart-axis{stroke:#e2e5ea;stroke-width:1}`
+    + `.chart-grid{stroke:#e2e5ea;stroke-width:.5;opacity:.6}</style>`
+    + `<rect x="0" y="0" width="${width}" height="${height}" fill="#ffffff"/>`;
   if (title) svg += `<text class="chart-title" x="${pad.l}" y="16">${title}</text>`;
   for (const yt of yTicks) {
     const y = py(yt);
     svg += `<line class="chart-grid" x1="${pad.l}" y1="${y.toFixed(2)}" x2="${width - pad.r}" y2="${y.toFixed(2)}"/>`;
-    svg += `<text x="${pad.l - 8}" y="${(y + 3).toFixed(2)}" text-anchor="end">${fmt(yt)}</text>`;
+    svg += `<text x="${pad.l - 8}" y="${(y + 3).toFixed(2)}" text-anchor="end">${fmtTick(yt, yStep)}</text>`;
   }
   for (const xt of xTicks) {
     const x = px(xt);
@@ -1570,7 +1681,8 @@ function svgLineChart(xs, ys, {width = 640, height = 260, xLabel = '', yLabel = 
     // linear one) doesn't center its text half outside the SVG viewBox.
     const anchor = x < pad.l + 18 ? 'start' : x > width - pad.r - 18 ? 'end' : 'middle';
     svg += `<line class="chart-grid" x1="${x.toFixed(2)}" y1="${pad.t}" x2="${x.toFixed(2)}" y2="${height - pad.b}"/>`;
-    svg += `<text x="${x.toFixed(2)}" y="${height - pad.b + 16}" text-anchor="${anchor}">${fmt(xt)}</text>`;
+    const label = logX ? fmtTick(xt, xt) : fmtTick(xt, xStep);
+    svg += `<text x="${x.toFixed(2)}" y="${height - pad.b + 16}" text-anchor="${anchor}">${label}</text>`;
   }
   svg += `<line class="chart-axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${height - pad.b}"/>`;
   svg += `<line class="chart-axis" x1="${pad.l}" y1="${height - pad.b}" x2="${width - pad.r}" y2="${height - pad.b}"/>`;
@@ -1599,7 +1711,7 @@ async function plot() {
       desc: $('desc').value, tool: tool === 'bode' ? 'bode' : 'time',
       key: $('plotKey').value, min: $('plotMin').value, max: $('plotMax').value,
       n: $('plotN').value,
-      equations: $('eqs').value, unknowns: $('unks').value, conditions: $('conds').value
+      ...expertFields()
     };
     const r = await fetch('/api/plot', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -1607,6 +1719,7 @@ async function plot() {
     });
     const data = await r.json();
     out.innerHTML = '';
+    $('plotDownloadBtn').hidden = true;
     if (!data.ok) {
       const div = document.createElement('div');
       div.className = 'error';
@@ -1650,6 +1763,7 @@ async function plot() {
     meta.textContent = `${tool === 'bode' ? 'Bode plot' : 'Time plot'} · ${nPts} point(s) · ${data.elapsed}s`;
     out.appendChild(meta);
     status.textContent = '';
+    $('plotDownloadBtn').hidden = false;
   } catch (e) {
     out.innerHTML = '<div class="error">Could not reach the solver. Please try again.</div>';
     status.textContent = '';
@@ -1659,6 +1773,63 @@ async function plot() {
 }
 $('plotBtn').addEventListener('click', plot);
 $('solveBtn').addEventListener('click', solve);
+
+// Save the chart(s) currently shown in the Plot card as one PNG -- each
+// <svg> (the Bode tool renders two, magnitude and phase) is rasterized on
+// its own offscreen canvas via a blob URL, then stacked into one final
+// image, all with plain browser APIs so it works offline in the local
+// build too (no chart library, no server round-trip).
+async function downloadPlotChart() {
+  const svgEls = Array.from($('plotOut').querySelectorAll('svg'));
+  if (!svgEls.length) return;
+  const btn = $('plotDownloadBtn');
+  btn.disabled = true;
+  try {
+    const dims = svgEls.map(svg => {
+      const vb = svg.viewBox && svg.viewBox.baseVal;
+      const w = (vb && vb.width) || (svg.width && svg.width.baseVal.value) || 640;
+      const h = (vb && vb.height) || (svg.height && svg.height.baseVal.value) || 260;
+      return {w, h};
+    });
+    const images = await Promise.all(svgEls.map(svg => new Promise((resolve, reject) => {
+      const xml = new XMLSerializer().serializeToString(svg);
+      const url = URL.createObjectURL(new Blob([xml], {type: 'image/svg+xml;charset=utf-8'}));
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not render the chart image.')); };
+      img.src = url;
+    })));
+    const scale = 2; // a little sharper than the on-screen SVG
+    const gap = 16;
+    const w = Math.max(...dims.map(d => d.w));
+    const h = dims.reduce((sum, d) => sum + d.h, 0) + gap * (dims.length - 1);
+    const canvas = document.createElement('canvas');
+    canvas.width = w * scale;
+    canvas.height = h * scale;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    let y = 0;
+    images.forEach((img, i) => {
+      ctx.drawImage(img, 0, y, dims[i].w, dims[i].h);
+      y += dims[i].h + gap;
+    });
+    canvas.toBlob(blob => {
+      if (!blob) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `symbulator_${plotToolSel.value}_plot.png`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }, 'image/png');
+  } catch (e) {
+    $('plotStatus').textContent = 'Could not prepare the chart for download.';
+  } finally {
+    btn.disabled = false;
+  }
+}
+$('plotDownloadBtn').addEventListener('click', downloadPlotChart);
 
 // ---- Expression evaluator -------------------------------------------
 async function evaluate() {
