@@ -1,5 +1,5 @@
 """
-Symbulator Web -- a thin Flask front end over the `symbulator` package
+Symbulator server -- a thin Flask front end over the `symbulator` package
 (https://pypi.org/project/symbulator/).
 
 Design notes:

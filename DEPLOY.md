@@ -1,4 +1,4 @@
-# Deploying Symbulator Web
+# Deploying Symbulator (server version)
 
 The app is a plain WSGI (Flask) application, so the same code runs
 without changes wherever it's hosted -- only the entry-point wiring
@@ -68,11 +68,11 @@ site gets disabled -- there's no traffic-based keep-alive.
 
 1. cPanel -> "Setup Python App" -> Create application.
    - Python version: 3.9+ (the newest offered)
-   - Application root: e.g. `symbulator_web` (upload this folder there)
+   - Application root: e.g. `symbulator_server` (upload this folder there)
    - Application URL: the subdomain you created (symbulator.perez-franco.com)
    - Application startup file: `passenger_wsgi.py` (usually the default)
 2. In the app's virtualenv (cPanel shows the command, something like
-   `source /home/USER/virtualenv/symbulator_web/3.x/bin/activate`):
+   `source /home/USER/virtualenv/symbulator_server/3.x/bin/activate`):
    `pip install -r requirements.txt`
 3. Restart the app from the cPanel page. Done -- same code, zero edits.
 
