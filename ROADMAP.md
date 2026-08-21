@@ -350,10 +350,10 @@ and doubles as the downloadable offline app. Prototype lives in
   spawning (some shared cPanel/CloudLinux setups). Needed before cPanel
   is a safe target for the *Flask* version; irrelevant to the browser
   build, which has no server at all.
-- **Deploy to Render**, then point `symbulator.perez-franco.com` at it
-  (CNAME). Later: migrate to Roberto's cPanel host — `passenger_wsgi.py`
-  is already in place for that.
-- **Open source**: two repos (`symbulator`, `symbulator-web`), MIT,
+- **Point `symbulator.perez-franco.com` at the live site** (CNAME).
+  Later: migrate to Roberto's cPanel host — `passenger_wsgi.py` is
+  already in place for that.
+- **Open source**: three repos (`solver`, `server`, `local`), MIT,
   CHANGELOG, CONTRIBUTING, CI running the test suite, `CITATION.cff`,
   optionally Zenodo DOIs and PyPI trusted publishing.
 - **Fix the 0 F capacitor bug in the original calculator source** (v7

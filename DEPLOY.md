@@ -2,10 +2,10 @@
 
 The app is a plain WSGI (Flask) application, so the same code runs
 without changes wherever it's hosted -- only the entry-point wiring
-differs. **It's currently live on PythonAnywhere** (see below); Render
-and cPanel were the original plan and are documented further down in
-case of a future migration, but PythonAnywhere is where deploys
-actually happen today.
+differs. **It's currently live on PythonAnywhere** (see below); cPanel
+was the original plan and is documented further down in case of a
+future migration, but PythonAnywhere is where deploys actually happen
+today.
 
 ## Files
 
@@ -20,9 +20,8 @@ actually happen today.
 - `static/mathjax/tex-svg.js` -- MathJax, served locally so the math
   rendering has no third-party CDN dependency (and the page even falls
   back to plain-text results if the script somehow fails to load)
-- `requirements.txt` -- Flask, gunicorn, and the `symbulator` package from PyPI
-- `render.yaml` -- Render configuration (used automatically when the repo is connected)
-- `passenger_wsgi.py` -- entry point for cPanel/PythonAnywhere; harmless on Render
+- `requirements.txt` -- Flask and the `symbulator` package from PyPI
+- `passenger_wsgi.py` -- entry point for cPanel/PythonAnywhere
 
 ## Live now: PythonAnywhere (symbulator.pythonanywhere.com)
 
@@ -63,23 +62,7 @@ To deploy a change:
 
 Free-tier PythonAnywhere caveat: the account needs a login at least once
 a month (a "Run until 1 month from today" button on the Web tab) or the
-site gets disabled -- there's no traffic-based keep-alive like Render's.
-
-## Originally planned, not currently used: Render.com (free tier)
-
-1. Put this folder in a GitHub repository (public or private).
-2. On https://render.com: New + -> Web Service -> connect the repo.
-   Render reads `render.yaml` and fills everything in; just click deploy.
-3. First deploy takes a few minutes (installing SymPy). You get a URL
-   like `https://symbulator.onrender.com`.
-4. Custom domain: in the service's Settings -> Custom Domains, add
-   `symbulator.perez-franco.com`; Render shows you a CNAME record to
-   create at your DNS provider (wherever perez-franco.com's DNS lives,
-   likely your cPanel host). HTTPS certificates are automatic.
-
-Free-tier caveat: the service spins down after ~15 min idle; the first
-visit after that takes ~30-60 s to wake. Fine for sharing with
-colleagues/students; upgrade or migrate when it matters.
+site gets disabled -- there's no traffic-based keep-alive.
 
 ## Originally planned, not currently used: your cPanel host
 

@@ -17,8 +17,8 @@ Design notes:
   off the classic sympify attack surface (attribute access / dunder
   tricks). Lengths are capped so nobody submits a megabyte of "circuit".
 
-- WSGI throughout (Flask + gunicorn on Render, Passenger on cPanel
-  later) -- see DEPLOY.md.
+- WSGI throughout (Flask, with the WSGI server supplied by the host)
+  -- see DEPLOY.md.
 """
 
 from __future__ import annotations
@@ -115,7 +115,7 @@ def index():
 
 @app.get("/healthz")
 def healthz():
-    """Trivial liveness check for the hosting platform (Render, etc.) to
+    """Trivial liveness check for the hosting platform to
     poll -- confirms the process is up and answering HTTP, nothing more."""
     return {"ok": True}
 
