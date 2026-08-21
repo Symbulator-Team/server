@@ -1413,8 +1413,16 @@ function applyCircuit(c) {
 function autoGrowDesc() {
   const el = $('desc');
   el.style.height = 'auto';
+  // scrollHeight covers the content and the padding but not the border, and
+  // the box is sized border-box -- so setting the height straight from it
+  // leaves the content two pixels short, and the browser fits a scrollbar to
+  // a box that looks big enough for the text. Add the border back so the box
+  // only ever scrolls because the user dragged it smaller, or because the
+  // circuit is long enough to hit the cap below.
+  const cs = getComputedStyle(el);
+  const border = parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
   const max = window.innerHeight * 0.6;
-  el.style.height = Math.min(el.scrollHeight, max) + 'px';
+  el.style.height = Math.min(el.scrollHeight + border, max) + 'px';
 }
 $('desc').addEventListener('input', autoGrowDesc);
 autoGrowDesc();
