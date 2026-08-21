@@ -368,7 +368,21 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     font-size: 1.15rem; font-weight: 700; color: var(--ink);
     letter-spacing: .02em; white-space: nowrap; margin: 2.4rem 0 .8rem;
   }
-  .group-h:first-of-type { margin-top: 0; }
+  /* Inputs is the first group heading and needs no gap above it; it is
+     now always wrapped, so the wrapper says so directly. A
+     :first-of-type rule would instead land on Outputs, which is the
+     only bare .group-h left, and swallow the gap above it. */
+  .group-h-row { position: relative; }
+  .group-h-row > .group-h { margin-top: 0; }
+  .group-h-row > button {
+    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  }
+  /* Narrow screens have no room beside the heading, so the button drops
+     below it rather than overlapping the text. */
+  @media (max-width: 620px) {
+    .group-h-row > button { position: static; transform: none;
+                            display: block; margin: .6rem auto 0; }
+  }
   .group-h::before, .group-h::after {
     content: ""; flex: 1 1 0; max-width: 6rem; height: 1px;
     background: linear-gradient(90deg, transparent, var(--line) 40%, var(--line) 60%, transparent);
@@ -468,7 +482,14 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   </div>
   <!-- /server-only -->
 
-  <h2 class="group-h"><span class="bracket">[</span>   I N P U T S   <span class="bracket">]</span></h2>
+  <!-- The heading stays centred on the page; the button is taken out of
+       the flow and pinned right, so [ I N P U T S ] still lines up with
+       [ O U T P U T S ] below it. -->
+  <div class="group-h-row">
+    <h2 class="group-h"><span class="bracket">[</span>   I N P U T S   <span class="bracket">]</span></h2>
+    <button type="button" id="clearAllBtn" class="uploadlbl"
+      title="Empty every input and start over">Clear all inputs</button>
+  </div>
   <p class="group-intro">
     <strong>Describe a linear circuit and specify the analysis type</strong> —
     You can use an Input&nbsp;File. Unsure how? Learn
@@ -487,8 +508,6 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
       <input type="file" id="fileInput" accept=".cir" hidden>
       <button type="button" id="downloadFileBtn" class="uploadlbl" disabled
         title="Download the input file as it now stands">Download this input file</button>
-      <button type="button" id="clearAllBtn" class="uploadlbl"
-        title="Empty every input and start over">Clear all inputs</button>
     </div>
 
     <span class="examples" style="display:block;margin-top:.9rem">
@@ -710,12 +729,22 @@ rms: no</pre>
     <div class="results-h" style="margin-top:1.6rem">Analysis and Settings</div>
     <div class="row">
       <div>
-        <label for="tool">Tool</label>
+        <label for="tool">Type of analysis</label>
         <select id="tool">
           <option value="solve">Solve circuit</option>
-          <option value="th">Find Thévenin / Norton equivalent</option>
-          <option value="er">Find equivalent impedance</option>
-          <option value="port">Find two-port parameters</option>
+          <option value="equiv">Find equivalent</option>
+        </select>
+      </div>
+      <!-- Which equivalent, shown only when one is being asked for. The
+           values are the tool names the solver has always used, so a saved
+           circuit still stores tool: er|th|port and older files load
+           unchanged; this pair of menus is presentation only. -->
+      <div id="equivField">
+        <label for="equivType">Type of equivalent</label>
+        <select id="equivType">
+          <option value="er">Equivalent resistance / impedance</option>
+          <option value="th">Thévenin / Norton equivalent</option>
+          <option value="port">Two-port parameters</option>
         </select>
       </div>
       <div id="domainField">
@@ -1193,8 +1222,19 @@ const plotToolSel = $('plotTool');
 // to DC/AC since those tools don't support fd/tr.
 const PLOT_TOOLS = new Set(['plot_time', 'bode']);
 
+// The Analysis menu offers "Solve circuit" or "Find equivalent"; which
+// equivalent lives in a second menu. The solver, the saved file format
+// and every downstream check still speak in the original tool names, so
+// this is the one place that collapses the two menus back into one
+// value: 'solve', or 'er'/'th'/'port'.
+function currentTool() {
+  return toolSel.value === 'equiv' ? $('equivType').value : 'solve';
+}
+
 function syncFields() {
-  const tool = toolSel.value;
+  const tool = currentTool();
+  // The second menu only makes sense once an equivalent has been asked for.
+  $('equivField').style.display = toolSel.value === 'equiv' ? 'block' : 'none';
   if (tool !== 'solve') {
     // th/er/port work in DC or AC only
     if (domainSel.value === 'fd' || domainSel.value === 'tr') domainSel.value = 'dc';
@@ -1216,6 +1256,7 @@ function syncFields() {
 }
 domainSel.addEventListener('change', () => { syncFields(); syncSettings(); });
 toolSel.addEventListener('change', syncFields);
+$('equivType').addEventListener('change', syncFields);
 
 // The Plot card's own tool switch (time-domain vs. Bode) -- it runs tr()
 // or fd() internally, independent of the main Analysis card entirely, so
@@ -1347,7 +1388,7 @@ function markAllStale() { markStale('solve', 'evaluate', 'solveq', 'plot'); }
 // Expert Mode fields but not the display settings.
 const STALE_ON_CHANGE = [
   [['desc'], ['solve', 'plot']],
-  [['tool', 'domain', 'omega', 'vars', 'limitVars', 'n1', 'n2', 'kind'], ['solve']],
+  [['tool', 'equivType', 'domain', 'omega', 'vars', 'limitVars', 'n1', 'n2', 'kind'], ['solve']],
   [['eqs', 'conds', 'unks', 'expertEnabled'], ['solve', 'plot']],
   [['digits', 'nDigits', 'siUnits', 'showUnits', 'useRms'], ['solve', 'evaluate', 'solveq']],
   [['evalExpr'], ['evaluate']],
@@ -1485,7 +1526,14 @@ function applyCircuit(c) {
   // a plain solve.
   const legacyPlotTool = PLOT_TOOLS.has(c.tool);
   const plotTool = c.plottool || (legacyPlotTool ? c.tool : '');
-  toolSel.value = legacyPlotTool ? 'solve' : (c.tool || 'solve');
+  // A file stores one tool name; the interface now spreads it over two
+  // menus. Anything that is not a plain solve selects "Find equivalent"
+  // and sets the second menu to the stored name, so files written before
+  // this split -- every existing one -- load exactly as they did.
+  const storedTool = legacyPlotTool ? 'solve' : (c.tool || 'solve');
+  const isEquiv = ['er', 'th', 'port'].includes(storedTool);
+  toolSel.value = isEquiv ? 'equiv' : 'solve';
+  if (isEquiv) $('equivType').value = storedTool;
   $('omega').value = c.omega || '';
   $('vars').value = c.vars || '';
   $('limitVars').checked = !!c.vars;
@@ -1755,11 +1803,11 @@ $('addToFileBtn').addEventListener('click', () => {
   const circuit = {
     name: trimmedName, desc: desc,
     domain: domainSel.value,
-    tool: toolSel.value === 'solve' ? '' : toolSel.value,
+    tool: currentTool() === 'solve' ? '' : currentTool(),
     plottool: hasPlot ? plotToolSel.value : '',
     omega: $('omega').value, vars: $('vars').value,
     n1: $('n1').value, n2: $('n2').value,
-    kind: toolSel.value === 'port' ? $('kind').value : '',
+    kind: currentTool() === 'port' ? $('kind').value : '',
     unknowns: expert.unknowns,
     equations: linesOf(expert.equations),
     conditions: linesOf(expert.conditions),
@@ -1824,6 +1872,7 @@ function clearAllInputs() {
   $('desc').value = '';
   autoGrowDesc();
   toolSel.value = 'solve';
+  $('equivType').value = 'er';
   domainSel.value = 'dc';
   $('omega').value = '';
   $('vars').value = '';
@@ -1958,7 +2007,7 @@ async function solve(suffixChoices) {
       domain: domainSel.value,
       omega: $('omega').value,
       variables: $('vars').value,
-      tool: toolSel.value,
+      tool: currentTool(),
       n1: $('n1').value,
       n2: $('n2').value,
       kind: $('kind').value,
