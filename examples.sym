@@ -24,7 +24,8 @@
 #   analysis:   dc | ac | fd | tr          (default dc)
 #   omega:      angular frequency, for ac  (e.g. 1000, or a symbol)
 #   variables:  which answers to transform, for tr (e.g. v_2, i_l1)
-#   tool:       th | er | port | plot_time | bode   (leave out for a normal solve)
+#   tool:       th | er | port          (leave out for a normal solve)
+#               plot_time | bode        (a Plot-card plot -- see PLOT below)
 #   n1:, n2:    the two port nodes, for th/er/port
 #   kind:       z | y | h | g | a | b      (for tool: port)
 #   equation:   an expert-mode added equation (repeat for more)
@@ -39,9 +40,17 @@
 #   solve_condition:  a substitution for it (repeat for more)
 #   solve_unknowns:   which symbols it should solve for, comma-separated
 #   solve_real_only:  yes | no -- keep only its real solutions (default no)
-#   plotkey:    the variable to plot, for tool: plot_time | bode
-#   plotmin, plotmax:  time range in s (plot_time) or frequency range in
-#               Hz (bode)
+#
+# PLOT
+#   Plotting is its own card in the app, separate from the Analysis
+#   tool above -- the Tool dropdown offers only th/er/port. The file
+#   format has just one "tool:" slot, though, so a saved plot writes
+#   its plot type there and the app routes it back to the Plot card on
+#   load. Setting plotkey is what marks a circuit as a plot.
+#
+#   plotkey:    the variable to plot
+#   plotmin, plotmax:  time range in s, or frequency range in Hz for
+#               a bode plot
 #   plotpoints: how many samples to take (default 300)
 #
 # Every one of these is optional -- leave a key out and the app's own
