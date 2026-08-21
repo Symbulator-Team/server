@@ -479,7 +479,24 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
        sits above the circuit box a first-time visitor actually needs. -->
   <div class="card" id="fileCard">
     <details id="fileBox" open>
-      <summary class="results-h section-toggle">Input File <span class="hint">(optional)</span></summary>
+      <summary>Input File <span class="hint">(optional)</span></summary>
+
+
+    <div class="btn-row" id="uploadRow" style="margin-top:.9rem">
+      <label for="fileInput" class="uploadlbl" title="Upload an Input File of circuit descriptions">Upload Input File</label>
+      <input type="file" id="fileInput" accept=".cir" hidden>
+      <button type="button" id="downloadFileBtn" class="uploadlbl" disabled
+        title="Download the input file as it now stands">Download this input file</button>
+      <button type="button" id="clearAllBtn" class="uploadlbl"
+        title="Empty every input and start over">Clear all inputs</button>
+    </div>
+
+    <span class="examples" style="display:block;margin-top:.9rem">
+      <span id="pickerLabel" style="margin-right:.8rem">Some examples you can try: </span>
+      <select id="examples">
+        <option value="">— loading… —</option>
+      </select>
+    </span>
 
     <details id="fileFormatBox" style="margin-top:.9rem">
       <summary>About input file (.cir) format</summary>
@@ -552,22 +569,6 @@ rms: no</pre>
         or updated a circuit).
       </p>
     </details>
-
-    <div class="btn-row" id="uploadRow" style="margin-top:.9rem">
-      <label for="fileInput" class="uploadlbl" title="Upload an Input File of circuit descriptions">Upload Input File</label>
-      <input type="file" id="fileInput" accept=".cir" hidden>
-      <button type="button" id="downloadFileBtn" class="uploadlbl" disabled
-        title="Download the input file as it now stands">Download this input file</button>
-      <button type="button" id="clearAllBtn" class="uploadlbl"
-        title="Empty every input and start over">Clear all inputs</button>
-    </div>
-
-    <span class="examples" style="display:block;margin-top:.9rem">
-      <span id="pickerLabel" style="margin-right:.8rem">Some examples you can try: </span>
-      <select id="examples">
-        <option value="">— loading… —</option>
-      </select>
-    </span>
     </details>
   </div>
 
@@ -1111,7 +1112,7 @@ rms: no</pre>
 
   <div class="card">
     <details>
-      <summary>About Symbulator 9</summary>
+      <summary>About Symbulator</summary>
 
       <div class="section-cap" style="margin-top:.9rem">What is Symbulator</div>
       <p style="font-size:.92rem;margin-top:.2rem">
