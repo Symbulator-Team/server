@@ -194,11 +194,22 @@ def api_export():
         circuit = {"name": str(raw.get("name") or "Circuit")[:MAX_NAME_LEN],
                    "desc": str(raw.get("desc") or "")[:MAX_DESC_LEN]}
         for field in ("domain", "omega", "vars", "tool", "n1", "n2", "kind",
-                      "unknowns", "plotkey", "plotmin", "plotmax", "plotpoints"):
+                      "unknowns", "plotkey", "plotmin", "plotmax", "plotpoints",
+                      "rounding", "evaluate", "solve_unknowns"):
             val = raw.get(field)
             if val:
                 circuit[field] = str(val)[:MAX_EXTRA_LEN]
-        for field in ("equations", "conditions"):
+        # Settings booleans -- always carried over (even when False), since
+        # a saved circuit always has *some* Settings state, unlike the
+        # "if present" fields above. "units" defaults to True (unlike the
+        # other three): a circuit dict that never touched Settings at all
+        # (e.g. parsed straight from examples.sym, which doesn't spell out
+        # every default) means "show units", same as a fresh page load --
+        # bool(None) would wrongly read that silence as "off".
+        for field in ("si", "rms", "solve_real_only"):
+            circuit[field] = bool(raw.get(field))
+        circuit["units"] = bool(raw.get("units", True))
+        for field in ("equations", "conditions", "solve_equations", "solve_conditions"):
             items = raw.get(field)
             if isinstance(items, list):
                 items = [str(x).strip()[:MAX_EXTRA_LEN] for x in items if str(x).strip()]
@@ -385,7 +396,12 @@ def api_solve():
         from symbulator.elements import (parse_circuit, ambiguous_in_elements,
                                          _VALUE_FIELD_IDX)
         from symbulator.si_prefix import bare_suffix_match, _BARE_SUFFIX_EXP
-        elements = parse_circuit(desc)
+        # expand_si=False: keep SI-prefix shorthand (4.7'M) as typed in
+        # these elements' fields, since they're what desc_used gets
+        # rebuilt from below -- it gets expanded to a real number the
+        # normal way when solve_ui parses `desc` again for the actual
+        # solve.
+        elements = parse_circuit(desc, expand_si=False)
         ambiguous = ambiguous_in_elements(elements)
     except Exception as exc:  # parse errors get the same friendly text
         return jsonify({"ok": False, "error": str(exc)[:400]}), 422
@@ -418,7 +434,12 @@ def api_solve():
     # whether anything above needed fixing up -- easier to read/edit
     # than a single ':'-joined line, and consistent every time you run,
     # not just on the two occasions (imaginary-unit normalizing, an
-    # ambiguous suffix being resolved) that used to trigger it.
+    # ambiguous suffix being resolved) that used to trigger it. Because
+    # `elements` was parsed with expand_si=False, any SI-prefix shorthand
+    # (4.7'M) is still sitting in e.fields as typed -- this reconstructs
+    # `desc_used` (what the user sees) with that notation intact; `desc`
+    # (what actually gets solved, below) gets it expanded to a real
+    # number the normal way when solve_ui parses it again.
     desc = ":".join(e.name + "," + ",".join(e.fields) for e in elements)
     desc_used = desc.replace(":", "\n")
 
@@ -437,10 +458,14 @@ def api_solve():
 
     payload.setdefault("notes", [])
     payload["notes"] = imaginary_notes + list(payload["notes"])
+    # solve_ui may have switched "exact" to "approximate" itself (an
+    # approximate value was found in the inputs) -- echo back what it
+    # actually used, not what was requested, so the UI can reflect it.
     return jsonify({"ok": True, "domain": domain, "tool": tool,
                     "elapsed": elapsed, "desc_used": desc_used,
                     "digits": digits, "si": si, "units": units,
-                    "use_rms": use_rms, "approx": approx,
+                    "use_rms": use_rms, "approx": payload.get("approx", approx),
+                    "approx_forced": payload.get("approx_forced", False),
                     "nodes": payload["nodes"],
                     "elements": payload["elements"], "extras": payload["extras"],
                     "values": payload["values"],

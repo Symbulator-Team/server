@@ -523,9 +523,11 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
         <code>'m</code> is milli — a factor of a billion apart. (Both
         <code>'k</code> and <code>'K</code> mean kilo.) Micro accepts
         either <code>u</code> or <code>µ</code>, so a value pasted from a
-        datasheet works as typed. There is no prefix for exa:
-        <code>E</code> is reserved for scientific notation, where
-        <code>8E3</code> means 8000.
+        datasheet works as typed. There is no prefix for exa: a bare
+        <code>E</code> glued directly to digits, like <code>8E3</code>, is
+        read as scientific notation instead — see below for when
+        <code>E</code>/<code>e</code> mean that versus an ordinary
+        variable.
       </p>
 
       <div class="section-cap">Numbers, constants and the imaginary unit</div>
@@ -533,6 +535,16 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
         <code>8000</code>, <code>8000.</code> and <code>8E3</code> all mean
         the same number; the last two are read as approximate rather than
         exact.
+      </p>
+      <p class="hint">
+        <code>E</code>/<code>e</code> only mean scientific notation when
+        glued directly onto digits with no space or operator in between —
+        <code>1E3</code> and <code>1e3</code> both mean 1000. Written on
+        their own (<code>E</code>, <code>e</code>), or separated from a
+        number by <code>*</code>, they are ordinary variables like any
+        other: <code>1*E3</code> and <code>1*e3</code> mean "1 times the
+        variable named <code>E3</code> / <code>e3</code>", not "1 times
+        E times 3".
       </p>
       <p class="hint">
         When conducting an AC analysis, or an analysis in the AC mode,
@@ -575,31 +587,61 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
       <summary>About input file (.cir) format</summary>
       <p style="font-size:.9rem;color:var(--muted);margin-top:.5rem">
         A plain text Input File can hold as many circuits as you like. Each one
-        starts with its name in square brackets, followed by optional
-        settings and then the element lines. Save it with a
+        starts with its name in square brackets, followed by the element
+        lines and then optional settings. Save it with a
         <code>.cir</code> extension.
       </p>
 <pre style="background:#f2f6fb;border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;font-size:.84rem;overflow-x:auto"># comments start with a hash
 
 [Problem 1 — divider]
-analysis: dc
 e1,1,0,20
 r1,1,2,5'k
 r2,2,0,15'k
 
+analysis: dc
+
+rounding: exact
+si: no
+units: yes
+rms: no
+
 [Problem 2 — RC transient]
-analysis: tr
-variables: v_2
 e1,1,0,10/s
 r1,1,2,2200
-c1,2,0,4.7e-6</pre>
+c1,2,0,4.7e-6
+
+analysis: tr
+variables: v_2
+
+rounding: exact
+si: no
+units: yes
+rms: no</pre>
       <p style="font-size:.88rem;color:var(--muted)">
-        Settings are all optional:
+        Everything after the element lines is optional, and can be left out
+        entirely — leaving a key out just means the app's own default
+        applies, same as if you'd never touched it:
         <code>analysis</code> (dc/ac/fd/tr), <code>omega</code>,
         <code>variables</code>, <code>tool</code> (th/er/port) with
-        <code>n1</code>/<code>n2</code>/<code>kind</code>, and the
-        expert-mode <code>equation</code>, <code>condition</code> and
-        <code>unknowns</code>.
+        <code>n1</code>/<code>n2</code>/<code>kind</code>, and (if the
+        circuit uses it) the expert-mode <code>equation</code>,
+        <code>condition</code> and <code>unknowns</code>; the Settings
+        <code>rounding</code> (exact/approx/a number of significant
+        digits), <code>si</code>, <code>units</code> and <code>rms</code>
+        (each yes/no); and, if you were using them when you saved,
+        <code>evaluate</code>, the standalone equation solver's
+        <code>solve_equation</code> / <code>solve_condition</code> /
+        <code>solve_unknowns</code> / <code>solve_real_only</code>, and the
+        plot tool's <code>plotkey</code> / <code>plotmin</code> /
+        <code>plotmax</code> / <code>plotpoints</code>.
+      </p>
+      <p style="font-size:.88rem;color:var(--muted)">
+        <em>Save this circuit to the input file</em>, above the textarea,
+        always writes a circuit's keys in the order shown above — element
+        lines, then analysis type and Expert Mode, then Settings, then
+        Evaluate / Solve equations / Plot — but nothing about reading a
+        file back in cares what order they were written in, so a
+        hand-written file can put them wherever's convenient.
       </p>
       <p style="font-size:.88rem;color:var(--muted)">
         <em>Update this circuit in the input file when it already exists</em>,
@@ -644,7 +686,7 @@ c1,2,0,4.7e-6</pre>
           <option value="dc">DC — direct current</option>
           <option value="ac">AC — alternating current</option>
           <option value="fd">FD — complex frequency domain</option>
-          <option value="tr">TR — transient (time domain)</option>
+          <option value="tr">TR — transient / time domain</option>
         </select>
       </div>
       <div id="kindField">
@@ -1077,7 +1119,7 @@ c1,2,0,4.7e-6</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-20
+  Symbulator 9 version 2026-08-21 03:04 UTC
 </footer>
 
 <script>
@@ -1310,6 +1352,33 @@ function applyCircuit(c) {
   if (hasExpertData) $('expertBox').open = true;
   syncExpertMode();
   syncFields();
+
+  // Settings -- "rounding" is the same exact/approx/n label roundingLabel()
+  // saves; an older file (or one with the key left out) doesn't have it,
+  // so this falls back to the app's own defaults, same as circuitbook.py.
+  const rounding = c.rounding || 'exact';
+  if (rounding === 'exact' || rounding === 'approx') {
+    $('digits').value = rounding;
+  } else {
+    const n = parseInt(rounding, 10);
+    $('digits').value = 'n';
+    $('nDigits').value = Number.isFinite(n) ? Math.min(12, Math.max(2, n)) : 4;
+  }
+  $('siUnits').checked = !!c.si;
+  $('showUnits').checked = c.units === undefined || c.units === null ? true : !!c.units;
+  $('useRms').checked = !!c.rms;
+  syncSettings();
+  if (rounding !== 'exact' || c.si || c.rms || c.units === false) $('settingsBox').open = true;
+
+  // Evaluate and the standalone "Solve equations" tool -- both stay
+  // disabled until the circuit is solved (see activatePostSolve), but
+  // pre-filling them now means they're ready the moment it is.
+  $('evalExpr').value = c.evaluate || '';
+  $('solveqEqs').value = (c.solve_equations || []).join('\n');
+  $('solveqConds').value = (c.solve_conditions || []).join('\n');
+  $('solveqUnks').value = c.solve_unknowns || '';
+  $('solveqReal').checked = !!c.solve_real_only;
+
   showNote(c.note || '', false);
   autoGrowDesc();
 }
@@ -1409,6 +1478,21 @@ function roundingState() {
   return { digits: 0, approx: mode === 'approx' };
 }
 
+// The same three rounding states, but as the single human-readable
+// string the Input File's "rounding:" key stores ("exact", "approx", or
+// the n itself) -- used when saving a circuit, and reversed by
+// applyCircuit() when loading one back.
+function roundingLabel() {
+  const mode = $('digits').value;
+  if (mode === 'n') {
+    let n = parseInt($('nDigits').value, 10);
+    if (!Number.isFinite(n)) n = 4;
+    n = Math.min(12, Math.max(2, n));
+    return String(n);
+  }
+  return mode;
+}
+
 // Prepend a bold note (or, if `text` is falsy, restore the original
 // wording) to the settings card's help text -- used to explain in place
 // why a setting is currently disabled, e.g. "digits" while "approximate"
@@ -1495,6 +1579,20 @@ $('addToFileBtn').addEventListener('click', () => {
     unknowns: expert.unknowns,
     equations: linesOf(expert.equations),
     conditions: linesOf(expert.conditions),
+    // Settings -- captured as they stand right now, not just "if
+    // applicable": a saved circuit always has some rounding/display
+    // state, even if it's every default.
+    rounding: roundingLabel(),
+    si: $('siUnits').checked,
+    units: $('showUnits').checked,
+    rms: $('useRms').checked,
+    // Evaluate and the standalone "Solve equations" tool, if either has
+    // something in it right now.
+    evaluate: $('evalExpr').value.trim(),
+    solve_equations: linesOf($('solveqEqs').value),
+    solve_unknowns: $('solveqUnks').value.trim(),
+    solve_conditions: linesOf($('solveqConds').value),
+    solve_real_only: $('solveqReal').checked,
     plotkey: hasPlot ? $('plotKey').value : '',
     plotmin: hasPlot ? $('plotMin').value : '',
     plotmax: hasPlot ? $('plotMax').value : '',
@@ -1668,12 +1766,23 @@ async function solve(suffixChoices) {
       div.style.whiteSpace = 'pre-line';
       div.textContent = data.error || 'Something went wrong.';
       out.appendChild(div);
-      status.textContent = '';
+      status.textContent = 'No solution found.';
       return;
     }
     // The server rewrote ambiguous values to their explicit spelling --
     // show that in the box so the choice is visible and permanent.
     if (data.desc_used) $('desc').value = data.desc_used;
+    // A decimal/scientific-notation value made "exact" rounding
+    // impossible to honour -- the server already switched to
+    // approximate for this answer; reflect that in the Rounding
+    // control too; same self-explaining-UI-change pattern as the SI
+    // prefixes <-> exact conflict above.
+    if (data.approx_forced) {
+      $('digits').value = 'approx';
+      syncSettings();
+      settingsNote('A decimal or scientific-notation value was found in '
+                    + 'the inputs, so rounding switched from exact to approximate.');
+    }
     // If MathJax is ready we render TeX; otherwise fall back to the
     // plain-text form so a slow/failed script load never shows raw \( \).
     const mjReady = window.MathJax && MathJax.typesetPromise;
@@ -1778,7 +1887,13 @@ async function solve(suffixChoices) {
         row.className = 'result-row';
         const nm = document.createElement('span');
         nm.className = 'result-name';
-        nm.textContent = ex.name.replace('_', '');
+        if (ex.label) {
+          const lab = document.createElement('span');
+          lab.className = 'el-label';
+          lab.textContent = ex.label;
+          nm.appendChild(lab);
+        }
+        nm.appendChild(document.createTextNode(ex.name.replace('_', '')));
         nm.title = ex.name;
         const math = document.createElement('div');
         math.className = 'result-math';
@@ -1792,14 +1907,14 @@ async function solve(suffixChoices) {
 
     if (!count) {
       out.innerHTML = '<div class="lcd"><div class="placeholder">— solved, but no variables to report —</div></div>';
-      status.textContent = '';
+      status.textContent = 'Solved!';
       return;
     }
     const meta = document.createElement('div');
     meta.className = 'lcd-meta';
     meta.textContent = `${data.domain.toUpperCase()} analysis · ${count} result(s) · ${data.elapsed}s`;
     out.appendChild(meta);
-    status.textContent = '';
+    status.textContent = 'Solved!';
 
     // Remember this solve for the evaluator + download area.
     const shown = {};
@@ -1827,7 +1942,7 @@ async function solve(suffixChoices) {
     if (mjReady) await MathJax.typesetPromise([out]);
   } catch (e) {
     out.innerHTML = '<div class="error">Could not reach the solver. Please try again.</div>';
-    status.textContent = '';
+    status.textContent = 'Could not reach the solver.';
     showHostNotice();
   } finally {
     btn.disabled = false;
@@ -1990,7 +2105,7 @@ async function plot() {
       div.style.whiteSpace = 'pre-line';
       div.textContent = data.error || 'Something went wrong.';
       out.appendChild(div);
-      status.textContent = '';
+      status.textContent = 'No solution found.';
       return;
     }
     if (data.notes && data.notes.length) {
@@ -2026,11 +2141,11 @@ async function plot() {
     const nPts = tool === 'bode' ? data.freq.length : data.t.length;
     meta.textContent = `${tool === 'bode' ? 'Bode plot' : 'Time plot'} · ${nPts} point(s) · ${data.elapsed}s`;
     out.appendChild(meta);
-    status.textContent = '';
+    status.textContent = 'Plotted!';
     $('plotDownloadBtn').hidden = false;
   } catch (e) {
     out.innerHTML = '<div class="error">Could not reach the solver. Please try again.</div>';
-    status.textContent = '';
+    status.textContent = 'Could not reach the solver.';
     showHostNotice();
   } finally {
     btn.disabled = false;

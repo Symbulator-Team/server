@@ -374,13 +374,19 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
     hasn't been updated to pass it keeps today's behaviour."""
     import sympy as sp
     from symbulator.elements import parse_circuit, _IDENTIFIER_FIELD_IDX
-    from symbulator.si_prefix import safe_sympify
+    from symbulator.si_prefix import safe_sympify, expand_shorthand
 
     if domain != "ac":
         return desc, []
 
     try:
-        elements = parse_circuit(desc)
+        # expand_si=False: keep SI-prefix shorthand (4.7'M) as typed in
+        # fields that don't need touching -- only the field(s) actually
+        # being rewritten below go through a real expansion (needed for
+        # safe_sympify to parse them), so a circuit like "e1,1,0,10+5*i"
+        # next to "r1,1,2,4.7'k" doesn't lose the resistor's SI notation
+        # just because the source needed its imaginary unit normalised.
+        elements = parse_circuit(desc, expand_si=False)
     except Exception:
         return desc, []
 
@@ -393,7 +399,7 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
             if not re.search(r"(?<![\w.])[iIjJ](?![\w])", raw):
                 continue
             try:
-                expr = safe_sympify(raw)
+                expr = safe_sympify(expand_shorthand(raw, si=True))
             except Exception:
                 continue
             if not (getattr(expr, "has", None) and expr.has(sp.I)):
@@ -501,6 +507,42 @@ def _impulse_notes(elements, domain: str):
             f"t = 0, write {val}/s."]
 
 
+# A decimal point, or genuine scientific notation (a digit glued
+# directly to e/E glued to digits -- see the Circuit syntax reference's
+# "Numbers, constants and the imaginary unit" section: anywhere else,
+# e/E is an ordinary variable name, not scientific notation) is what
+# makes SymPy read a value as an approximate float rather than an exact
+# Integer/Rational the moment it's parsed.
+_APPROX_NUMBER_RE = re.compile(r"\d+\.\d*|\.\d+|\d[eE][+-]?\d+")
+
+
+def _has_approx_value(*texts) -> bool:
+    """True if any of the given strings contains a decimal-point or
+    scientific-notation numeric literal. Used to warn the user (and
+    switch "exact" rounding to "approximate") when their inputs already
+    contain an approximate value -- "exact" mode only skips the
+    rounding step, so if the underlying number was never exact to begin
+    with, "exact" mode just shows that same approximation completely
+    unrounded, which looks more precise than it is rather than less."""
+    for text in texts:
+        if text and _APPROX_NUMBER_RE.search(text):
+            return True
+    return False
+
+
+def _approx_value_notes(has_approx: bool) -> list:
+    """One explanatory note for `_has_approx_value`, phrased for whoever
+    is reading the results rather than as a bare flag -- callers that
+    also auto-switch rounding to "approximate" say so in the same
+    breath, so the note doubles as an explanation for why the answers
+    changed shape."""
+    if not has_approx:
+        return []
+    return ["A decimal or scientific-notation value (like 0.1 or 2e3) "
+            "was found in the inputs, so the answers can't be exact -- "
+            "switched \"Rounding\" from exact to approximate."]
+
+
 def _exc_text(exc: Exception) -> str:
     """Human-readable text for any exception crossing the process pipe.
     Some exceptions (mpmath's ZeroDivisionError, for one) carry an empty
@@ -563,6 +605,48 @@ _TOOL_UNITS = {"vth": "V", "ino": "A", "req": "ohm", "zeq": "ohm",
 # dimensionless ratios mixed with the two. Rather than mislabel them,
 # only the uniform ones get a unit.
 _PORT_UNITS = {"z": "ohm", "y": "S"}
+
+# Human-readable descriptions for the th/er tool's named answers, matching
+# the labels the main circuit solve already gives every node voltage and
+# element answer (see _ELEMENT_KEYS below) -- so the special tools stop
+# being the only place that shows a bare variable name with no explanation.
+_TOOL_LABELS = {
+    "vth": "Thevenin voltage", "ino": "Norton current",
+    "req": "Equivalent resistance", "zeq": "Equivalent impedance",
+    "pmax": "Maximum deliverable power",
+}
+
+# Same idea for the two-port (port) tool: one textbook description per
+# parameter position, shared across all six kinds since z11/y11/h11/g11/
+# a11/b11 all play the same structural role (input, under whichever
+# port-2 condition -- open or short -- defines that kind of parameter),
+# just naming a different physical quantity each time.
+_PORT_LABELS = {
+    "z": {"11": "open-circuit input impedance",
+          "12": "open-circuit reverse transfer impedance",
+          "21": "open-circuit forward transfer impedance",
+          "22": "open-circuit output impedance"},
+    "y": {"11": "short-circuit input admittance",
+          "12": "short-circuit reverse transfer admittance",
+          "21": "short-circuit forward transfer admittance",
+          "22": "short-circuit output admittance"},
+    "h": {"11": "short-circuit input impedance",
+          "12": "open-circuit reverse voltage ratio",
+          "21": "short-circuit forward current gain",
+          "22": "open-circuit output admittance"},
+    "g": {"11": "open-circuit input admittance",
+          "12": "short-circuit reverse current ratio",
+          "21": "open-circuit forward voltage gain",
+          "22": "short-circuit output impedance"},
+    "a": {"11": "open-circuit voltage ratio",
+          "12": "short-circuit transfer impedance",
+          "21": "open-circuit transfer admittance",
+          "22": "short-circuit current ratio"},
+    "b": {"11": "open-circuit voltage ratio",
+          "12": "short-circuit transfer impedance",
+          "21": "open-circuit transfer admittance",
+          "22": "short-circuit current ratio"},
+}
 
 _UNIT_LATEX = {"ohm": r"\Omega", "V": r"\mathrm{V}", "A": r"\mathrm{A}",
                "W": r"\mathrm{W}", "VA": r"\mathrm{VA}", "S": r"\mathrm{S}"}
@@ -636,6 +720,22 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         _notes = _hijack_notes(_guard_elements, reserve_imaginary=(domain == "ac"))
         _notes += _impulse_notes(_guard_elements, domain)
 
+        # "Exact" rounding only skips the rounding step -- it can't make
+        # an already-approximate input exact. If a decimal or
+        # scientific-notation value is anywhere in the inputs (circuit
+        # description, omega, or an expert-mode equation/condition),
+        # switch exact to approximate so the answers get sensibly
+        # formatted instead of dumped as raw, falsely-precise floats.
+        approx_forced = False
+        if digits == 0 and not approx:
+            omega_text = omega if domain == "ac" else ""
+            if _has_approx_value(desc, omega_text,
+                                  *(extra_equations or ()),
+                                  *(extra_conditions or ())):
+                approx = True
+                approx_forced = True
+                _notes += _approx_value_notes(True)
+
         # Expert mode: let "ir5" mean "i_r5" the same way Evaluate and
         # the Solve panel already do, by rewriting equations/conditions
         # against this circuit's real symbol names before they're parsed.
@@ -672,11 +772,17 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             for key, expr in named:
                 unit = _TOOL_UNITS.get(key, _PORT_UNITS.get(kind, "")
                                        if tool == "port" else "")
+                if tool == "port":
+                    label = _PORT_LABELS.get(kind, {}).get(key[len(kind):], "")
+                else:
+                    label = _TOOL_LABELS.get(key, "")
                 plain, latex = fmt0(expr, unit)
-                answers.append({"name": key, "plain": plain, "latex": latex})
+                answers.append({"name": key, "label": label,
+                                "plain": plain, "latex": latex})
                 flat[key] = plain
             return _ok({"nodes": [], "elements": [], "extras": answers,
-                        "values": flat, "equations": [], "notes": _notes})
+                        "values": flat, "equations": [], "notes": _notes,
+                        "approx": approx, "approx_forced": approx_forced})
 
         # ---- Normal circuit solve (dc/ac/fd/tr) -------------------------
         kwargs = {}
@@ -853,7 +959,8 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
 
         return _ok({"nodes": nodes, "elements": element_cards,
                     "extras": extras, "values": flat,
-                    "equations": equations, "notes": _notes})
+                    "equations": equations, "notes": _notes,
+                    "approx": approx, "approx_forced": approx_forced})
     except Exception as exc:  # noqa: BLE001 -- anything goes back as text
         return _err(_exc_text(exc))
 

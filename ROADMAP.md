@@ -2,16 +2,17 @@
 
 Running notes so nothing is lost between sessions.
 
-## Next build TODO — Dark Mode for the documentation site (21 Aug 2026)
+## Dark Mode across all three surfaces — DONE 21 Aug 2026
 
-Roberto wants a Dark Mode toggle across all three user-facing surfaces.
-Two of the three shipped in the 21 Aug 2026 build:
+Roberto wanted a Dark Mode toggle across all three user-facing surfaces.
+All three are now shipped:
 
 * the server (Flask) interface — `server/templates/index.html` — DONE
 * the local (offline/Pyodide) interface — generated from the same
   template by `build_local.py`, so it came along automatically — DONE
-* the web version of the documentation (the CoderDocs tutorial/docs
-  site — `learn.symbulator.com`) — NOT done yet, still open
+* the documentation website (`web/index.php` + `web/assets/style.css`
+  in the `symbulator-docs` project, the versioned v7/v8/v9 rebuild that
+  replaced the old static `docs-pageN.html` pages) — DONE
 
 The app-template implementation: a `#themeToggle` button in the header
 flips `data-theme="dark"` on `<html>`, persisted in
@@ -25,10 +26,17 @@ properties on `:root`, overridden under `html[data-theme="dark"]` — the
 `.lcd`/`.elcard` "calculator screen" panels are deliberately excluded,
 since they're styled dark in both themes on purpose.
 
-Still open: the docs site. Check whether it uses the same CSS-variable
-system as the app template or a separate CoderDocs stylesheet, since
-the toggle will likely need its own implementation there even though
-it's one feature from Roberto's point of view.
+The docs site reused the same mechanism and the same interaction
+pattern, with its own storage key (`symbulator-docs-theme`, so the two
+sites never read each other's preference) since it's a separate
+project (`symbulator-docs`) with its own design-token system
+(`design/tokens.css` / `tokens.json`). Two deliberate exceptions there:
+the navy topbar stays navy in both themes (matching the app's own fixed
+header band), and circuit-diagram figures (transparent-background line
+art, drawn for print) get a small white card behind them in dark mode
+rather than being recoloured. `tools/check_palette.py`, the project's
+own light/dark consistency checker, was extended to verify the new dark
+palette the same way it already verified the light one.
 
 ## Next build TODO — real domains are settling (19 Aug 2026)
 

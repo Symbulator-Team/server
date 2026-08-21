@@ -8,9 +8,17 @@
 #
 # FORMAT
 #   [Name]            starts a circuit; the name is the dropdown label
-#   key: value        optional setup (see below)
 #   anything else     a circuit line, exactly as typed in the textarea
+#   key: value        optional setup (see below)
 #   # ...             a comment
+#
+# Nothing about *parsing* cares what order lines come in within a
+# section -- a "key: value" line is always metadata and anything else is
+# always a circuit line, wherever it falls. "Save this circuit to the
+# input file" (on the site itself) writes the circuit lines first and
+# then the keys below, grouped analysis-type-and-Expert-Mode, then
+# Settings, then Evaluate/Solve-equations/Plot -- the examples here
+# follow that same layout for consistency, but you don't have to.
 #
 # SETTINGS
 #   analysis:   dc | ac | fd | tr          (default dc)
@@ -22,107 +30,133 @@
 #   equation:   an expert-mode added equation (repeat for more)
 #   condition:  an expert-mode substitution (repeat for more)
 #   unknowns:   extra symbols to solve for, comma-separated
+#   rounding:   exact | approx | a number of significant digits (default exact)
+#   si:         yes | no -- SI-prefix display, e.g. 1.2 k instead of 1200 (default no)
+#   units:      yes | no -- show V/A/W/Ω units on answers (default yes)
+#   rms:        yes | no -- RMS phasor convention for AC power (default no)
+#   evaluate:   an expression to evaluate against the solved answers
+#   solve_equation:   an equation for the standalone equation solver (repeat for more)
+#   solve_condition:  a substitution for it (repeat for more)
+#   solve_unknowns:   which symbols it should solve for, comma-separated
+#   solve_real_only:  yes | no -- keep only its real solutions (default no)
 #   plotkey:    the variable to plot, for tool: plot_time | bode
 #   plotmin, plotmax:  time range in s (plot_time) or frequency range in
 #               Hz (bode)
 #   plotpoints: how many samples to take (default 300)
+#
+# Every one of these is optional -- leave a key out and the app's own
+# default applies, exactly as if it had never been touched.
 #
 # TIP: write 1'k for "one kilo-ohm" and 1*k for "one times variable k".
 # A bare 1k is ambiguous and the site will stop to ask which you meant.
 # ---------------------------------------------------------------------
 
 [Voltage divider (DC)]
-analysis: dc
 e1,1,0,5
 r1,1,2,1'k
 r2,2,0,1'k
 
-[Resistive ladder (DC)]
 analysis: dc
+
+[Resistive ladder (DC)]
 e1,1,0,36
 r1,1,2,1'k
 r2,2,3,3'k
 r3,3,0,2'k
 
+analysis: dc
+
 [Series RLC (AC, w=1000)]
-analysis: ac
-omega: 1000
 e1,1,0,10
 r1,1,2,100
 l1,2,3,0.1
 c1,3,0,1e-6
 
+analysis: ac
+omega: 1000
+
 [RC step response (TR)]
-analysis: tr
-variables: v_2
 e1,1,0,5/s
 r1,1,2,1000
 c1,2,0,1e-6
 
-[RL discharge, I0 = 3A (TR)]
 analysis: tr
-variables: i_l1
+variables: v_2
+
+[RL discharge, I0 = 3A (TR)]
 l1,0,2,0.2,3
 r1,2,0,100
 
+analysis: tr
+variables: i_l1
+
 [Fully symbolic divider (DC)]
-analysis: dc
 e1,1,0,vin
 r1,1,2,r_a
 r2,2,0,r_b
 
-[Inverting op-amp, gain -4 (DC)]
 analysis: dc
+
+[Inverting op-amp, gain -4 (DC)]
 e1,1,0,2
 rin,1,2,1'k
 rf,2,3,4'k
 o1,0,2,3
 
-[Thevenin equivalent at node 2 (tool)]
-tool: th
-n1: 2
-n2: 0
 analysis: dc
+
+[Thevenin equivalent at node 2 (tool)]
 e1,1,0,12
 r1,1,2,4'k
 r2,2,0,2'k
 
+tool: th
+n1: 2
+n2: 0
+analysis: dc
+
 [Two-port z parameters of a T network (tool)]
+r1,1,3,100
+r2,2,3,200
+r3,3,0,50
+
 tool: port
 kind: z
 n1: 1
 n2: 2
 analysis: dc
-r1,1,3,100
-r2,2,3,200
-r3,3,0,50
 
 [Design: find r_b so that v2 = 6 V (expert)]
-analysis: dc
-equation: v_2 = 6
-unknowns: r_b
 e1,1,0,12
 r1,1,2,4'k
 r2,2,0,r_b
 
+analysis: dc
+equation: v_2 = 6
+unknowns: r_b
+
 [RC step response, plotted (plot vs. time)]
-analysis: tr
-tool: plot_time
-plotkey: v_2
-plotmin: 0
-plotmax: 0.005
-plotpoints: 200
 e1,1,0,5/s
 r1,1,2,1'k
 c1,2,0,1'u
 
+analysis: tr
+tool: plot_time
+
+plotkey: v_2
+plotmin: 0
+plotmax: 0.005
+plotpoints: 200
+
 [RC low-pass, Bode plot]
+e1,1,0,1
+r1,1,2,1'k
+c1,2,0,1'u
+
 analysis: fd
 tool: bode
+
 plotkey: v_2
 plotmin: 10
 plotmax: 100000
 plotpoints: 200
-e1,1,0,1
-r1,1,2,1'k
-c1,2,0,1'u
