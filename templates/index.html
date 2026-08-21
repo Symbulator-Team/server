@@ -352,6 +352,11 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .eval-row { display: flex; gap: .8rem; flex-wrap: wrap; align-items: flex-end; }
   .eval-row > div:first-child { flex: 1 1 260px; }
   .dl-row { display: flex; gap: 1.4rem; flex-wrap: wrap; align-items: center; }
+  /* The Input File buttons. Deliberately not .dl-row: that rule styles
+     its own <label> children for checkboxes, which would outrank
+     .uploadlbl and leave the Upload control a different size and
+     weight from the two <button>s next to it. */
+  .btn-row { display: flex; gap: .8rem; flex-wrap: wrap; align-items: center; }
   .dl-row label { font-weight: 400; font-size: .92rem; display: flex;
                   align-items: center; gap: .45rem; margin: 0; cursor: pointer; }
   .dl-row input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
@@ -389,13 +394,16 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .disamb-item input[type=radio] { accent-color: var(--accent); }
   .disamb button { margin-top: .8rem; }
   .uploadlbl {
-    display: inline-block; font-size: 1rem; font-weight: 600; cursor: pointer;
+    /* font-family too: a <button> does not inherit the page font the way
+       a <label> does, so without this the three controls differ. */
+    display: inline-block; font-family: inherit; font-size: 1rem;
+    font-weight: 600; cursor: pointer;
     color: var(--accent-ink); border: 0; border-radius: 8px;
     padding: .6rem 1.6rem; background: var(--accent);
     box-shadow: 0 1px 2px rgba(16,24,40,.15);
     transition: background-color .15s ease, box-shadow .15s ease;
   }
-  .uploadlbl:hover { background: #1f4a86; }
+  .uploadlbl:hover:not(:disabled) { background: #1f4a86; }
   button.linkish {
     background: none; border: 0; color: var(--accent); font-size: .84rem;
     padding: .1rem .3rem; text-decoration: underline; cursor: pointer;
@@ -470,7 +478,8 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   <!-- Input File: optional, and deliberately labelled so, since it now
        sits above the circuit box a first-time visitor actually needs. -->
   <div class="card" id="fileCard">
-    <div class="results-h" style="margin-top:0">Input File <span class="hint">(optional)</span></div>
+    <details id="fileBox" open>
+      <summary class="results-h section-toggle">Input File <span class="hint">(optional)</span></summary>
 
     <details id="fileFormatBox" style="margin-top:.9rem">
       <summary>About input file (.cir) format</summary>
@@ -544,7 +553,7 @@ rms: no</pre>
       </p>
     </details>
 
-    <div class="dl-row" id="uploadRow" style="margin-top:.9rem">
+    <div class="btn-row" id="uploadRow" style="margin-top:.9rem">
       <label for="fileInput" class="uploadlbl" title="Upload an Input File of circuit descriptions">Upload Input File</label>
       <input type="file" id="fileInput" accept=".cir" hidden>
       <button type="button" id="downloadFileBtn" class="uploadlbl" disabled
@@ -559,6 +568,7 @@ rms: no</pre>
         <option value="">— loading… —</option>
       </select>
     </span>
+    </details>
   </div>
 
   <div class="card" id="inputsCard">
