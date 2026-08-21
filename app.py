@@ -40,7 +40,7 @@ MAX_UPLOAD_BYTES = 512 * 1024
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES
 
 EXAMPLES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             "examples.sym")
+                             "examples.cir")
 
 # ---------------------------------------------------------------------------
 # Limits and validation
@@ -133,7 +133,7 @@ def _decode(data: bytes) -> str:
 
 @app.get("/api/examples")
 def api_examples():
-    """The built-in examples, re-read from examples.sym on every call so
+    """The built-in examples, re-read from examples.cir on every call so
     the file can be edited without restarting the server."""
     try:
         with open(EXAMPLES_PATH, "rb") as fh:
@@ -203,7 +203,7 @@ def api_export():
         # a saved circuit always has *some* Settings state, unlike the
         # "if present" fields above. "units" defaults to True (unlike the
         # other three): a circuit dict that never touched Settings at all
-        # (e.g. parsed straight from examples.sym, which doesn't spell out
+        # (e.g. parsed straight from examples.cir, which doesn't spell out
         # every default) means "show units", same as a fresh page load --
         # bool(None) would wrongly read that silence as "off".
         for field in ("si", "rms", "solve_real_only"):

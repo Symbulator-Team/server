@@ -10,7 +10,7 @@ today.
 ## Files
 
 - `app.py` -- the whole backend (routes, validation, solver subprocess with timeout)
-- `examples.sym` -- **the examples dropdown.** Plain text, edit freely;
+- `examples.cir` -- **the examples dropdown.** Plain text, edit freely;
   the server re-reads it on every page load, so no restart is needed.
   The file's own header comment documents the format. If it's missing or
   unparseable the site still runs, just without examples.

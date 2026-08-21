@@ -1,6 +1,6 @@
 """
 The "circuit book" format: a plain-text file holding one or more named
-circuits, used both for the site's built-in examples (examples.sym) and
+circuits, used both for the site's built-in examples (examples.cir) and
 for files users upload.
 
     [Voltage divider (DC)]
