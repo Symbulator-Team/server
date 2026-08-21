@@ -37,6 +37,9 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     --lcd-dim: #4a7098;
     --err-bg: #fdf1f1;
     --err-ink: #a13030;
+    /* Settings notices: the app changed a control the user had set.
+       Distinct from --err-ink, which means something went wrong. */
+    --note-warn: #8a1f3f;
     --err-line: #ecc8c8;
     --placeholder: #a7b3c4;
     --focus-ring: 0 0 0 3px rgba(47, 111, 192, .18);
@@ -85,6 +88,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     --line-soft: #232a36;
     --err-bg: #3a1f21;
     --err-ink: #ff9c9c;
+    --note-warn: #f0a3bd;
     --err-line: #5c2b2e;
     --placeholder: #5d6b80;
     --warn-ink: #e3b567;
@@ -192,6 +196,15 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     transition: background-color .15s ease, box-shadow .15s ease, transform .06s ease;
   }
   button:hover { background: #1f4a86; }
+  /* A run button whose result still describes the current inputs: there
+     is nothing to do, so it steps back instead of inviting another
+     click. Drawn with an inset ring rather than a border so the button
+     does not change size as it switches state. */
+  button.is-current, button.is-current:hover {
+    background: transparent; color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  button.is-current:hover { box-shadow: inset 0 0 0 1px var(--accent); }
   button:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
   button:disabled { background: #9fb0c8; cursor: wait; box-shadow: none; }
   button:focus-visible, .uploadlbl:focus-visible, a.btnlink:focus-visible,
@@ -301,6 +314,8 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .result-math::-webkit-scrollbar-thumb, .el-item::-webkit-scrollbar-thumb {
     background: #25517a; border-radius: 4px; }
   .result-math::-webkit-scrollbar-button, .el-item::-webkit-scrollbar-button { display: none; }
+  .fieldnote { color: var(--note-warn); font-size: .84rem; line-height: 1.45;
+               margin-top: .4rem; }
   .error { background: var(--err-bg); color: var(--err-ink); border: 1px solid var(--err-line);
            border-radius: 8px; padding: .7rem 1rem; font-size: .92rem; }
   details { margin-top: .4rem; }
@@ -452,6 +467,100 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     <a href="https://learn.symbulator.com" target="_blank" rel="noopener">here</a>!
   </p>
 
+  <!-- Input File: optional, and deliberately labelled so, since it now
+       sits above the circuit box a first-time visitor actually needs. -->
+  <div class="card" id="fileCard">
+    <div class="results-h" style="margin-top:0">Input File <span class="hint">(optional)</span></div>
+
+    <details id="fileFormatBox" style="margin-top:.9rem">
+      <summary>About input file (.cir) format</summary>
+      <p style="font-size:.9rem;color:var(--muted);margin-top:.5rem">
+        A plain text Input File can hold as many circuits as you like. Each one
+        starts with its name in square brackets, followed by the element
+        lines and then optional settings. Save it with a
+        <code>.cir</code> extension.
+      </p>
+<pre style="background:#f2f6fb;border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;font-size:.84rem;overflow-x:auto"># comments start with a hash
+
+[Problem 1 — divider]
+e1,1,0,20
+r1,1,2,5'k
+r2,2,0,15'k
+
+analysis: dc
+
+rounding: exact
+si: no
+units: yes
+rms: no
+
+[Problem 2 — RC transient]
+e1,1,0,10/s
+r1,1,2,2200
+c1,2,0,4.7e-6
+
+analysis: tr
+variables: v_2
+
+rounding: exact
+si: no
+units: yes
+rms: no</pre>
+      <p style="font-size:.88rem;color:var(--muted)">
+        Everything after the element lines is optional, and can be left out
+        entirely — leaving a key out just means the app's own default
+        applies, same as if you'd never touched it:
+        <code>analysis</code> (dc/ac/fd/tr), <code>omega</code>,
+        <code>variables</code>, <code>tool</code> (th/er/port) with
+        <code>n1</code>/<code>n2</code>/<code>kind</code>, and (if the
+        circuit uses it) the expert-mode <code>equation</code>,
+        <code>condition</code> and <code>unknowns</code>; the Settings
+        <code>rounding</code> (exact/approx/a number of significant
+        digits), <code>si</code>, <code>units</code> and <code>rms</code>
+        (each yes/no); and, if you were using them when you saved,
+        <code>evaluate</code>, the standalone equation solver's
+        <code>solve_equation</code> / <code>solve_condition</code> /
+        <code>solve_unknowns</code> / <code>solve_real_only</code>, and the
+        plot tool's <code>plotkey</code> / <code>plotmin</code> /
+        <code>plotmax</code> / <code>plotpoints</code>.
+      </p>
+      <p style="font-size:.88rem;color:var(--muted)">
+        <em>Save this circuit to the input file</em>, above the textarea,
+        always writes a circuit's keys in the order shown above — element
+        lines, then analysis type and Expert Mode, then Settings, then
+        Evaluate / Solve equations / Plot — but nothing about reading a
+        file back in cares what order they were written in, so a
+        hand-written file can put them wherever's convenient.
+      </p>
+      <p style="font-size:.88rem;color:var(--muted)">
+        <em>Update this circuit in the input file when it already exists</em>,
+        above, adds the circuit you're describing to it — or updates it, if
+        a circuit by that name is already there. <em>Upload Input File</em>,
+        below, reads a file like this — its circuits become the live Input
+        File in your browser, replacing whatever was there before (nothing
+        is stored on the server). <em>Download this input file</em>, below,
+        appears once you've made a change to it (uploaded a file, or added
+        or updated a circuit).
+      </p>
+    </details>
+
+    <div class="dl-row" id="uploadRow" style="margin-top:.9rem">
+      <label for="fileInput" class="uploadlbl" title="Upload an Input File of circuit descriptions">Upload Input File</label>
+      <input type="file" id="fileInput" accept=".cir" hidden>
+      <button type="button" id="downloadFileBtn" class="uploadlbl" disabled
+        title="Download the input file as it now stands">Download this input file</button>
+      <button type="button" id="clearAllBtn" class="uploadlbl"
+        title="Empty every input and start over">Clear all inputs</button>
+    </div>
+
+    <span class="examples" style="display:block;margin-top:.9rem">
+      <span id="pickerLabel" style="margin-right:.8rem">Some examples you can try: </span>
+      <select id="examples">
+        <option value="">— loading… —</option>
+      </select>
+    </span>
+  </div>
+
   <div class="card" id="inputsCard">
     <div class="results-h" style="margin-top:0">Circuit Description</div>
 
@@ -586,91 +695,6 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
       <button type="button" id="addToFileBtn" class="linkish" hidden>Save this circuit to the input file</button>
     </div>
 
-    <details id="fileFormatBox" style="margin-top:.9rem">
-      <summary>About input file (.cir) format</summary>
-      <p style="font-size:.9rem;color:var(--muted);margin-top:.5rem">
-        A plain text Input File can hold as many circuits as you like. Each one
-        starts with its name in square brackets, followed by the element
-        lines and then optional settings. Save it with a
-        <code>.cir</code> extension.
-      </p>
-<pre style="background:#f2f6fb;border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;font-size:.84rem;overflow-x:auto"># comments start with a hash
-
-[Problem 1 — divider]
-e1,1,0,20
-r1,1,2,5'k
-r2,2,0,15'k
-
-analysis: dc
-
-rounding: exact
-si: no
-units: yes
-rms: no
-
-[Problem 2 — RC transient]
-e1,1,0,10/s
-r1,1,2,2200
-c1,2,0,4.7e-6
-
-analysis: tr
-variables: v_2
-
-rounding: exact
-si: no
-units: yes
-rms: no</pre>
-      <p style="font-size:.88rem;color:var(--muted)">
-        Everything after the element lines is optional, and can be left out
-        entirely — leaving a key out just means the app's own default
-        applies, same as if you'd never touched it:
-        <code>analysis</code> (dc/ac/fd/tr), <code>omega</code>,
-        <code>variables</code>, <code>tool</code> (th/er/port) with
-        <code>n1</code>/<code>n2</code>/<code>kind</code>, and (if the
-        circuit uses it) the expert-mode <code>equation</code>,
-        <code>condition</code> and <code>unknowns</code>; the Settings
-        <code>rounding</code> (exact/approx/a number of significant
-        digits), <code>si</code>, <code>units</code> and <code>rms</code>
-        (each yes/no); and, if you were using them when you saved,
-        <code>evaluate</code>, the standalone equation solver's
-        <code>solve_equation</code> / <code>solve_condition</code> /
-        <code>solve_unknowns</code> / <code>solve_real_only</code>, and the
-        plot tool's <code>plotkey</code> / <code>plotmin</code> /
-        <code>plotmax</code> / <code>plotpoints</code>.
-      </p>
-      <p style="font-size:.88rem;color:var(--muted)">
-        <em>Save this circuit to the input file</em>, above the textarea,
-        always writes a circuit's keys in the order shown above — element
-        lines, then analysis type and Expert Mode, then Settings, then
-        Evaluate / Solve equations / Plot — but nothing about reading a
-        file back in cares what order they were written in, so a
-        hand-written file can put them wherever's convenient.
-      </p>
-      <p style="font-size:.88rem;color:var(--muted)">
-        <em>Update this circuit in the input file when it already exists</em>,
-        above, adds the circuit you're describing to it — or updates it, if
-        a circuit by that name is already there. <em>Upload Input File</em>,
-        below, reads a file like this — its circuits become the live Input
-        File in your browser, replacing whatever was there before (nothing
-        is stored on the server). <em>Download this input file</em>, below,
-        appears once you've made a change to it (uploaded a file, or added
-        or updated a circuit).
-      </p>
-    </details>
-
-      <div class="dl-row" id="uploadRow" style="margin-top:.9rem">
-        <label for="fileInput" class="uploadlbl" title="Upload an Input File of circuit descriptions">Upload Input File</label>
-        <input type="file" id="fileInput" accept=".cir" hidden>
-        <button type="button" id="downloadFileBtn" class="linkish" hidden>Download this input file</button>
-      </div>
-
-      <span class="examples" style="display:block;margin-top:.9rem">
-        <span id="pickerLabel" style="margin-right:.8rem">Some examples you can try: </span>
-        <select id="examples">
-          <option value="">— loading… —</option>
-        </select>
-        <button type="button" id="backToExamples" class="linkish" hidden>Reload Examples</button>
-      </span>
 
     <div class="results-h" style="margin-top:1.6rem">Analysis and Settings</div>
     <div class="row">
@@ -746,6 +770,9 @@ rms: no</pre>
             <option value="approx">approximate</option>
             <option value="n">approximate to n significant digits</option>
           </select>
+          <!-- A message about this control belongs under this control, not
+               in a shared box at the foot of the card. -->
+          <div class="fieldnote" id="roundingNote" hidden></div>
         </div>
         <div id="nField" style="flex: 0 1 14rem">
           <label for="nDigits">n</label>
@@ -756,10 +783,16 @@ rms: no</pre>
       <div class="row">
         <div>
           <label>Display</label>
-          <label class="checkline"><input type="checkbox" id="siUnits"><span>use
-            SI prefixes <span class="hint">— 0.002 becomes 2 m, 1200 becomes 1.2 k</span></span></label>
-          <label class="checkline"><input type="checkbox" id="showUnits" checked><span>show
-            units <span class="hint">— V, A, W, VA, Ω</span></span></label>
+          <label class="checkline"><input type="checkbox" id="showUnits" checked><span>Show
+            units in answers <span class="hint">— V, A, W, VA, Ω</span></span></label>
+          <label class="checkline"><input type="checkbox" id="siUnits"><span>Use
+            SI prefixes in answers <span class="hint">— 0.002 becomes 2 m, 1200 becomes 1.2 k</span></span></label>
+          <div class="fieldnote" id="siNote" hidden></div>
+          <div class="hint" id="settingsNote" style="margin-top:.5rem">
+            SI prefixes apply to numeric answers only; a symbolic answer such as
+            <code>x·vin/(r1 + x)</code> is left as it is. A prefixed value is a
+            decimal, so SI prefixes and <em>exact</em> can't both apply.
+          </div>
         </div>
       </div>
 
@@ -770,12 +803,6 @@ rms: no</pre>
             phasors <span class="hint">— off means peak amplitude (the ÷2 convention);
             affects AC power only</span></span></label>
         </div>
-      </div>
-
-      <div class="hint" id="settingsNote" style="margin-top:.5rem">
-        SI prefixes apply to numeric answers only; a symbolic answer such as
-        <code>x·vin/(r1 + x)</code> is left as it is. A prefixed value is a
-        decimal, so SI prefixes and <em>exact</em> can't both apply.
       </div>
     </details>
 
@@ -1265,6 +1292,69 @@ $('limitVars').addEventListener('change', () => {
   if (!on) $('vars').value = '';
 });
 
+// ---- Result freshness ----------------------------------------------
+// A result stops describing the inputs the moment anything it was
+// computed from changes. Rather than leave "Solved!" and a full results
+// panel standing over edited inputs, each tool tracks whether what it
+// shows still matches: the status text clears, and the run button drops
+// to a quiet state while a result is current, returning to its normal
+// accent once there is something worth running.
+//
+// The four tools do not depend on the same things. Evaluate and Solve
+// equations are handed the main solve's answers, so anything that
+// invalidates the solve invalidates them too. Plot never sees those
+// answers -- it gets the circuit and solves it itself -- so display
+// settings do not touch it, but Expert Mode does.
+const TOOL_BUTTON = { solve: 'solveBtn', evaluate: 'evalBtn',
+                      solveq: 'solveqBtn', plot: 'plotBtn' };
+// Only two of the four have a status line; the others say it with the
+// button alone.
+const TOOL_STATUS = { solve: 'status', plot: 'plotStatus' };
+const freshness = { solve: false, evaluate: false, solveq: false, plot: false };
+
+function paintFreshness(tool) {
+  const btn = $(TOOL_BUTTON[tool]);
+  if (btn) btn.classList.toggle('is-current', freshness[tool]);
+  const statusId = TOOL_STATUS[tool];
+  if (statusId && !freshness[tool]) $(statusId).textContent = '';
+}
+
+function markFresh(tool) { freshness[tool] = true; paintFreshness(tool); }
+
+function markStale(...tools) {
+  const set = new Set(tools);
+  // Evaluate and Solve equations were computed from the solve's answers,
+  // so they cannot outlive it.
+  if (set.has('solve')) { set.add('evaluate'); set.add('solveq'); }
+  for (const t of set) { freshness[t] = false; paintFreshness(t); }
+}
+
+function markAllStale() { markStale('solve', 'evaluate', 'solveq', 'plot'); }
+
+// Which inputs invalidate which tools. Anything the main solve is sent
+// invalidates the solve; the plot endpoint is sent the circuit and the
+// Expert Mode fields but not the display settings.
+const STALE_ON_CHANGE = [
+  [['desc'], ['solve', 'plot']],
+  [['tool', 'domain', 'omega', 'vars', 'limitVars', 'n1', 'n2', 'kind'], ['solve']],
+  [['eqs', 'conds', 'unks', 'expertEnabled'], ['solve', 'plot']],
+  [['digits', 'nDigits', 'siUnits', 'showUnits', 'useRms'], ['solve', 'evaluate', 'solveq']],
+  [['evalExpr'], ['evaluate']],
+  [['solveqEqs', 'solveqUnks', 'solveqConds', 'solveqReal'], ['solveq']],
+  [['plotTool', 'plotKey', 'plotMin', 'plotMax', 'plotN'], ['plot']],
+];
+for (const [ids, tools] of STALE_ON_CHANGE) {
+  for (const id of ids) {
+    const el = $(id);
+    if (!el) continue;
+    // Both events: "input" catches typing, "change" catches selects and
+    // checkboxes. Marking something already stale is a no-op.
+    for (const evName of ['input', 'change']) {
+      el.addEventListener(evName, () => markStale(...tools));
+    }
+  }
+}
+
 // Last successful solve -- feeds the evaluator and the download builder.
 let last = null;
 // The most recent successful Evaluate / Solve-equations result, kept
@@ -1297,6 +1387,37 @@ function activatePostSolve() {
   for (const id of ['dlDesc', 'dlEqs', 'dlAns']) $(id).disabled = false;
   $('dlBtn').disabled = false;
   $('dlCard').classList.remove('inactive');
+}
+
+// The exact mirror of activatePostSolve: put the page back to how it
+// looks before anything has been run. Used by "Clear all inputs", where
+// leaving answers on screen above emptied fields would be claiming a
+// result for a circuit that no longer exists.
+function clearResults() {
+  last = null; lastEval = null; lastSolveq = null;
+  $('out').innerHTML = '<div class="lcd"><div class="placeholder">— no analysis run yet —</div></div>';
+  $('status').textContent = '';
+  $('resultsCard').classList.add('inactive');
+  $('addToFileBtn').hidden = true;
+  $('evalOut').innerHTML = '';
+  $('evalExpr').disabled = true;
+  $('evalExpr').placeholder = 'solve a circuit first…';
+  $('evalBtn').disabled = true;
+  $('evalCard').classList.add('inactive');
+  $('solveqOut').innerHTML = '';
+  $('solveqEqs').disabled = true;
+  $('solveqEqs').placeholder = '';
+  $('solveqUnks').disabled = true;
+  $('solveqConds').disabled = true;
+  $('solveqReal').disabled = true;
+  $('solveqBtn').disabled = true;
+  $('solveqCard').classList.add('inactive');
+  $('plotOut').innerHTML = '<div class="lcd"><div class="placeholder">— no plot run yet —</div></div>';
+  $('plotStatus').textContent = '';
+  for (const id of ['dlDesc', 'dlEqs', 'dlAns']) $(id).disabled = true;
+  $('dlBtn').disabled = true;
+  $('dlCard').classList.add('inactive');
+  markAllStale();
 }
 
 // ---- Circuit picker: built-in examples, or an opened file ----------
@@ -1370,7 +1491,10 @@ function applyCircuit(c) {
   $('plotMax').value = c.plotmax || '';
   $('plotN').value = c.plotpoints || 300;
   syncPlotFields();
-  if (plotTool || c.plotkey) $('plotBox').open = true;
+  // A loaded circuit decides this either way: the card was previously
+  // only ever opened, so loading a plot circuit and then a plain one
+  // left it standing open over an empty plot.
+  $('plotBox').open = !!(plotTool || c.plotkey);
   const hasExpertData = !!((c.equations || []).length || (c.conditions || []).length || c.unknowns);
   $('expertEnabled').checked = hasExpertData;
   if (hasExpertData) $('expertBox').open = true;
@@ -1405,6 +1529,9 @@ function applyCircuit(c) {
 
   showNote(c.note || '', false);
   autoGrowDesc();
+  // Loading a circuit rewrites every field and fires no events doing
+  // it, so nothing on screen describes these inputs any more.
+  markAllStale();
 }
 
 // Grows the description textarea to fit what's typed or pasted into it
@@ -1477,11 +1604,12 @@ $('fileInput').addEventListener('change', async ev => {
     }
     populatePicker(data.circuits, 'From ' + data.filename + ':', '— choose —');
     liveFileName = data.filename;
-    $('backToExamples').hidden = false;
     // "Download this input file" only makes sense once an input file has
     // actually been uploaded to build on -- a solved-but-never-uploaded
     // circuit isn't an input file yet, just a description in the textarea.
-    $('downloadFileBtn').hidden = false;
+    // It sits beside Upload as a peer button now, so it stays put and
+    // greys out rather than appearing and shifting the row.
+    $('downloadFileBtn').disabled = false;
     const n = data.circuits.length;
     let msg = `Loaded ${n} circuit${n === 1 ? '' : 's'} from ${data.filename}.`;
     if (data.warnings && data.warnings.length) msg += ' ' + data.warnings.join(' ');
@@ -1529,12 +1657,23 @@ function roundingLabel() {
 // wording) to the settings card's help text -- used to explain in place
 // why a setting is currently disabled, e.g. "digits" while "approximate"
 // is off, rather than just greying it out with no explanation.
-function settingsNote(text) {
-  const el = $('settingsNote');
-  if (!el.dataset.original) el.dataset.original = el.innerHTML;
-  el.innerHTML = text
-    ? '<strong>' + text + '</strong><br>' + el.dataset.original
-    : el.dataset.original;
+function settingsNote(where, text) {
+  const target = where === 'si' ? 'siNote' : 'roundingNote';
+  const other  = where === 'si' ? 'roundingNote' : 'siNote';
+  const el = $(target);
+  el.textContent = text || '';
+  el.hidden = !text;
+  // The two notices are one conflict seen from either side -- SI prefixes
+  // versus exact -- so raising one always retires the other. Without this
+  // both stand at once, each describing a change the other just undid.
+  if (text) { $(other).textContent = ''; $(other).hidden = true; }
+}
+
+// Both notices describe one conflict -- SI prefixes versus exact -- so
+// only ever one of them is on screen.
+function clearSettingsNotes() {
+  settingsNote('rounding', '');
+  settingsNote('si', '');
 }
 
 // Show/hide/disable the settings fields that only apply in certain
@@ -1559,18 +1698,18 @@ $('siUnits').addEventListener('change', () => {
   if ($('siUnits').checked && $('digits').value === 'exact') {
     $('digits').value = 'approx';
     syncSettings();
-    settingsNote('SI prefixes need decimal values, so rounding switched to approximate.');
+    settingsNote('rounding', 'SI prefixes need decimal values, so rounding switched to approximate.');
   } else {
-    settingsNote('');
+    clearSettingsNotes();
   }
   if (last) solve();
 });
 $('digits').addEventListener('change', () => {
   if ($('digits').value === 'exact' && $('siUnits').checked) {
     $('siUnits').checked = false;
-    settingsNote('Exact answers can\'t carry SI prefixes, so SI prefixes were turned off.');
+    settingsNote('si', 'Exact answers can\'t carry SI prefixes, so SI prefixes were turned off.');
   } else {
-    settingsNote('');
+    clearSettingsNotes();
   }
   syncSettings();
   if (last) solve();
@@ -1638,7 +1777,7 @@ $('addToFileBtn').addEventListener('click', () => {
   else { picker.push(circuit); verb = 'Added'; }
   populatePicker(picker, $('pickerLabel').textContent, picker.length ? '— choose —' : '— none defined —');
   $('examples').value = String(picker.findIndex(c => c.name === trimmedName));
-  $('downloadFileBtn').hidden = false;
+  $('downloadFileBtn').disabled = false;
   showNote(`${verb} '${trimmedName}' in the Input File (${picker.length} circuit${picker.length === 1 ? '' : 's'} now). Download it any time.`, false);
 });
 
@@ -1665,12 +1804,64 @@ $('downloadFileBtn').addEventListener('click', async () => {
   }
 });
 
-$('backToExamples').addEventListener('click', () => {
+// Clear all inputs -- every field that would be written to an input
+// file goes back to its default, which includes Settings: they are
+// saved with a circuit, so leaving them behind would mean a "cleared"
+// page still carried state from the last one. The picker returns to the
+// built-in examples, which is what the old "Reload Examples" link did.
+function clearAllInputs() {
+  $('desc').value = '';
+  autoGrowDesc();
+  toolSel.value = 'solve';
+  domainSel.value = 'dc';
+  $('omega').value = '';
+  $('vars').value = '';
+  $('limitVars').checked = false;
+  // Setting .checked fires no change event, so the sub-field it reveals
+  // has to be hidden by hand or it would stay open over an empty input.
+  $('varsSubfield').style.display = 'none';
+  $('n1').value = ''; $('n2').value = '';
+  $('kind').value = 'z';
+  // Expert Mode
+  $('eqs').value = ''; $('conds').value = ''; $('unks').value = '';
+  $('expertEnabled').checked = false;
+  syncExpertMode();
+  // Settings, back to the page's own defaults
+  $('digits').value = 'exact';
+  $('nDigits').value = '4';
+  $('siUnits').checked = false;
+  $('showUnits').checked = true;
+  $('useRms').checked = false;
+  // The other three tools
+  $('evalExpr').value = '';
+  $('solveqEqs').value = ''; $('solveqConds').value = ''; $('solveqUnks').value = '';
+  $('solveqReal').checked = false;
+  $('plotKey').value = ''; $('plotMin').value = ''; $('plotMax').value = '';
+  $('plotN').value = 300;
+  $('plotTool').value = 'plot_time';
+  syncPlotFields();
+  // Results: an emptied page must not keep showing answers to a circuit
+  // that is no longer there.
+  clearResults();
+  // The input file itself
   populatePicker(builtIn, 'Some examples you can try: ', builtIn.length ? '— choose —' : '— none defined —');
   liveFileName = null;
-  $('backToExamples').hidden = true;
-  $('downloadFileBtn').hidden = true;
+  $('downloadFileBtn').disabled = true;
+  $('addToFileBtn').hidden = true;
   showNote('', false);
+  clearSettingsNotes();
+  syncSettings();
+  syncFields();
+}
+
+$('clearAllBtn').addEventListener('click', () => {
+  // Only ask when there is something to lose -- a dialog on an already
+  // empty page is pure friction.
+  const hasWork = $('desc').value.trim() !== '' || liveFileName !== null ||
+                  $('evalExpr').value.trim() !== '' ||
+                  $('solveqEqs').value.trim() !== '';
+  if (hasWork && !window.confirm('Clear every input and start over?')) return;
+  clearAllInputs();
 });
 
 const TEXNAME = { vth: 'v_{th}', ino: 'i_{no}', req: 'R_{eq}',
@@ -1814,7 +2005,7 @@ async function solve(suffixChoices) {
     if (data.approx_forced) {
       $('digits').value = 'approx';
       syncSettings();
-      settingsNote('A decimal or scientific-notation value was found in '
+      settingsNote('rounding', 'A decimal or scientific-notation value was found in '
                     + 'the inputs, so rounding switched from exact to approximate.');
     }
     // If MathJax is ready we render TeX; otherwise fall back to the
@@ -1942,6 +2133,7 @@ async function solve(suffixChoices) {
     if (!count) {
       out.innerHTML = '<div class="lcd"><div class="placeholder">— solved, but no variables to report —</div></div>';
       status.textContent = 'Solved!';
+      markFresh('solve');
       return;
     }
     const meta = document.createElement('div');
@@ -1949,6 +2141,7 @@ async function solve(suffixChoices) {
     meta.textContent = `${data.domain.toUpperCase()} analysis · ${count} result(s) · ${data.elapsed}s`;
     out.appendChild(meta);
     status.textContent = 'Solved!';
+    markFresh('solve');
 
     // Remember this solve for the evaluator + download area.
     const shown = {};
@@ -2176,6 +2369,7 @@ async function plot() {
     meta.textContent = `${tool === 'bode' ? 'Bode plot' : 'Time plot'} · ${nPts} point(s) · ${data.elapsed}s`;
     out.appendChild(meta);
     status.textContent = 'Plotted!';
+    markFresh('plot');
     $('plotDownloadBtn').hidden = false;
   } catch (e) {
     out.innerHTML = '<div class="error">Could not reach the solver. Please try again.</div>';
@@ -2281,6 +2475,7 @@ async function evaluate() {
     // as the expression field still holds the same expression that produced
     // it (see the download builder below).
     lastEval = { expr: $('evalExpr').value, plain: data.plain };
+    markFresh('evaluate');
     if (mjReady) await MathJax.typesetPromise([box]);
   } catch (e) {
     box.innerHTML = '<div class="error">Could not reach the server.</div>';
@@ -2375,6 +2570,7 @@ async function solveEquations() {
       realOnly: $('solveqReal').checked,
       solutions: data.solutions
     };
+    markFresh('solveq');
     if (mjReady) await MathJax.typesetPromise([box]);
   } catch (e) {
     box.innerHTML = '<div class="error">Could not reach the server.</div>';
