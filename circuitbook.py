@@ -208,8 +208,15 @@ def format_book(circuits: List[dict]) -> str:
     (if applicable) Expert Mode, then Settings, then Evaluate /
     Solve-equations / Plot, if any of those were in use."""
     out: List[str] = ["# Symbulator circuit book", ""]
-    for c in circuits:
+    for index, c in enumerate(circuits):
+        # Two blank lines before every circuit but the first, so each block
+        # stands clearly apart when the file is read or edited by hand.
+        if index:
+            out.extend(["", ""])
         out.append(f"[{c.get('name', 'Circuit')}]")
+        # One blank under the name, so it reads as a heading rather than
+        # the first line of the netlist below it.
+        out.append("")
 
         # 1. Circuit description.
         out.append(c.get("desc", "").strip())
@@ -271,5 +278,7 @@ def format_book(circuits: List[dict]) -> str:
             out.append("")
             out.extend(extra)
 
-        out.append("")
+    # One trailing newline for the file, rather than one per circuit --
+    # the gaps between circuits are written above instead.
+    out.append("")
     return "\n".join(out)
