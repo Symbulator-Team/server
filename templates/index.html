@@ -1347,10 +1347,13 @@ function showNote(text, isWarning) {
 function applyCircuit(c) {
   $('desc').value = (c.desc || '').replace(/:/g, '\n');
   domainSel.value = c.domain || 'dc';
-  // A plot tool now lives in its own card, not the main Tool select --
-  // route it there and leave the main Analysis card on a plain solve.
-  const isPlotTool = PLOT_TOOLS.has(c.tool);
-  toolSel.value = isPlotTool ? 'solve' : (c.tool || 'solve');
+  // The plot type has its own key. Files written before it existed put it
+  // in "tool:" instead, so that form is still understood: if tool names a
+  // plot, it belongs to the Plot card and the Analysis card falls back to
+  // a plain solve.
+  const legacyPlotTool = PLOT_TOOLS.has(c.tool);
+  const plotTool = c.plottool || (legacyPlotTool ? c.tool : '');
+  toolSel.value = legacyPlotTool ? 'solve' : (c.tool || 'solve');
   $('omega').value = c.omega || '';
   $('vars').value = c.vars || '';
   $('limitVars').checked = !!c.vars;
@@ -1361,13 +1364,13 @@ function applyCircuit(c) {
   $('eqs').value = (c.equations || []).join('\n');
   $('conds').value = (c.conditions || []).join('\n');
   $('unks').value = c.unknowns || '';
-  if (isPlotTool) plotToolSel.value = c.tool;
+  if (plotTool) plotToolSel.value = plotTool;
   $('plotKey').value = c.plotkey || '';
   $('plotMin').value = c.plotmin || '';
   $('plotMax').value = c.plotmax || '';
   $('plotN').value = c.plotpoints || 300;
   syncPlotFields();
-  if (isPlotTool) $('plotBox').open = true;
+  if (plotTool || c.plotkey) $('plotBox').open = true;
   const hasExpertData = !!((c.equations || []).length || (c.conditions || []).length || c.unknowns);
   $('expertEnabled').checked = hasExpertData;
   if (hasExpertData) $('expertBox').open = true;
@@ -1586,14 +1589,16 @@ $('addToFileBtn').addEventListener('click', () => {
   const name = window.prompt('Name for this circuit:', suggested);
   if (name === null) return;
   const trimmedName = name.trim() || 'Circuit';
-  // The Plot card is independent of the main Tool select now, but a saved
-  // circuit still names only one tool -- if a plot variable is set, that's
-  // what the user means for this circuit to run as.
+  // The Plot card and the Analysis tool are independent, and a circuit may
+  // legitimately have both -- a two-port analysis and a plot, say. They get
+  // separate keys so saving one cannot silently drop the other.
   const hasPlot = $('plotKey').value.trim() !== '';
   const expert = expertFields();
   const circuit = {
     name: trimmedName, desc: desc,
-    domain: domainSel.value, tool: hasPlot ? plotToolSel.value : (toolSel.value === 'solve' ? '' : toolSel.value),
+    domain: domainSel.value,
+    tool: toolSel.value === 'solve' ? '' : toolSel.value,
+    plottool: hasPlot ? plotToolSel.value : '',
     omega: $('omega').value, vars: $('vars').value,
     n1: $('n1').value, n2: $('n2').value,
     kind: toolSel.value === 'port' ? $('kind').value : '',

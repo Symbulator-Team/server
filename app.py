@@ -194,8 +194,8 @@ def api_export():
         circuit = {"name": str(raw.get("name") or "Circuit")[:MAX_NAME_LEN],
                    "desc": str(raw.get("desc") or "")[:MAX_DESC_LEN]}
         for field in ("domain", "omega", "vars", "tool", "n1", "n2", "kind",
-                      "unknowns", "plotkey", "plotmin", "plotmax", "plotpoints",
-                      "rounding", "evaluate", "solve_unknowns"):
+                      "unknowns", "plottool", "plotkey", "plotmin", "plotmax",
+                      "plotpoints", "rounding", "evaluate", "solve_unknowns"):
             val = raw.get(field)
             if val:
                 circuit[field] = str(val)[:MAX_EXTRA_LEN]

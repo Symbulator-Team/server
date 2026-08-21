@@ -74,6 +74,10 @@ _KEYS = {
     "kind": "kind",
     "unknowns": "unknowns",
     "note": "note",
+    # The Plot card is a separate tool from the Analysis one above, so it
+    # gets its own key. Older files stored the plot type in "tool:" -- see
+    # applyCircuit() in the front end, which still reads that form.
+    "plottool": "plottool",
     "plotkey": "plotkey",
     "plotmin": "plotmin",
     "plotmax": "plotmax",
@@ -253,8 +257,9 @@ def format_book(circuits: List[dict]) -> str:
             extra.append(f"solve_condition: {val}")
         if c.get("solve_real_only"):
             extra.append("solve_real_only: yes")
-        for key, field in (("plotkey", "plotkey"), ("plotmin", "plotmin"),
-                           ("plotmax", "plotmax"), ("plotpoints", "plotpoints")):
+        for key, field in (("plottool", "plottool"), ("plotkey", "plotkey"),
+                           ("plotmin", "plotmin"), ("plotmax", "plotmax"),
+                           ("plotpoints", "plotpoints")):
             val = c.get(field)
             if val:
                 extra.append(f"{key}: {val}")

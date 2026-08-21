@@ -25,7 +25,6 @@
 #   omega:      angular frequency, for ac  (e.g. 1000, or a symbol)
 #   variables:  which answers to transform, for tr (e.g. v_2, i_l1)
 #   tool:       th | er | port          (leave out for a normal solve)
-#               plot_time | bode        (a Plot-card plot -- see PLOT below)
 #   n1:, n2:    the two port nodes, for th/er/port
 #   kind:       z | y | h | g | a | b      (for tool: port)
 #   equation:   an expert-mode added equation (repeat for more)
@@ -43,11 +42,12 @@
 #
 # PLOT
 #   Plotting is its own card in the app, separate from the Analysis
-#   tool above -- the Tool dropdown offers only th/er/port. The file
-#   format has just one "tool:" slot, though, so a saved plot writes
-#   its plot type there and the app routes it back to the Plot card on
-#   load. Setting plotkey is what marks a circuit as a plot.
+#   tool above -- the Tool dropdown offers only th/er/port -- so it has
+#   its own key and a circuit can carry both. Older files put the plot
+#   type in "tool:" instead; that is still read, but new saves use
+#   plottool.
 #
+#   plottool:   plot_time | bode
 #   plotkey:    the variable to plot
 #   plotmin, plotmax:  time range in s, or frequency range in Hz for
 #               a bode plot
@@ -150,7 +150,7 @@ r1,1,2,1'k
 c1,2,0,1'u
 
 analysis: tr
-tool: plot_time
+plottool: plot_time
 
 plotkey: v_2
 plotmin: 0
@@ -163,7 +163,7 @@ r1,1,2,1'k
 c1,2,0,1'u
 
 analysis: fd
-tool: bode
+plottool: bode
 
 plotkey: v_2
 plotmin: 10
