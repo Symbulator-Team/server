@@ -173,7 +173,6 @@ c1,2,0,1'u
 
 analysis: tr
 plottool: plot_time
-
 plotkey: v_2
 plotmin: 0
 plotmax: 0.005
@@ -188,7 +187,6 @@ c1,2,0,1'u
 
 analysis: fd
 plottool: bode
-
 plotkey: v_2
 plotmin: 10
 plotmax: 100000

@@ -4,18 +4,19 @@ circuits, used both for the site's built-in examples (examples.sym) and
 for files users upload.
 
     [Voltage divider (DC)]
+
     e1,1,0,5
     r1,1,2,1'k
     r2,2,0,1'k
 
     analysis: dc
-
     rounding: exact
     si: no
     units: yes
-    rms: no
+
 
     [Thevenin equivalent]
+
     e1,1,0,12
     r1,1,2,4'k
     r2,2,0,2'k
@@ -24,16 +25,15 @@ for files users upload.
     n1: 2
     n2: 0
     analysis: dc
-
     rounding: exact
     si: no
     units: yes
-    rms: no
 
 A `[Name]` line starts a new circuit and supplies its dropdown label,
 followed by its circuit lines, written exactly as they'd be typed into
-the textarea. `key: value` lines carry everything else -- analysis type
-and (if the circuit uses it) Expert Mode, then the four Settings, then
+the textarea. `key: value` lines carry everything else, in one
+unbroken block -- analysis type and (if the circuit uses it) Expert
+Mode, then Settings (rms only for AC, where it means anything), then
 (if present) Evaluate / Solve-equations / Plot -- which is the order
 "Save this circuit to the input file" writes them in, though nothing
 about *parsing* cares about order: a `key: value` line is metadata and
@@ -236,24 +236,21 @@ def format_book(circuits: List[dict]) -> str:
         for key, field in (("equation", "equations"), ("condition", "conditions")):
             for val in c.get(field, []) or []:
                 analysis.append(f"{key}: {val}")
-        if analysis:
-            out.append("")
-            out.extend(analysis)
+        meta: List[str] = list(analysis)
 
         # 3. Settings -- always written (not "if applicable"): a saved
         # circuit always has *some* rounding/display state, even if it's
         # every default. Falls back to the app's own defaults so a
         # circuit dict that never touched Settings (e.g. one parsed
         # straight out of an older file) still renders something correct.
-        out.append("")
-        out.append(f"rounding: {c.get('rounding') or 'exact'}")
-        out.append(f"si: {_bool_word(c.get('si'))}")
-        out.append(f"units: {_bool_word(c.get('units', True))}")
+        meta.append(f"rounding: {c.get('rounding') or 'exact'}")
+        meta.append(f"si: {_bool_word(c.get('si'))}")
+        meta.append(f"units: {_bool_word(c.get('units', True))}")
         # The RMS convention applies to AC power only, so writing it for a
         # DC or transient circuit records a setting that cannot do anything
         # there. Left out entirely unless the analysis is AC.
         if (c.get("domain") or "dc").strip().lower() == "ac":
-            out.append(f"rms: {_bool_word(c.get('rms'))}")
+            meta.append(f"rms: {_bool_word(c.get('rms'))}")
 
         # 4. Evaluate / Solve-equations / Plot, if any were in use.
         extra: List[str] = []
@@ -274,9 +271,13 @@ def format_book(circuits: List[dict]) -> str:
             val = c.get(field)
             if val:
                 extra.append(f"{key}: {val}")
-        if extra:
+        meta.extend(extra)
+        # One block, one blank line above it: every tagged line for this
+        # circuit reads as a single run of settings rather than three
+        # groups the reader has to reassemble.
+        if meta:
             out.append("")
-            out.extend(extra)
+            out.extend(meta)
 
     # One trailing newline for the file, rather than one per circuit --
     # the gaps between circuits are written above instead.
