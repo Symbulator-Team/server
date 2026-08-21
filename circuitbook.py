@@ -242,7 +242,11 @@ def format_book(circuits: List[dict]) -> str:
         out.append(f"rounding: {c.get('rounding') or 'exact'}")
         out.append(f"si: {_bool_word(c.get('si'))}")
         out.append(f"units: {_bool_word(c.get('units', True))}")
-        out.append(f"rms: {_bool_word(c.get('rms'))}")
+        # The RMS convention applies to AC power only, so writing it for a
+        # DC or transient circuit records a setting that cannot do anything
+        # there. Left out entirely unless the analysis is AC.
+        if (c.get("domain") or "dc").strip().lower() == "ac":
+            out.append(f"rms: {_bool_word(c.get('rms'))}")
 
         # 4. Evaluate / Solve-equations / Plot, if any were in use.
         extra: List[str] = []
