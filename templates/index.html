@@ -406,11 +406,21 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .group-h-row > button {
     position: absolute; right: 0; top: 50%; transform: translateY(-50%);
   }
+  /* Here the vertical centring is a transform, and so is the press nudge
+     every button gets. A second transform replaces the first instead of
+     adding to it, and :active is the more specific selector -- so without
+     this the press threw away the centring and dropped the button by half
+     its own height. Both offsets have to travel together. */
+  .group-h-row > button:active:not(:disabled) {
+    transform: translateY(calc(-50% + 1px));
+  }
   /* Narrow screens have no room beside the heading, so the button drops
      below it rather than overlapping the text. */
   @media (max-width: 620px) {
     .group-h-row > button { position: static; transform: none;
                             display: block; margin: .6rem auto 0; }
+    /* Not centred here, so the plain nudge is right again. */
+    .group-h-row > button:active:not(:disabled) { transform: translateY(1px); }
   }
   .group-h::before, .group-h::after {
     content: ""; flex: 1 1 0; max-width: 6rem; height: 1px;
@@ -1284,7 +1294,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-22 09:39 UTC
+  Symbulator 9 version 2026-08-22 10:46 UTC
 </footer>
 
 <script>
