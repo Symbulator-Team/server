@@ -363,7 +363,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   /* margin: 0 because the page gives every <label> a bottom margin for
      sitting above a field -- here it makes the label's box taller than
      the button's and knocks the row out of alignment by 3px. */
-  .btn-row .uploadlbl { min-width: 15.5rem; text-align: center; margin: 0; }
+  .btn-row .uploadlbl { min-width: 9rem; text-align: center; margin: 0; }
   .dl-row label { font-weight: 400; font-size: .92rem; display: flex;
                   align-items: center; gap: .45rem; margin: 0; cursor: pointer; }
   .dl-row input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
@@ -531,10 +531,10 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 
 
     <div class="btn-row" id="uploadRow" style="margin-top:.9rem">
-      <label for="fileInput" class="uploadlbl" title="Upload an input file of circuit entries">Upload an input file</label>
+      <label for="fileInput" class="uploadlbl" title="Upload an input file of circuit entries">Upload</label>
       <input type="file" id="fileInput" accept=".cir" hidden>
       <button type="button" id="downloadFileBtn" class="uploadlbl" disabled
-        title="Download the input file as it now stands">Download this input file</button>
+        title="Download the input file as it now stands">Download</button>
     </div>
 
     <span class="examples" style="display:block;margin-top:.9rem">
