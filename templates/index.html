@@ -372,6 +372,19 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
      now always wrapped, so the wrapper says so directly. A
      :first-of-type rule would instead land on Outputs, which is the
      only bare .group-h left, and swallow the gap above it. */
+  /* A quiet button, for an action that throws work away. Solid accent is
+     for things you want people to do; this one should recede until it is
+     wanted, then say what it costs -- hence the warning colour on hover
+     rather than at rest. Ring drawn inset so the size does not shift. */
+  button.btn-quiet {
+    background: transparent; color: var(--muted); font-weight: 500;
+    font-size: .92rem; padding: .45rem 1rem;
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  button.btn-quiet:hover:not(:disabled) {
+    background: transparent; color: var(--err-ink);
+    box-shadow: inset 0 0 0 1px var(--err-line);
+  }
   .group-h-row { position: relative; }
   .group-h-row > .group-h { margin-top: 0; }
   .group-h-row > button {
@@ -487,7 +500,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
        [ O U T P U T S ] below it. -->
   <div class="group-h-row">
     <h2 class="group-h"><span class="bracket">[</span>   I N P U T S   <span class="bracket">]</span></h2>
-    <button type="button" id="clearAllBtn" class="uploadlbl"
+    <button type="button" id="clearAllBtn" class="btn-quiet"
       title="Empty every input and start over">Clear all inputs</button>
   </div>
   <p class="group-intro">
