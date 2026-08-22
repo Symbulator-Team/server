@@ -541,6 +541,14 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
         title="Download the input file as it now stands">Download</button>
     </div>
 
+    <!-- Which file is open. Upload replaces it, "New file" starts an empty
+         one, and "Built-in examples" goes back to the read-only set -- the
+         last of which is only offered when they are not already showing. -->
+    <div class="actions" id="fileActions" style="margin-top:.7rem">
+      <button type="button" id="newFileBtn" class="linkish">New file</button>
+      <button type="button" id="openExamplesBtn" class="linkish" hidden>Built-in examples</button>
+    </div>
+
     <span class="examples" style="display:block;margin-top:.9rem">
       <span id="pickerLabel" style="margin-right:.8rem">Some examples you can try: </span>
       <select id="examples">
@@ -751,8 +759,13 @@ units: yes</pre>
     <textarea id="desc" spellcheck="false" style="margin-top:.9rem"
       placeholder="e1,1,0,5&#10;r1,1,2,1'k&#10;r2,2,0,1'k"></textarea>
 
+    <!-- What you can do with these inputs, relative to the open file. Both
+         are hidden until they apply; which of them shows is worked out by
+         refreshEntryLinks(). Update sits left because it acts on the entry
+         you are already in, and is the likelier of the two. -->
     <div class="actions" style="margin-top:0">
-      <button type="button" id="addToFileBtn" class="linkish" hidden>Save this circuit to the input file</button>
+      <button type="button" id="updateEntryBtn" class="linkish" hidden>Update inputs in this entry</button>
+      <button type="button" id="addToFileBtn" class="linkish" hidden>Save inputs to new entry</button>
     </div>
 
 
@@ -1432,7 +1445,7 @@ for (const [ids, tools] of STALE_ON_CHANGE) {
     // Both events: "input" catches typing, "change" catches selects and
     // checkboxes. Marking something already stale is a no-op.
     for (const evName of ['input', 'change']) {
-      el.addEventListener(evName, () => markStale(...tools));
+      el.addEventListener(evName, () => { markStale(...tools); refreshEntryLinks(); persistState(); });
     }
   }
 }
@@ -1454,7 +1467,6 @@ let lastSolveq = null;
 // solve has actually succeeded.
 function activatePostSolve() {
   $('resultsCard').classList.remove('inactive');
-  $('addToFileBtn').hidden = false;
   $('evalExpr').disabled = false;
   $('evalExpr').placeholder = 'e.g. v2 - v3, or p_r1 + p_r2';
   $('evalBtn').disabled = false;
@@ -1480,7 +1492,6 @@ function clearResults() {
   $('out').innerHTML = '<div class="lcd"><div class="placeholder">— no analysis run yet —</div></div>';
   $('status').textContent = '';
   $('resultsCard').classList.add('inactive');
-  $('addToFileBtn').hidden = true;
   $('evalOut').innerHTML = '';
   $('evalExpr').disabled = true;
   $('evalExpr').placeholder = 'solve a circuit first…';
@@ -1508,7 +1519,25 @@ function clearResults() {
 // (.cir) format":
 // uploading a file replaces it, "add this circuit to the file" appends
 // or updates an entry in it, and "download the file" writes it out.
-let builtIn = [], picker = [], liveFileName = null;
+// `builtIn` is the read-only example set that ships with the app; `picker`
+// is whatever the dropdown is currently listing. They used to be the same
+// list you could also write into, which meant saving a circuit appended it
+// to the examples and downloading handed you all of them back as one file.
+// An input file is now a separate thing you open, write to and export:
+//
+//   openFile === null      the examples are showing; nothing is writable
+//   openFile = {name, entries}   a real file, uploaded or created here
+//
+// `currentEntry` is the entry the inputs on screen came from -- held as a
+// reference rather than a name or an index, so renaming or reordering
+// cannot lose track of it, and two entries may share a name harmlessly.
+let builtIn = [], picker = [];
+let openFile = null;
+let currentEntry = null;
+// Whether openFile has been downloaded since it last changed. Nothing here
+// reaches disk on its own, so this is what "you have work that only exists
+// in this browser" means, and it is what the warnings key off.
+let exported = true;
 
 // Rebuild the circuit-picker <select> from a fresh list of circuits
 // (the built-in examples, or a just-uploaded file's contents), with
@@ -1643,11 +1672,21 @@ function autoGrowDesc() {
 $('desc').addEventListener('input', autoGrowDesc);
 autoGrowDesc();
 
+let lastPickerValue = '';
 $('examples').addEventListener('change', ev => {
   const idx = ev.target.value;
-  if (idx === '') return;
+  if (idx === '') { lastPickerValue = ''; return; }
+  if (!okToDiscardEdits()) { ev.target.value = lastPickerValue; return; }
   const c = picker[Number(idx)];
-  if (c) applyCircuit(c);
+  if (!c) return;
+  applyCircuit(c);
+  // Only an entry of the open file can be the current entry: the examples
+  // are read-only, so loading one leaves the inputs untied and offering
+  // nothing but "save as a new entry".
+  currentEntry = (openFile && openFile.entries.indexOf(c) !== -1) ? c : null;
+  lastPickerValue = idx;
+  refreshEntryLinks();
+  persistState();
 });
 
 // Fetch the built-in example circuits from the server and populate the
@@ -1669,8 +1708,9 @@ async function loadExamples() {
     const r = await fetch('/api/examples');
     const data = await r.json();
     builtIn = data.circuits || [];
-    populatePicker(builtIn, 'Some examples you can try: ',
-                   builtIn.length ? '— choose —' : '— none defined —');
+    // A restored workspace wins: it means the visitor has a file open, and
+    // dropping them back on the examples would look like losing it.
+    if (!restoreState()) { currentEntry = null; showFile(null); }
   } catch (e) {
     populatePicker([], 'Some examples you can try: ', '— unavailable —');
     showHostNotice();
@@ -1691,19 +1731,15 @@ $('fileInput').addEventListener('change', async ev => {
       showNote(data.error || 'Could not read that file.', true);
       return;
     }
-    populatePicker(data.circuits, 'From ' + data.filename + ':', '— choose —');
-    liveFileName = data.filename;
-    // "Download this input file" only makes sense once an input file has
-    // actually been uploaded to build on -- a solved-but-never-uploaded
-    // circuit isn't an input file yet, just a description in the textarea.
-    // It sits beside Upload as a peer button now, so it stays put and
-    // greys out rather than appearing and shifting the row.
-    $('downloadFileBtn').disabled = false;
+    // An uploaded file came from disk, so it counts as exported until
+    // something changes it.
+    exported = true;
+    currentEntry = null;
+    showFile({ name: data.filename, entries: data.circuits });
     const n = data.circuits.length;
-    let msg = `Loaded ${n} circuit${n === 1 ? '' : 's'} from ${data.filename}.`;
+    let msg = `Opened ${data.filename} — ${n} ${n === 1 ? 'entry' : 'entries'}.`;
     if (data.warnings && data.warnings.length) msg += ' ' + data.warnings.join(' ');
     showNote(msg, !!(data.warnings && data.warnings.length));
-    if (n === 1) { applyCircuit(data.circuits[0]); $('examples').value = '0'; }
   } catch (e) {
     showNote('Could not upload that file.', true);
   } finally {
@@ -1815,23 +1851,59 @@ function linesOf(text) {
   return String(text || '').split(/[\r\n]+/).map(s => s.trim()).filter(Boolean);
 }
 
-// Save (or, if the name matches an existing entry, update) the currently
-// described circuit into the live Input File, prompting for a name.
-$('addToFileBtn').addEventListener('click', () => {
+// ---- Keeping your work between visits -------------------------------
+// None of this reaches disk: "saving" an entry writes to an array in the
+// page, and only Download produces a file. Without somewhere durable to
+// put it, closing the tab would throw away a file the user had just been
+// asked to name. So the open file, which entry is current, and the inputs
+// themselves are mirrored into localStorage on every change and read back
+// on load -- the same store the theme and the install bar already use.
+const STORE_KEY = 'symbulator-workspace';
+
+function persistState() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      file: openFile,
+      entryIndex: openFile && currentEntry ? openFile.entries.indexOf(currentEntry) : -1,
+      inputs: inputsSnapshot(),
+      exported: exported
+    }));
+  } catch (e) { /* private mode, or storage full: carry on unsaved */ }
+}
+
+function restoreState() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) {}
+  if (!saved) return false;
+  if (saved.file) {
+    exported = saved.exported !== false;
+    showFile(saved.file);
+  }
+  if (saved.inputs && saved.inputs.desc) {
+    // applyCircuit wants a name; the snapshot has none, and none is needed.
+    applyCircuit(Object.assign({ name: '' }, saved.inputs));
+  }
+  if (saved.file && saved.entryIndex >= 0 && openFile.entries[saved.entryIndex]) {
+    currentEntry = openFile.entries[saved.entryIndex];
+    $('examples').value = String(saved.entryIndex);
+  }
+  refreshEntryLinks();
+  return true;
+}
+
+// Everything the input file records about one entry, read straight off the
+// form. `name` is added by the caller, since it is the one field that does
+// not come from the inputs -- which is also what lets this double as the
+// snapshot the "has anything changed?" test compares against.
+function inputsSnapshot() {
   const desc = $('desc').value.trim();
-  if (!desc) { showNote('Enter a circuit first.', true); return; }
-  const selIdx = $('examples').value;
-  const suggested = (selIdx !== '' && picker[Number(selIdx)]) ? picker[Number(selIdx)].name : 'My circuit';
-  const name = window.prompt('Name for this circuit:', suggested);
-  if (name === null) return;
-  const trimmedName = name.trim() || 'Circuit';
   // The Plot card and the Analysis tool are independent, and a circuit may
   // legitimately have both -- a two-port analysis and a plot, say. They get
   // separate keys so saving one cannot silently drop the other.
   const hasPlot = $('plotKey').value.trim() !== '';
   const expert = expertFields();
-  const circuit = {
-    name: trimmedName, desc: desc,
+  return {
+    desc: desc,
     domain: domainSel.value,
     tool: currentTool() === 'solve' ? '' : currentTool(),
     plottool: hasPlot ? plotToolSel.value : '',
@@ -1860,34 +1932,159 @@ $('addToFileBtn').addEventListener('click', () => {
     plotmax: hasPlot ? $('plotMax').value : '',
     plotpoints: hasPlot ? $('plotN').value : ''
   };
-  const existingIdx = picker.findIndex(c => c.name === trimmedName);
-  let verb;
-  if (existingIdx >= 0) { picker[existingIdx] = circuit; verb = 'Updated'; }
-  else { picker.push(circuit); verb = 'Added'; }
-  populatePicker(picker, $('pickerLabel').textContent, picker.length ? '— choose —' : '— none defined —');
-  $('examples').value = String(picker.findIndex(c => c.name === trimmedName));
-  $('downloadFileBtn').disabled = false;
-  showNote(`${verb} '${trimmedName}' in the Input File (${picker.length} circuit${picker.length === 1 ? '' : 's'} now). Download it any time.`, false);
+}
+
+// Compare an entry against the inputs on screen. Every field the file
+// records counts, not just the circuit text: changing the rounding alone
+// still means the entry no longer describes what is on screen.
+function sameAsEntry(entry) {
+  if (!entry) return false;
+  const now = inputsSnapshot();
+  return Object.keys(now).every(k => {
+    // The circuit is the same circuit whichever separator it is written
+    // with: a file may use colons, and applyCircuit turns those into
+    // newlines because that is how the textarea reads. Comparing the raw
+    // text would call every freshly-loaded entry "changed".
+    if (k === 'desc') return sameCircuitText(now.desc, entry.desc);
+    return JSON.stringify(now[k]) === JSON.stringify(entry[k]);
+  });
+}
+
+function sameCircuitText(a, b) {
+  const norm = t => String(t || '').split(/[:\r\n]+/)
+                     .map(x => x.trim()).filter(Boolean).join('\n');
+  return norm(a) === norm(b);
+}
+
+// Which of the two entry links to show. Four states:
+//   nothing typed                      -> neither
+//   typed, not tied to an entry        -> Save
+//   tied to an entry, unchanged        -> neither
+//   tied to an entry, changed          -> Update, then Save
+function refreshEntryLinks() {
+  const hasInputs = $('desc').value.trim() !== '';
+  const tied = currentEntry !== null && openFile !== null
+               && openFile.entries.indexOf(currentEntry) !== -1;
+  const changed = tied && !sameAsEntry(currentEntry);
+  $('updateEntryBtn').hidden = !(hasInputs && tied && changed);
+  $('addToFileBtn').hidden = !(hasInputs && (!tied || changed));
+}
+
+// Adopt `entries` as the dropdown's list. `file` is null for the read-only
+// examples, or {name, entries} for a real file.
+function showFile(file) {
+  openFile = file;
+  const entries = file ? file.entries : builtIn;
+  const label = file ? 'Entries in ' + file.name + ':' : 'Some examples you can try: ';
+  populatePicker(entries, label,
+                 entries.length ? '— choose —' : (file ? '— no entries yet —' : '— none defined —'));
+  $('openExamplesBtn').hidden = (file === null);
+  $('downloadFileBtn').disabled = !(file && file.entries.length);
+  refreshEntryLinks();
+  persistState();
+}
+
+// Nothing here has reached disk, so warn before replacing a file that has
+// entries only this browser knows about. Returns false if the user backs out.
+function okToReplaceFile() {
+  if (!openFile || !openFile.entries.length || exported) return true;
+  const n = openFile.entries.length;
+  return window.confirm(
+    `${openFile.name} has ${n} ${n === 1 ? 'entry' : 'entries'} you have not downloaded. ` +
+    `Continue and lose ${n === 1 ? 'it' : 'them'}?`);
+}
+
+// And before throwing away edits that have not been written to their entry.
+function okToDiscardEdits() {
+  if ($('updateEntryBtn').hidden) return true;
+  return window.confirm(`Discard your unsaved changes to '${currentEntry.name}'?`);
+}
+
+// Save the inputs as a brand-new entry. If no file is open yet -- the
+// examples are read-only, so this is the first real save of the session --
+// one is created here, which is the only time a filename is asked for.
+$('addToFileBtn').addEventListener('click', () => {
+  if (!$('desc').value.trim()) { showNote('Enter a circuit first.', true); return; }
+  if (!openFile) {
+    const fname = window.prompt('Name for the new input file:', 'circuits.cir');
+    if (fname === null) return;
+    let clean = fname.trim().replace(/[^A-Za-z0-9 _.-]/g, '') || 'circuits';
+    if (!/\.cir$/i.test(clean)) clean = clean.replace(/\.[^.]*$/, '') + '.cir';
+    currentEntry = null;
+    showFile({ name: clean, entries: [] });
+  }
+  const suggested = currentEntry ? currentEntry.name : 'My circuit';
+  const name = window.prompt('Name for this entry:', suggested);
+  if (name === null) return;
+  const entry = Object.assign({ name: name.trim() || 'Entry' }, inputsSnapshot());
+  openFile.entries.push(entry);
+  exported = false;
+  showFile(openFile);
+  currentEntry = entry;
+  $('examples').value = String(openFile.entries.indexOf(entry));
+  lastPickerValue = $('examples').value;
+  refreshEntryLinks();
+  persistState();
+  const n = openFile.entries.length;
+  showNote(`Saved '${entry.name}' to ${openFile.name} (${n} ${n === 1 ? 'entry' : 'entries'}). ` +
+           `Download the file to keep it outside this browser.`, false);
+});
+
+// Write the inputs back over the entry they came from. Identity is the
+// entry object, so this cannot be misdirected by a name typed at a prompt.
+$('updateEntryBtn').addEventListener('click', () => {
+  if (!currentEntry) return;
+  Object.assign(currentEntry, inputsSnapshot());
+  exported = false;
+  refreshEntryLinks();
+  persistState();
+  showNote(`Updated '${currentEntry.name}' in ${openFile.name}.`, false);
+});
+
+$('newFileBtn').addEventListener('click', () => {
+  if (!okToDiscardEdits() || !okToReplaceFile()) return;
+  const fname = window.prompt('Name for the new input file:', 'circuits.cir');
+  if (fname === null) return;
+  let clean = fname.trim().replace(/[^A-Za-z0-9 _.-]/g, '') || 'circuits';
+  if (!/\.cir$/i.test(clean)) clean = clean.replace(/\.[^.]*$/, '') + '.cir';
+  exported = true;                     // an empty file has nothing to lose
+  currentEntry = null;
+  showFile({ name: clean, entries: [] });
+  showNote(`Started ${clean}. It has no entries yet.`, false);
+});
+
+$('openExamplesBtn').addEventListener('click', () => {
+  if (!okToDiscardEdits() || !okToReplaceFile()) return;
+  exported = true;
+  currentEntry = null;
+  showFile(null);
+  showNote('', false);
 });
 
 // Render the live Input File (picker) to .cir text via the server and
 // trigger a browser download.
 $('downloadFileBtn').addEventListener('click', async () => {
-  if (!picker.length) { showNote('The Input File is empty — add a circuit to it first.', true); return; }
+  if (!openFile || !openFile.entries.length) {
+    showNote('There is nothing to download yet — save an entry first.', true); return;
+  }
   try {
     const r = await fetch('/api/export', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ circuits: picker })
+      body: JSON.stringify({ circuits: openFile.entries })
     });
     const data = await r.json();
     if (!data.ok) { showNote(data.error || 'Could not build that file.', true); return; }
     const blob = new Blob([data.text], { type: 'text/plain' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    const base = (liveFileName || 'circuits').replace(/\.[^./\\]+$/, '').replace(/[^A-Za-z0-9 _.-]/g, '') || 'circuits';
+    const base = (openFile ? openFile.name : 'circuits').replace(/\.[^./\\]+$/, '').replace(/[^A-Za-z0-9 _.-]/g, '') || 'circuits';
     a.download = base + '.cir';
     a.click();
     URL.revokeObjectURL(a.href);
+    // This is the only thing here that reaches disk, so it is what clears
+    // the "you have work only this browser knows about" warning.
+    exported = true;
+    persistState();
   } catch (e) {
     showNote('Could not download the file.', true);
   }
@@ -1933,21 +2130,24 @@ function clearAllInputs() {
   // Results: an emptied page must not keep showing answers to a circuit
   // that is no longer there.
   clearResults();
-  // The input file itself
-  populatePicker(builtIn, 'Some examples you can try: ', builtIn.length ? '— choose —' : '— none defined —');
-  liveFileName = null;
-  $('downloadFileBtn').disabled = true;
-  $('addToFileBtn').hidden = true;
+  // The open file is deliberately left alone: clearing the inputs is how
+  // you start a fresh entry in the file you already have, which is the
+  // ordinary way to add a second one. Closing a file is New file, Upload
+  // or Built-in examples.
+  currentEntry = null;
+  $('examples').value = '';
   showNote('', false);
   clearSettingsNotes();
   syncSettings();
   syncFields();
+  refreshEntryLinks();
+  persistState();
 }
 
 $('clearAllBtn').addEventListener('click', () => {
   // Only ask when there is something to lose -- a dialog on an already
   // empty page is pure friction.
-  const hasWork = $('desc').value.trim() !== '' || liveFileName !== null ||
+  const hasWork = $('desc').value.trim() !== '' ||
                   $('evalExpr').value.trim() !== '' ||
                   $('solveqEqs').value.trim() !== '';
   if (hasWork && !window.confirm('Clear every input and start over?')) return;
