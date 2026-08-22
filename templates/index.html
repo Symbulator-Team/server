@@ -1313,7 +1313,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-22 12:25 UTC
+  Symbulator 9 version 2026-08-22 12:43 UTC
 </footer>
 
 <script>
@@ -2518,6 +2518,18 @@ function buildSolutionPicker(data) {
   pick.hidden = false;
 }
 
+// Flatten one solution into {name: displayed value}. Used for the answers
+// the evaluator works from, and again by the download builder, which writes
+// out every solution rather than only the one on screen.
+function shownFrom(sol) {
+  const shown = {};
+  for (const nv of sol.nodes) shown['v_' + nv.node] = nv.plain;
+  for (const el of sol.elements)
+    for (const it of el.items) shown[it.sym + '_' + el.name] = it.plain;
+  for (const ex of sol.extras) shown[ex.name] = ex.plain;
+  return shown;
+}
+
 async function renderSolveResult(data, idx) {
   const out = $('out'), status = $('status');
   // A payload without `solutions` is itself the single solution, which is
@@ -2659,11 +2671,7 @@ async function renderSolveResult(data, idx) {
   markFresh('solve');
 
   // Remember this solve for the evaluator + download area.
-  const shown = {};
-  for (const nv of sol.nodes) shown['v_' + nv.node] = nv.plain;
-  for (const el of sol.elements)
-    for (const it of el.items) shown[it.sym + '_' + el.name] = it.plain;
-  for (const ex2 of sol.extras) shown[ex2.name] = ex2.plain;
+  const shown = shownFrom(sol);
   last = {
     desc: $('desc').value,
     domain: data.domain,
@@ -3231,15 +3239,35 @@ $('dlBtn').addEventListener('click', () => {
     if (last.rms) hdr += ' (RMS phasors)';
     if (last.approx) hdr += ' (decimal)';
     parts.push(hdr);
-    const answers = Object.keys(last.shown || {}).length ? last.shown : last.values;
-    for (const [k, v] of Object.entries(answers)) parts.push(`${k} = ${v}`);
+    // A circuit with several roots is not described by whichever one the
+    // picker happens to be showing, so the file carries them all. Reading
+    // it later, there is no way to tell which was on screen at the time --
+    // hence saying so explicitly rather than writing one and staying quiet.
+    const sols = (lastSolve && lastSolve.solutions) || [];
+    if (sols.length > 1) {
+      const shownIdx = Number($('solutionSel').value) || 0;
+      parts.push(`This circuit has ${sols.length} valid solutions -- each one `
+                 + `satisfies every constraint given. All of them are listed `
+                 + `below; solution ${shownIdx + 1} was the one on screen.`);
+      sols.forEach((sol, i) => {
+        parts.push('');
+        parts.push(`--- Solution ${i + 1} of ${sols.length} ---`);
+        for (const [k, v] of Object.entries(shownFrom(sol))) parts.push(`${k} = ${v}`);
+      });
+    } else {
+      const answers = Object.keys(last.shown || {}).length ? last.shown : last.values;
+      for (const [k, v] of Object.entries(answers)) parts.push(`${k} = ${v}`);
+    }
     parts.push('');
   }
   // Include Evaluate / Solve results too, but only if the fields still hold
   // the same inputs that produced them -- otherwise they no longer match
   // what's on screen and would be misleading in the downloaded file.
   if (lastEval && lastEval.expr === $('evalExpr').value) {
-    parts.push('=== Evaluate ===');
+    const sols = (lastSolve && lastSolve.solutions) || [];
+    parts.push(sols.length > 1
+      ? `=== Evaluate (from solution ${(Number($('solutionSel').value) || 0) + 1}) ===`
+      : '=== Evaluate ===');
     parts.push(`Expression: ${lastEval.expr}`);
     parts.push(`Result: ${lastEval.plain}`);
     parts.push('');
