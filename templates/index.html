@@ -1294,7 +1294,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-22 10:46 UTC
+  Symbulator 9 version 2026-08-22 11:08 UTC
 </footer>
 
 <script>
@@ -1464,7 +1464,19 @@ function markStale(...tools) {
   const set = new Set(tools);
   // Evaluate and Solve equations were computed from the solve's answers,
   // so they cannot outlive it.
-  if (set.has('solve')) { set.add('evaluate'); set.add('solveq'); }
+  if (set.has('solve')) {
+    set.add('evaluate'); set.add('solveq');
+    // So do the "several solutions" line and its picker. They are claims
+    // about the answers on screen, and the moment those stop describing
+    // the inputs -- a different entry loaded, a field edited -- the
+    // sentence is false and the menu offers a choice between roots of a
+    // circuit that is no longer in the form. Doing this here rather than
+    // at each call site is the point: every path that invalidates a solve
+    // already comes through markStale, and the two that did not were
+    // exactly the ones that left a stale picker behind.
+    lastSolve = null;
+    buildSolutionPicker({});
+  }
   for (const t of set) { freshness[t] = false; paintFreshness(t); }
 }
 
