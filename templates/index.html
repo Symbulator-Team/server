@@ -433,6 +433,12 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     display: flex; align-items: center; justify-content: center;
     gap: .55rem; margin: .9rem 0 0; font-size: .92rem; color: var(--muted);
   }
+  /* An author `display` beats the browser's own [hidden] { display: none }
+     whatever the specificity, so setting display: flex above quietly
+     disabled the hidden attribute and left an empty picker sitting under
+     the Outputs heading before anything had been run. Anything here that
+     sets display has to say this too. */
+  .solution-pick[hidden] { display: none; }
   .solution-pick select { width: auto; min-width: 11rem; margin: 0; }
   .solution-pick label { margin: 0; font-weight: 600; }
   .group-intro { margin: 0 0 1.2rem; }
@@ -1278,7 +1284,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-22 09:25 UTC
+  Symbulator 9 version 2026-08-22 09:39 UTC
 </footer>
 
 <script>
