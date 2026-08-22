@@ -357,6 +357,13 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
      .uploadlbl and leave the Upload control a different size and
      weight from the two <button>s next to it. */
   .btn-row { display: flex; gap: .8rem; flex-wrap: wrap; align-items: center; }
+  /* Upload and Download read as a pair, so they are sized as one: wide
+     enough for the longer label rather than each shrinking to its own
+     text. Centred, since the labels differ in length. */
+  /* margin: 0 because the page gives every <label> a bottom margin for
+     sitting above a field -- here it makes the label's box taller than
+     the button's and knocks the row out of alignment by 3px. */
+  .btn-row .uploadlbl { min-width: 15.5rem; text-align: center; margin: 0; }
   .dl-row label { font-weight: 400; font-size: .92rem; display: flex;
                   align-items: center; gap: .45rem; margin: 0; cursor: pointer; }
   .dl-row input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
@@ -377,7 +384,11 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
      wanted, then say what it costs -- hence the warning colour on hover
      rather than at rest. Ring drawn inset so the size does not shift. */
   button.btn-quiet {
+    /* font-family and line-height for the same reason as .uploadlbl: a
+       <button> inherits neither, and without them this one renders in the
+       browser's default face while everything around it does not. */
     background: transparent; color: var(--muted); font-weight: 500;
+    font-family: inherit; line-height: inherit;
     font-size: .92rem; padding: .45rem 1rem;
     box-shadow: inset 0 0 0 1px var(--line);
   }
@@ -421,10 +432,13 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .disamb-item input[type=radio] { accent-color: var(--accent); }
   .disamb button { margin-top: .8rem; }
   .uploadlbl {
-    /* font-family too: a <button> does not inherit the page font the way
-       a <label> does, so without this the three controls differ. */
+    /* font-family and line-height both: a <button> inherits neither the
+       page font nor its line-height the way a <label> does, so without
+       these the controls come out different sizes -- the line-height
+       difference is only 3px, invisible until they sit side by side at
+       equal width. */
     display: inline-block; font-family: inherit; font-size: 1rem;
-    font-weight: 600; cursor: pointer;
+    line-height: inherit; font-weight: 600; cursor: pointer;
     color: var(--accent-ink); border: 0; border-radius: 8px;
     padding: .6rem 1.6rem; background: var(--accent);
     box-shadow: 0 1px 2px rgba(16,24,40,.15);
@@ -504,7 +518,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
       title="Empty every input and start over">Clear all inputs</button>
   </div>
   <p class="group-intro">
-    <strong>Describe a linear circuit and specify the analysis type</strong> —
+    <strong>Describe a circuit and select analysis type</strong> —
     You can use an Input&nbsp;File. Unsure how? Learn
     <a href="https://learn.symbulator.com" target="_blank" rel="noopener">here</a>!
   </p>
@@ -517,7 +531,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 
 
     <div class="btn-row" id="uploadRow" style="margin-top:.9rem">
-      <label for="fileInput" class="uploadlbl" title="Upload an Input File of circuit descriptions">Upload Input File</label>
+      <label for="fileInput" class="uploadlbl" title="Upload an input file of circuit entries">Upload an input file</label>
       <input type="file" id="fileInput" accept=".cir" hidden>
       <button type="button" id="downloadFileBtn" class="uploadlbl" disabled
         title="Download the input file as it now stands">Download this input file</button>
@@ -535,35 +549,34 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
       <p style="font-size:.9rem;color:var(--muted);margin-top:.5rem">
         A plain text Input File can hold as many circuits as you like. Each one
         starts with its name in square brackets, followed by the element
-        lines and then optional settings. Save it with a
-        <code>.cir</code> extension.
+        lines and then optional settings. The file extension is
+        <code>.cir</code>.
       </p>
 <pre style="background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;font-size:.84rem;overflow-x:auto"># comments start with a hash
 
 [Problem 1 — divider]
+
 e1,1,0,20
 r1,1,2,5'k
 r2,2,0,15'k
 
 analysis: dc
-
 rounding: exact
 si: no
 units: yes
-rms: no
+
 
 [Problem 2 — RC transient]
+
 e1,1,0,10/s
 r1,1,2,2200
 c1,2,0,4.7e-6
 
 analysis: tr
 variables: v_2
-
 rounding: exact
 si: no
-units: yes
-rms: no</pre>
+units: yes</pre>
       <p style="font-size:.88rem;color:var(--muted)">
         Everything after the element lines is optional, and can be left out
         entirely — leaving a key out just means the app's own default
@@ -755,8 +768,8 @@ rms: no</pre>
       <div id="equivField">
         <label for="equivType">Type of equivalent</label>
         <select id="equivType">
-          <option value="er">Equivalent resistance / impedance</option>
-          <option value="th">Thévenin / Norton equivalent</option>
+          <option value="er">Resistance / impedance</option>
+          <option value="th">Thévenin / Norton</option>
           <option value="port">Two-port parameters</option>
         </select>
       </div>
