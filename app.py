@@ -113,11 +113,53 @@ def index():
     return render_template("index.html")
 
 
+# The build stamp shown in the page footer, read out of the template the
+# same way a reader would read it off the page.
+_BUILD_RE = re.compile(
+    r"Symbulator 9 version (\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC)")
+_TEMPLATE = os.path.join(app.root_path, "templates", "index.html")
+
+
+def _build_stamp():
+    """The stamp currently written in the template file, or None."""
+    try:
+        with open(_TEMPLATE, encoding="utf-8") as fh:
+            found = _BUILD_RE.search(fh.read())
+    except OSError:
+        return None
+    return found.group(1) if found else None
+
+
+# Captured once, at import: this is the build the running process started
+# with. Compared against the file on disk it answers the question that
+# cost an hour on 22 Aug 2026 -- the files had been pulled, git status was
+# clean, the page showed the new stamp, and the API was still answering
+# from the previous app.py because the web app had never been reloaded.
+# A pull moves the disk; only a reload moves the process.
+_LOADED_BUILD = _build_stamp()
+
+try:
+    from symbulator import __version__ as _SOLVER_VERSION
+except Exception:                                  # pragma: no cover
+    _SOLVER_VERSION = None
+
+
 @app.get("/healthz")
 def healthz():
-    """Trivial liveness check for the hosting platform to
-    poll -- confirms the process is up and answering HTTP, nothing more."""
-    return {"ok": True}
+    """Liveness check for the hosting platform to poll, and the fastest
+    way to tell what is actually deployed: which build this process is
+    serving, which build is on disk, and which solver is loaded. When the
+    two builds differ the process is running stale code and wants a
+    reload -- a `git pull` alone does not do it."""
+    on_disk = _build_stamp()
+    return {
+        "ok": True,
+        "build": _LOADED_BUILD,
+        "build_on_disk": on_disk,
+        "needs_reload": bool(_LOADED_BUILD and on_disk
+                             and _LOADED_BUILD != on_disk),
+        "solver": _SOLVER_VERSION,
+    }
 
 
 def _decode(data: bytes) -> str:

@@ -68,7 +68,27 @@ To deploy a change:
    only feedback you get is an error if the path was wrong. That makes
    it indistinguishable from a typo unless you read carefully, which is
    why the button is the better habit.
-5. **Verify by actually using the live site** -- load
+5. **Check `/healthz` before anything else.** It reports what is really
+   deployed, and answers the reload question directly:
+
+       {"ok": true,
+        "build": "2026-08-22 11:08 UTC",
+        "build_on_disk": "2026-08-22 11:08 UTC",
+        "needs_reload": false,
+        "solver": "0.4.6"}
+
+   `build` is the footer stamp the running process started with;
+   `build_on_disk` is what the files say now. **If they differ,
+   `needs_reload` is true and the pull has not reached the process** --
+   go back to step 4 and use the Reload button. This is worth knowing
+   because the symptom is otherwise baffling: on 22 Aug 2026 a deploy
+   served the new page while the API still answered from the previous
+   `app.py`, with `git pull` done and `git status` clean. A browser hard
+   refresh does not fix it; only a reload does. `solver` is the version
+   of the `symbulator` package the process has loaded, which is the other
+   half of step 3.
+
+6. **Then verify by actually using the live site** -- load
    `symbulator.pythonanywhere.com` and run a real solve. Don't stop at
    "the pull/reload command didn't error"; that doesn't catch a
    version-mismatch crash, which only shows up on an actual request.
