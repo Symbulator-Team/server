@@ -363,7 +363,11 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   /* margin: 0 because the page gives every <label> a bottom margin for
      sitting above a field -- here it makes the label's box taller than
      the button's and knocks the row out of alignment by 3px. */
-  .btn-row .uploadlbl { min-width: 9rem; text-align: center; margin: 0; }
+  /* Sized to just fit the longer label, so the pair stays equal without
+     either being padded out. 8rem is Download's natural width (~7.85rem)
+     plus a little slack, so a font that loads slightly wide cannot make
+     it wrap. */
+  .btn-row .uploadlbl { min-width: 8rem; text-align: center; margin: 0; }
   .dl-row label { font-weight: 400; font-size: .92rem; display: flex;
                   align-items: center; gap: .45rem; margin: 0; cursor: pointer; }
   .dl-row input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
