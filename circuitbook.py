@@ -99,13 +99,15 @@ _KEYS = {
     "solve_unknowns": "solve_unknowns",
     "solve_real_only": "solve_real_only",
 }
-# Keys that may appear several times and accumulate into a list. The
-# plural spelling is what format_book writes; the singular is accepted so
-# that files written before that change, and hand-written ones, still load.
-_MULTI = {"equations": "equations", "equation": "equations",
-          "conditions": "conditions", "condition": "conditions",
-          "solve_equations": "solve_equations", "solve_equation": "solve_equations",
-          "solve_conditions": "solve_conditions", "solve_condition": "solve_conditions"}
+# Keys that may appear several times and accumulate into a list. Plural,
+# because the field holds several -- the same rule as unknowns and
+# variables. The singular spellings these once had are not accepted: a
+# file still using them fails loudly, since an unknown key is reported
+# and kept as a circuit line rather than quietly dropped.
+_MULTI = {"equations": "equations",
+          "conditions": "conditions",
+          "solve_equations": "solve_equations",
+          "solve_conditions": "solve_conditions"}
 
 # JSON fields (the _KEYS values above, not the file-text keys) that are
 # booleans rather than plain text -- parse_book converts their text
@@ -235,9 +237,6 @@ def format_book(circuits: List[dict]) -> str:
         val = c.get("unknowns")
         if val:
             analysis.append(f"unknowns: {val}")
-        # Plural, because the field holds several -- the same rule as
-        # unknowns/variables. The singular spellings are still read (see
-        # _MULTI), so files written before this keep loading unchanged.
         for key, field in (("equations", "equations"), ("conditions", "conditions")):
             for val in c.get(field, []) or []:
                 analysis.append(f"{key}: {val}")

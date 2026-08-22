@@ -1314,7 +1314,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-22 11:38 UTC
+  Symbulator 9 version 2026-08-22 11:45 UTC
 </footer>
 
 <script>
@@ -2380,15 +2380,25 @@ function clearAllInputs() {
 }
 
 $('clearAllBtn').addEventListener('click', () => {
-  // Only ask when there is something to lose -- a dialog on an already
-  // empty page is pure friction.
-  // Everything the file records is about to go, not just these three
-  // fields: Expert Mode, the plot settings and any non-default Settings
-  // were being wiped without a word whenever the circuit box happened to
-  // be empty.
-  const pristine = JSON.stringify(PRISTINE_INPUTS);
-  const hasWork = JSON.stringify(inputsSnapshot()) !== pristine;
-  if (hasWork && !window.confirm('Clear every input and start over?')) return;
+  // Only ask when clearing would actually lose something.
+  //
+  // Inputs sitting in an entry of the open file are not lost by clearing
+  // the form -- the entry still holds them -- so asking there is friction
+  // for nothing, which is the commonest case of all: load an entry, look
+  // at it, clear. What matters is whether they have drifted from the
+  // entry since.
+  //
+  // Untied inputs are judged against the app's own defaults rather than
+  // by whether a circuit is typed, because everything the file records is
+  // about to go: Expert Mode, the plot settings and any non-default
+  // Settings were once wiped without a word whenever the circuit box
+  // happened to be empty.
+  const tied = currentEntry !== null && openFile !== null
+               && openFile.entries.indexOf(currentEntry) !== -1;
+  const wouldLose = tied
+    ? hasUnsavedEdits()
+    : JSON.stringify(inputsSnapshot()) !== JSON.stringify(PRISTINE_INPUTS);
+  if (wouldLose && !window.confirm('Clear every input and start over?')) return;
   clearAllInputs();
 });
 
