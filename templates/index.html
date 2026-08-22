@@ -368,6 +368,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
      plus a little slack, so a font that loads slightly wide cannot make
      it wrap. */
   .btn-row .uploadlbl { min-width: 8rem; text-align: center; margin: 0; }
+
   .dl-row label { font-weight: 400; font-size: .92rem; display: flex;
                   align-items: center; gap: .45rem; margin: 0; cursor: pointer; }
   .dl-row input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
@@ -535,7 +536,8 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 
 
     <div class="btn-row" id="uploadRow" style="margin-top:.9rem">
-      <label for="fileInput" class="uploadlbl" title="Upload an input file of circuit entries">Upload</label>
+      <button type="button" id="uploadBtn" class="uploadlbl"
+        title="Upload an input file of circuit entries">Upload</button>
       <input type="file" id="fileInput" accept=".cir" hidden>
       <button type="button" id="downloadFileBtn" class="uploadlbl" disabled
         title="Download the input file as it now stands">Download</button>
@@ -1540,6 +1542,19 @@ function clearResults() {
 let builtIn = [], picker = [];
 let openFile = null;
 let currentEntry = null;
+// What the inputs looked like when the current entry was loaded or last
+// written; "changed" is measured against this rather than against the entry
+// dict. See hasUnsavedEdits.
+let loadedSnapshot = null;
+// What an untouched form looks like, captured at startup, so "is there
+// anything to lose?" can be asked about every field the file records.
+let PRISTINE_INPUTS = null;
+// Restoring writes to the very fields that trigger persistState, and
+// showFile persists on the way out, so without this a restore would save its
+// own half-finished state over the thing it was restoring: the file would
+// survive but the inputs and the current entry would be replaced by an empty
+// form. Everything is written once, at the end, when it is whole.
+let restoring = false;
 // Whether openFile has been downloaded since it last changed. Nothing here
 // reaches disk on its own, so this is what "you have work that only exists
 // in this browser" means, and it is what the warnings key off.
@@ -1575,8 +1590,15 @@ function showNote(text, isWarning) {
   const div = document.createElement('div');
   div.id = 'bookNote';
   div.className = 'booknote' + (isWarning ? ' warn' : '');
+  // Announced rather than only appearing: this is the only feedback that a
+  // save, rename or delete happened, and it is easy to miss.
+  div.setAttribute('role', isWarning ? 'alert' : 'status');
+  div.setAttribute('aria-live', isWarning ? 'assertive' : 'polite');
   div.textContent = text;
   $('uploadRow').insertAdjacentElement('afterend', div);
+  // The Input File panel starts folded, so feedback about saving an entry
+  // would otherwise be written inside a closed box and never seen.
+  if (text) $('fileBox').open = true;
 }
 
 // Fill every input from a picked circuit. Circuit lines are shown one
@@ -1682,7 +1704,9 @@ let lastPickerValue = '';
 $('examples').addEventListener('change', ev => {
   const idx = ev.target.value;
   if (idx === '') { lastPickerValue = ''; return; }
-  if (!okToDiscardEdits()) { ev.target.value = lastPickerValue; return; }
+  if (!okToDiscardEdits() || !okToDiscardUntiedInputs()) {
+    ev.target.value = lastPickerValue; return;
+  }
   const c = picker[Number(idx)];
   if (!c) return;
   applyCircuit(c);
@@ -1690,6 +1714,7 @@ $('examples').addEventListener('change', ev => {
   // are read-only, so loading one leaves the inputs untied and offering
   // nothing but "save as a new entry".
   currentEntry = (openFile && openFile.entries.indexOf(c) !== -1) ? c : null;
+  markInputsSaved();
   lastPickerValue = idx;
   refreshEntryLinks();
   persistState();
@@ -1709,24 +1734,42 @@ function showHostNotice() {
   if (el) el.classList.add('show');
 }
 
+PRISTINE_INPUTS = inputsSnapshot();
+
 async function loadExamples() {
   try {
     const r = await fetch('/api/examples');
     const data = await r.json();
     builtIn = data.circuits || [];
-    // A restored workspace wins: it means the visitor has a file open, and
-    // dropping them back on the examples would look like losing it.
-    if (!restoreState()) { currentEntry = null; showFile(null); }
   } catch (e) {
-    populatePicker([], 'Some examples you can try: ', '— unavailable —');
+    // Only a genuine failure to reach the examples belongs here. Restoring
+    // used to sit inside this try, so a damaged workspace surfaced as "this
+    // page cannot reach a maths engine" -- and never got cleared, so it did
+    // so on every visit afterwards.
+    builtIn = [];
     showHostNotice();
   }
+  // Either way the picker gets populated: a restored workspace wins, since
+  // it means a file is open and showing the examples would look like losing
+  // it, and otherwise the examples are what belongs there.
+  if (!restoreState()) { currentEntry = null; showFile(null); }
 }
 loadExamples();
+
+// The file input stays hidden; the button in front of it is what people
+// (and keyboards) actually reach.
+$('uploadBtn').addEventListener('click', () => $('fileInput').click());
 
 $('fileInput').addEventListener('change', async ev => {
   const file = ev.target.files && ev.target.files[0];
   if (!file) return;
+  // Opening a file replaces whatever is open, exactly as New file and
+  // Built-in examples do -- and is the likeliest of the three to be done by
+  // accident, so it asks the same questions they do.
+  if (!okToDiscardEdits() || !okToDiscardUntiedInputs() || !okToReplaceFile()) {
+    ev.target.value = '';
+    return;
+  }
   const fd = new FormData();
   fd.append('file', file);
   showNote('reading ' + file.name + '…', false);
@@ -1829,6 +1872,7 @@ $('siUnits').addEventListener('change', () => {
   if ($('siUnits').checked && $('digits').value === 'exact') {
     $('digits').value = 'approx';
     syncSettings();
+    refreshEntryLinks(); persistState();
     settingsNote('rounding', 'SI prefixes need decimal values, so rounding switched to approximate.');
   } else {
     clearSettingsNotes();
@@ -1838,6 +1882,7 @@ $('siUnits').addEventListener('change', () => {
 $('digits').addEventListener('change', () => {
   if ($('digits').value === 'exact' && $('siUnits').checked) {
     $('siUnits').checked = false;
+    refreshEntryLinks(); persistState();
     settingsNote('si', 'Exact answers can\'t carry SI prefixes, so SI prefixes were turned off.');
   } else {
     clearSettingsNotes();
@@ -1867,33 +1912,64 @@ function linesOf(text) {
 const STORE_KEY = 'symbulator-workspace';
 
 function persistState() {
+  if (restoring) return;
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
       file: openFile,
       entryIndex: openFile && currentEntry ? openFile.entries.indexOf(currentEntry) : -1,
       inputs: inputsSnapshot(),
+      loadedSnapshot: loadedSnapshot,
       exported: exported
     }));
   } catch (e) { /* private mode, or storage full: carry on unsaved */ }
 }
 
+function forgetWorkspace() {
+  try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+}
+
 function restoreState() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) {}
-  if (!saved) return false;
-  if (saved.file) {
-    exported = saved.exported !== false;
-    showFile(saved.file);
+  if (!saved || typeof saved !== 'object') return false;
+
+  // A store written by an older build, or damaged, must not be able to
+  // throw from in here: this runs inside the same try as the examples
+  // fetch, so an exception used to surface as "no maths engine".
+  const file = saved.file;
+  if (file && !(typeof file.name === 'string' && Array.isArray(file.entries))) {
+    forgetWorkspace();
+    return false;
   }
-  if (saved.inputs && saved.inputs.desc) {
-    // applyCircuit wants a name; the snapshot has none, and none is needed.
-    applyCircuit(Object.assign({ name: '' }, saved.inputs));
+
+  restoring = true;
+  try {
+    // A missing flag means a build that predates it, so assume the worst
+    // and warn rather than quietly disarming the loss warnings.
+    exported = saved.exported === true;
+    currentEntry = null;
+    showFile(file || null);
+    if (saved.inputs && typeof saved.inputs === 'object' && saved.inputs.desc) {
+      // applyCircuit wants a name; the snapshot has none, and none is needed.
+      applyCircuit(Object.assign({ name: '' }, saved.inputs));
+    }
+    if (file && saved.entryIndex >= 0 && file.entries[saved.entryIndex]) {
+      currentEntry = file.entries[saved.entryIndex];
+      $('examples').value = String(saved.entryIndex);
+      lastPickerValue = String(saved.entryIndex);
+    }
+    // The baseline is what was on screen when it was stored, so a session
+    // resumes mid-edit exactly as it was left -- including still showing
+    // Update if there were unwritten changes.
+    loadedSnapshot = saved.loadedSnapshot || inputsSnapshot();
+  } catch (e) {
+    forgetWorkspace();
+    restoring = false;
+    return false;
   }
-  if (saved.file && saved.entryIndex >= 0 && openFile.entries[saved.entryIndex]) {
-    currentEntry = openFile.entries[saved.entryIndex];
-    $('examples').value = String(saved.entryIndex);
-  }
+  restoring = false;
   refreshEntryLinks();
+  persistState();
   return true;
 }
 
@@ -1940,26 +2016,46 @@ function inputsSnapshot() {
   };
 }
 
-// Compare an entry against the inputs on screen. Every field the file
-// records counts, not just the circuit text: changing the rounding alone
-// still means the entry no longer describes what is on screen.
-function sameAsEntry(entry) {
-  if (!entry) return false;
-  const now = inputsSnapshot();
-  return Object.keys(now).every(k => {
-    // The circuit is the same circuit whichever separator it is written
-    // with: a file may use colons, and applyCircuit turns those into
-    // newlines because that is how the textarea reads. Comparing the raw
-    // text would call every freshly-loaded entry "changed".
-    if (k === 'desc') return sameCircuitText(now.desc, entry.desc);
-    return JSON.stringify(now[k]) === JSON.stringify(entry[k]);
-  });
+// "Have the inputs changed since this entry was loaded or last written?"
+//
+// The obvious way -- compare the form against the entry dict -- does not
+// work, and failed silently in exactly the case least likely to be tested.
+// An entry parsed from a file carries only the keys that file contained,
+// often just desc and domain, while the form always has a value for all
+// twenty-five. Comparing them directly reports two dozen differences on an
+// entry nobody has touched, so every uploaded entry sat permanently in the
+// "edited" state and every warning built on that fired wrongly -- which
+// teaches people to click through the warnings that do matter.
+//
+// So the comparison is form-against-form: `loadedSnapshot` is what the
+// inputs looked like the moment the entry was applied or written, and
+// "changed" means they no longer look like that. That needs no knowledge of
+// which keys a file happened to contain, nor of what each one defaults to,
+// and it cannot drift out of step with applyCircuit the way a table of
+// defaults would.
+function markInputsSaved() { loadedSnapshot = inputsSnapshot(); }
+
+function cleanFileName(raw) {
+  let clean = String(raw || '').trim().replace(/[^A-Za-z0-9 _.-]/g, '') || 'circuits';
+  if (!/\.cir$/i.test(clean)) clean = clean.replace(/\.[^.]*$/, '') + '.cir';
+  return clean;
 }
 
-function sameCircuitText(a, b) {
-  const norm = t => String(t || '').split(/[:\r\n]+/)
-                     .map(x => x.trim()).filter(Boolean).join('\n');
-  return norm(a) === norm(b);
+// An entry name goes into the file as [Name] on its own line, and the parser
+// treats a leading # as a comment before it looks for a section -- so a name
+// starting with # would be read back as a comment, silently swallowing the
+// entry and folding its circuit lines into whichever entry came before it.
+// Square brackets would break the heading the same way.
+function cleanEntryName(raw, fallback) {
+  const clean = String(raw || '').trim().replace(/^[#\s]+/, '').replace(/[\[\]]/g, '').trim();
+  return clean || fallback || 'Entry';
+}
+
+function hasUnsavedEdits() {
+  if (!currentEntry || !loadedSnapshot) return false;
+  const now = inputsSnapshot();
+  return Object.keys(now).some(k =>
+    JSON.stringify(now[k]) !== JSON.stringify(loadedSnapshot[k]));
 }
 
 // Which of the two entry links to show. Four states:
@@ -1971,7 +2067,7 @@ function refreshEntryLinks() {
   const hasInputs = $('desc').value.trim() !== '';
   const tied = currentEntry !== null && openFile !== null
                && openFile.entries.indexOf(currentEntry) !== -1;
-  const changed = tied && !sameAsEntry(currentEntry);
+  const changed = tied && hasUnsavedEdits();
   $('updateEntryBtn').hidden = !(hasInputs && tied && changed);
   $('addToFileBtn').hidden = !(hasInputs && (!tied || changed));
   // Renaming and deleting act on the entry itself, so they do not care
@@ -2007,8 +2103,16 @@ function okToReplaceFile() {
 
 // And before throwing away edits that have not been written to their entry.
 function okToDiscardEdits() {
-  if ($('updateEntryBtn').hidden) return true;
+  if (!hasUnsavedEdits()) return true;
   return window.confirm(`Discard your unsaved changes to '${currentEntry.name}'?`);
+}
+
+// Typed-but-never-saved work is just as lost when something overwrites the
+// form -- and the page is at that moment offering to save it -- so it gets
+// a warning too, not only edits to an entry that already exists.
+function okToDiscardUntiedInputs() {
+  if (currentEntry || $('desc').value.trim() === '') return true;
+  return window.confirm('You have inputs that are not saved to any entry. Discard them?');
 }
 
 // Save the inputs as a brand-new entry. If no file is open yet -- the
@@ -2016,22 +2120,25 @@ function okToDiscardEdits() {
 // one is created here, which is the only time a filename is asked for.
 $('addToFileBtn').addEventListener('click', () => {
   if (!$('desc').value.trim()) { showNote('Enter a circuit first.', true); return; }
+  // Both names are collected before anything changes. Creating the file
+  // first and then asking meant cancelling the second prompt left the user
+  // moved off the examples onto an empty file they never agreed to.
+  let newFileName = null;
   if (!openFile) {
     const fname = window.prompt('Name for the new input file:', 'circuits.cir');
     if (fname === null) return;
-    let clean = fname.trim().replace(/[^A-Za-z0-9 _.-]/g, '') || 'circuits';
-    if (!/\.cir$/i.test(clean)) clean = clean.replace(/\.[^.]*$/, '') + '.cir';
-    currentEntry = null;
-    showFile({ name: clean, entries: [] });
+    newFileName = cleanFileName(fname);
   }
   const suggested = currentEntry ? currentEntry.name : 'My circuit';
   const name = window.prompt('Name for this entry:', suggested);
   if (name === null) return;
-  const entry = Object.assign({ name: name.trim() || 'Entry' }, inputsSnapshot());
+  if (newFileName) { currentEntry = null; showFile({ name: newFileName, entries: [] }); }
+  const entry = Object.assign({ name: cleanEntryName(name) }, inputsSnapshot());
   openFile.entries.push(entry);
   exported = false;
   showFile(openFile);
   currentEntry = entry;
+  markInputsSaved();
   $('examples').value = String(openFile.entries.indexOf(entry));
   lastPickerValue = $('examples').value;
   refreshEntryLinks();
@@ -2046,6 +2153,7 @@ $('addToFileBtn').addEventListener('click', () => {
 $('updateEntryBtn').addEventListener('click', () => {
   if (!currentEntry) return;
   Object.assign(currentEntry, inputsSnapshot());
+  markInputsSaved();
   exported = false;
   refreshEntryLinks();
   persistState();
@@ -2056,8 +2164,7 @@ $('newFileBtn').addEventListener('click', () => {
   if (!okToDiscardEdits() || !okToReplaceFile()) return;
   const fname = window.prompt('Name for the new input file:', 'circuits.cir');
   if (fname === null) return;
-  let clean = fname.trim().replace(/[^A-Za-z0-9 _.-]/g, '') || 'circuits';
-  if (!/\.cir$/i.test(clean)) clean = clean.replace(/\.[^.]*$/, '') + '.cir';
+  const clean = cleanFileName(fname);
   exported = true;                     // an empty file has nothing to lose
   currentEntry = null;
   showFile({ name: clean, entries: [] });
@@ -2079,7 +2186,7 @@ $('renameEntryBtn').addEventListener('click', () => {
   const name = window.prompt('Rename this entry:', currentEntry.name);
   if (name === null) return;
   const was = currentEntry.name;
-  currentEntry.name = name.trim() || was;
+  currentEntry.name = cleanEntryName(name, was);
   exported = false;
   const idx = openFile.entries.indexOf(currentEntry);
   showFile(openFile);
@@ -2202,9 +2309,12 @@ function clearAllInputs() {
 $('clearAllBtn').addEventListener('click', () => {
   // Only ask when there is something to lose -- a dialog on an already
   // empty page is pure friction.
-  const hasWork = $('desc').value.trim() !== '' ||
-                  $('evalExpr').value.trim() !== '' ||
-                  $('solveqEqs').value.trim() !== '';
+  // Everything the file records is about to go, not just these three
+  // fields: Expert Mode, the plot settings and any non-default Settings
+  // were being wiped without a word whenever the circuit box happened to
+  // be empty.
+  const pristine = JSON.stringify(PRISTINE_INPUTS);
+  const hasWork = JSON.stringify(inputsSnapshot()) !== pristine;
   if (hasWork && !window.confirm('Clear every input and start over?')) return;
   clearAllInputs();
 });
@@ -2341,7 +2451,13 @@ async function solve(suffixChoices) {
     }
     // The server rewrote ambiguous values to their explicit spelling --
     // show that in the box so the choice is visible and permanent.
-    if (data.desc_used) $('desc').value = data.desc_used;
+    if (data.desc_used) {
+      $('desc').value = data.desc_used;
+      // Normalising the circuit is a real change to a recorded field,
+      // and setting .value fires nothing -- so say so explicitly, or
+      // the entry looks unedited and a reload restores the old text.
+      autoGrowDesc(); refreshEntryLinks(); persistState();
+    }
     // A decimal/scientific-notation value made "exact" rounding
     // impossible to honour -- the server already switched to
     // approximate for this answer; reflect that in the Rounding
@@ -2350,6 +2466,7 @@ async function solve(suffixChoices) {
     if (data.approx_forced) {
       $('digits').value = 'approx';
       syncSettings();
+      refreshEntryLinks(); persistState();
       settingsNote('rounding', 'A decimal or scientific-notation value was found in '
                     + 'the inputs, so rounding switched from exact to approximate.');
     }
