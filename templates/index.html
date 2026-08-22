@@ -554,15 +554,21 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
       <select id="examples">
         <option value="">— loading… —</option>
       </select>
+      <!-- Acting on the selected entry belongs next to the list of entries,
+           not down with the save links. Both stay hidden unless an entry of
+           a writable file is selected: the examples cannot be edited. -->
+      <button type="button" id="renameEntryBtn" class="linkish" hidden>Rename</button>
+      <button type="button" id="deleteEntryBtn" class="linkish" hidden>Delete</button>
     </span>
 
     <details id="fileFormatBox" style="margin-top:.9rem">
       <summary>About input file (.cir) format</summary>
       <p style="font-size:.9rem;color:var(--muted);margin-top:.5rem">
-        A plain text Input File can hold as many circuits as you like. Each one
-        starts with its name in square brackets, followed by the element
-        lines and then optional settings. The file extension is
-        <code>.cir</code>.
+        A plain text input file holds as many <em>entries</em> as you like. An
+        entry is one set of inputs to be solved together: a circuit, the
+        analysis to run on it, and the settings to run it with. Each starts
+        with its name in square brackets, followed by the element lines and
+        then its settings. The file extension is <code>.cir</code>.
       </p>
 <pre style="background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;font-size:.84rem;overflow-x:auto"># comments start with a hash
 
@@ -1968,6 +1974,11 @@ function refreshEntryLinks() {
   const changed = tied && !sameAsEntry(currentEntry);
   $('updateEntryBtn').hidden = !(hasInputs && tied && changed);
   $('addToFileBtn').hidden = !(hasInputs && (!tied || changed));
+  // Renaming and deleting act on the entry itself, so they do not care
+  // whether the inputs have drifted from it -- only that one is selected
+  // and that the file it belongs to can be written to.
+  $('renameEntryBtn').hidden = !tied;
+  $('deleteEntryBtn').hidden = !tied;
 }
 
 // Adopt `entries` as the dropdown's list. `file` is null for the read-only
@@ -2061,12 +2072,56 @@ $('openExamplesBtn').addEventListener('click', () => {
   showNote('', false);
 });
 
+// Renaming is safe because identity is the entry object: the name is just
+// a label on it, so nothing else has to be told it changed.
+$('renameEntryBtn').addEventListener('click', () => {
+  if (!currentEntry) return;
+  const name = window.prompt('Rename this entry:', currentEntry.name);
+  if (name === null) return;
+  const was = currentEntry.name;
+  currentEntry.name = name.trim() || was;
+  exported = false;
+  const idx = openFile.entries.indexOf(currentEntry);
+  showFile(openFile);
+  $('examples').value = String(idx);
+  lastPickerValue = String(idx);
+  refreshEntryLinks();
+  persistState();
+  showNote(`Renamed '${was}' to '${currentEntry.name}'.`, false);
+});
+
+// Deleting removes the entry but leaves the inputs on screen: they are
+// still your work, now untied, so the page offers to save them afresh
+// rather than emptying the form along with the entry.
+$('deleteEntryBtn').addEventListener('click', () => {
+  if (!currentEntry) return;
+  const name = currentEntry.name;
+  if (!window.confirm(`Delete '${name}' from ${openFile.name}?`)) return;
+  const idx = openFile.entries.indexOf(currentEntry);
+  if (idx !== -1) openFile.entries.splice(idx, 1);
+  currentEntry = null;
+  exported = false;
+  showFile(openFile);
+  $('examples').value = '';
+  lastPickerValue = '';
+  refreshEntryLinks();
+  persistState();
+  const n = openFile.entries.length;
+  showNote(`Deleted '${name}'. ${openFile.name} now has ${n} ${n === 1 ? 'entry' : 'entries'}. ` +
+           `The inputs are still here if you want to save them again.`, false);
+});
+
 // Render the live Input File (picker) to .cir text via the server and
 // trigger a browser download.
 $('downloadFileBtn').addEventListener('click', async () => {
   if (!openFile || !openFile.entries.length) {
     showNote('There is nothing to download yet — save an entry first.', true); return;
   }
+  // The file holds what was saved, not what is on screen. Silently leaving
+  // out the edits in front of them is exactly the surprise this warns about.
+  if (!$('updateEntryBtn').hidden &&
+      !window.confirm(`Your unsaved changes to '${currentEntry.name}' are not in the file `
+                      + `and will not be downloaded. Download anyway?`)) return;
   try {
     const r = await fetch('/api/export', {
       method: 'POST', headers: {'Content-Type': 'application/json'},

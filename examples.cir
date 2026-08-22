@@ -7,15 +7,15 @@
 # without examples.
 #
 # FORMAT
-#   [Name]            starts a circuit; the name is the dropdown label
+#   [Name]            starts an entry; the name is the dropdown label
 #   anything else     a circuit line, exactly as typed in the textarea
 #   key: value        optional setup (see below)
 #   # ...             a comment
 #
 # Nothing about *parsing* cares what order lines come in within a
-# section -- a "key: value" line is always metadata and anything else is
-# always a circuit line, wherever it falls. "Save this circuit to the
-# input file" (on the site itself) writes the circuit lines first and
+# entry -- a "key: value" line is always metadata and anything else is
+# always a circuit line, wherever it falls. "Save inputs to new entry"
+# (on the site itself) writes the circuit lines first and
 # then the keys below, grouped analysis-type-and-Expert-Mode, then
 # Settings, then Evaluate/Solve-equations/Plot -- the examples here
 # follow that same layout for consistency, but you don't have to.
@@ -30,6 +30,9 @@
 #   equation:   an expert-mode added equation (repeat for more)
 #   condition:  an expert-mode substitution (repeat for more)
 #   unknowns:   extra symbols to solve for, comma-separated
+#   note:       a line of your own about this entry, shown when it is
+#               loaded. Nothing in the app writes one -- add it by hand
+#               here -- but it survives being loaded and saved again.
 #   rounding:   exact | approx | a number of significant digits (default exact)
 #   si:         yes | no -- SI-prefix display, e.g. 1.2 k instead of 1200 (default no)
 #   units:      yes | no -- show V/A/W/Ω units on answers (default yes)
