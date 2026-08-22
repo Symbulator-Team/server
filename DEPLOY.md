@@ -51,10 +51,23 @@ To deploy a change:
    Skipping this when the new code needs a newer package version
    deploys code that will error on every request until someone notices.
 4. **Reload the web app** -- PythonAnywhere's WSGI apps do not pick up
-   new code or packages without an explicit reload. Either click Reload
-   on the "Web" tab for `Symbulator.pythonanywhere.com`, or from a
-   console: `touch /var/www/symbulator_pythonanywhere_com_wsgi.py`
-   (equivalent; either works).
+   new code or packages without an explicit reload.
+
+   Prefer the **Reload button on the "Web" tab** for
+   `Symbulator.pythonanywhere.com`. It is the only option that tells you
+   it worked: it shows a spinner and then confirms.
+
+   Touching the WSGI file from a console works too, but look up its real
+   name first rather than typing one from memory -- it is derived from
+   the domain, and guessing it wrong fails in a way that is easy to miss:
+
+       ls /var/www/
+
+   Then `touch` whatever `*_wsgi.py` that lists. Note that **`touch`
+   prints nothing on success** -- silence is the good outcome, and the
+   only feedback you get is an error if the path was wrong. That makes
+   it indistinguishable from a typo unless you read carefully, which is
+   why the button is the better habit.
 5. **Verify by actually using the live site** -- load
    `symbulator.pythonanywhere.com` and run a real solve. Don't stop at
    "the pull/reload command didn't error"; that doesn't catch a
