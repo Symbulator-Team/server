@@ -164,7 +164,7 @@ r1,1,2,4'k
 r2,2,0,r_b
 
 analysis: dc
-equation: v_2 = 6
+equations: v_2 = 6
 unknowns: r_b
 
 

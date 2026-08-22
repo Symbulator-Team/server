@@ -99,7 +99,9 @@ _KEYS = {
     "solve_unknowns": "solve_unknowns",
     "solve_real_only": "solve_real_only",
 }
-# Keys that may appear several times and accumulate into a list.
+# Keys that may appear several times and accumulate into a list. The
+# plural spelling is what format_book writes; the singular is accepted so
+# that files written before that change, and hand-written ones, still load.
 _MULTI = {"equations": "equations", "equation": "equations",
           "conditions": "conditions", "condition": "conditions",
           "solve_equations": "solve_equations", "solve_equation": "solve_equations",
@@ -233,7 +235,10 @@ def format_book(circuits: List[dict]) -> str:
         val = c.get("unknowns")
         if val:
             analysis.append(f"unknowns: {val}")
-        for key, field in (("equation", "equations"), ("condition", "conditions")):
+        # Plural, because the field holds several -- the same rule as
+        # unknowns/variables. The singular spellings are still read (see
+        # _MULTI), so files written before this keep loading unchanged.
+        for key, field in (("equations", "equations"), ("conditions", "conditions")):
             for val in c.get(field, []) or []:
                 analysis.append(f"{key}: {val}")
         meta: List[str] = list(analysis)
@@ -257,12 +262,12 @@ def format_book(circuits: List[dict]) -> str:
         if c.get("evaluate"):
             extra.append(f"evaluate: {c['evaluate']}")
         for val in c.get("solve_equations", []) or []:
-            extra.append(f"solve_equation: {val}")
+            extra.append(f"solve_equations: {val}")
         val = c.get("solve_unknowns")
         if val:
             extra.append(f"solve_unknowns: {val}")
         for val in c.get("solve_conditions", []) or []:
-            extra.append(f"solve_condition: {val}")
+            extra.append(f"solve_conditions: {val}")
         if c.get("solve_real_only"):
             extra.append("solve_real_only: yes")
         for key, field in (("plottool", "plottool"), ("plotkey", "plotkey"),

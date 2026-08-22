@@ -122,7 +122,21 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none; }
   .header-title { min-width: 0; }
   header h1 { margin: 0; font-size: 2rem; letter-spacing: .5px; }
-  header h1 .tm { color: #8ec7f5; }
+  /* A serif italic numeral against the sans wordmark reads as a version
+     mark rather than a stray digit. Georgia is on Windows and macOS alike
+     and the page loads no webfont, so this has to be a face that is
+     already there -- hence the ordinary serif fallbacks behind it. Its
+     numerals sit larger on the body than Plex's, so the size comes down a
+     touch; the baseline needs no help, since the two spans share a line
+     box. The wordmark's letter-spacing is cancelled because it would
+     otherwise add a gap after the numeral with nothing following it. */
+  header h1 .tm {
+    color: #8ec7f5;
+    font-family: Georgia, "Times New Roman", "Nimbus Roman", serif;
+    font-style: italic;
+    font-size: .92em;
+    letter-spacing: 0;
+  }
   header p { margin: .4rem 0 0; color: #b7c3d6; }
   .theme-toggle {
     margin-left: auto; flex: none; width: 2.5rem; height: 2.5rem;
@@ -632,35 +646,41 @@ units: yes</pre>
         applies, same as if you'd never touched it:
         <code>analysis</code> (dc/ac/fd/tr), <code>omega</code>,
         <code>variables</code>, <code>tool</code> (th/er/port) with
-        <code>n1</code>/<code>n2</code>/<code>kind</code>, and (if the
-        circuit uses it) the expert-mode <code>equation</code>,
-        <code>condition</code> and <code>unknowns</code>; the Settings
+        <code>n1</code>/<code>n2</code>/<code>kind</code>,
+        <code>note</code> (a line of your own text, shown when the entry
+        is loaded), and (if the circuit uses it) the expert-mode
+        <code>equations</code>, <code>conditions</code> and
+        <code>unknowns</code>; the Settings
         <code>rounding</code> (exact/approx/a number of significant
         digits), <code>si</code>, <code>units</code> and <code>rms</code>
         (each yes/no); and, if you were using them when you saved,
         <code>evaluate</code>, the standalone equation solver's
-        <code>solve_equation</code> / <code>solve_condition</code> /
+        <code>solve_equations</code> / <code>solve_conditions</code> /
         <code>solve_unknowns</code> / <code>solve_real_only</code>, and the
-        plot tool's <code>plotkey</code> / <code>plotmin</code> /
+        plot tool's <code>plottool</code> (time/bode) /
+        <code>plotkey</code> / <code>plotmin</code> /
         <code>plotmax</code> / <code>plotpoints</code>.
       </p>
       <p style="font-size:.88rem;color:var(--muted)">
-        <em>Save this circuit to the input file</em>, above the textarea,
-        always writes a circuit's keys in the order shown above — element
-        lines, then analysis type and Expert Mode, then Settings, then
-        Evaluate / Solve equations / Plot — but nothing about reading a
-        file back in cares what order they were written in, so a
-        hand-written file can put them wherever's convenient.
+        When the app writes a file it puts the keys in the order shown
+        above — element lines, then the analysis type and Expert Mode,
+        then Settings, then Evaluate, Solve equations and Plot. Nothing
+        that reads a file back in cares about that order, so a
+        hand-written file can put them wherever is convenient.
       </p>
       <p style="font-size:.88rem;color:var(--muted)">
-        <em>Update this circuit in the input file when it already exists</em>,
-        above, adds the circuit you're describing to it — or updates it, if
-        a circuit by that name is already there. <em>Upload Input File</em>,
-        below, reads a file like this — its circuits become the live Input
-        File in your browser, replacing whatever was there before (nothing
-        is stored on the server). <em>Download this input file</em>, below,
-        appears once you've made a change to it (uploaded a file, or added
-        or updated a circuit).
+        Two links below the circuit box put the inputs you have on screen
+        into the open file, and only one of them shows at a time:
+        <em>Save inputs to new entry</em> adds them as a new entry, and
+        <em>Update inputs in this entry</em> overwrites the entry you are
+        already working in.
+      </p>
+      <p style="font-size:.88rem;color:var(--muted)">
+        <em>Upload</em>, at the top of this card, reads a file like the one
+        above: its entries become the input file open in your browser,
+        replacing whatever was open before. The file is only read, never
+        stored. <em>Download</em>, beside it, writes the open file back out,
+        and is available whenever that file has at least one entry in it.
       </p>
     </details>
     </details>
@@ -1246,12 +1266,12 @@ units: yes</pre>
       <p style="font-size:.92rem;margin-top:.2rem">
         Symbulator was made by
         <a href="https://roberto.perez-franco.com" target="_blank" rel="noopener">Roberto Perez-Franco</a>
-        on a Texas Instruments TI-89 calculator, starting in April 1999
-        as an engineering student at Universidad Tecnológica de Panamá
-        (UTP). An early version won 1st place at the IEEE Student Paper
-        Contest for Latin America in 2000. Version 5 served as
-        Roberto's graduation thesis in January 2001. He released
-        version 6 in 2013 and version 7 in 2023, along with a port to
+        on a Texas Instruments TI-89 calculator, starting in April 1999,
+        when he was an engineering student at Universidad Tecnológica de
+        Panamá (UTP) in Azuero. An early version won 1st place at the
+        IEEE Student Paper Contest for Latin America in 2000. Version 5
+        served as Roberto's graduation thesis in January 2001. He
+        released version 6 in 2013 and version 7 in 2023, along with a port to
         the TI-Nspire as version 8.
       </p>
 
@@ -1262,9 +1282,9 @@ units: yes</pre>
         written by Roberto entirely by hand, this new version — in a
         sign of the times — was ported and developed using Anthropic's
         AI assistant. Claude took care of all the coding, while Roberto
-        provided instructions and feedback, during a week-long
-        collaboration. It is the author's hope that this port
-        will preserve Symbulator for a new generation and beyond.
+        provided instructions and feedback, during an intense week-long
+        collaboration in August 2026. It is the author's hope that this
+        port will preserve Symbulator for a new generation and beyond.
       </p>
 
       <div class="section-cap">Symbulator is free</div>
