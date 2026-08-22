@@ -1256,9 +1256,9 @@ units: yes</pre>
         symbolically and numerically. It accepts inputs
         with numerical and symbolic values, and provides numerical and
         symbolic results. The name is a portmanteau of "symbolic
-        simulator". Symbulator is widely regarded as the best symbolic
-        simulator of linear electric circuits ever made for a
-        calculator.
+        simulator". For a quarter of a century, Symbulator has been widely
+        regarded as the best symbolic simulator of linear electric circuits
+        ever made.
         <a href="https://learn.symbulator.com" target="_blank" rel="noopener">[more]</a>
       </p>
 
@@ -1284,7 +1284,7 @@ units: yes</pre>
         AI assistant. Claude took care of all the coding, while Roberto
         provided instructions and feedback, during an intense week-long
         collaboration in August 2026. It is the author's hope that this
-        port will preserve Symbulator for a new generation and beyond.
+        port will preserve Symbulator for a new generation.
       </p>
 
       <div class="section-cap">Symbulator is free</div>
@@ -1314,7 +1314,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-22 11:53 UTC
+  Symbulator 9 version 2026-08-22 12:22 UTC
 </footer>
 
 <script>
@@ -2124,11 +2124,20 @@ function cleanEntryName(raw, fallback) {
   return clean || fallback || 'Entry';
 }
 
-function hasUnsavedEdits() {
-  if (!currentEntry || !loadedSnapshot) return false;
+// Has the form moved since whatever was last put into it -- an entry, a
+// read-only example, or a clear? Deliberately says nothing about where
+// that came from, which is what lets the two guards below ask different
+// questions of the same fact.
+function inputsDifferFromLoaded() {
+  if (!loadedSnapshot) return true;
   const now = inputsSnapshot();
   return Object.keys(now).some(k =>
     JSON.stringify(now[k]) !== JSON.stringify(loadedSnapshot[k]));
+}
+
+function hasUnsavedEdits() {
+  if (!currentEntry || !loadedSnapshot) return false;
+  return inputsDifferFromLoaded();
 }
 
 // Which of the two entry links to show. Four states:
@@ -2183,8 +2192,15 @@ function okToDiscardEdits() {
 // Typed-but-never-saved work is just as lost when something overwrites the
 // form -- and the page is at that moment offering to save it -- so it gets
 // a warning too, not only edits to an entry that already exists.
+// But only if it is really the user's work. Loading a built-in example
+// leaves the inputs untied, because the examples are read-only and none of
+// them can be the current entry -- so this fired on every switch from one
+// example to the next, with nothing typed and nothing at stake: what would
+// be discarded is a copy of an example still sitting in the list. Asking
+// whether the form has moved since it was loaded separates the two cases.
 function okToDiscardUntiedInputs() {
   if (currentEntry || $('desc').value.trim() === '') return true;
+  if (!inputsDifferFromLoaded()) return true;
   return window.confirm('You have inputs that are not saved to any entry. Discard them?');
 }
 
@@ -2370,6 +2386,10 @@ function clearAllInputs() {
   // ordinary way to add a second one. Closing a file is New file, Upload
   // or Built-in examples.
   currentEntry = null;
+  // Nothing is loaded any more, so the snapshot the guards compare against
+  // has to say so; it used to go on describing an entry no longer in the
+  // form, which made anything typed next look unchanged.
+  markInputsSaved();
   $('examples').value = '';
   showNote('', false);
   clearSettingsNotes();
