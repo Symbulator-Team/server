@@ -1313,7 +1313,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-22 12:43 UTC
+  Symbulator 9 version 2026-08-22 12:47 UTC
 </footer>
 
 <script>
@@ -2399,24 +2399,21 @@ function clearAllInputs() {
 }
 
 $('clearAllBtn').addEventListener('click', () => {
-  // Only ask when clearing would actually lose something.
+  // Only ask when clearing would actually lose something. Inputs loaded
+  // from an entry or from a read-only example are not lost by clearing the
+  // form -- both are still where they came from -- so asking there is
+  // friction for nothing, and it is the commonest case of all: load
+  // something, look at it, clear.
   //
-  // Inputs sitting in an entry of the open file are not lost by clearing
-  // the form -- the entry still holds them -- so asking there is friction
-  // for nothing, which is the commonest case of all: load an entry, look
-  // at it, clear. What matters is whether they have drifted from the
-  // entry since.
-  //
-  // Untied inputs are judged against the app's own defaults rather than
-  // by whether a circuit is typed, because everything the file records is
-  // about to go: Expert Mode, the plot settings and any non-default
-  // Settings were once wiped without a word whenever the circuit box
-  // happened to be empty.
-  const tied = currentEntry !== null && openFile !== null
-               && openFile.entries.indexOf(currentEntry) !== -1;
-  const wouldLose = tied
-    ? hasUnsavedEdits()
-    : JSON.stringify(inputsSnapshot()) !== JSON.stringify(PRISTINE_INPUTS);
+  // Two conditions, and both have to hold. The form must have moved since
+  // it was loaded -- otherwise what would go is a copy of an entry or of a
+  // read-only example, both still where they were. And it must differ from
+  // the app's own defaults, or there is nothing on screen to lose at all.
+  // The second test is deliberately not "is a circuit typed": Expert Mode,
+  // the plot settings and any non-default Settings were once wiped without
+  // a word whenever the circuit box happened to be empty.
+  const wouldLose = inputsDifferFromLoaded()
+    && JSON.stringify(inputsSnapshot()) !== JSON.stringify(PRISTINE_INPUTS);
   if (wouldLose && !window.confirm('Clear every input and start over?')) return;
   clearAllInputs();
 });
