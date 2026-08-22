@@ -814,6 +814,8 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         else:
             res = ex(desc, domain, **kwargs)
         values = res.values
+        # 0.4.6 exposes every root; older solvers have only the one.
+        solutions = list(getattr(res, "solutions", None) or [values])
 
         def fmt(expr, unit=""):
             """Same formatting logic as `fmt0` above, for a normal
@@ -842,99 +844,109 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                               unit, show_unit)
 
         elements = parse_circuit(desc)
-        used = set()
+        # Formatting one solution. An expert-mode equation on a power is
+        # quadratic in its unknown, so a circuit can have more than one
+        # answer -- both real, both satisfying every constraint. Rather than
+        # pick one and present it as the answer, every solution is rendered
+        # and the caller is told there is a choice. Only the values differ
+        # between them; the equation system and the notes are shared.
+        def render_solution(values):
+            used = set()
 
-        # ---- Tranche 1: node voltages, in order of first appearance ----
-        node_order = []
-        for el in elements:
-            if el.kind == "m":
-                continue  # references inductor names, not nodes
-            cand = [el.n1, el.n2]
-            if el.kind == "o":
-                cand.append(el.fields[2])  # op-amp output node
-            for n in cand:
-                if n != "0" and n not in node_order:
-                    node_order.append(n)
-        nodes = []
-        for n in node_order:
-            key = f"v_{n}"
-            if key in values:
-                plain, latex = fmt(values[key], "V")
-                nodes.append({"node": n, "plain": plain, "latex": latex})
-                used.add(key)
-
-        # ---- Tranche 2: one entry per element, in circuit order ----
-        def node_v(n):
-            """Node n's solved voltage, or the literal 0 for ground
-            (which never gets its own v_0 entry in `values`). Used below
-            to derive an element's branch voltage (v1 - v2) on the fly
-            for older symbulator versions that didn't stamp a v_<name>
-            answer directly."""
-            if n == "0":
-                return sp.Integer(0)
-            return values.get(f"v_{n}")
-
-        element_cards = []
-        for el in sorted(elements, key=lambda e: (_KIND_ORDER.get(e.kind, 99),
-                                                  _natural_key(e.name))):
-            items = []
-            ikey = f"i_{el.name}"
-            if ikey in values:
-                plain, latex = fmt(values[ikey], "A")
-                items.append({"sym": "i", "label": "current through",
-                              "plain": plain, "latex": latex})
-                used.add(ikey)
-            # Voltage drop across the element: stored as v_<name> by
-            # symbulator >= 0.2, else derived from the node voltages.
-            if el.kind in "rlcejs":
-                vkey = f"v_{el.name}"
-                drop = values.get(vkey)
-                if drop is not None:
-                    used.add(vkey)
-                else:
-                    v1, v2 = node_v(el.n1), node_v(el.n2)
-                    if v1 is not None and v2 is not None:
-                        drop = v1 - v2
-                if drop is not None:
-                    plain, latex = fmt(drop, "V")
-                    items.append({"sym": "v", "label": "voltage drop",
-                                  "plain": plain, "latex": latex})
-            for pattern, symbol, label, unit in _ELEMENT_KEYS:
-                key = pattern.format(n=el.name)
+            # ---- Tranche 1: node voltages, in order of first appearance ----
+            node_order = []
+            for el in elements:
+                if el.kind == "m":
+                    continue  # references inductor names, not nodes
+                cand = [el.n1, el.n2]
+                if el.kind == "o":
+                    cand.append(el.fields[2])  # op-amp output node
+                for n in cand:
+                    if n != "0" and n not in node_order:
+                        node_order.append(n)
+            nodes = []
+            for n in node_order:
+                key = f"v_{n}"
                 if key in values:
-                    plain, latex = fmt(values[key], unit)
-                    items.append({"sym": symbol, "label": label,
-                                  "plain": plain, "latex": latex})
+                    plain, latex = fmt(values[key], "V")
+                    nodes.append({"node": n, "plain": plain, "latex": latex})
                     used.add(key)
-            if items:
-                element_cards.append({"name": el.name,
-                                      "kind": _KIND_LABEL.get(el.kind, el.kind),
-                                      "items": items})
 
-        # ---- Safety net: anything solved but not claimed above ----
-        _EXTRA_UNITS = {"v": "V", "i": "A", "p": "W", "ap": "W",
-                        "s": "VA", "z": "ohm", "r": "ohm"}
-        extras = []
-        for key in sorted(values.keys()):
-            if key not in used:
-                prefix = key.split("_", 1)[0] if "_" in key else ""
-                plain, latex = fmt(values[key], _EXTRA_UNITS.get(prefix, ""))
-                extras.append({"name": key, "plain": plain, "latex": latex})
+            # ---- Tranche 2: one entry per element, in circuit order ----
+            def node_v(n):
+                """Node n's solved voltage, or the literal 0 for ground
+                (which never gets its own v_0 entry in `values`). Used below
+                to derive an element's branch voltage (v1 - v2) on the fly
+                for older symbulator versions that didn't stamp a v_<name>
+                answer directly."""
+                if n == "0":
+                    return sp.Integer(0)
+                return values.get(f"v_{n}")
 
-        # ---- Flat name->expression map (for the evaluator + download).
-        # Computed branch voltages are added under v_<element> (the TI
-        # kept these as v<name>), unless that key already exists.
-        flat = {k: str(v) for k, v in values.items()}
-        for el in elements:
-            if el.kind in "rlcejs":
-                key = f"v_{el.name}"
-                if key not in flat:
-                    v1, v2 = node_v(el.n1), node_v(el.n2)
-                    if v1 is not None and v2 is not None:
-                        try:
-                            flat[key] = str(sp.simplify(v1 - v2))
-                        except Exception:
-                            flat[key] = str(v1 - v2)
+            element_cards = []
+            for el in sorted(elements, key=lambda e: (_KIND_ORDER.get(e.kind, 99),
+                                                      _natural_key(e.name))):
+                items = []
+                ikey = f"i_{el.name}"
+                if ikey in values:
+                    plain, latex = fmt(values[ikey], "A")
+                    items.append({"sym": "i", "label": "current through",
+                                  "plain": plain, "latex": latex})
+                    used.add(ikey)
+                # Voltage drop across the element: stored as v_<name> by
+                # symbulator >= 0.2, else derived from the node voltages.
+                if el.kind in "rlcejs":
+                    vkey = f"v_{el.name}"
+                    drop = values.get(vkey)
+                    if drop is not None:
+                        used.add(vkey)
+                    else:
+                        v1, v2 = node_v(el.n1), node_v(el.n2)
+                        if v1 is not None and v2 is not None:
+                            drop = v1 - v2
+                    if drop is not None:
+                        plain, latex = fmt(drop, "V")
+                        items.append({"sym": "v", "label": "voltage drop",
+                                      "plain": plain, "latex": latex})
+                for pattern, symbol, label, unit in _ELEMENT_KEYS:
+                    key = pattern.format(n=el.name)
+                    if key in values:
+                        plain, latex = fmt(values[key], unit)
+                        items.append({"sym": symbol, "label": label,
+                                      "plain": plain, "latex": latex})
+                        used.add(key)
+                if items:
+                    element_cards.append({"name": el.name,
+                                          "kind": _KIND_LABEL.get(el.kind, el.kind),
+                                          "items": items})
+
+            # ---- Safety net: anything solved but not claimed above ----
+            _EXTRA_UNITS = {"v": "V", "i": "A", "p": "W", "ap": "W",
+                            "s": "VA", "z": "ohm", "r": "ohm"}
+            extras = []
+            for key in sorted(values.keys()):
+                if key not in used:
+                    prefix = key.split("_", 1)[0] if "_" in key else ""
+                    plain, latex = fmt(values[key], _EXTRA_UNITS.get(prefix, ""))
+                    extras.append({"name": key, "plain": plain, "latex": latex})
+
+            # ---- Flat name->expression map (for the evaluator + download).
+            # Computed branch voltages are added under v_<element> (the TI
+            # kept these as v<name>), unless that key already exists.
+            flat = {k: str(v) for k, v in values.items()}
+            for el in elements:
+                if el.kind in "rlcejs":
+                    key = f"v_{el.name}"
+                    if key not in flat:
+                        v1, v2 = node_v(el.n1), node_v(el.n2)
+                        if v1 is not None and v2 is not None:
+                            try:
+                                flat[key] = str(sp.simplify(v1 - v2))
+                            except Exception:
+                                flat[key] = str(v1 - v2)
+            return {"nodes": nodes, "elements": element_cards,
+                    "extras": extras, "values": flat}
+
 
         # ---- The equation system the solver assembled (for download).
         equations = []
@@ -957,8 +969,16 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         except Exception:
             pass  # equations are a bonus; never fail the solve over them
 
-        return _ok({"nodes": nodes, "elements": element_cards,
-                    "extras": extras, "values": flat,
+        # Every solution is rendered, ranked as the solver ranked them --
+        # the first is the one to show by default. The top-level nodes /
+        # elements / extras / values stay as that first solution so callers
+        # that predate this, and everything downstream that reads a single
+        # answer, are unaffected.
+        rendered = [render_solution(v) for v in solutions]
+        first = rendered[0]
+        return _ok({"nodes": first["nodes"], "elements": first["elements"],
+                    "extras": first["extras"], "values": first["values"],
+                    "solutions": rendered,
                     "equations": equations, "notes": _notes,
                     "approx": approx, "approx_forced": approx_forced})
     except Exception as exc:  # noqa: BLE001 -- anything goes back as text

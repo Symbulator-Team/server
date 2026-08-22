@@ -470,6 +470,10 @@ def api_solve():
                     "nodes": payload["nodes"],
                     "elements": payload["elements"], "extras": payload["extras"],
                     "values": payload["values"],
+                    # Every root of the system, each formatted the same way
+                    # as the fields above -- which mirror the first of them.
+                    # The page offers a picker when there is more than one.
+                    "solutions": payload.get("solutions") or [],
                     "equations": payload["equations"],
                     "notes": payload["notes"]})
 

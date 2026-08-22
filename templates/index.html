@@ -421,7 +421,20 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
      the way Inputs does, so it reads as cramped without a bit of its own
      breathing room here -- Inputs is unaffected since .group-intro, not
      .card, is what follows it. */
-  .group-h + .card { margin-top: .6rem; }
+  .group-h + .card, .solution-pick + .card { margin-top: .6rem; }
+  /* More than one answer: a line under Run saying so, and a picker under
+     the Outputs heading to choose between them. Both are hidden in the
+     ordinary single-answer case, which is nearly every circuit. */
+  .multi-note {
+    margin: -.9rem auto 1.4rem; max-width: 40rem; text-align: center;
+    font-size: .92rem; color: var(--warn-ink);
+  }
+  .solution-pick {
+    display: flex; align-items: center; justify-content: center;
+    gap: .55rem; margin: .9rem 0 0; font-size: .92rem; color: var(--muted);
+  }
+  .solution-pick select { width: auto; min-width: 11rem; margin: 0; }
+  .solution-pick label { margin: 0; font-weight: 600; }
   .group-intro { margin: 0 0 1.2rem; }
   #evalOut, #solveqOut { margin-top: .9rem; display: none; }
   .disamb {
@@ -939,9 +952,16 @@ units: yes</pre>
     <span id="status"></span>
   </div>
 
+  <div id="multiNote" class="multi-note" hidden></div>
+
   <hr class="section-divider">
 
   <h2 class="group-h"><span class="bracket">[</span>   O U T P U T S   <span class="bracket">]</span></h2>
+
+  <div id="solutionPick" class="solution-pick" hidden>
+    <label for="solutionSel">Showing</label>
+    <select id="solutionSel"></select>
+  </div>
 
   <div class="card inactive" id="resultsCard">
     <details id="resultsBox">
@@ -1258,7 +1278,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-21 03:04 UTC
+  Symbulator 9 version 2026-08-22 09:25 UTC
 </footer>
 
 <script>
@@ -1467,6 +1487,9 @@ let last = null;
 // they were computed against the old answers.
 let lastEval = null;
 let lastSolveq = null;
+// The whole last answer, every solution of it, so the picker under Outputs
+// can redraw a different one without solving again.
+let lastSolve = null;
 
 // Turn on the Evaluate, Solve-equations and Download cards, plus
 // "Save to input file" (which requires a circuit that has actually been
@@ -1497,6 +1520,8 @@ function activatePostSolve() {
 // result for a circuit that no longer exists.
 function clearResults() {
   last = null; lastEval = null; lastSolveq = null;
+  lastSolve = null;
+  buildSolutionPicker({});
   $('out').innerHTML = '<div class="lcd"><div class="placeholder">— no analysis run yet —</div></div>';
   $('status').textContent = '';
   $('resultsCard').classList.add('inactive');
@@ -2385,6 +2410,203 @@ function askSuffix(groups) {
 // calls back into solve() with the user's choices once answered), or an
 // error. `suffixChoices` is empty on the user's own click of "Solve",
 // and populated when this is a re-solve triggered by askSuffix.
+
+// Draw one solution into the results card.
+//
+// A circuit can have more than one answer: an expert-mode equation on a
+// power is quadratic in its unknown, so both roots satisfy every constraint
+// the user gave. The solver returns them all and each is rendered here on
+// demand, so switching between them redraws data already in hand instead of
+// solving again -- which matters when a solve costs seconds in the browser
+// build. Only the values differ between solutions; the notes, the equation
+// system and the settings are shared, and come off `data`.
+// Offer the choice only when there is one to make. `solutions` is present
+// on every 0.4.6 answer but holds a single entry for nearly every circuit,
+// and a menu with one item in it is just clutter.
+function buildSolutionPicker(data) {
+  const note = $('multiNote'), pick = $('solutionPick'), sel = $('solutionSel');
+  const n = (data.solutions || []).length;
+  sel.innerHTML = '';
+  if (n < 2) { note.hidden = true; pick.hidden = true; return; }
+  note.textContent = n + ' solutions fit the circuit as described — every one of '
+                   + 'them satisfies all of it. Choose which to see under Outputs.';
+  note.hidden = false;
+  for (let i = 0; i < n; i++) {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = 'Solution #' + (i + 1);
+    sel.appendChild(opt);
+  }
+  sel.value = '0';
+  pick.hidden = false;
+}
+
+async function renderSolveResult(data, idx) {
+  const out = $('out'), status = $('status');
+  // A payload without `solutions` is itself the single solution, which is
+  // exactly the shape the fields below expect.
+  const sol = (data.solutions && data.solutions[idx]) || data;
+  // If MathJax is ready we render TeX; otherwise fall back to the
+  // plain-text form so a slow/failed script load never shows raw \( \).
+  const mjReady = window.MathJax && MathJax.typesetPromise;
+  const tex = (t, plain) => {
+    const div = document.createElement('div');
+    if (mjReady) { div.innerHTML = `\\(${t}\\)`; }
+    else { div.style.fontFamily = 'var(--mono)'; div.style.fontSize = '.9rem'; div.textContent = plain; }
+    return div;
+  };
+  out.innerHTML = '';
+  let count = 0;
+
+  // ---- Anything the solver had to tell the user about their input ----
+  // Normalised spellings of the imaginary unit, names SymPy would
+  // otherwise have hijacked, s-domain sources written as constants:
+  // all resolved rather than refused, but never silently.
+  if (data.notes && data.notes.length) {
+    const box = document.createElement('div');
+    box.className = 'booknote warn';
+    box.id = 'solveNotes';
+    box.style.margin = '0 0 1rem';
+    data.notes.forEach((n, i) => {
+      const line = document.createElement('div');
+      if (i) line.style.marginTop = '.35rem';
+      line.textContent = n;
+      box.appendChild(line);
+    });
+    out.appendChild(box);
+  }
+
+  // ---- Tranche 1: node voltages (the dark screen) ----
+  if (sol.nodes.length) {
+    const cap = document.createElement('div');
+    cap.className = 'section-cap';
+    cap.textContent = 'Node voltages';
+    out.appendChild(cap);
+    const lcd = document.createElement('div');
+    lcd.className = 'lcd';
+    for (const nv of sol.nodes) {
+      const row = document.createElement('div');
+      row.className = 'result-row';
+      const nm = document.createElement('span');
+      nm.className = 'result-name';
+      nm.title = 'v_' + nv.node;
+      nm.append('node ' + nv.node + ' ');
+      const nmCap = document.createElement('span');
+      nmCap.className = 'el-label';
+      nmCap.style.display = 'inline';
+      nmCap.textContent = 'voltage';
+      nm.appendChild(nmCap);
+      const math = document.createElement('div');
+      math.className = 'result-math';
+      math.appendChild(tex(`v_{${nv.node}} = ${nv.latex}`, `v_${nv.node} = ${nv.plain}`));
+      row.appendChild(nm); row.appendChild(math);
+      lcd.appendChild(row);
+      count++;
+    }
+    out.appendChild(lcd);
+  }
+
+  // ---- Tranche 2: one card per element ----
+  if (sol.elements.length) {
+    const cap = document.createElement('div');
+    cap.className = 'section-cap';
+    cap.textContent = 'Results by Element';
+    out.appendChild(cap);
+    const grid = document.createElement('div');
+    grid.className = 'elgrid';
+    for (const el of sol.elements) {
+      const card = document.createElement('div');
+      card.className = 'elcard';
+      const title = document.createElement('div');
+      title.innerHTML = `<span class="el-title">${el.name}</span><span class="el-kind">${el.kind}</span>`;
+      card.appendChild(title);
+      for (const it of el.items) {
+        const item = document.createElement('div');
+        item.className = 'el-item';
+        const lab = document.createElement('span');
+        lab.className = 'el-label';
+        lab.textContent = it.label;
+        item.appendChild(lab);
+        item.appendChild(tex(`${it.sym}_{${el.name}} = ${it.latex}`,
+                             `${it.sym}_${el.name} = ${it.plain}`));
+        card.appendChild(item);
+        count++;
+      }
+      grid.appendChild(card);
+    }
+    out.appendChild(grid);
+  }
+
+  // ---- Special-tool answers, or anything else the solver reported ----
+  if (sol.extras.length) {
+    const cap = document.createElement('div');
+    cap.className = 'section-cap';
+    cap.textContent = TOOL_CAPTION[data.tool] || 'Expert mode unknowns';
+    out.appendChild(cap);
+    const lcd = document.createElement('div');
+    lcd.className = 'lcd';
+    for (const ex of sol.extras) {
+      const row = document.createElement('div');
+      row.className = 'result-row';
+      const nm = document.createElement('span');
+      nm.className = 'result-name';
+      if (ex.label) {
+        const lab = document.createElement('span');
+        lab.className = 'el-label';
+        lab.textContent = ex.label;
+        nm.appendChild(lab);
+      }
+      nm.appendChild(document.createTextNode(ex.name.replace('_', '')));
+      nm.title = ex.name;
+      const math = document.createElement('div');
+      math.className = 'result-math';
+      math.appendChild(tex(`${nameToTex(ex.name)} = ${ex.latex}`, `${ex.name} = ${ex.plain}`));
+      row.appendChild(nm); row.appendChild(math);
+      lcd.appendChild(row);
+      count++;
+    }
+    out.appendChild(lcd);
+  }
+
+  if (!count) {
+    out.innerHTML = '<div class="lcd"><div class="placeholder">— solved, but no variables to report —</div></div>';
+    status.textContent = 'Solved!';
+    markFresh('solve');
+    return;
+  }
+  const meta = document.createElement('div');
+  meta.className = 'lcd-meta';
+  meta.textContent = `${data.domain.toUpperCase()} analysis · ${count} result(s) · ${data.elapsed}s`;
+  out.appendChild(meta);
+  status.textContent = 'Solved!';
+  markFresh('solve');
+
+  // Remember this solve for the evaluator + download area.
+  const shown = {};
+  for (const nv of sol.nodes) shown['v_' + nv.node] = nv.plain;
+  for (const el of sol.elements)
+    for (const it of el.items) shown[it.sym + '_' + el.name] = it.plain;
+  for (const ex2 of sol.extras) shown[ex2.name] = ex2.plain;
+  last = {
+    desc: $('desc').value,
+    domain: data.domain,
+    tool: data.tool,
+    values: sol.values || {},   // exact -- what the evaluator computes from
+    shown: shown,                // as displayed -- what the download records
+    digits: data.digits || 0,
+    si: !!data.si,
+    rms: !!data.use_rms,
+    approx: !!data.approx,
+    equations: data.equations || []
+  };
+  // A fresh main solve invalidates any earlier Evaluate/Solve results,
+  // since they were computed against the previous answers.
+  lastEval = null;
+  lastSolveq = null;
+  activatePostSolve();
+  if (mjReady) await MathJax.typesetPromise([out]);
+}
+
 async function solve(suffixChoices) {
   const btn = $('solveBtn'), out = $('out'), status = $('status');
   btn.disabled = true;
@@ -2394,6 +2616,8 @@ async function solve(suffixChoices) {
   $('evalOut').innerHTML = '';
   $('solveqOut').style.display = 'none';
   $('solveqOut').innerHTML = '';
+  lastSolve = null;
+  buildSolutionPicker({});
   $('resultsBox').open = true;   // pressing Solve means you want to see them
   $('resultsCard').classList.remove('inactive');   // no longer "no analysis run yet"
   try {
@@ -2470,165 +2694,9 @@ async function solve(suffixChoices) {
       settingsNote('rounding', 'A decimal or scientific-notation value was found in '
                     + 'the inputs, so rounding switched from exact to approximate.');
     }
-    // If MathJax is ready we render TeX; otherwise fall back to the
-    // plain-text form so a slow/failed script load never shows raw \( \).
-    const mjReady = window.MathJax && MathJax.typesetPromise;
-    const tex = (t, plain) => {
-      const div = document.createElement('div');
-      if (mjReady) { div.innerHTML = `\\(${t}\\)`; }
-      else { div.style.fontFamily = 'var(--mono)'; div.style.fontSize = '.9rem'; div.textContent = plain; }
-      return div;
-    };
-    out.innerHTML = '';
-    let count = 0;
-
-    // ---- Anything the solver had to tell the user about their input ----
-    // Normalised spellings of the imaginary unit, names SymPy would
-    // otherwise have hijacked, s-domain sources written as constants:
-    // all resolved rather than refused, but never silently.
-    if (data.notes && data.notes.length) {
-      const box = document.createElement('div');
-      box.className = 'booknote warn';
-      box.id = 'solveNotes';
-      box.style.margin = '0 0 1rem';
-      data.notes.forEach((n, i) => {
-        const line = document.createElement('div');
-        if (i) line.style.marginTop = '.35rem';
-        line.textContent = n;
-        box.appendChild(line);
-      });
-      out.appendChild(box);
-    }
-
-    // ---- Tranche 1: node voltages (the dark screen) ----
-    if (data.nodes.length) {
-      const cap = document.createElement('div');
-      cap.className = 'section-cap';
-      cap.textContent = 'Node voltages';
-      out.appendChild(cap);
-      const lcd = document.createElement('div');
-      lcd.className = 'lcd';
-      for (const nv of data.nodes) {
-        const row = document.createElement('div');
-        row.className = 'result-row';
-        const nm = document.createElement('span');
-        nm.className = 'result-name';
-        nm.title = 'v_' + nv.node;
-        nm.append('node ' + nv.node + ' ');
-        const nmCap = document.createElement('span');
-        nmCap.className = 'el-label';
-        nmCap.style.display = 'inline';
-        nmCap.textContent = 'voltage';
-        nm.appendChild(nmCap);
-        const math = document.createElement('div');
-        math.className = 'result-math';
-        math.appendChild(tex(`v_{${nv.node}} = ${nv.latex}`, `v_${nv.node} = ${nv.plain}`));
-        row.appendChild(nm); row.appendChild(math);
-        lcd.appendChild(row);
-        count++;
-      }
-      out.appendChild(lcd);
-    }
-
-    // ---- Tranche 2: one card per element ----
-    if (data.elements.length) {
-      const cap = document.createElement('div');
-      cap.className = 'section-cap';
-      cap.textContent = 'Results by Element';
-      out.appendChild(cap);
-      const grid = document.createElement('div');
-      grid.className = 'elgrid';
-      for (const el of data.elements) {
-        const card = document.createElement('div');
-        card.className = 'elcard';
-        const title = document.createElement('div');
-        title.innerHTML = `<span class="el-title">${el.name}</span><span class="el-kind">${el.kind}</span>`;
-        card.appendChild(title);
-        for (const it of el.items) {
-          const item = document.createElement('div');
-          item.className = 'el-item';
-          const lab = document.createElement('span');
-          lab.className = 'el-label';
-          lab.textContent = it.label;
-          item.appendChild(lab);
-          item.appendChild(tex(`${it.sym}_{${el.name}} = ${it.latex}`,
-                               `${it.sym}_${el.name} = ${it.plain}`));
-          card.appendChild(item);
-          count++;
-        }
-        grid.appendChild(card);
-      }
-      out.appendChild(grid);
-    }
-
-    // ---- Special-tool answers, or anything else the solver reported ----
-    if (data.extras.length) {
-      const cap = document.createElement('div');
-      cap.className = 'section-cap';
-      cap.textContent = TOOL_CAPTION[data.tool] || 'Expert mode unknowns';
-      out.appendChild(cap);
-      const lcd = document.createElement('div');
-      lcd.className = 'lcd';
-      for (const ex of data.extras) {
-        const row = document.createElement('div');
-        row.className = 'result-row';
-        const nm = document.createElement('span');
-        nm.className = 'result-name';
-        if (ex.label) {
-          const lab = document.createElement('span');
-          lab.className = 'el-label';
-          lab.textContent = ex.label;
-          nm.appendChild(lab);
-        }
-        nm.appendChild(document.createTextNode(ex.name.replace('_', '')));
-        nm.title = ex.name;
-        const math = document.createElement('div');
-        math.className = 'result-math';
-        math.appendChild(tex(`${nameToTex(ex.name)} = ${ex.latex}`, `${ex.name} = ${ex.plain}`));
-        row.appendChild(nm); row.appendChild(math);
-        lcd.appendChild(row);
-        count++;
-      }
-      out.appendChild(lcd);
-    }
-
-    if (!count) {
-      out.innerHTML = '<div class="lcd"><div class="placeholder">— solved, but no variables to report —</div></div>';
-      status.textContent = 'Solved!';
-      markFresh('solve');
-      return;
-    }
-    const meta = document.createElement('div');
-    meta.className = 'lcd-meta';
-    meta.textContent = `${data.domain.toUpperCase()} analysis · ${count} result(s) · ${data.elapsed}s`;
-    out.appendChild(meta);
-    status.textContent = 'Solved!';
-    markFresh('solve');
-
-    // Remember this solve for the evaluator + download area.
-    const shown = {};
-    for (const nv of data.nodes) shown['v_' + nv.node] = nv.plain;
-    for (const el of data.elements)
-      for (const it of el.items) shown[it.sym + '_' + el.name] = it.plain;
-    for (const ex2 of data.extras) shown[ex2.name] = ex2.plain;
-    last = {
-      desc: $('desc').value,
-      domain: data.domain,
-      tool: data.tool,
-      values: data.values || {},   // exact -- what the evaluator computes from
-      shown: shown,                // as displayed -- what the download records
-      digits: data.digits || 0,
-      si: !!data.si,
-      rms: !!data.use_rms,
-      approx: !!data.approx,
-      equations: data.equations || []
-    };
-    // A fresh main solve invalidates any earlier Evaluate/Solve results,
-    // since they were computed against the previous answers.
-    lastEval = null;
-    lastSolveq = null;
-    activatePostSolve();
-    if (mjReady) await MathJax.typesetPromise([out]);
+    lastSolve = data;
+    buildSolutionPicker(data);
+    await renderSolveResult(data, 0);
   } catch (e) {
     out.innerHTML = '<div class="error">Could not reach the solver. Please try again.</div>';
     status.textContent = 'Could not reach the solver.';
@@ -2842,6 +2910,20 @@ async function plot() {
   }
 }
 $('plotBtn').addEventListener('click', plot);
+// Switching solutions is a redraw, never another solve: every answer was
+// formatted server-side when the circuit was run. Anything computed against
+// the solution being replaced -- an Evaluate, a follow-up Solve -- is no
+// longer about what is on screen, so it goes, exactly as a fresh run clears
+// it.
+$('solutionSel').addEventListener('change', async () => {
+  if (!lastSolve) return;
+  $('evalOut').style.display = 'none';
+  $('evalOut').innerHTML = '';
+  $('solveqOut').style.display = 'none';
+  $('solveqOut').innerHTML = '';
+  await renderSolveResult(lastSolve, Number($('solutionSel').value) || 0);
+});
+
 $('solveBtn').addEventListener('click', solve);
 
 // Save the chart(s) currently shown in the Plot card as one PNG -- each
