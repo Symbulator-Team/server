@@ -112,16 +112,24 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     font: 16px/1.55 var(--sans);
     transition: background-color .15s ease, color .15s ease;
   }
+  /* The lockup matches symbulator.com's top bar, whose own CSS notes it
+     was taken from here in the first place: 56px mark, the name at
+     1.55rem/600, the tagline at .8125rem, and .7rem of padding above and
+     below a 3.5rem row. Keeping the two identical is the point -- someone
+     arriving from the site should not feel they have landed somewhere
+     else. */
   header {
     background: #203864;
-    color: #fff; padding: 2.2rem 1rem 2rem;
+    color: #fff; padding: 1rem;
     border-bottom: 3px solid #8ec7f5;
   }
   .wrap { max-width: 880px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
-  .header-flex { display: flex; align-items: center; gap: 1.2rem; flex-wrap: nowrap; }
-  .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none; }
+  .header-flex { display: flex; align-items: center; gap: .7rem;
+                 flex-wrap: nowrap; min-height: 3.5rem; }
+  .header-logo { width: 56px; height: 56px; border-radius: 4px; flex: none; }
   .header-title { min-width: 0; }
-  header h1 { margin: 0; font-size: 2rem; letter-spacing: .5px; }
+  header h1 { margin: 0; font-size: 1.55rem; font-weight: 600;
+              letter-spacing: .005em; line-height: 1.15; }
   /* A serif italic numeral against the sans wordmark reads as a version
      mark rather than a stray digit. Georgia is on Windows and macOS alike
      and the page loads no webfont, so this has to be a face that is
@@ -137,7 +145,8 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     font-size: .92em;
     letter-spacing: 0;
   }
-  header p { margin: .4rem 0 0; color: #b7c3d6; }
+  header p { margin: .1rem 0 0; font-size: .8125rem; line-height: 1.3;
+             color: #a9bedd; }
   .theme-toggle {
     margin-left: auto; flex: none; width: 2.5rem; height: 2.5rem;
     display: flex; align-items: center; justify-content: center;
