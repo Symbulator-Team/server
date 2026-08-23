@@ -131,6 +131,17 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
                  padding-left: clamp(1.25rem, 4vw, 2.75rem);
                  padding-right: clamp(1.25rem, 4vw, 2.75rem); }
   .header-flex { display: flex; align-items: center; gap: 1.2rem; flex-wrap: nowrap; }
+  /* IBM Plex is deliberately absent from the banner's stack, and this is
+     the one rule that keeps the three sites actually identical rather
+     than nearly so. This page loads no webfont, so --sans falls through
+     to the system UI face on a machine without Plex -- but renders in
+     Plex on a machine with it, while symbulator.com and
+     learn.symbulator.com pin the fallback stack precisely so their
+     banners do not. Naming the same stack here makes all three land on
+     the same face either way. The page below keeps --sans. */
+  header h1, header p {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
   .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none; }
   .header-title { min-width: 0; }
   header h1 { margin: 0; font-size: 2rem; font-weight: 700;
