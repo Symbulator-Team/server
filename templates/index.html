@@ -112,76 +112,161 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     font: 16px/1.55 var(--sans);
     transition: background-color .15s ease, color .15s ease;
   }
-  /* This lockup is shared with the landing page at symbulator.com, whose
-     landing.css carries the same values and says so. Everything that used
-     to be inherited from the body -- the weight, both line-heights, the
-     tagline size -- is pinned here instead, because the two sites have
-     different body rules and the banner must not follow them. */
-  header {
-    background: #203864;
-    color: #fff; padding: 2.2rem 1rem 2rem;
-    border-bottom: 3px solid #8ec7f5;
+  /* ==== BEGIN banner.css ====================================
+     Copied verbatim from Sym Docum/Documentation/design/banner.css,
+     which is the single source for the lockup shared by this app,
+     symbulator.com and learn.symbulator.com. Do not edit it here:
+     build_local.py compares the two and refuses to build if they
+     differ. The lockup drifted twice in one day while it was written
+     out three times, which is why the copy is now guarded.
+
+     This build has no controls ribbon -- one theme toggle does not
+     warrant a second band -- so the keyline lands on the lockup via
+     .topbar:last-child, which the shared file provides for exactly
+     this case.
+     ======================================================== */
+  /* Symbulator — the shared banner
+     ==========================================================================
+     ONE source for the lockup that appears on all three properties:
+
+         symbulator.com          Documentation/landing/
+         learn.symbulator.com    Documentation/web/  (via build.py)
+         the app                 repos/local, repos/server
+
+     This file exists because the same rules were previously written out three
+     times in three repositories, and drifted twice in a single day, in both
+     directions, each fix a person copying values by hand. Import it; do not
+     copy it.
+
+     Two bands: .topbar carries the lockup alone, .subbar carries each
+     property's own controls in a slightly lighter shade. The sky keyline
+     closes the pair, under the subbar.
+
+     It is self-contained on purpose. Every colour is var(--name, #literal), so
+     it works whether or not the host defines the tokens, and whatever the host
+     calls them. It styles only what is common to all three; each property
+     layers its own controls on top (nav links, Start reading / Download the
+     PDF, the version picker) in its own stylesheet.
+
+     Both .vnum and .tm are matched for the version numeral, because the three
+     properties named that span differently before this file existed.
+
+     Verified computed values at 1280px wide: lockup band 148px, controls
+     ribbon 62px, container 1152 and left edge 64 on both,
+     logo 80/r12, gap 19.2px, name 32/700/.5px/lh49.6, numeral italic 29.44px
+     #8ec7f5, second line 16px #b7c3d6, keyline 3px. If you change anything
+     here, re-measure — do not judge by eye.
+     ========================================================================== */
+
+  :root {
+    --banner-w:   72rem;
+    --banner-pad: clamp(1.25rem, 4vw, 2.75rem);
   }
-  .wrap { max-width: 880px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
-  /* The banner alone spans the landing page's container rather than the
-     app's narrower content column, so the mark lands in the same place on
-     both sites. The gutter is landing.css's clamp, not a fixed rem, or the
-     two drift apart at the widths where the clamp is doing work. */
-  header .wrap { width: min(72rem, 100%); max-width: none;
-                 padding-left: clamp(1.25rem, 4vw, 2.75rem);
-                 padding-right: clamp(1.25rem, 4vw, 2.75rem); }
-  .header-flex { display: flex; align-items: center; gap: 1.2rem; flex-wrap: nowrap; }
-  /* IBM Plex is deliberately absent from the banner's stack, and this is
-     the one rule that keeps the three sites actually identical rather
-     than nearly so. This page loads no webfont, so --sans falls through
-     to the system UI face on a machine without Plex -- but renders in
-     Plex on a machine with it, while symbulator.com and
-     learn.symbulator.com pin the fallback stack precisely so their
-     banners do not. Naming the same stack here makes all three land on
-     the same face either way. The page below keeps --sans. */
-  header h1, header p {
-    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  .topbar {
+    position: relative; z-index: 50;
+    padding-block: 2.2rem 2rem;
+    background: var(--navy, #203864);
+    color: #fff;
   }
-  .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none; }
+
+  /* The controls ribbon: a second, slightly lighter band under the lockup.
+     The lockup band carries the identity and nothing else; every control --
+     nav links on symbulator.com, Start reading / Download the PDF and the
+     version picker on learn, whatever the app puts there -- sits down here.
+
+     The two bands are one assembly: the shade change is the only divider
+     between them, and the 3px sky keyline finishes the pair rather than
+     splitting them, so it moved off .topbar and onto .subbar. A page with no
+     subbar keeps the keyline via .topbar:last-child below.
+
+     #2a4576 is --navy lightened about 8% -- far enough to read as a distinct
+     band on both themes, close enough that the two still read as one header.
+     Deliberately not a token: it exists only in relation to --navy. */
+  .subbar {
+    /* Above .topbar so the version picker's dropdown, which lives inside this
+       band, is never trapped under the lockup's stacking context. */
+    position: relative; z-index: 51;
+    background: var(--navy-2, #2a4576);
+    border-bottom: 3px solid var(--sky, #8ec7f5);
+    color: #fff;
+  }
+  .subbar-inner {
+    width: min(var(--banner-w), 100%); margin-inline: auto;
+    padding-inline: var(--banner-pad);
+    min-height: 3.25rem;
+    display: flex; align-items: center; gap: 0.6rem;
+    flex-wrap: wrap;
+    padding-block: 0.6rem;
+  }
+  /* Controls sit left, under the wordmark; anything after .subbar-spacer is
+     pushed to the right edge. */
+  .subbar-spacer { flex: 1 1 auto; }
+
+  /* A header with no controls ribbon still needs its bottom edge. */
+  .topbar:last-child { border-bottom: 3px solid var(--sky, #8ec7f5); }
+
+  .topbar-inner {
+    width: min(var(--banner-w), 100%); margin-inline: auto;
+    padding-inline: var(--banner-pad);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1.5rem;
+  }
+
+  .header-brand {
+    /* The app loads no webfont. The websites load IBM Plex. Naming Plex here
+       would render the banner in Plex on the sites and the system face in the
+       app -- identical layout, different letterforms, and invisible unless you
+       look closely. All three therefore pin the system stack on the banner
+       alone; the page body keeps whatever the host uses. Do not "tidy" this
+       back to --sans. */
+    --banner-sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex; align-items: center; gap: 1.2rem;
+    color: #fff; text-decoration: none; min-width: 0;
+  }
+  .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none; display: block; }
   .header-title { min-width: 0; }
-  header h1 { margin: 0; font-size: 2rem; font-weight: 700;
-              letter-spacing: .5px; line-height: 1.55; }
-  /* A serif italic numeral against the sans wordmark reads as a version
-     mark rather than a stray digit. Georgia is on Windows and macOS alike
-     and the page loads no webfont, so this has to be a face that is
-     already there -- hence the ordinary serif fallbacks behind it. Its
-     numerals sit larger on the body than Plex's, so the size comes down a
-     touch; the baseline needs no help, since the two spans share a line
-     box. The wordmark's letter-spacing is cancelled because it would
-     otherwise add a gap after the numeral with nothing following it. */
-  header h1 .tm {
-    color: #8ec7f5;
-    font-family: Georgia, "Times New Roman", "Nimbus Roman", serif;
-    font-style: italic;
-    font-size: .92em;
-    letter-spacing: 0;
+
+  .brand-name {
+    margin: 0; font-family: var(--banner-sans);
+    font-size: 2rem; font-weight: 700; letter-spacing: 0.5px; line-height: 1.55;
   }
-  header p { margin: .4rem 0 0; font-size: 1rem; line-height: 1.55;
-             color: #b7c3d6; }
+  .brand-name .vnum,
+  .brand-name .tm {
+    color: var(--sky, #8ec7f5);
+    font-family: Georgia, "Times New Roman", "Nimbus Roman", serif;
+    font-style: italic; font-size: 0.92em; letter-spacing: 0;
+  }
+  .brand-sub {
+    margin: 0.4rem 0 0; font-family: var(--banner-sans);
+    font-size: 1rem; line-height: 1.55; color: #b7c3d6;
+  }
+
   .theme-toggle {
-    margin-left: auto; flex: none; width: 2.5rem; height: 2.5rem;
+    flex: none; width: 2.5rem; height: 2.5rem;
     display: flex; align-items: center; justify-content: center;
     background: rgba(255,255,255,.12); color: #fff;
     border: 1px solid rgba(255,255,255,.35); border-radius: 999px;
     font-size: 1.2rem; line-height: 1; cursor: pointer;
     transition: background-color .15s ease, transform .06s ease;
   }
-  .theme-toggle:hover { background: rgba(255,255,255,.22); }
+  .theme-toggle svg { width: 1.15em; height: 1.15em; flex: none; }
+  .theme-toggle:hover  { background: rgba(255,255,255,.22); }
   .theme-toggle:active { transform: translateY(1px); }
-  .theme-toggle:focus-visible { outline: 2px solid #8ec7f5; outline-offset: 2px; }
+  .theme-toggle:focus-visible { outline: 2px solid var(--sky, #8ec7f5); outline-offset: 2px; }
+
   @media (max-width: 520px) {
-    header { padding: 1.6rem 1rem 1.4rem; }
-    .header-flex { gap: .9rem; }
+    .topbar { padding-block: 1.6rem 1.4rem; }
+    .subbar-inner { min-height: 0; padding-block: 0.5rem; gap: 0.45rem; }
+    .topbar-inner { gap: 0.9rem; }
+    .header-brand { gap: 0.9rem; }
     .header-logo { width: 56px; height: 56px; border-radius: 9px; }
-    header h1 { font-size: 1.4rem; letter-spacing: .3px; }
-    header p { font-size: .9rem; margin-top: .25rem; }
+    .brand-name { font-size: 1.4rem; letter-spacing: 0.3px; }
+    .brand-sub { font-size: 0.9rem; margin-top: 0.25rem; }
     .theme-toggle { width: 2.15rem; height: 2.15rem; font-size: 1.05rem; }
   }
+  /* ==== END banner.css ====================================== */
+  .wrap { max-width: 880px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
   .nowrap { white-space: nowrap; }
   a.toplinks { color: #8ec7f5; font-weight: 600; text-decoration: none;
                 border-bottom: 1px solid rgba(142,199,245,.45); padding-bottom: 1px;
@@ -560,17 +645,24 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 </style>
 </head>
 <body>
-<header>
-  <div class="wrap header-flex">
-    <img src="/static/logo.png" alt="Symbulator logo" class="header-logo">
-    <div class="header-title">
-      <h1>Symbulator <span class="tm">9</span></h1>
-      <p>the best portable symbolic simulator of linear circuits</p>
+<!-- The shared banner.css gives a ribbon-less header its bottom keyline
+     through .topbar:last-child, which assumes the bands sit in a wrapper
+     of their own. Here <header> is followed by <main>, so it needs one. -->
+<div class="banner">
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="header-brand">
+      <img src="/static/logo.png" alt="Symbulator logo" class="header-logo">
+      <div class="header-title">
+        <h1 class="brand-name">Symbulator <span class="tm">9</span></h1>
+        <p class="brand-sub">the best portable symbolic simulator of linear circuits</p>
+      </div>
     </div>
     <button type="button" id="themeToggle" class="theme-toggle"
             aria-label="Switch to dark mode" title="Switch to dark mode"><svg viewBox="0 0 24 24" style="width:1.2em;height:1.2em;flex:none" fill="#8ec7f5" aria-hidden="true"><path d="M20.4 14.7A8.5 8.5 0 1 1 9.3 3.6a7 7 0 1 0 11.1 11.1Z"/></svg></button>
   </div>
 </header>
+</div>
 
 <main class="wrap">
   <!-- server-only: this notice only makes sense when the page has no
@@ -1374,7 +1466,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-23 08:24 UTC
+  Symbulator 9 version 2026-08-23 08:54 UTC
 </footer>
 
 <script>
