@@ -59,6 +59,7 @@ from symbulator_ui import (                                   # noqa: E402
     _ALLOWED, _ALLOWED_EQ, _ALLOWED_COND, _VARNAME,
     MAX_DESC_LEN, MAX_OMEGA_LEN, MAX_VARIABLES, MAX_EXTRA, MAX_EXTRA_LEN,
     MAX_PLOT_POINTS, VALID_DOMAINS,
+    schematic_ui,
 )
 
 
@@ -535,6 +536,31 @@ def _clean_range(raw, lo_default, hi_default):
     if not (-_MAX_RANGE < lo < _MAX_RANGE and -_MAX_RANGE < hi < _MAX_RANGE):
         return None, None, "Range values are out of bounds."
     return lo, hi, None
+
+
+@app.post("/api/schematic")
+def api_schematic():
+    """Draw the circuit, without solving it. Separate from /api/solve on
+    purpose: the picture earns its keep on a circuit that does not solve,
+    and the drawer parses SI shorthand without the ambiguity negotiation
+    the solver needs, so `1k` draws where a solve would stop and ask."""
+    data = request.get_json(silent=True) or {}
+    desc = str(data.get("desc") or "")
+    if len(desc) > MAX_DESC_LEN:
+        return jsonify({"ok": False, "error": "That circuit description is too long."}), 400
+    t0 = time.time()
+    ok, payload = _run_in_process("schematic_ui", (desc,))
+    elapsed = round(time.time() - t0, 2)
+    if not ok:
+        return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
+    # _run_in_process has already unwrapped the ui dict's own "ok": on
+    # failure it hands back the message as a string, so there is nothing
+    # left to check here.
+    #
+    # Enumerated by hand like the other routes -- a key added in
+    # symbulator_ui reaches the offline build automatically but is
+    # silently dropped here until it is named.
+    return jsonify({"ok": True, "svg": payload["svg"], "elapsed": elapsed})
 
 
 @app.post("/api/plot")

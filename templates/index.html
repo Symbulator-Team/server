@@ -112,24 +112,29 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     font: 16px/1.55 var(--sans);
     transition: background-color .15s ease, color .15s ease;
   }
-  /* The lockup matches symbulator.com's top bar, whose own CSS notes it
-     was taken from here in the first place: 56px mark, the name at
-     1.55rem/600, the tagline at .8125rem, and .7rem of padding above and
-     below a 3.5rem row. Keeping the two identical is the point -- someone
-     arriving from the site should not feel they have landed somewhere
-     else. */
+  /* This lockup is shared with the landing page at symbulator.com, whose
+     landing.css carries the same values and says so. Everything that used
+     to be inherited from the body -- the weight, both line-heights, the
+     tagline size -- is pinned here instead, because the two sites have
+     different body rules and the banner must not follow them. */
   header {
     background: #203864;
-    color: #fff; padding: 1rem;
+    color: #fff; padding: 2.2rem 1rem 2rem;
     border-bottom: 3px solid #8ec7f5;
   }
   .wrap { max-width: 880px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
-  .header-flex { display: flex; align-items: center; gap: .7rem;
-                 flex-wrap: nowrap; min-height: 3.5rem; }
-  .header-logo { width: 56px; height: 56px; border-radius: 4px; flex: none; }
+  /* The banner alone spans the landing page's container rather than the
+     app's narrower content column, so the mark lands in the same place on
+     both sites. The gutter is landing.css's clamp, not a fixed rem, or the
+     two drift apart at the widths where the clamp is doing work. */
+  header .wrap { width: min(72rem, 100%); max-width: none;
+                 padding-left: clamp(1.25rem, 4vw, 2.75rem);
+                 padding-right: clamp(1.25rem, 4vw, 2.75rem); }
+  .header-flex { display: flex; align-items: center; gap: 1.2rem; flex-wrap: nowrap; }
+  .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none; }
   .header-title { min-width: 0; }
-  header h1 { margin: 0; font-size: 1.55rem; font-weight: 600;
-              letter-spacing: .005em; line-height: 1.15; }
+  header h1 { margin: 0; font-size: 2rem; font-weight: 700;
+              letter-spacing: .5px; line-height: 1.55; }
   /* A serif italic numeral against the sans wordmark reads as a version
      mark rather than a stray digit. Georgia is on Windows and macOS alike
      and the page loads no webfont, so this has to be a face that is
@@ -145,8 +150,8 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     font-size: .92em;
     letter-spacing: 0;
   }
-  header p { margin: .1rem 0 0; font-size: .8125rem; line-height: 1.3;
-             color: #a9bedd; }
+  header p { margin: .4rem 0 0; font-size: 1rem; line-height: 1.55;
+             color: #b7c3d6; }
   .theme-toggle {
     margin-left: auto; flex: none; width: 2.5rem; height: 2.5rem;
     display: flex; align-items: center; justify-content: center;
@@ -455,6 +460,12 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
      breathing room here -- Inputs is unaffected since .group-intro, not
      .card, is what follows it. */
   .group-h + .card, .solution-pick + .card { margin-top: .6rem; }
+  /* The drawing names no colours of its own -- every stroke is
+     currentColor -- so it takes the page's ink and works in both themes
+     without being redrawn. Width is capped rather than stretched: a
+     two-element circuit blown up to the full card looks absurd. */
+  #schematicOut svg { max-width: 100%; height: auto; color: var(--ink); }
+  #schematicOut { overflow-x: auto; text-align: center; }
   /* More than one answer: a line under Run saying so, and a picker under
      the Outputs heading to choose between them. Both are hidden in the
      ordinary single-answer case, which is nearly every circuit. */
@@ -1090,6 +1101,31 @@ units: yes</pre>
 
   <hr class="section-divider">
 
+  <!-- Drawing is its own card and its own request, not part of a solve.
+       A picture earns its keep on a circuit that does not solve yet, and
+       the drawer reads SI shorthand without the ambiguity negotiation the
+       solver needs, so `1k` draws where a solve would stop and ask. It
+       draws on demand rather than as you type: in the offline builds that
+       work happens in your own tab. -->
+  <div class="card" id="schematicCard">
+    <details id="schematicBox">
+      <summary class="results-h section-toggle">Schematic</summary>
+      <p class="hint" style="margin:.2rem 0 .9rem">
+        Draw the circuit above as a diagram. It does not have to solve —
+        the drawing is often most useful when it doesn't.
+      </p>
+      <div class="run-row" style="margin:.6rem 0 0">
+        <button type="button" id="schematicBtn">Draw the circuit</button>
+        <span id="schematicStatus"></span>
+      </div>
+      <div id="schematicOut" style="margin-top:.9rem">
+        <div class="lcd"><div class="placeholder">— nothing drawn yet —</div></div>
+      </div>
+    </details>
+  </div>
+
+  <hr class="section-divider">
+
   <div class="card" id="plotCard">
     <details id="plotBox">
       <summary class="results-h section-toggle">Plot</summary>
@@ -1327,7 +1363,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-23 04:57 UTC
+  Symbulator 9 version 2026-08-23 06:48 UTC
 </footer>
 
 <script>
@@ -3223,6 +3259,50 @@ $('solveqBtn').addEventListener('click', solveEquations);
 $('solveqUnks').addEventListener('keydown', ev => {
   if (ev.key === 'Enter') solveEquations();
 });
+
+// ---- Schematic -------------------------------------------------------
+// Its own request, deliberately: see the card's comment. Nothing here
+// depends on a solve having happened, so it stays enabled from the start.
+async function drawSchematic() {
+  const btn = $('schematicBtn'), out = $('schematicOut'), status = $('schematicStatus');
+  const desc = $('desc').value.trim();
+  if (!desc) {
+    out.innerHTML = '<div class="lcd"><div class="placeholder">— enter a circuit first —</div></div>';
+    status.textContent = '';
+    return;
+  }
+  btn.disabled = true;
+  status.textContent = 'drawing…';
+  try {
+    const r = await fetch('/api/schematic', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ desc: desc })
+    });
+    const data = await r.json();
+    out.innerHTML = '';
+    if (!data.ok) {
+      const div = document.createElement('div');
+      div.className = 'error';
+      div.style.whiteSpace = 'pre-line';
+      div.textContent = data.error || 'Could not draw that circuit.';
+      out.appendChild(div);
+      status.textContent = 'Could not draw it.';
+      return;
+    }
+    // The SVG is built by our own drawer, not by anything a user typed:
+    // element names reach it through _esc() in schematic.py.
+    out.innerHTML = data.svg;
+    status.textContent = 'Drawn.';
+  } catch (e) {
+    out.innerHTML = '<div class="error">Could not reach the drawer. Please try again.</div>';
+    status.textContent = '';
+    showHostNotice();
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+$('schematicBtn').addEventListener('click', drawSchematic);
 
 // ---- Download builder ------------------------------------------------
 $('dlBtn').addEventListener('click', () => {

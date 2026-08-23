@@ -1214,6 +1214,33 @@ def _conditions_hold(sol, conditions, values, wanted) -> bool:
     return True
 
 
+def schematic_ui(desc: str):
+    """Draw a circuit description as an SVG. Returns {"ok": True, "svg":
+    ...} or {"ok": False, "error": message}.
+
+    Deliberately separate from solve_ui rather than folded into it: the
+    drawing is most useful on a circuit that does *not* solve yet, and
+    `to_svg` parses with expand_si=False, so a bare `1k` draws where the
+    solver would stop and ask which it meant. Folding it into the solve
+    would mean you only ever saw a picture after a successful run, which
+    is when you least need one.
+
+    The description arrives in whichever form the page holds it -- the
+    textarea uses newlines, the file format uses colons -- and both mean
+    the same thing to the parser, so neither is normalised away here."""
+    try:
+        from symbulator.schematic import to_svg
+    except ImportError:
+        return _err("This build has no schematic drawer. It needs "
+                    "symbulator 0.5.0 or newer.")
+    if not (desc or "").strip():
+        return _err("Enter a circuit first.")
+    try:
+        return _ok({"svg": to_svg(desc)})
+    except Exception as exc:
+        return _err(_exc_text(exc))
+
+
 def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
                  si: bool = False, approx: bool = False):
     """Evaluate a user expression against the solved values. Names match
