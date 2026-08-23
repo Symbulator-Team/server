@@ -562,6 +562,9 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
      two-element circuit blown up to the full card looks absurd. */
   #schematicOut svg { max-width: 100%; height: auto; color: var(--ink); }
   #schematicOut { overflow-x: auto; text-align: center; }
+  #schematicOut:not(:empty) { margin-top: .9rem; }
+  .schematic-line { margin: .35rem 0 0; font-size: .92rem; }
+  .schematic-line #schematicStatus { margin-left: .5rem; }
   /* More than one answer: a line under Run saying so, and a picker under
      the Outputs heading to choose between them. Both are hidden in the
      ordinary single-answer case, which is nearly every circuit. */
@@ -948,6 +951,19 @@ units: yes</pre>
       <button type="button" id="addToFileBtn" class="linkish" hidden>Save inputs to new entry</button>
     </div>
 
+    <!-- Drawing sits with the circuit it draws, rather than in a card of
+         its own further down: it is a way of looking at what you have just
+         typed, and it does not need the circuit to solve -- the drawer
+         reads `1k` where a solve would stop and ask which it meant. It
+         draws on demand, never as you type, because in the offline builds
+         that work happens in the reader's own tab. -->
+    <p class="schematic-line">
+      <strong>Schematic</strong> —
+      <button type="button" id="schematicBtn" class="linkish">Draw the circuit above as a diagram (beta)</button>
+      <span id="schematicStatus" class="hint"></span>
+    </p>
+    <div id="schematicOut"></div>
+
 
     <div class="results-h" style="margin-top:1.6rem">Analysis and Settings</div>
     <div class="row">
@@ -1204,31 +1220,6 @@ units: yes</pre>
 
   <hr class="section-divider">
 
-  <!-- Drawing is its own card and its own request, not part of a solve.
-       A picture earns its keep on a circuit that does not solve yet, and
-       the drawer reads SI shorthand without the ambiguity negotiation the
-       solver needs, so `1k` draws where a solve would stop and ask. It
-       draws on demand rather than as you type: in the offline builds that
-       work happens in your own tab. -->
-  <div class="card" id="schematicCard">
-    <details id="schematicBox">
-      <summary class="results-h section-toggle">Schematic</summary>
-      <p class="hint" style="margin:.2rem 0 .9rem">
-        Draw the circuit above as a diagram. It does not have to solve —
-        the drawing is often most useful when it doesn't.
-      </p>
-      <div class="run-row" style="margin:.6rem 0 0">
-        <button type="button" id="schematicBtn">Draw the circuit</button>
-        <span id="schematicStatus"></span>
-      </div>
-      <div id="schematicOut" style="margin-top:.9rem">
-        <div class="lcd"><div class="placeholder">— nothing drawn yet —</div></div>
-      </div>
-    </details>
-  </div>
-
-  <hr class="section-divider">
-
   <div class="card" id="plotCard">
     <details id="plotBox">
       <summary class="results-h section-toggle">Plot</summary>
@@ -1466,7 +1457,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-23 09:13 UTC
+  Symbulator 9 version 2026-08-23 09:25 UTC
 </footer>
 
 <script>
@@ -3370,8 +3361,8 @@ async function drawSchematic() {
   const btn = $('schematicBtn'), out = $('schematicOut'), status = $('schematicStatus');
   const desc = $('desc').value.trim();
   if (!desc) {
-    out.innerHTML = '<div class="lcd"><div class="placeholder">— enter a circuit first —</div></div>';
-    status.textContent = '';
+    out.innerHTML = '';
+    status.textContent = 'Enter a circuit first.';
     return;
   }
   btn.disabled = true;
