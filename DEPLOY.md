@@ -39,6 +39,12 @@ To deploy a change:
        cd ~/symbulator_web
        source ~/.virtualenvs/symbulator-venv/bin/activate
        git pull
+       git log -1 --oneline
+       grep -o "Symbulator 9 version.*UTC" templates/index.html
+
+   The last two are worth the seconds: they say which commit and which
+   build stamp the pull actually landed, so a pull that quietly did
+   nothing is visible before the reload rather than after.
 
 3. **Check whether the new code needs a newer `symbulator` than what's
    installed** before assuming you're done -- `requirements.txt` pins a
