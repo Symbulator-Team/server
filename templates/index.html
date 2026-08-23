@@ -144,9 +144,15 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 
      It is self-contained on purpose. Every colour is var(--name, #literal), so
      it works whether or not the host defines the tokens, and whatever the host
-     calls them. It styles only what is common to all three; each property
-     layers its own controls on top (nav links, Start reading / Download the
-     PDF, the version picker) in its own stylesheet.
+     calls them.
+
+     Scope widened 23 Aug 2026. It used to style the bands and nothing inside
+     them, leaving every property to dress its own ribbon -- which produced
+     three ribbons that looked like three different websites. It now also
+     owns the ribbon's shared vocabulary: the row, and what a link in it looks
+     like. What goes *in* the row is still each property's own business, and
+     genuinely local controls (learn's version picker, the app's Clear all
+     inputs) still layer on top in their own stylesheets.
 
      Both .vnum and .tm are matched for the version numeral, because the three
      properties named that span differently before this file existed.
@@ -203,6 +209,59 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
      pushed to the right edge. */
   .subbar-spacer { flex: 1 1 auto; }
 
+  /* The ribbon's links, shared by all three properties.
+     ---------------------------------------------------------------------
+     These moved here on 23 Aug 2026. Until then this file styled the bands
+     and nothing inside them, on the principle that each property owns its
+     own controls -- and the result was three ribbons that read as three
+     different websites: symbulator.com had plain links, learn had two solid
+     chips, the app had no ribbon at all.
+
+     The lesson is the same one the lockup taught. A shared band with
+     unshared contents is not a shared banner. So the *vocabulary* lives
+     here -- a row of links, and what a link in a navy ribbon looks like --
+     while what each property puts in the row stays its own business.
+
+     Anything genuinely local still layers on top: learn's version picker,
+     the app's Clear all inputs. They sit in the same row, at the same
+     size. */
+  .subbar nav {
+    display: flex; align-items: center; gap: 1.15rem;
+    flex-wrap: wrap; min-width: 0;
+  }
+  .subbar nav a {
+    color: #dbe6f5; text-decoration: none;
+    font-size: 0.875rem; line-height: 1.4;
+    border-radius: 4px;
+  }
+  .subbar nav a:hover { color: #fff; text-decoration: underline; }
+  .subbar nav a:focus-visible {
+    outline: 2px solid var(--sky, #8ec7f5); outline-offset: 3px;
+  }
+  /* A link that happens to act on the page rather than lead somewhere -- the
+     app's Clear all inputs. Same size and colour as its neighbours; it is a
+     <button> only because it does something, and should not look like one.
+
+     The class is .subbar-action, not the more natural .linkish, because the
+     app already has a small underlined link-button of its own under that very
+     name -- and the two collided: this rule won on specificity for what it
+     declared, and the app's underline came through for what it did not, so
+     Clear all inputs rendered underlined at rest while its neighbours did not.
+     A shared file must not claim a class name a host might already use. Check
+     for collisions before naming anything here. */
+  .subbar nav button.subbar-action {
+    appearance: none; background: none; border: 0; padding: 0;
+    font: inherit; color: #dbe6f5; font-size: 0.875rem; line-height: 1.4;
+    cursor: pointer; border-radius: 4px;
+  }
+  .subbar nav button.subbar-action:hover { color: #fff; text-decoration: underline; }
+  .subbar nav button.subbar-action:focus-visible {
+    outline: 2px solid var(--sky, #8ec7f5); outline-offset: 3px;
+  }
+  .subbar nav button.subbar-action:disabled {
+    color: #8ea3c4; cursor: default; text-decoration: none;
+  }
+
   /* A header with no controls ribbon still needs its bottom edge. */
   .topbar:last-child { border-bottom: 3px solid var(--sky, #8ec7f5); }
 
@@ -243,6 +302,13 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   }
 
   .theme-toggle {
+    /* padding:0 is load-bearing, not tidiness. A host with a generic
+       `button { padding: .6rem 1.6rem }` rule -- the app has exactly that --
+       wins over the width below, because a flex item cannot shrink under its
+       own padding. The toggle then measures 53x40 there and 40x40 on the
+       websites: the same circle on two sites and an oval on the third.
+       Measured 23 Aug 2026. */
+    padding: 0;
     flex: none; width: 2.5rem; height: 2.5rem;
     display: flex; align-items: center; justify-content: center;
     background: rgba(255,255,255,.12); color: #fff;
@@ -504,48 +570,19 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     font-size: 1.15rem; font-weight: 700; color: var(--ink);
     letter-spacing: .02em; white-space: nowrap; margin: 2.4rem 0 .8rem;
   }
-  /* Inputs is the first group heading and needs no gap above it; it is
-     now always wrapped, so the wrapper says so directly. A
-     :first-of-type rule would instead land on Outputs, which is the
-     only bare .group-h left, and swallow the gap above it. */
-  /* A quiet button, for an action that throws work away. Solid accent is
-     for things you want people to do; this one should recede until it is
-     wanted, then say what it costs -- hence the warning colour on hover
-     rather than at rest. Ring drawn inset so the size does not shift. */
-  button.btn-quiet {
-    /* font-family and line-height for the same reason as .uploadlbl: a
-       <button> inherits neither, and without them this one renders in the
-       browser's default face while everything around it does not. */
-    background: transparent; color: var(--muted); font-weight: 500;
-    font-family: inherit; line-height: inherit;
-    font-size: .92rem; padding: .45rem 1rem;
-    box-shadow: inset 0 0 0 1px var(--line);
-  }
-  button.btn-quiet:hover:not(:disabled) {
-    background: transparent; color: var(--err-ink);
-    box-shadow: inset 0 0 0 1px var(--err-line);
-  }
-  .group-h-row { position: relative; }
-  .group-h-row > .group-h { margin-top: 0; }
-  .group-h-row > button {
-    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
-  }
-  /* Here the vertical centring is a transform, and so is the press nudge
-     every button gets. A second transform replaces the first instead of
-     adding to it, and :active is the more specific selector -- so without
-     this the press threw away the centring and dropped the button by half
-     its own height. Both offsets have to travel together. */
-  .group-h-row > button:active:not(:disabled) {
-    transform: translateY(calc(-50% + 1px));
-  }
-  /* Narrow screens have no room beside the heading, so the button drops
-     below it rather than overlapping the text. */
-  @media (max-width: 620px) {
-    .group-h-row > button { position: static; transform: none;
-                            display: block; margin: .6rem auto 0; }
-    /* Not centred here, so the plain nudge is right again. */
-    .group-h-row > button:active:not(:disabled) { transform: translateY(1px); }
-  }
+  /* Inputs is the first group heading and needs no gap above it.
+     Until 23 Aug 2026 it was wrapped in .group-h-row so a Clear all inputs
+     button could be pinned beside it, and the comment here warned that
+     :first-of-type would land on Outputs instead. That warning no longer
+     applies: the wrapper is gone, Clear all inputs lives in the ribbon,
+     and Inputs is now genuinely the first .group-h on the page.
+
+     Deleted with it: button.btn-quiet, .group-h-row, and the pair of
+     :active rules that carried the centring offset and the press nudge
+     together (#72). None have any remaining users -- the bug was a
+     consequence of pinning a button with a transform, and moving it into
+     normal flow removed the cause rather than the symptom. */
+  main > .group-h:first-of-type { margin-top: 0; }
   .group-h::before, .group-h::after {
     content: ""; flex: 1 1 0; max-width: 6rem; height: 1px;
     background: linear-gradient(90deg, transparent, var(--line) 40%, var(--line) 60%, transparent);
@@ -648,9 +685,15 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 </style>
 </head>
 <body>
-<!-- The shared banner.css gives a ribbon-less header its bottom keyline
-     through .topbar:last-child, which assumes the bands sit in a wrapper
-     of their own. Here <header> is followed by <main>, so it needs one. -->
+<!-- Two bands, the same pair symbulator.com and learn.symbulator.com use:
+     .topbar carries the lockup and nothing else, .subbar carries this
+     property's own controls, and the sky keyline closes the pair under the
+     subbar. Both are styled by the shared design/banner.css copied in
+     above; only what sits INSIDE .subbar-inner is the app's own business.
+
+     The app had no .subbar until 23 Aug 2026 -- it took the shared file but
+     kept its toggle up in the lockup band, so the three sites matched
+     everywhere except in shape. See #74. -->
 <div class="banner">
 <header class="topbar">
   <div class="topbar-inner">
@@ -661,10 +704,30 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
         <p class="brand-sub">the best portable symbolic simulator of linear circuits</p>
       </div>
     </div>
+  </div>
+</header>
+
+<div class="subbar">
+  <div class="subbar-inner">
+    <nav>
+      <a href="https://learn.symbulator.com">Documentation</a>
+      <a href="https://symbulator.com/9/local.zip">Download</a>
+      <a href="https://symbulator.com">symbulator.com</a>
+      <!-- Clear all inputs lived beside the [ I N P U T S ] heading until
+           23 Aug 2026, pinned there with a transform -- which fought the
+           1px press nudge every button gets and made it fall 20px when
+           clicked (#72). In the ribbon it is in normal flow, so that whole
+           class of problem is gone rather than patched. It is a <button>
+           because it acts on the page, and .linkish so it does not look
+           like one: the ribbon is a row of links on all three sites. -->
+      <button type="button" id="clearAllBtn" class="subbar-action"
+        title="Empty every input and start over">Clear all inputs</button>
+    </nav>
+    <span class="subbar-spacer"></span>
     <button type="button" id="themeToggle" class="theme-toggle"
             aria-label="Switch to dark mode" title="Switch to dark mode"><svg viewBox="0 0 24 24" style="width:1.2em;height:1.2em;flex:none" fill="#8ec7f5" aria-hidden="true"><path d="M20.4 14.7A8.5 8.5 0 1 1 9.3 3.6a7 7 0 1 0 11.1 11.1Z"/></svg></button>
   </div>
-</header>
+</div>
 </div>
 
 <main class="wrap">
@@ -683,14 +746,11 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   </div>
   <!-- /server-only -->
 
-  <!-- The heading stays centred on the page; the button is taken out of
-       the flow and pinned right, so [ I N P U T S ] still lines up with
-       [ O U T P U T S ] below it. -->
-  <div class="group-h-row">
-    <h2 class="group-h"><span class="bracket">[</span>   I N P U T S   <span class="bracket">]</span></h2>
-    <button type="button" id="clearAllBtn" class="btn-quiet"
-      title="Empty every input and start over">Clear all inputs</button>
-  </div>
+  <!-- Clear all inputs moved to the ribbon on 23 Aug 2026, so this heading
+       is now just a heading and needs no row around it to hold a button
+       out of the flow. [ I N P U T S ] lines up with [ O U T P U T S ] on
+       its own. -->
+  <h2 class="group-h"><span class="bracket">[</span>   I N P U T S   <span class="bracket">]</span></h2>
   <p class="group-intro">
     <strong>Describe a circuit and select analysis type</strong> —
     You can use an Input&nbsp;File. Unsure how? Learn
@@ -1457,7 +1517,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-23 09:25 UTC
+  Symbulator 9 version 2026-08-23 12:27 UTC
 </footer>
 
 <script>
