@@ -965,9 +965,17 @@ units: yes</pre>
         A value can be a number, a symbol (<code>r_load</code>,
         <code>vin</code>) or an expression — and an expression referring
         to another answer, like <code>2*v_2</code>, makes a dependent
-        (controlled) source. For FD and TR analysis give source values in
-        the s-domain: <code>5/s</code> for a 5 V step, <code>1</code> for a
-        unit impulse.
+        (controlled) source.
+      </p>
+      <p class="hint">
+        <strong>TR</strong> reads a source value as a function of time:
+        <code>12</code> is a 12 V step, <code>u(t)</code> the unit step,
+        <code>t</code> a ramp, <code>δ(t)</code> an impulse.
+        <strong>FD</strong> reads it in the s-domain instead:
+        <code>5/s</code> is a 5 V step and <code>5</code> an impulse. To
+        write an FD source in time, wrap it —
+        <code>{5}</code>, <code>{u(t)}</code> — which is shorthand for
+        <code>t2s(…)</code> and works in FD only.
       </p>
 
       <div class="section-cap">SI prefixes</div>
@@ -1608,7 +1616,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-24 23:22 UTC
+  Symbulator 9 version 2026-08-24 23:26 UTC
 </footer>
 
 <script>
