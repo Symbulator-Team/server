@@ -53,7 +53,8 @@ SOLVE_TIMEOUT_S = float(os.environ.get("SYMBULATOR_TIMEOUT", "25"))
 # server around it: validation is re-used from there, and the actual
 # solving runs in a killable child process.
 from symbulator_ui import (                                   # noqa: E402
-    solve_ui, evaluate_ui, solveq_ui, normalise_imaginary,
+    solve_ui, evaluate_ui, solveq_ui, mini_tool_ui, MINI_TOOLS,
+    normalise_imaginary,
     plot_time_ui, bode_ui,
     _validate, _validate_extras, _expand_and, _clean_digits, _exc_text,
     _ALLOWED, _ALLOWED_EQ, _ALLOWED_COND, _VARNAME,
@@ -670,6 +671,51 @@ def api_evaluate():
     elapsed = round(time.time() - t0, 2)
     if not ok:
         return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
+    return jsonify({"ok": True, "elapsed": elapsed, **payload})
+
+
+@app.post("/api/minitool")
+def api_minitool():
+    """Run one of the small version 7 helpers (the "Mini-tools" card).
+
+    These differ from Evaluate in what they hand back: `aa` answers with a
+    magnitude and an angle, `pf` with a number and a direction, `gain` with
+    four figures at once. None of that is an expression, so none of it can
+    go through the Evaluate path -- but the arguments are still resolved
+    against the posted answers, which is what lets a user write `i_r1`
+    rather than copying a phasor out of the results by hand."""
+    data = request.get_json(silent=True) or {}
+    tool = str(data.get("tool", "")).strip()
+    args = data.get("args") or []
+    values = data.get("values") or {}
+
+    if tool not in MINI_TOOLS:
+        return jsonify({"ok": False, "error": "Unknown tool."}), 400
+    if not isinstance(args, list) or len(args) > 8:
+        return jsonify({"ok": False, "error": "Invalid arguments."}), 400
+    clean_args = []
+    for a in args:
+        a = str(a or "").strip()
+        if len(a) > _EXPR_MAX or (a and (not _ALLOWED.match(a) or "__" in a)):
+            return jsonify({"ok": False,
+                            "error": "Values contain invalid characters."}), 400
+        clean_args.append(a)
+    if not isinstance(values, dict) or len(values) > 300:
+        return jsonify({"ok": False, "error": "Invalid values payload."}), 400
+    clean = {}
+    for k, v in values.items():
+        if (isinstance(k, str) and _VARNAME.match(k) and isinstance(v, str)
+                and len(v) <= 4000 and _ALLOWED.match(v) and "__" not in v):
+            clean[k] = v
+
+    digits = _clean_digits(data.get("digits")) or 4
+    t0 = time.time()
+    ok, payload = _run_in_process("mini_tool_ui",
+                                  (tool, clean_args, clean, digits))
+    elapsed = round(time.time() - t0, 2)
+    if not ok:
+        return jsonify({"ok": False, "error": payload,
+                        "elapsed": elapsed}), 422
     return jsonify({"ok": True, "elapsed": elapsed, **payload})
 
 

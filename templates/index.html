@@ -592,6 +592,14 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .dl-row label { font-weight: 400; font-size: .92rem; display: flex;
                   align-items: center; gap: .45rem; margin: 0; cursor: pointer; }
   .dl-row input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
+  /* Mini-tool answers: one reading, or gain's four. Monospaced so a
+     magnitude and an angle line up when several are run in turn. */
+  .mini-value { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .mini-single { font-size: 1.25rem; padding: .35rem 0; }
+  .mini-table { width: 100%; border-collapse: collapse; }
+  .mini-table td { padding: .3rem 0; }
+  .mini-table td:first-child { color: var(--muted); }
+  .mini-table td.mini-value { text-align: right; }
   .card.inactive { border-color: var(--line-soft); box-shadow: none; }
   .card.inactive .results-h { color: var(--muted); }
   #expertBox textarea:disabled, #expertBox input[type=text]:disabled { opacity: .55; cursor: not-allowed; }
@@ -1331,6 +1339,36 @@ units: yes</pre>
     </details>
   </div>
 
+  <!-- The version 7 helpers that answer with a reading rather than an
+       expression: `aa` shows a complex number as magnitude and angle, `pf`
+       reads a power factor, `gain` reports four figures at once. They
+       cannot live in Evaluate -- it shows a single expression, and these
+       hand back a sentence or a table -- so they get a card, collapsed
+       until wanted. Their arguments resolve against the solved answers,
+       which is the point: you name `i_r1` rather than copying a phasor
+       out of the results by hand. -->
+  <div class="card inactive" id="miniCard">
+    <details id="miniBox">
+      <summary class="results-h section-toggle">Mini-tools</summary>
+      <div class="row" style="margin-top:.7rem">
+        <div>
+          <label for="miniTool">Tool</label>
+          <select id="miniTool">
+            <option value="aa">aa — amplitude and angle</option>
+            <option value="pf">pf — power factor</option>
+            <option value="gain">gain — voltage, current and power gain</option>
+          </select>
+        </div>
+      </div>
+      <div id="miniArgs" class="row" style="margin-top:.7rem"></div>
+      <div class="hint" id="miniHint" style="margin-top:.35rem"></div>
+      <div class="actions" style="margin-top:.7rem">
+        <button id="miniBtn" disabled>Run</button>
+      </div>
+      <div id="miniOut" class="lcd"></div>
+    </details>
+  </div>
+
   <hr class="section-divider">
 
   <div class="card" id="plotCard">
@@ -1570,7 +1608,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-24 10:28 UTC
+  Symbulator 9 version 2026-08-24 11:16 UTC
 </footer>
 
 <script>
@@ -1828,6 +1866,8 @@ function activatePostSolve() {
   for (const id of ['dlDesc', 'dlEqs', 'dlAns']) $(id).disabled = false;
   $('dlBtn').disabled = false;
   $('dlCard').classList.remove('inactive');
+  $('miniBtn').disabled = false;
+  $('miniCard').classList.remove('inactive');
 }
 
 // The exact mirror of activatePostSolve: put the page back to how it
@@ -1854,6 +1894,9 @@ function clearResults() {
   $('solveqReal').disabled = true;
   $('solveqBtn').disabled = true;
   $('solveqCard').classList.add('inactive');
+  $('miniOut').innerHTML = '';
+  $('miniBtn').disabled = true;
+  $('miniCard').classList.add('inactive');
   $('plotOut').innerHTML = '<div class="lcd"><div class="placeholder">— no plot run yet —</div></div>';
   $('plotStatus').textContent = '';
   for (const id of ['dlDesc', 'dlEqs', 'dlAns']) $(id).disabled = true;
@@ -3476,6 +3519,108 @@ async function solveEquations() {
 }
 $('solveqBtn').addEventListener('click', solveEquations);
 $('solveqUnks').addEventListener('keydown', ev => {
+
+// ---- Mini-tools -----------------------------------------------------------
+// Each tool takes a different number of values, so the fields are built from
+// the choice rather than written out three times and hidden.
+const MINI_SPEC = {
+  aa:   {fields: ['Value'], hint: 'a complex value, as in i_r1'},
+  pf:   {fields: ['Voltage', 'Current'],
+         hint: 'a voltage and a current, as in v_1 and i_r1'},
+  gain: {fields: ['v1', 'i1', 'v2', 'i2'],
+         hint: 'an input pair and an output pair'},
+};
+
+function miniFields() {
+  const spec = MINI_SPEC[$('miniTool').value];
+  const box = $('miniArgs');
+  // Keep whatever the user already typed when the field still exists, so
+  // switching tool to compare two readings does not empty the row.
+  const previous = [...box.querySelectorAll('input')].map(i => i.value);
+  box.innerHTML = '';
+  spec.fields.forEach((label, n) => {
+    const cell = document.createElement('div');
+    const lab = document.createElement('label');
+    lab.setAttribute('for', 'miniArg' + n);
+    lab.textContent = label;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'miniArg' + n;
+    input.value = previous[n] || '';
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); runMiniTool(); }
+    });
+    cell.appendChild(lab); cell.appendChild(input);
+    box.appendChild(cell);
+  });
+  $('miniHint').textContent = spec.hint;
+}
+
+async function runMiniTool() {
+  if (!last) return;
+  const btn = $('miniBtn'), out = $('miniOut');
+  const tool = $('miniTool').value;
+  const args = [...$('miniArgs').querySelectorAll('input')].map(i => i.value);
+  btn.disabled = true;
+  out.innerHTML = '<div class="placeholder">working…</div>';
+  try {
+    const data = await callMiniTool(tool, args);
+    if (!data.ok) {
+      out.innerHTML = '';
+      const box = document.createElement('div');
+      box.className = 'booknote warn';
+      box.textContent = data.error || 'That did not work.';
+      out.appendChild(box);
+      return;
+    }
+    out.innerHTML = '';
+    if (data.rows) {
+      // gain answers with four figures; a list reads better than a sentence.
+      const table = document.createElement('table');
+      table.className = 'mini-table';
+      data.rows.forEach(r => {
+        const tr = document.createElement('tr');
+        const th = document.createElement('td');
+        th.textContent = r.key + ' — ' + r.label;
+        const td = document.createElement('td');
+        td.className = 'mini-value';
+        td.textContent = r.plain;
+        tr.appendChild(th); tr.appendChild(td);
+        table.appendChild(tr);
+      });
+      out.appendChild(table);
+    } else {
+      const line = document.createElement('div');
+      line.className = 'mini-value mini-single';
+      line.textContent = data.plain;
+      out.appendChild(line);
+    }
+  } catch (err) {
+    out.innerHTML = '';
+    const box = document.createElement('div');
+    box.className = 'booknote warn';
+    box.textContent = String(err);
+    out.appendChild(box);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// Written as a plain fetch so build_local.py can swap it for the Pyodide
+// call the offline builds use, the same way it does for evaluate and solveq.
+async function callMiniTool(tool, args) {
+  const r = await fetch('/api/minitool', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ tool: tool, args: args, values: last.values,
+                           ...roundingState() })
+  });
+  return await r.json();
+}
+
+$('miniTool').addEventListener('change', miniFields);
+$('miniBtn').addEventListener('click', runMiniTool);
+miniFields();
   if (ev.key === 'Enter') solveEquations();
 });
 

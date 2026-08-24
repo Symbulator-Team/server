@@ -1700,6 +1700,208 @@ def schematic_ui(desc: str):
         return _err(_exc_text(exc))
 
 
+# --------------------------------------------------------------------------
+# Mini-tools
+# --------------------------------------------------------------------------
+#
+# A handful of version 7's helpers answer with a *presentation* rather than
+# an expression: `aa` shows a complex number as magnitude and angle, `pf`
+# reads a power factor as a number and a direction. They cannot live in the
+# parsing namespace, because sympify would call them with symbols still
+# unsubstituted and because what they hand back is a sentence, not
+# something the formatters downstream can round or prefix.
+#
+# So they get their own small surface, chosen by name, with their arguments
+# evaluated against the solved answers first -- which is what lets a user
+# write `i_r1` instead of copying a phasor out of the results by hand.
+#
+# `aa` is the one that mattered: it is the most-used tool in the whole
+# version 7 documentation (40 calls) and version 9 had no equivalent at
+# all -- its name was reserved and nothing implemented it.
+
+MINI_TOOLS = {
+    "aa": {"args": 1, "label": "aa -- amplitude and angle",
+           "hint": "a complex value, as in i_r1"},
+    "pf": {"args": 2, "label": "pf -- power factor",
+           "hint": "a voltage and a current, as in v_1 and i_r1"},
+    "gain": {"args": 4, "label": "gain -- voltage, current and power gain",
+             "hint": "an input pair and an output pair: v1, i1, v2, i2"},
+}
+
+
+def _as_number(text: str, values: dict):
+    """One mini-tool argument, resolved against the solved answers.
+    Returns (value, None) or (None, error message)."""
+    import sympy as sp
+    from symbulator.si_prefix import safe_sympify
+
+    if not (text or "").strip():
+        return None, "Give a value."
+    try:
+        parsed = safe_sympify(expand_value_for_ui(text))
+    except Exception as exc:                                  # noqa: BLE001
+        return None, _exc_text(exc)
+    got = sp.simplify(parsed.subs(_alias_mapping(values, expr=parsed)))
+    if got.free_symbols:
+        unknown = ", ".join(sorted(str(s) for s in got.free_symbols))
+        return None, (f"`{text.strip()}` still contains {unknown}. These "
+                      f"tools need a number -- solve the circuit first, "
+                      f"then name one of its answers.")
+    return got, None
+
+
+def expand_value_for_ui(text: str) -> str:
+    """The same shorthand a circuit value gets, so `2'k` and `10e^2` work
+    here too rather than only inside a circuit description."""
+    try:
+        from symbulator.si_prefix import expand_value
+        return expand_value(text)
+    except Exception:                                         # noqa: BLE001
+        return text
+
+
+def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
+    """Run one mini-tool and return its answer as text."""
+    try:
+        import sympy as sp
+
+        spec = MINI_TOOLS.get(tool)
+        if spec is None:
+            return _err(f"Unknown tool `{tool}`.")
+        args = [a for a in (args or [])]
+        if len(args) < spec["args"]:
+            return _err(f"`{tool}` needs {spec['args']} "
+                        f"value{'s' if spec['args'] > 1 else ''}: "
+                        f"{spec['hint']}.")
+
+        numbers = []
+        for a in args[:spec["args"]]:
+            got, bad = _as_number(a, values)
+            if bad:
+                return _err(bad)
+            numbers.append(got)
+
+        def rounded(x):
+            return sp.N(x, digits + 2) if digits else sp.N(x)
+
+        if tool == "aa":
+            # Amplitude and angle, the way version 7 printed it:
+            # 1.789 <26.57 degrees.
+            z = sp.simplify(numbers[0])
+            magnitude = rounded(sp.Abs(z))
+            angle = rounded(sp.deg(sp.arg(z)))
+            plain = f"{magnitude}\u2220{angle}\u00b0"
+            latex = (rf"{sp.latex(magnitude)} \angle "
+                     rf"{sp.latex(angle)}^\circ")
+            return _ok({"plain": plain, "latex": latex,
+                        "magnitude": str(magnitude), "angle": str(angle)})
+
+        if tool == "gain":
+            # Four in, four out -- the only mini-tool that answers with a
+            # table rather than a single value, which is why it belongs
+            # here and not in Evaluate: Evaluate can show one thing.
+            from symbulator.utils import gain as _gain
+            got = _gain(*numbers)
+            rows = [("Av", "voltage gain", got["Av"]),
+                    ("Ai", "current gain", got["Ai"]),
+                    ("Ap", "power gain", got["Ap"]),
+                    ("Zi", "input impedance", got["Zi"])]
+            return _ok({
+                "plain": "  ".join(f"{k} = {rounded(v)}" for k, _, v in rows),
+                "latex": r" \quad ".join(
+                    rf"{k} = {sp.latex(rounded(v))}" for k, _, v in rows),
+                "rows": [{"key": k, "label": label,
+                          "plain": str(rounded(v)),
+                          "latex": sp.latex(rounded(v))}
+                         for k, label, v in rows]})
+
+        if tool == "pf":
+            from symbulator.utils import pf as _pf
+            text = _pf(*numbers)
+            body = text.split(":", 1)[1].strip() if ":" in text else text
+            magnitude, _, direction = body.partition(" ")
+            return _ok({"plain": body, "latex": rf"\text{{{body}}}",
+                        "magnitude": magnitude,
+                        "direction": direction.strip()})
+
+        return _err(f"Unknown tool `{tool}`.")
+    except Exception as exc:                                  # noqa: BLE001
+        return _err(_exc_text(exc))
+
+
+# --------------------------------------------------------------------------
+# Power factor, in Evaluate
+# --------------------------------------------------------------------------
+#
+# `pf` is a different creature from everything else Evaluate takes. It
+# answers with a sentence -- "pf: 0.6 lagging" -- rather than an
+# expression, and it needs its two arguments as actual numbers: given
+# symbols it raises "Cannot convert expression to float", because it has
+# to compare an angle against zero to decide leading from lagging.
+#
+# So it cannot live in the parsing namespace, where sympify would call it
+# with the symbols still unsubstituted. It is handled here instead, as a
+# form Evaluate recognises: each argument is evaluated against the solved
+# answers first -- which is the whole reason Evaluate is the right home,
+# since it is the only place a user can refer to a phasor as `v_1` rather
+# than retyping it -- and only then does pf see two numbers.
+
+_PF_CALL = re.compile(r"^\s*pf\s*\((.*)\)\s*$", re.S)
+
+
+def _split_two_args(inside: str):
+    """The two arguments of a pf(...) call, split on the comma that
+    separates them rather than on any comma inside a nested call."""
+    depth, split_at = 0, None
+    for i, ch in enumerate(inside):
+        if ch in "([":
+            depth += 1
+        elif ch in ")]":
+            depth -= 1
+        elif ch == "," and depth == 0:
+            if split_at is not None:
+                return None            # more than two: not a pf call
+            split_at = i
+    if split_at is None:
+        return None
+    return inside[:split_at], inside[split_at + 1:]
+
+
+def _power_factor(expr_str: str, values: dict):
+    """`pf(v, i)` against the solved answers, or None if this is not one."""
+    m = _PF_CALL.match(expr_str)
+    if not m:
+        return None
+    args = _split_two_args(m.group(1))
+    if not args:
+        return _err("`pf` needs two values: a voltage and a current, "
+                    "as in `pf(v_1, i_r1)`.")
+
+    import sympy as sp
+    from symbulator.si_prefix import safe_sympify
+    from symbulator.utils import pf as _pf
+
+    numbers = []
+    for arg in args:
+        parsed = safe_sympify(arg)
+        got = sp.simplify(parsed.subs(_alias_mapping(values, expr=parsed)))
+        if got.free_symbols:
+            unknown = ", ".join(sorted(str(s) for s in got.free_symbols))
+            return _err(f"`pf` needs numbers, and `{arg.strip()}` still "
+                        f"contains {unknown}. Solve the circuit in AC "
+                        f"first, then refer to its answers by name.")
+        numbers.append(got)
+
+    text = _pf(*numbers)
+    # pf() answers "pf: 0.6 lagging". Split it so the interface can show
+    # the number and the direction as the two things they are.
+    body = text.split(":", 1)[1].strip() if ":" in text else text
+    magnitude, _, direction = body.partition(" ")
+    return _ok({"plain": body, "latex": rf"\text{{{body}}}",
+                "magnitude": magnitude, "direction": direction.strip(),
+                "text_only": True})
+
+
 def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
                  si: bool = False, approx: bool = False):
     """Evaluate a user expression against the solved values. Names match
@@ -1708,6 +1910,12 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
     try:
         import sympy as sp
         from symbulator.si_prefix import safe_sympify
+
+        # pf() is answered before the ordinary path, because it wants its
+        # arguments as numbers and gives back a sentence.
+        power_factor = _power_factor(expr_str, values)
+        if power_factor is not None:
+            return power_factor
 
         parsed = safe_sympify(expr_str)
         result = parsed.subs(_alias_mapping(values, expr=parsed))
