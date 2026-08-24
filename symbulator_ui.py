@@ -359,6 +359,13 @@ def _latex_with_j(expr) -> str:
 # Content checks, explanatory notes, and error-message formatting
 # ---------------------------------------------------------------------------
 
+# A numeric literal written straight against the imaginary unit: 5i, 2.5J,
+# .5i. The leading lookbehind keeps it off the tail of an identifier -- the
+# `1i` inside `vr1i` is not a number followed by the unit -- and the trailing
+# lookahead keeps it off the head of one, so `3irx` stays a name.
+_IMPLICIT_IMAGINARY = re.compile(r"(?<![\w.])(\d+\.?\d*|\.\d+)([iIjJ])(?![\w])")
+
+
 def normalise_imaginary(desc: str, domain: str = "ac"):
     """Rewrite every spelling of the imaginary unit into the canonical
     engineering form, so `3*i`, `3*I`, `3*J` and a bare `j` all become
@@ -395,7 +402,19 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
         for idx in range(len(el.fields)):
             if idx in _IDENTIFIER_FIELD_IDX.get(el.kind, ()):
                 continue                      # a node or element reference
-            raw = el.fields[idx]
+            original = el.fields[idx]
+            # `10+5i` the way it is written on paper: a number against the
+            # imaginary unit with no operator between them. SymPy will not
+            # parse that -- it reads as one malformed literal -- so put the
+            # multiplication back before anything else looks at it.
+            #
+            # The number must not itself be the tail of a name, which is why
+            # this matches the numeric literal rather than just looking at
+            # the character before the letter: in `vr1i` the `1` is preceded
+            # by `r`, the lookbehind fails, and the value is left alone. A
+            # letter following the unit already disqualifies it, so `3irx`
+            # and `2*i_r1` are untouched either way.
+            raw = _IMPLICIT_IMAGINARY.sub(r"\1*\2", original)
             if not re.search(r"(?<![\w.])[iIjJ](?![\w])", raw):
                 continue
             try:
@@ -405,8 +424,9 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
             if not (getattr(expr, "has", None) and expr.has(sp.I)):
                 continue
             canonical = _plain_with_j(expr)
-            if canonical != raw:
-                notes.append(f"normalised '{raw}' to '{canonical}' in {el.name}")
+            if canonical != original:
+                notes.append(f"normalised '{original}' to '{canonical}' "
+                             f"in {el.name}")
                 el.fields[idx] = canonical
                 changed = True
 
@@ -661,6 +681,219 @@ def _with_unit(plain: str, latex: str, unit: str, show: bool):
         return plain, latex
     return (f"{plain} {_UNIT_PLAIN.get(unit, unit)}",
             f"{latex}\\,{_UNIT_LATEX.get(unit, unit)}")
+
+
+# --------------------------------------------------------------------------
+# Answer names with and without the underscore
+# --------------------------------------------------------------------------
+#
+# Symbulator 9 names its answers with an underscore between the quantity and
+# the element: i_r1, v_2, p_e, r_e. Roberto's condition when that scheme was
+# adopted was that the sans-underscore spelling a user naturally types --
+# ir1, v2, pe, re -- must mean the same thing wherever it is given as input.
+#
+# It could not be done with a pattern, because the same token means different
+# things in different circuits: `vx` is a free unknown unless the circuit has
+# an element called x. So the alias list is built FROM the parsed circuit,
+# and anything not on it is left alone. That is what keeps genuine unknowns
+# working.
+#
+# Applied to values only -- never to a name or a node field. In `re,3,0,6`
+# the name `re` must survive as the element's name; only what a value could
+# refer to is rewritten.
+
+# Every quantity the solver actually reports, per element kind. Measured by
+# solving a probe circuit for each kind in both DC and AC and reading the
+# keys back -- twice, because the first survey was wrong in both directions:
+#
+#   * it invented quantities (q, y) that do not exist, which would have put
+#     phantom names like `ye` into the alias map and captured a user's own
+#     unknown of that name;
+#   * it dropped `ap` (apparent power) and `z` (impedance seen), which are
+#     real -- they only appear in AC, and the first probe ran DC only;
+#   * it assumed a mutual inductance reports something. It reports nothing.
+#
+# And two kinds report under a SUFFIXED name: a transformer called t answers
+# as i_t2, a two-port called z1 as i_z12 and i_z13. Those are the element's
+# ports, so the alias has to cover the suffixes as well as the bare name.
+_NODE_QUANTITIES = ("v",)
+_QUANTITIES_BY_KIND = {
+    "r": ("ap", "i", "p", "s", "v"),
+    "e": ("ap", "i", "p", "r", "s", "v", "z"),
+    "j": ("ap", "i", "p", "r", "s", "v", "z"),
+    "c": ("i", "p", "s", "v"),
+    "l": ("i", "p", "s", "v"),
+    "s": ("i",),                       # a short carries current, nothing else
+    "o": ("ap", "i", "p", "s"),        # an op-amp reports no voltage
+    "m": (),                           # mutual inductance reports nothing
+    "t": ("i",),
+    "z": ("i",), "y": ("i",), "h": ("i",),
+    "g": ("i",), "a": ("i",), "b": ("i",),
+}
+# Kinds whose answers hang off numbered ports rather than the bare name.
+_PORT_SUFFIXES = {"t": ("2",), "z": ("2", "3"), "y": ("2", "3"),
+                  "h": ("2", "3"), "g": ("2", "3"), "a": ("2", "3"),
+                  "b": ("2", "3")}
+_DEFAULT_QUANTITIES = ("i", "p", "v")
+
+
+def answer_aliases(elements) -> dict:
+    """{sans-underscore name: underscored name} for one parsed circuit.
+
+    Built from the circuit's own nodes and elements, so it contains exactly
+    the names that could denote an answer here and nothing else."""
+    from symbulator.elements import _IDENTIFIER_FIELD_IDX
+
+    nodes, named = set(), []
+    for el in elements:
+        named.append((el.name, el.kind))
+        for idx in _IDENTIFIER_FIELD_IDX.get(el.kind, ()):
+            if idx < len(el.fields):
+                nodes.add(el.fields[idx])
+
+    alias = {}
+    for node in nodes:
+        for q in _NODE_QUANTITIES:
+            alias[f"{q}{node}"] = f"{q}_{node}"
+    for name, kind in named:
+        targets = [name] + [name + sfx for sfx in _PORT_SUFFIXES.get(kind, ())]
+        for q in _QUANTITIES_BY_KIND.get(kind, _DEFAULT_QUANTITIES):
+            for target in targets:
+                alias[f"{q}{target}"] = f"{q}_{target}"
+    # A name that is already underscored is not an alias of anything.
+    return {k: v for k, v in alias.items() if k != v}
+
+
+def _alias_pattern(alias: dict):
+    if not alias:
+        return None
+    # Longest first, so `ir10` wins over `ir1` when both exist.
+    body = "|".join(re.escape(k) for k in sorted(alias, key=len, reverse=True))
+    # Not preceded or followed by a name character, and not followed by "(" --
+    # `pr(6,3)` is the parallel-resistor function, not the power in element r.
+    return re.compile(rf"(?<![\w.]) ({body}) (?![\w])(?!\s*\()".replace(" ", ""))
+
+
+def apply_answer_aliases(text: str, alias: dict) -> tuple:
+    """Rewrite sans-underscore answer names in one value or expression.
+
+    Returns (new_text, [names that were rewritten])."""
+    pat = _alias_pattern(alias)
+    if not pat or not text:
+        return text, []
+    used = []
+
+    def sub(m):
+        used.append(m.group(1))
+        return alias[m.group(1)]
+
+    return pat.sub(sub, text), used
+
+
+# A dependent source is *supposed* to be driven by another answer, so
+# `jd,0,2,.2*v1` and `ed,2,3,2*ir1` are the expected thing and say nothing.
+# What is worth a word is an answer used where one is not expected -- a
+# resistor whose value is `re`, the equivalent resistance seen by source e.
+# That is not wrong: it describes a resistor whose value tracks that
+# equivalent. It is just unusual enough to be worth asking about.
+_CONTROL_KINDS = ("e", "j")          # sources may be dependent
+_CONTROL_QUANTITIES = ("v", "i")     # on a voltage or a current
+
+
+def ambiguous_answer_names(elements, alias: dict) -> list:
+    """Answer names used as values where that is *unexpected*.
+
+    Roberto's rule, 24 Aug 2026: a source driven by a voltage or a current
+    is an ordinary dependent source and needs no comment. Anything else --
+    a passive element valued by an answer, or a source driven by a power or
+    an equivalent resistance -- is unusual but legal, so warn and accept.
+
+    The message says which reading was taken, names the circuit feature
+    that caused it, and gives the escape."""
+    from symbulator.elements import _IDENTIFIER_FIELD_IDX
+    from symbulator.si_prefix import safe_sympify, expand_shorthand
+
+    seen, out = set(), []
+    for el in elements:
+        ident = _IDENTIFIER_FIELD_IDX.get(el.kind, ())
+        for idx in range(len(el.fields)):
+            if idx in ident:
+                continue
+            raw = el.fields[idx]
+            # Identifiers are read from the text, not from free_symbols.
+            # SymPy owns some of these names as functions -- `re` is its
+            # real-part function, so safe_sympify("re") comes back with no
+            # free symbols at all and the clash Roberto described would go
+            # unreported. The text is the honest source for "what did the
+            # user write here".
+            symbols = set(re.findall(r"[A-Za-z_]\w*", raw))
+            for s in sorted(symbols & set(alias)):
+                quantity = s[0]
+                if (el.kind in _CONTROL_KINDS
+                        and quantity in _CONTROL_QUANTITIES):
+                    continue          # an ordinary dependent source
+                if s in seen:
+                    continue
+                seen.add(s)
+                target = alias[s].split("_", 1)[1]
+                what = {"v": "voltage", "i": "current", "p": "power",
+                        "q": "reactive power", "s": "apparent power",
+                        "r": "equivalent resistance",
+                        "z": "equivalent impedance",
+                        "y": "admittance"}.get(quantity, "answer")
+                out.append(
+                    f"Is that what you meant by `{s}`? This circuit has "
+                    f"`{target}`, so `{s}` is its {what}, and `{el.name}` "
+                    f"has been given that as its value — an element whose "
+                    f"value tracks another answer. That is legal and "
+                    f"sometimes deliberate, but it is unusual. If you meant "
+                    f"`{s}` as an unknown of your own, rename it: `{s}x`, or "
+                    f"anything not spelled like an answer.")
+    return out
+
+
+def prepare_inputs(desc: str, extra_equations=None, extra_unknowns=None,
+                   extra_conditions=None, evaluate=None):
+    """Translate every sans-underscore answer name in the user's inputs.
+
+    Returns (desc, equations, unknowns, conditions, evaluate, notices).
+    The description comes back with its values rewritten and its names and
+    nodes untouched; the notices are the ambiguity warnings, if any."""
+    from symbulator.elements import parse_circuit, _IDENTIFIER_FIELD_IDX
+
+    try:
+        elements = parse_circuit(desc, expand_si=False)
+    except Exception:
+        # Not parseable yet -- leave everything alone and let the real
+        # validation report it.
+        return (desc, extra_equations, extra_unknowns, extra_conditions,
+                evaluate, [])
+
+    alias = answer_aliases(elements)
+    notices = ambiguous_answer_names(elements, alias)
+
+    changed = False
+    for el in elements:
+        ident = _IDENTIFIER_FIELD_IDX.get(el.kind, ())
+        for idx in range(len(el.fields)):
+            if idx in ident:
+                continue                        # a node or an element name
+            new, used = apply_answer_aliases(el.fields[idx], alias)
+            if used:
+                el.fields[idx] = new
+                changed = True
+    if changed:
+        desc = ":".join(e.name + "," + ",".join(e.fields) for e in elements)
+
+    def each(items):
+        if not items:
+            return items
+        if isinstance(items, str):
+            return apply_answer_aliases(items, alias)[0]
+        return [apply_answer_aliases(str(i), alias)[0] for i in items]
+
+    return (desc, each(extra_equations), each(extra_unknowns),
+            each(extra_conditions), each(evaluate), notices)
 
 
 def solve_ui(desc: str, domain: str, omega: str, variables,

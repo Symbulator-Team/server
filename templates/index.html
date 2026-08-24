@@ -230,6 +230,14 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     flex-wrap: wrap; min-width: 0;
   }
   .subbar nav a {
+    /* font-family is pinned, not inherited. learn.symbulator.com sets its
+       body in IBM Plex Serif for long-form reading, so an inheriting ribbon
+       rendered its links in a serif there and in a sans on the other two --
+       the same words, three sizes of the same idea, in two different faces.
+       Reported 24 Aug 2026. --sans is whatever the host calls its sans stack;
+       the literal is here for a host that defines nothing. */
+    font-family: var(--sans, -apple-system, "Segoe UI", Roboto, Helvetica,
+                  Arial, sans-serif);
     color: #dbe6f5; text-decoration: none;
     font-size: 0.875rem; line-height: 1.4;
     border-radius: 4px;
@@ -251,7 +259,9 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
      for collisions before naming anything here. */
   .subbar nav button.subbar-action {
     appearance: none; background: none; border: 0; padding: 0;
-    font: inherit; color: #dbe6f5; font-size: 0.875rem; line-height: 1.4;
+    font-family: var(--sans, -apple-system, "Segoe UI", Roboto, Helvetica,
+                  Arial, sans-serif);
+    font-weight: 400; color: #dbe6f5; font-size: 0.875rem; line-height: 1.4;
     cursor: pointer; border-radius: 4px;
   }
   .subbar nav button.subbar-action:hover { color: #fff; text-decoration: underline; }
@@ -284,6 +294,26 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     color: #fff; text-decoration: none; min-width: 0;
   }
   .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none; display: block; }
+
+  /* The scorpion is a link home, on every property and from every page.
+     ---------------------------------------------------------------------
+     It has to be its own anchor rather than part of .header-brand, because
+     two of the three properties wrapped the whole lockup in a link already
+     and an anchor inside an anchor is not valid markup. So .header-brand is
+     a plain container now, and its children carry the links.
+
+     Requested 24 Aug 2026: wherever you are -- reading a lesson, running the
+     app offline -- the scorpion goes to symbulator.com. */
+  .header-logo-link {
+    flex: none; display: block; border-radius: 12px;
+    color: inherit; text-decoration: none;
+  }
+  .header-logo-link:focus-visible {
+    outline: 2px solid var(--sky, #8ec7f5); outline-offset: 3px;
+  }
+  /* .header-brand may be a div wrapping links, or a link itself. Either way
+     nothing inside it should look like an underlined blue anchor. */
+  .header-brand a { color: inherit; text-decoration: none; }
   .header-title { min-width: 0; }
 
   .brand-name {
@@ -698,7 +728,14 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 <header class="topbar">
   <div class="topbar-inner">
     <div class="header-brand">
-      <img src="/static/logo.png" alt="Symbulator logo" class="header-logo">
+      <!-- The scorpion is a link home to symbulator.com (#77). It is the one
+           way back to the rest of the project from inside the app, and it
+           works the same here as on the two websites -- including in the
+           offline build, where it is the only outward link in the lockup. -->
+      <a class="header-logo-link" href="https://symbulator.com"
+         aria-label="Symbulator home">
+        <img src="/static/logo.png" alt="Symbulator logo" class="header-logo">
+      </a>
       <div class="header-title">
         <h1 class="brand-name">Symbulator <span class="tm">9</span></h1>
         <p class="brand-sub">the best portable symbolic simulator of linear circuits</p>
@@ -710,17 +747,24 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 <div class="subbar">
   <div class="subbar-inner">
     <nav>
-      <a href="https://learn.symbulator.com">Documentation</a>
-      <a href="https://symbulator.com/9/local.zip">Download</a>
       <!-- Clear all inputs lived beside the [ I N P U T S ] heading until
            23 Aug 2026, pinned there with a transform -- which fought the
            1px press nudge every button gets and made it fall 20px when
            clicked (#72). In the ribbon it is in normal flow, so that whole
            class of problem is gone rather than patched. It is a <button>
-           because it acts on the page, and .linkish so it does not look
-           like one: the ribbon is a row of links on all three sites. -->
+           because it acts on the page, and .subbar-action so it does not
+           look like one: the ribbon is a row of links on all three sites. -->
       <button type="button" id="clearAllBtn" class="subbar-action"
         title="Empty every input and start over">Clear all inputs</button>
+      <!-- server-only: Download points at this page's own "Run Symbulator 9
+           locally" card, and that card is itself server-only -- it explains
+           how to get the offline copy, which is meaningless once you are the
+           offline copy. So the link has to go with it: left in, the offline
+           builds would carry a Download that scrolls to an anchor
+           build_local.py has removed, and clicking it would do nothing. -->
+      <a href="#runLocallyCard">Download</a>
+      <!-- /server-only -->
+      <a href="https://learn.symbulator.com">Documentation</a>
     </nav>
     <span class="subbar-spacer"></span>
     <button type="button" id="themeToggle" class="theme-toggle"
@@ -1486,7 +1530,7 @@ units: yes</pre>
         written by Roberto entirely by hand, this new version — in a
         sign of the times — was ported and developed using Anthropic's
         AI assistant. Claude took care of all the coding, while Roberto
-        provided instructions and feedback, during an intense week-long
+        provided instructions and feedback, during an intense
         collaboration in August 2026. It is the author's hope that this
         port will preserve Symbulator for a new generation.
       </p>
@@ -1516,7 +1560,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-23 22:16 UTC
+  Symbulator 9 version 2026-08-24 03:15 UTC
 </footer>
 
 <script>
