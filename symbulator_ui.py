@@ -123,10 +123,11 @@ def _validate(desc: str, domain: str, omega: str, variables) -> str | None:
     # reach SymPy and come back as "contains a set", which tells nobody
     # anything.
     if "{" in desc and domain != "fd":
-        return ("The `{...}` shorthand marks a source value as written in "
-                "the time domain, and only FD needs it — every other "
-                "analysis already reads its sources that way. Drop the "
-                "braces.")
+        return ("The `{...}` shorthand is only allowed in FD. It marks a "
+                "source value as written in the time domain, and FD is the "
+                "one analysis that reads its sources in the s-domain — "
+                "every other analysis already reads them as functions of "
+                "time. Drop the braces.")
     if domain == "ac":
         if not omega or not omega.strip():
             return "AC analysis needs an angular frequency (omega)."
