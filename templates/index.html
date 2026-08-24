@@ -796,8 +796,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   <h2 class="group-h"><span class="bracket">[</span>   I N P U T S   <span class="bracket">]</span></h2>
   <p class="group-intro">
     <strong>Describe a circuit and select analysis type</strong> —
-    You can use an Input&nbsp;File. Unsure how? Learn
-    <a href="https://learn.symbulator.com" target="_blank" rel="noopener">here</a>!
+    You can use an Input&nbsp;File.
   </p>
 
   <!-- Input File: optional, and deliberately labelled so, since it now
@@ -1305,7 +1304,7 @@ units: yes</pre>
 
   <div class="card inactive" id="dlCard">
     <details>
-      <summary class="results-h section-toggle">Download output</summary>
+      <summary class="results-h section-toggle">Download Output</summary>
       <p class="hint" style="margin:0 0 .9rem">
         Download an output file with the information you decide to include.
       </p>
@@ -1560,7 +1559,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-24 04:44 UTC
+  Symbulator 9 version 2026-08-24 08:28 UTC
 </footer>
 
 <script>
@@ -1663,7 +1662,7 @@ function updateExpertFlag() {
   const flag = $('expertEqFlag');
   if ($('expertBox').open) { flag.style.display = 'none'; return; }
   if (enabled && has) {
-    flag.textContent = ' — (equations entered)';
+    flag.textContent = ' — (inputs entered)';
   } else if (enabled && !has) {
     flag.textContent = ' — (enabled, but empty)';
   } else if (!enabled && has) {
@@ -2939,7 +2938,7 @@ async function renderSolveResult(data, idx) {
 async function solve(suffixChoices) {
   const btn = $('solveBtn'), out = $('out'), status = $('status');
   btn.disabled = true;
-  status.textContent = 'solving…';
+  status.textContent = 'Solving…';
   out.innerHTML = '<div class="lcd"><div class="placeholder">computing symbolically…</div></div>';
   $('evalOut').style.display = 'none';
   $('evalOut').innerHTML = '';
