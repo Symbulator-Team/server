@@ -47,16 +47,19 @@ MAX_VARIABLES = 40
 # element names, node numbers, values like 1e-6 / 4.7u / 'k / 5/s / 2*v_2,
 # the `[a,b,c]` parallel-impedance shortcut (expand_shorthand turns it
 # into pr(a,b,c) before it ever reaches sympify), separators, and basic
-# arithmetic. Deliberately excluded: { } = ; " \ ` @ # $ % & ! ? < > | ~
+# arithmetic, and the `{...}` shorthand that marks an FD source value as
+# written in the time domain -- expand_time_domain_braces turns it into
+# t2s(...) before sympify, so no brace survives to be read as a Python set.
+# Deliberately excluded: = ; " \ ` @ # $ % & ! ? < > | ~
 # and whitespace other than space.
 # The Greek delta is allowed for the same reason the two micro signs
 # are: it is a character people actually type. It spells the impulse,
 # as it does on the calculator, and expand_shorthand turns a following
 # "(" into DiracDelta(. ASCII "delta(" works too, for anyone without
 # the character to hand.
-_ALLOWED = re.compile("^[A-Za-z0-9_,.:+\\-*/()\\[\\]'^ \u00b5\u03bc\u03b4]*$")
+_ALLOWED = re.compile("^[A-Za-z0-9_,.:+\\-*/()\\[\\]{}'^ \u00b5\u03bc\u03b4]*$")
 # Expert-mode equations/conditions additionally need "=".
-_ALLOWED_EQ = re.compile("^[A-Za-z0-9_,.=+\\-*/()\\[\\]'^ \u00b5\u03bc\u03b4]*$")
+_ALLOWED_EQ = re.compile("^[A-Za-z0-9_,.=+\\-*/()\\[\\]{}'^ \u00b5\u03bc\u03b4]*$")
 # The Solve panel's "Conditions / constraints" (solveq_ui) also allow
 # < and > (and, via >=/<=, both together) -- a post-solve filter, not a
 # substitution, so an actual inequality is meaningful there.
@@ -114,6 +117,16 @@ def _validate(desc: str, domain: str, omega: str, variables) -> str | None:
         return "Circuit description contains an invalid token."
     if domain not in VALID_DOMAINS:
         return "Unknown analysis type. Choose DC, AC, FD, or TR."
+    # `{...}` marks a source value as written in time rather than in s.
+    # That only means something in FD, which is the one analysis whose
+    # sources are read in the s-domain. Anywhere else the braces would
+    # reach SymPy and come back as "contains a set", which tells nobody
+    # anything.
+    if "{" in desc and domain != "fd":
+        return ("The `{...}` shorthand marks a source value as written in "
+                "the time domain, and only FD needs it — every other "
+                "analysis already reads its sources that way. Drop the "
+                "braces.")
     if domain == "ac":
         if not omega or not omega.strip():
             return "AC analysis needs an angular frequency (omega)."
