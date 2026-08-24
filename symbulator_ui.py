@@ -1877,6 +1877,33 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
 
 _PF_CALL = re.compile(r"^\s*pf\s*\((.*)\)\s*$", re.S)
 
+#: `s2t(v_o)` and `t2s(...)` have the same trouble as pf, for the same
+#: reason: sympify calls the function while its argument is still the
+#: symbol `v_o`, so the transform is taken of a bare symbol and the answer
+#: comes back 0 -- silently, and 0 is a plausible-looking voltage. The
+#: answer has to be substituted in first, and only then transformed.
+_TRANSFORM_CALL = re.compile(r"^\s*(s2t|t2s)\s*\((.*)\)\s*$", re.S)
+
+
+def _domain_transform(expr_str: str, values: dict):
+    """`s2t(...)` / `t2s(...)` against the solved answers, or None."""
+    m = _TRANSFORM_CALL.match(expr_str)
+    if not m:
+        return None
+    name, inner = m.group(1), m.group(2)
+
+    import sympy as sp
+    from symbulator.laplace import s2t, t2s
+    from symbulator.si_prefix import safe_sympify
+
+    try:
+        parsed = safe_sympify(expand_value_for_ui(inner))
+        substituted = parsed.subs(_alias_mapping(values, expr=parsed))
+        got = (s2t if name == "s2t" else t2s)(sp.simplify(substituted))
+    except Exception as exc:                                  # noqa: BLE001
+        return _err(_exc_text(exc))
+    return got
+
 
 def _split_two_args(inside: str):
     """The two arguments of a pf(...) call, split on the comma that
@@ -1945,6 +1972,26 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
         power_factor = _power_factor(expr_str, values)
         if power_factor is not None:
             return power_factor
+
+        # A domain transform is answered with the ordinary formatting, so
+        # it is folded back into `result` rather than returned whole.
+        transformed = _domain_transform(expr_str, values)
+        if isinstance(transformed, dict):
+            return transformed          # an error from the transform
+        if transformed is not None:
+            result = sp.simplify(transformed)
+            if si:
+                shown = _si_format(result, digits)
+                if shown is not None:
+                    return _ok({"plain": shown[0], "latex": shown[1]})
+            if approx and not digits:
+                shown = _approx_format(result)
+                if shown is not None:
+                    return _ok({"plain": shown[0], "latex": shown[1]})
+                result = sp.N(result)
+            result = _round_expr(result, digits)
+            return _ok({"plain": _plain_with_j(result),
+                        "latex": _latex_with_j(result)})
 
         # Through the same shorthand a circuit value gets, so `^`, an
         # implied multiplication and `2'k` mean here what they mean in the
