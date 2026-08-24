@@ -1044,6 +1044,17 @@ units: yes</pre>
     <textarea id="desc" spellcheck="false" style="margin-top:.9rem"
       placeholder="e1,1,0,5&#10;r1,1,2,1'k&#10;r2,2,0,1'k"></textarea>
 
+    <!-- The impulse is spelled with a Greek delta, which most keyboards
+         cannot type. Rather than make people hunt for a character map, put
+         it a click away -- but only in the two analyses where an impulse
+         means anything, so it is not clutter in DC and AC. Typing
+         "delta(t)" works just as well for anyone who prefers ASCII. -->
+    <div id="deltaHelp" class="actions" style="margin-top:.5rem" hidden>
+      <button type="button" id="insertDeltaBtn" class="linkish"
+        title="Insert the impulse function at the cursor">Insert &#948;(t)</button>
+      <span class="hint">or type <code>delta(t)</code></span>
+    </div>
+
     <!-- What you can do with these inputs, relative to the open file. Both
          are hidden until they apply; which of them shows is worked out by
          refreshEntryLinks(). Update sits left because it acts on the entry
@@ -1559,7 +1570,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-24 08:28 UTC
+  Symbulator 9 version 2026-08-24 10:28 UTC
 </footer>
 
 <script>
@@ -1597,6 +1608,7 @@ function syncFields() {
     for (const opt of domainSel.options) opt.disabled = false;
   }
   $('omegaField').style.display = domainSel.value === 'ac' ? 'block' : 'none';
+  $('deltaHelp').hidden = !(domainSel.value === 'tr' || domainSel.value === 'fd');
   $('varsField').style.display  = (domainSel.value === 'tr' && tool === 'solve') ? 'block' : 'none';
   $('n1Field').style.display = tool !== 'solve' ? 'block' : 'none';
   $('n2Field').style.display = tool !== 'solve' ? 'block' : 'none';
@@ -1607,6 +1619,17 @@ function syncFields() {
   $('expertBox').style.display = tool === 'solve' ? 'block' : 'none';
 }
 domainSel.addEventListener('change', () => { syncFields(); syncSettings(); });
+
+$('insertDeltaBtn').addEventListener('click', () => {
+  const box = $('desc'), at = box.selectionStart, to = box.selectionEnd;
+  const text = 'δ(t)';
+  box.value = box.value.slice(0, at) + text + box.value.slice(to);
+  // Leave the caret after what was inserted, so typing carries on
+  // naturally, and hand focus back to the box rather than the button.
+  box.selectionStart = box.selectionEnd = at + text.length;
+  box.focus();
+  box.dispatchEvent(new Event('input', {bubbles: true}));
+});
 toolSel.addEventListener('change', syncFields);
 $('equivType').addEventListener('change', syncFields);
 

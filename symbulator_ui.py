@@ -49,9 +49,14 @@ MAX_VARIABLES = 40
 # into pr(a,b,c) before it ever reaches sympify), separators, and basic
 # arithmetic. Deliberately excluded: { } = ; " \ ` @ # $ % & ! ? < > | ~
 # and whitespace other than space.
-_ALLOWED = re.compile("^[A-Za-z0-9_,.:+\\-*/()\\[\\]'^ \u00b5\u03bc]*$")
+# The Greek delta is allowed for the same reason the two micro signs
+# are: it is a character people actually type. It spells the impulse,
+# as it does on the calculator, and expand_shorthand turns a following
+# "(" into DiracDelta(. ASCII "delta(" works too, for anyone without
+# the character to hand.
+_ALLOWED = re.compile("^[A-Za-z0-9_,.:+\\-*/()\\[\\]'^ \u00b5\u03bc\u03b4]*$")
 # Expert-mode equations/conditions additionally need "=".
-_ALLOWED_EQ = re.compile("^[A-Za-z0-9_,.=+\\-*/()\\[\\]'^ \u00b5\u03bc]*$")
+_ALLOWED_EQ = re.compile("^[A-Za-z0-9_,.=+\\-*/()\\[\\]'^ \u00b5\u03bc\u03b4]*$")
 # The Solve panel's "Conditions / constraints" (solveq_ui) also allow
 # < and > (and, via >=/<=, both together) -- a post-solve filter, not a
 # substitution, so an actual inequality is meaningful there.
