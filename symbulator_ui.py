@@ -691,6 +691,33 @@ _UNIT_LATEX = {"ohm": r"\Omega", "V": r"\mathrm{V}", "A": r"\mathrm{A}",
 _UNIT_PLAIN = {"ohm": "\u03a9"}   # plain text is UTF-8, so use the real symbol
 
 
+#: Every unit _with_unit() can append. Written out rather than derived
+#: from _UNIT_PLAIN, which only carries the ohm sign -- the rest of the
+#: units pass through it unmapped. Longest first, so "VA" is matched
+#: before "V" and no stray "A" is left behind.
+_UNIT_SUFFIXES = ("VA", "ohm", "Ω", "Hz", "V", "A", "W", "S", "F", "H")
+
+
+def _without_unit(text: str) -> str:
+    """An answer with its unit taken back off.
+
+    Answers are stored formatted, so with "Show units" on, `vth` is the
+    string "6 V" -- which sympify cannot read. That made a Thevenin result
+    unusable in Evaluate and in Solve: `vth/(req+2)` failed with a syntax
+    error unless the reader first went into Settings and turned units off.
+    Rather than document that workaround in every Thevenin problem, take
+    the unit off on the way back in.
+
+    Only a trailing unit after a space is removed, so an expression that
+    happens to end in a symbol called V is untouched.
+    """
+    stripped = (text or "").strip()
+    for unit in _UNIT_SUFFIXES:
+        if unit and stripped.endswith(" " + unit):
+            return stripped[:-(len(unit) + 1)].strip()
+    return stripped
+
+
 def _with_unit(plain: str, latex: str, unit: str, show: bool):
     """Append a unit to a formatted answer. Skipped for expressions that
     still contain free symbols -- "r_b*vin/(r_a + r_b) V" would be
@@ -1603,7 +1630,7 @@ def _alias_mapping(values: dict, exclude=(), expr=None):
         key = _norm_name(k)
         if key in by_norm:
             clashes.add(key)
-        by_norm[key] = sp.sympify(vstr)   # internal text: parse plainly
+        by_norm[key] = sp.sympify(_without_unit(vstr))
 
     mapping = {}
     symbols = expr.free_symbols if expr is not None else set()
@@ -1885,7 +1912,7 @@ def _power_factor(expr_str: str, values: dict):
 
     numbers = []
     for arg in args:
-        parsed = safe_sympify(arg)
+        parsed = safe_sympify(expand_value_for_ui(arg))
         got = sp.simplify(parsed.subs(_alias_mapping(values, expr=parsed)))
         if got.free_symbols:
             unknown = ", ".join(sorted(str(s) for s in got.free_symbols))
@@ -1919,7 +1946,13 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
         if power_factor is not None:
             return power_factor
 
-        parsed = safe_sympify(expr_str)
+        # Through the same shorthand a circuit value gets, so `^`, an
+        # implied multiplication and `2'k` mean here what they mean in the
+        # Circuit Description box. Without this, `vth^2*2/(req+2)^2` was
+        # refused in Evaluate while the identical text was accepted as an
+        # element's value -- the sort of inconsistency a reader reads as
+        # the tool being broken.
+        parsed = safe_sympify(expand_value_for_ui(expr_str))
         result = parsed.subs(_alias_mapping(values, expr=parsed))
         result = sp.simplify(result)
         if si:
