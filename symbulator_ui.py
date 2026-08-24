@@ -1807,12 +1807,14 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
                     ("Ap", "power gain", got["Ap"]),
                     ("Zi", "input impedance", got["Zi"])]
             return _ok({
-                "plain": "  ".join(f"{k} = {rounded(v)}" for k, _, v in rows),
+                "plain": "  ".join(f"{k} = {_plain_with_j(rounded(v))}"
+                                   for k, _, v in rows),
                 "latex": r" \quad ".join(
-                    rf"{k} = {sp.latex(rounded(v))}" for k, _, v in rows),
+                    rf"{k} = {_latex_with_j(rounded(v))}"
+                    for k, _, v in rows),
                 "rows": [{"key": k, "label": label,
-                          "plain": str(rounded(v)),
-                          "latex": sp.latex(rounded(v))}
+                          "plain": _plain_with_j(rounded(v)),
+                          "latex": _latex_with_j(rounded(v))}
                          for k, label, v in rows]})
 
         if tool == "pf":
