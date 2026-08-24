@@ -120,6 +120,19 @@ def _validate(desc: str, domain: str, omega: str, variables) -> str | None:
         for v in variables:
             if not isinstance(v, str) or not _VARNAME.match(v):
                 return f"Invalid variable name: {v!r}"
+
+    # Names whose answers would collide with a Python or SymPy name. Refused
+    # rather than warned about: this is not a case where the user might have
+    # meant either reading, it is a name that cannot work. Parsed leniently --
+    # if the description does not parse yet, the errors below are not ours to
+    # report and the real parser will say so.
+    try:
+        from symbulator.elements import parse_circuit
+        banned = banned_name_errors(parse_circuit(desc, expand_si=False))
+    except Exception:
+        banned = []
+    if banned:
+        return banned[0] if len(banned) == 1 else " ".join(banned)
     return None
 
 
@@ -684,6 +697,202 @@ def _with_unit(plain: str, latex: str, unit: str, show: bool):
 
 
 # --------------------------------------------------------------------------
+# Names that cannot be used, because their answers collide
+# --------------------------------------------------------------------------
+#
+# SymPy parses the user's input before Symbulator sees it, and it owns a lot
+# of short names. An element called `e` produces the answer `re`, which is
+# SymPy's real-part function; a short called `s` produces `is`, a Python
+# keyword. Those inputs do not fail cleanly -- they are read as the function
+# and quietly mean something else.
+#
+# This list is generated, not hand-picked: for every name Python or SymPy
+# owns, ask whether Symbulator could produce it as <quantity><element> --
+# with the element's name starting with its kind letter, the quantity drawn
+# from what that kind actually reports (measured by probing each kind in DC
+# and AC), and the port suffixes a transformer or two-port adds. Names that
+# cannot arise are not listed: there is no element kind `i`, so `pi` is
+# impossible and `i` is not banned.
+#
+# Roberto's ruling, 24 Aug 2026: an outright ban, not a warning. Warnings
+# are for ambiguity -- where the user might have meant either reading. This
+# is not ambiguous; it is a name that cannot work.
+#
+# The documentation was renamed off `e` (113 circuits, e -> e1) before this
+# landed, since `e` was its standard name for a lone source.
+
+BANNED_ELEMENT_NAMES = {
+    'e': ('re', "a SymPy function"),
+    's': ('is', 'a Python keyword'),
+    'ec': ('sec', "a SymPy function"),
+    'em': ('rem', "a SymPy function"),
+    'er': ('per', "a SymPy function"),
+    'ow': ('pow', 'a Python builtin'),
+    'ech': ('sech', "a SymPy function"),
+    'eta': ('zeta', "a SymPy function"),
+    'ets': ('sets', "a SymPy module"),
+    'gcd': ('igcd', "a SymPy function"),
+    'lcm': ('ilcm', "a SymPy function"),
+    'lex': ('ilex', "a SymPy name"),
+    'lot': ('plot', "a SymPy function"),
+    'oly': ('poly', "a SymPy function"),
+    'rem': ('prem', "a SymPy function"),
+    'rod': ('prod', "a SymPy function"),
+    'eros': ('zeros', "a SymPy function"),
+    'olve': ('solve', "a SymPy function"),
+    'olys': ('polys', "a SymPy module"),
+    'repr': ('srepr', "a SymPy function"),
+    'rime': ('prime', "a SymPy function"),
+    'ring': ('sring', "a SymPy function"),
+    'efine': ('refine', "a SymPy function"),
+    'eries': ('series', "a SymPy function"),
+    'eterr': ('seterr', "a SymPy function"),
+    'eturn': ('return', 'a Python keyword'),
+    'exquo': ('pexquo', "a SymPy function"),
+    'grlex': ('igrlex', "a SymPy name"),
+    'osify': ('posify', "a SymPy function"),
+    'retty': ('pretty', "a SymPy function"),
+    'educed': ('reduced', "a SymPy function"),
+    'elease': ('release', "a SymPy module"),
+    'eshape': ('reshape', "a SymPy function"),
+    'esidue': ('residue', "a SymPy function"),
+    'olvers': ('solvers', "a SymPy module"),
+    'olylog': ('polylog', "a SymPy function"),
+    'owsimp': ('powsimp', "a SymPy function"),
+    'review': ('preview', "a SymPy function"),
+    'rimenu': ('primenu', "a SymPy function"),
+    'rimepi': ('primepi', "a SymPy function"),
+    'roduct': ('product', "a SymPy function"),
+    'solate': ('isolate', "a SymPy function"),
+    'sprime': ('isprime', "a SymPy function"),
+    'equence': ('sequence', "a SymPy function"),
+    'grevlex': ('igrevlex', "a SymPy name"),
+    'lotting': ('plotting', "a SymPy module"),
+    'olarify': ('polarify', "a SymPy function"),
+    'olveset': ('solveset', "a SymPy function"),
+    'refixes': ('prefixes', "a SymPy function"),
+    'rinting': ('printing', "a SymPy module"),
+    'eal_root': ('real_root', "a SymPy function"),
+    'ectorize': ('vectorize', "a SymPy name"),
+    'esultant': ('resultant', "a SymPy function"),
+    'olygamma': ('polygamma', "a SymPy function"),
+    'ostfixes': ('postfixes', "a SymPy function"),
+    'owdenest': ('powdenest', "a SymPy function"),
+    'revprime': ('prevprime', "a SymPy function"),
+    'rimitive': ('primitive', "a SymPy function"),
+    'rimorial': ('primorial', "a SymPy function"),
+    'rint_gtk': ('print_gtk', "a SymPy function"),
+    's_convex': ('is_convex', "a SymPy function"),
+    'eal_roots': ('real_roots', "a SymPy function"),
+    'olar_lift': ('polar_lift', "a SymPy function"),
+    'rimeomega': ('primeomega', "a SymPy function"),
+    'rimerange': ('primerange', "a SymPy function"),
+    'rint_glsl': ('print_glsl', "a SymPy function"),
+    'rint_tree': ('print_tree', "a SymPy function"),
+    's_perfect': ('is_perfect', "a SymPy function"),
+    'efine_root': ('refine_root', "a SymPy function"),
+    'eriodicity': ('periodicity', "a SymPy function"),
+    'ermutedims': ('permutedims', "a SymPy function"),
+    'ollard_pm1': ('pollard_pm1', "a SymPy function"),
+    'ollard_rho': ('pollard_rho', "a SymPy function"),
+    'rint_ccode': ('print_ccode', "a SymPy function"),
+    'rint_fcode': ('print_fcode', "a SymPy function"),
+    'rint_latex': ('print_latex', "a SymPy function"),
+    'rint_rcode': ('print_rcode', "a SymPy function"),
+    's_abundant': ('is_abundant', "a SymPy function"),
+    's_amicable': ('is_amicable', "a SymPy function"),
+    'eparatevars': ('separatevars', "a SymPy function"),
+    'olve_linear': ('solve_linear', "a SymPy function"),
+    'retty_print': ('pretty_print', "a SymPy function"),
+    'rime_decomp': ('prime_decomp', "a SymPy function"),
+    'rimefactors': ('primefactors', "a SymPy function"),
+    'rint_jscode': ('print_jscode', "a SymPy function"),
+    'rint_mathml': ('print_mathml', "a SymPy function"),
+    'rint_python': ('print_python', "a SymPy function"),
+    's_deficient': ('is_deficient', "a SymPy function"),
+    's_monotonic': ('is_monotonic', "a SymPy function"),
+    'erfect_power': ('perfect_power', "a SymPy function"),
+    'lot_backends': ('plot_backends', "a SymPy name"),
+    'lot_implicit': ('plot_implicit', "a SymPy function"),
+    's_carmichael': ('is_carmichael', "a SymPy function"),
+    's_decreasing': ('is_decreasing', "a SymPy function"),
+    's_increasing': ('is_increasing', "a SymPy function"),
+    'termonomials': ('itermonomials', "a SymPy function"),
+    'emove_handler': ('remove_handler', "a SymPy function"),
+    'oly_from_expr': ('poly_from_expr', "a SymPy function"),
+    'rimitive_root': ('primitive_root', "a SymPy function"),
+    'educed_totient': ('reduced_totient', "a SymPy function"),
+    'lot_parametric': ('plot_parametric', "a SymPy function"),
+    'rime_valuation': ('prime_valuation', "a SymPy function"),
+    'roper_divisors': ('proper_divisors', "a SymPy function"),
+    's_quad_residue': ('is_quad_residue', "a SymPy function"),
+    'egister_handler': ('register_handler', "a SymPy function"),
+    'rincipal_branch': ('principal_branch', "a SymPy function"),
+    'rint_maple_code': ('print_maple_code', "a SymPy function"),
+    'eriodic_argument': ('periodic_argument', "a SymPy function"),
+    'olve_poly_system': ('solve_poly_system', "a SymPy function"),
+    'rimitive_element': ('primitive_element', "a SymPy function"),
+    's_mersenne_prime': ('is_mersenne_prime', "a SymPy function"),
+    's_nthpow_residue': ('is_nthpow_residue', "a SymPy function"),
+    's_primitive_root': ('is_primitive_root', "a SymPy function"),
+    'olve_triangulated': ('solve_triangulated', "a SymPy function"),
+    'reorder_traversal': ('preorder_traversal', "a SymPy name"),
+    'educe_inequalities': ('reduce_inequalities', "a SymPy function"),
+    'olve_linear_system': ('solve_linear_system', "a SymPy function"),
+    'ostorder_traversal': ('postorder_traversal', "a SymPy function"),
+    's_zero_dimensional': ('is_zero_dimensional', "a SymPy function"),
+    'roper_divisor_count': ('proper_divisor_count', "a SymPy function"),
+    'educe_abs_inequality': ('reduce_abs_inequality', "a SymPy function"),
+    'olve_poly_inequality': ('solve_poly_inequality', "a SymPy function"),
+    'olve_linear_system_LU': ('solve_linear_system_LU', "a SymPy function"),
+    's_strictly_decreasing': ('is_strictly_decreasing', "a SymPy function"),
+    's_strictly_increasing': ('is_strictly_increasing', "a SymPy function"),
+    'educe_abs_inequalities': ('reduce_abs_inequalities', "a SymPy function"),
+    'olve_undetermined_coeffs': ('solve_undetermined_coeffs', "a SymPy function"),
+    'olve_rational_inequalities': ('solve_rational_inequalities', "a SymPy function"),
+    'olve_univariate_inequality': ('solve_univariate_inequality', "a SymPy function"),
+}
+
+BANNED_NODE_NAMES = {
+    'ar': ('var', "a SymPy function"),
+    'iete': ('viete', "a SymPy function"),
+    'ring': ('vring', "a SymPy function"),
+    'field': ('vfield', "a SymPy function"),
+    'ectorize': ('vectorize', "a SymPy name"),
+    'ariations': ('variations', "a SymPy function"),
+}
+
+
+def banned_name_errors(elements) -> list:
+    """Element or node names whose answers would collide with a Python or
+    SymPy name. Returns a list of messages; empty means the circuit is fine."""
+    from symbulator.elements import _IDENTIFIER_FIELD_IDX
+
+    out, seen = [], set()
+    for el in elements:
+        if el.name in BANNED_ELEMENT_NAMES and el.name not in seen:
+            seen.add(el.name)
+            produces, owner = BANNED_ELEMENT_NAMES[el.name]
+            out.append(
+                f"`{el.name}` cannot be used as an element name. Its answers "
+                f"would be spelled `{produces}`, and {produces} is already "
+                f"{owner} — so it would be read as that rather than as your "
+                f"circuit. Rename the element: `{el.name}1` works.")
+        for idx in _IDENTIFIER_FIELD_IDX.get(el.kind, ()):
+            if idx >= len(el.fields):
+                continue
+            node = el.fields[idx]
+            if node in BANNED_NODE_NAMES and node not in seen:
+                seen.add(node)
+                produces, owner = BANNED_NODE_NAMES[node]
+                out.append(
+                    f"`{node}` cannot be used as a node name. Its voltage "
+                    f"would be spelled `{produces}`, and {produces} is "
+                    f"already {owner}. Rename the node: `{node}1` works.")
+    return out
+
+
+# --------------------------------------------------------------------------
 # Answer names with and without the underscore
 # --------------------------------------------------------------------------
 #
@@ -943,6 +1152,17 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             return _with_unit(_plain_with_j(expr), _latex_with_j(expr),
                               unit, show_unit)
 
+        # Sans-underscore answer names become the underscored ones the
+        # package expects: `.2*v1` is node 1's voltage, not a free symbol
+        # called v1, and without this it solved to a symbolic answer rather
+        # than a number. Applied to values and to the expert-mode inputs;
+        # names and nodes are read but never rewritten. Anything not an
+        # answer in THIS circuit is left alone, which is what keeps a
+        # genuine unknown like `vx` working.
+        desc, extra_equations, extra_unknowns, extra_conditions, _, _alias_notes = \
+            prepare_inputs(desc, extra_equations, extra_unknowns,
+                           extra_conditions)
+
         # Complex values are meaningful only in AC; catch them before
         # solving so the message names the element rather than surfacing
         # as a strange answer.
@@ -952,6 +1172,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             return _err(_bad)
         _notes = _hijack_notes(_guard_elements, reserve_imaginary=(domain == "ac"))
         _notes += _impulse_notes(_guard_elements, domain)
+        _notes += _alias_notes          # "Is that what you meant by `re`?"
 
         # "Exact" rounding only skips the rounding step -- it can't make
         # an already-approximate input exact. If a decimal or
