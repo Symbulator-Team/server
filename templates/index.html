@@ -1608,7 +1608,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-24 11:16 UTC
+  Symbulator 9 version 2026-08-24 11:20 UTC
 </footer>
 
 <script>
@@ -3519,6 +3519,8 @@ async function solveEquations() {
 }
 $('solveqBtn').addEventListener('click', solveEquations);
 $('solveqUnks').addEventListener('keydown', ev => {
+  if (ev.key === 'Enter') solveEquations();
+});
 
 // ---- Mini-tools -----------------------------------------------------------
 // Each tool takes a different number of values, so the fields are built from
@@ -3621,8 +3623,6 @@ async function callMiniTool(tool, args) {
 $('miniTool').addEventListener('change', miniFields);
 $('miniBtn').addEventListener('click', runMiniTool);
 miniFields();
-  if (ev.key === 'Enter') solveEquations();
-});
 
 // ---- Schematic -------------------------------------------------------
 // Its own request, deliberately: see the card's comment. Nothing here
