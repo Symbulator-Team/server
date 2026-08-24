@@ -96,7 +96,7 @@ omega: 1000
 
 [RC step response (TR)]
 
-e1,1,0,5/s
+e1,1,0,5
 r1,1,2,1000
 c1,2,0,1e-6
 
@@ -170,7 +170,7 @@ unknowns: r_b
 
 [RC step response, plotted (plot vs. time)]
 
-e1,1,0,5/s
+e1,1,0,5
 r1,1,2,1'k
 c1,2,0,1'u
 
