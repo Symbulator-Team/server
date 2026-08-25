@@ -608,14 +608,19 @@ def _impulse_notes(elements, domain: str):
     confusing thing a newcomer can meet -- a 10 V source whose node
     reads 0 V. Say so rather than letting them find out.
 
-    TR is deliberately excluded, and used not to be. Before issue #77 it
-    read its sources in the s-domain too and the warning was true of both.
-    tr() now moves each source into the s-domain itself -- a constant
-    becomes value/s, a step -- so in TR a plain `5` is a 5 V step and this
-    warning was contradicting the answer printed beneath it: the built-in
-    "RC step response (TR)" example fired it while returning
-    v_2 = 5 - 5*exp(-1000t), which is precisely a step response."""
-    if domain != "fd":
+    TR says the opposite, and used to say the same. Before issue #77 it
+    read its sources in the s-domain too, so the impulse warning was true
+    of both. tr() now moves each source into the s-domain itself -- a
+    constant becomes value/s, a step -- so in TR a plain `5` is a 5 V
+    step, and the old warning was contradicting the answer printed
+    beneath it: the built-in "RC step response (TR)" example fired it
+    while returning v_2 = 5 - 5*exp(-1000t), precisely a step response.
+
+    Dropping it there left no note at all, which is not the same as an
+    explanation -- the reader still has to learn that a bare number means
+    a step in one analysis and an impulse in the next. So TR now states
+    what the value became."""
+    if domain not in ("fd", "tr"):
         return []
     from symbulator.si_prefix import safe_sympify
 
@@ -637,6 +642,20 @@ def _impulse_notes(elements, domain: str):
     names = ", ".join(f"'{n}'" for n, _ in culprits)
     val = culprits[0][1]
     plural = "s" if len(culprits) > 1 else ""
+
+    if domain == "tr":
+        # The helpful direction: tr() has already moved these into the
+        # s-domain, so say which waveform each one became. Without this
+        # the reader has to know that a bare number is a step here but an
+        # impulse one analysis over.
+        if len(culprits) == 1:
+            name, value = culprits[0]
+            return [f"Source '{name}' with a value of {value} is simulated "
+                    f"as a step source: {value}*u(t)."]
+        shown = ", ".join(f"'{n}' as {v}*u(t)" for n, v in culprits)
+        return [f"Sources {names} have constant values and are simulated as "
+                f"step sources: {shown}."]
+
     return [f"Source{plural} {names} took a constant s-domain value. That is "
             f"an impulse, not a steady level, so it contributes nothing for "
             f"t > 0. For a step of {val} volts (or amps) switched on at "
