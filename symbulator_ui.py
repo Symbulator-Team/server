@@ -372,6 +372,73 @@ def _si_format(expr, digits: int, unit: str = ""):
 # "5.0*j": the first re-parses back to an imaginary number, the second
 # comes back as a variable.
 
+#: The quantities a phasor angle means something for. Average power is
+#: deliberately absent: it is a real number, and dressing it up as
+#: "1234 angle 0 degrees" would suggest a phase it does not have. Complex
+#: power is present because its polar form is the apparent power and the
+#: power-factor angle, which is how it is usually quoted.
+_PHASOR_UNITS = frozenset({"V", "A", "ohm", "Ω", "VA"})
+
+
+def _polar_format(expr, digits: int, unit: str, si: bool = False):
+    """A phasor as magnitude and angle -- `5∠53.13°` -- or None if
+    this value is not one.
+
+    Returns None, leaving the caller's rectangular formatting to run, for
+    an expression that still holds free symbols (the angle of
+    `r_b*vin/(r_a + r_b)` is not a number) and for a quantity whose unit
+    is not in `_PHASOR_UNITS`.
+
+    A real phasor still gets an angle, of 0 or 180 degrees. That is what
+    version 7's `aa` does -- Example 12.10's line current prints there as
+    `56.78∠0.°` -- and it is what makes the setting visibly do
+    something in a purely resistive circuit.
+    """
+    import sympy as sp
+
+    if unit not in _PHASOR_UNITS:
+        return None
+    if getattr(expr, "free_symbols", None):
+        return None
+    def _num(x):
+        """Always numeric, unlike _round_expr, which returns the
+        expression untouched under "exact". sp.deg() builds the symbolic
+        180*arg(z)/pi, so without this an exact-mode angle printed as
+        "180(-1.249...)" with a stray pi in it. A phasor angle in degrees
+        is a measurement rather than a closed form -- the same trade the
+        SI-prefix setting makes, and what version 7's `aa` does."""
+        return sp.N(x, digits) if digits else sp.N(x)
+
+    try:
+        z = sp.N(sp.simplify(expr))
+        # A magnitude and an angle are both real, but evaluating them from
+        # float inputs can leave a crumb of imaginary part behind --
+        # "19.3649 + 0.e-13*I" -- which is arithmetically nothing and
+        # visually a mess. Take the real part after evaluating, as the
+        # `aa` mini-tool does.
+        magnitude = sp.re(_num(sp.Abs(z)))
+        # arg(0) has no value; a zero phasor is conventionally 0 at 0.
+        angle = sp.Integer(0) if z == 0 else sp.re(_num(sp.deg(sp.arg(z))))
+    except Exception:                                         # noqa: BLE001
+        return None
+    if (getattr(magnitude, "free_symbols", None)
+            or getattr(angle, "free_symbols", None)):
+        return None
+
+    if si:
+        # Prefix the magnitude only. An angle in degrees is already the
+        # size it should be, and "3.26 m at -3.74 milli-degrees" would be
+        # nonsense.
+        shown = _si_format(magnitude, digits, "")
+        mag_plain, mag_latex = (shown if shown
+                                else (str(magnitude), sp.latex(magnitude)))
+    else:
+        mag_plain, mag_latex = str(magnitude), sp.latex(magnitude)
+
+    return (f"{mag_plain}∠{angle}°",
+            rf"{mag_latex} \angle {sp.latex(angle)}^\circ")
+
+
 def _plain_with_j(expr) -> str:
     """str() with the imaginary unit written the engineering way."""
     import sympy as sp
@@ -1165,7 +1232,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                   extra_equations, extra_unknowns, extra_conditions,
                   digits: int = 0, si: bool = False,
                   units: bool = False, use_rms: bool = False,
-                  approx: bool = False):
+                  approx: bool = False, polar: bool = False):
     """Solve a full circuit, or run the th/er/port tools. Returns
     {"ok": True, ...} with the payload grouping answers into node voltages
     and per-element results (or, for the special tools, one block of named
@@ -1176,6 +1243,11 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         import sympy as sp
         from symbulator import ex, tr, th, er, port
         from symbulator.elements import parse_circuit
+
+        # A phasor angle is an AC idea. In DC every answer is real,
+        # and in FD/TR the answers are functions of s or t, so there
+        # is nothing to take an angle of.
+        polar = polar and domain == "ac"
 
         def fmt0(expr, unit=""):
             """Format one answer from a special tool (th/er/port) as a
@@ -1194,6 +1266,10 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             # symbols in the expression carry their own units.
             has_syms = bool(getattr(expr, "free_symbols", None))
             show_unit = units and not has_syms
+            if polar:
+                shown = _polar_format(expr, digits, unit, si)
+                if shown is not None:
+                    return _with_unit(shown[0], shown[1], unit, show_unit)
             if si:
                 shown = _si_format(expr, digits, unit if show_unit else "")
                 if shown is not None:
@@ -1339,6 +1415,10 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             # symbols in the expression carry their own units.
             has_syms = bool(getattr(expr, "free_symbols", None))
             show_unit = units and not has_syms
+            if polar:
+                shown = _polar_format(expr, digits, unit, si)
+                if shown is not None:
+                    return _with_unit(shown[0], shown[1], unit, show_unit)
             if si:
                 shown = _si_format(expr, digits, unit if show_unit else "")
                 if shown is not None:

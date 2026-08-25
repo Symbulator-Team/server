@@ -385,6 +385,7 @@ def api_solve():
     si = bool(data.get("si"))
     units = bool(data.get("units"))
     use_rms = bool(data.get("use_rms"))
+    polar = bool(data.get("polar"))
     approx = bool(data.get("approx"))
 
     def _lines(field):
@@ -492,7 +493,7 @@ def api_solve():
     ok, payload = _run_in_process(
         "solve_ui", (desc, domain, omega, variables, tool, n1, n2, kind,
                         extra_equations, extra_unknowns, extra_conditions,
-                        digits, si, units, use_rms, approx))
+                        digits, si, units, use_rms, approx, polar))
     elapsed = round(time.time() - t0, 2)
 
     if not ok:
@@ -509,7 +510,8 @@ def api_solve():
     return jsonify({"ok": True, "domain": domain, "tool": tool,
                     "elapsed": elapsed, "desc_used": desc_used,
                     "digits": digits, "si": si, "units": units,
-                    "use_rms": use_rms, "approx": payload.get("approx", approx),
+                    "use_rms": use_rms, "polar": polar,
+                    "approx": payload.get("approx", approx),
                     "approx_forced": payload.get("approx_forced", False),
                     "nodes": payload["nodes"],
                     "elements": payload["elements"], "extras": payload["extras"],

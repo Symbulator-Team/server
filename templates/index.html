@@ -1195,6 +1195,9 @@ units: yes</pre>
             units in answers <span class="hint">— V, A, W, VA, Ω</span></span></label>
           <label class="checkline"><input type="checkbox" id="siUnits"><span>Use
             SI prefixes in answers <span class="hint">— 0.002 becomes 2 m, 1200 becomes 1.2 k</span></span></label>
+          <label class="checkline" id="polarLine"><input type="checkbox" id="polarPhasors"><span>Show
+            AC answers as polar phasors <span class="hint">— 3 + 4j becomes 5∠53.13°;
+            average power stays real</span></span></label>
           <div class="fieldnote" id="siNote" hidden></div>
           <div class="hint" id="settingsNote" style="margin-top:.5rem">
             SI prefixes apply to numeric answers only; a symbolic answer such as
@@ -1616,7 +1619,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-25 03:44 UTC
+  Symbulator 9 version 2026-08-25 07:31 UTC
 </footer>
 
 <script>
@@ -1823,7 +1826,7 @@ const STALE_ON_CHANGE = [
   [['desc'], ['solve', 'plot']],
   [['tool', 'equivType', 'domain', 'omega', 'vars', 'limitVars', 'n1', 'n2', 'kind'], ['solve']],
   [['eqs', 'conds', 'unks', 'expertEnabled'], ['solve', 'plot']],
-  [['digits', 'nDigits', 'siUnits', 'showUnits', 'useRms'], ['solve', 'evaluate', 'solveq']],
+  [['digits', 'nDigits', 'siUnits', 'showUnits', 'useRms', 'polarPhasors'], ['solve', 'evaluate', 'solveq']],
   [['evalExpr'], ['evaluate']],
   [['solveqEqs', 'solveqUnks', 'solveqConds', 'solveqReal'], ['solveq']],
   [['plotTool', 'plotKey', 'plotMin', 'plotMax', 'plotN'], ['plot']],
@@ -2053,8 +2056,9 @@ function applyCircuit(c) {
   $('siUnits').checked = !!c.si;
   $('showUnits').checked = c.units === undefined || c.units === null ? true : !!c.units;
   $('useRms').checked = !!c.rms;
+  $('polarPhasors').checked = !!c.polar;
   syncSettings();
-  if (rounding !== 'exact' || c.si || c.rms || c.units === false) $('settingsBox').open = true;
+  if (rounding !== 'exact' || c.si || c.rms || c.polar || c.units === false) $('settingsBox').open = true;
 
   // Evaluate and the standalone "Solve equations" tool -- both stay
   // disabled until the circuit is solved (see activatePostSolve), but
@@ -2254,6 +2258,11 @@ function syncSettings() {
   $('useRms').disabled = !isAc;
   $('rmsLine').style.opacity = isAc ? '1' : '.5';
   $('rmsLine').title = isAc ? '' : 'Applies to AC analysis only';
+  // Polar display is the same story: in DC every answer is real, and in
+  // FD/TR they are functions of s or t, with no angle to take.
+  $('polarPhasors').disabled = !isAc;
+  $('polarLine').style.opacity = isAc ? '1' : '.5';
+  $('polarLine').title = isAc ? '' : 'Applies to AC analysis only';
 }
 
 // SI prefixes and exact answers contradict each other -- a prefixed
@@ -2286,6 +2295,7 @@ $('nDigits').addEventListener('change', () => { if (last) solve(); });
 syncSettings();
 $('showUnits').addEventListener('change', () => { if (last) solve(); });
 $('useRms').addEventListener('change', () => { if (last) solve(); });
+$('polarPhasors').addEventListener('change', () => { if (last) solve(); });
 
 // Turns a textarea's raw text into a clean list of non-blank lines --
 // used when building a circuit dict for the live Input File, matching how
@@ -2394,6 +2404,7 @@ function inputsSnapshot() {
     si: $('siUnits').checked,
     units: $('showUnits').checked,
     rms: $('useRms').checked,
+    polar: $('polarPhasors').checked,
     // Evaluate and the standalone "Solve equations" tool, if either has
     // something in it right now.
     evaluate: $('evalExpr').value.trim(),
@@ -2689,6 +2700,7 @@ function clearAllInputs() {
   $('siUnits').checked = false;
   $('showUnits').checked = true;
   $('useRms').checked = false;
+  $('polarPhasors').checked = false;
   // The other three tools
   $('evalExpr').value = '';
   $('solveqEqs').value = ''; $('solveqConds').value = ''; $('solveqUnks').value = '';
@@ -3037,6 +3049,7 @@ async function solve(suffixChoices) {
       si: $('siUnits').checked,
       units: $('showUnits').checked,
       use_rms: $('useRms').checked,
+      polar: $('polarPhasors').checked,
       suffix_choices: suffixChoices || {}
     };
     const r = await fetch('/api/solve', {
