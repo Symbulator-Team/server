@@ -2105,6 +2105,14 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
         had_sols = bool(sols)
         if conditions:
             parsed_conds = [_parse_condition(c) for c in conditions]
+            if real_only:
+                # The unknowns were re-declared as real above, so a
+                # solution is keyed by Symbol("w", real=True) while the
+                # condition was parsed against a bare Symbol("w"). Those
+                # are different symbols and subs() silently does nothing,
+                # which left the condition unevaluated and every root
+                # kept -- `w > 0` quietly filtering nothing at all.
+                parsed_conds = [c.xreplace(real_map) for c in parsed_conds]
             sols = [s for s in sols
                     if _conditions_hold(s, parsed_conds, values, wanted)]
 
