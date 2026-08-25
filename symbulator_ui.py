@@ -602,12 +602,20 @@ def _hijack_notes(elements, reserve_imaginary: bool = True):
 
 
 def _impulse_notes(elements, domain: str):
-    """FD and TR read source values in the s-domain, so a plain number is
+    """FD reads source values in the s-domain, so a plain number there is
     an impulse, not a steady level: `10` means 10·δ(t), whose value for
     every t > 0 is zero. That is correct, and it is also the single most
     confusing thing a newcomer can meet -- a 10 V source whose node
-    reads 0 V. Say so rather than letting them find out."""
-    if domain not in ("fd", "tr"):
+    reads 0 V. Say so rather than letting them find out.
+
+    TR is deliberately excluded, and used not to be. Before issue #77 it
+    read its sources in the s-domain too and the warning was true of both.
+    tr() now moves each source into the s-domain itself -- a constant
+    becomes value/s, a step -- so in TR a plain `5` is a 5 V step and this
+    warning was contradicting the answer printed beneath it: the built-in
+    "RC step response (TR)" example fired it while returning
+    v_2 = 5 - 5*exp(-1000t), which is precisely a step response."""
+    if domain != "fd":
         return []
     from symbulator.si_prefix import safe_sympify
 
