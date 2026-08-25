@@ -1772,14 +1772,55 @@ def _alias_mapping(values: dict, exclude=(), expr=None):
     return mapping
 
 
+def _unbrace_for(text: str, domain: str) -> str:
+    """`{...}` in an input, when the analysis is the one it belongs to.
+
+    The brackets convert from time into s, so they mean something only
+    where the convention being escaped is the s-domain one -- FD. In TR
+    every input is already in time and there is nothing to escape, so
+    they are left alone rather than silently transforming an expression
+    into the wrong domain.
+    """
+    if "{" not in (text or ""):
+        return text
+    if domain != "fd":
+        # Saying so beats letting sympify report "contains a set", which
+        # is true and tells the reader nothing about what they did.
+        from symbulator.elements import CircuitError
+
+        where = {"tr": "TR", "dc": "DC", "ac": "AC"}.get(domain, "this analysis")
+        raise CircuitError(
+            f"Brackets convert an expression from the time domain into s, "
+            f"which only applies in FD. In {where} every input is already "
+            f"read in the domain the answers are in, so there is nothing "
+            f"to convert -- write the expression without the brackets.")
+    from symbulator.si_prefix import expand_time_domain_braces
+
+    return expand_time_domain_braces(text)
+
+
+def _sympify_input(text: str):
+    """One side of an equation or condition, read the way every other
+    input is read.
+
+    The Solve card used to call sp.sympify directly, which meant it alone
+    understood none of Symbulator's notation -- `t2s(...)` came back
+    echoed rather than computed, because sympify has no such name and
+    quietly made an undefined function of it, and `u(t)`, `delta(t)`,
+    `2'k`, `e^2` and `(5\u222030\u00b0)` were all unavailable."""
+    from symbulator.si_prefix import safe_sympify
+
+    return safe_sympify(expand_value_for_ui(text))
+
+
 def _parse_equation(text: str):
     """"lhs = rhs" -> Eq(lhs, rhs); a bare expression -> Eq(expr, 0)."""
     import sympy as sp
 
     if "=" in text:
         lhs, rhs = text.split("=", 1)
-        return sp.Eq(sp.sympify(lhs), sp.sympify(rhs))
-    return sp.Eq(sp.sympify(text), 0)
+        return sp.Eq(_sympify_input(lhs), _sympify_input(rhs))
+    return sp.Eq(_sympify_input(text), 0)
 
 
 def _parse_condition(text: str):
@@ -1801,8 +1842,8 @@ def _parse_condition(text: str):
     for op, make in ops:
         if op in text:
             lhs, rhs = text.split(op, 1)
-            return make(sp.sympify(lhs), sp.sympify(rhs))
-    return sp.sympify(text)
+            return make(_sympify_input(lhs), _sympify_input(rhs))
+    return _sympify_input(text)
 
 
 def _conditions_hold(sol, conditions, values, wanted) -> bool:
@@ -2093,13 +2134,18 @@ def _power_factor(expr_str: str, values: dict):
 
 
 def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
-                 si: bool = False, approx: bool = False):
+                 si: bool = False, approx: bool = False,
+                 domain: str = ""):
     """Evaluate a user expression against the solved values. Names match
     however they are spelled: `i_r1`, `i_R1`, `iR1` and `IR1` all find
     the same answer, since element names are lowercase by this point."""
     try:
         import sympy as sp
         from symbulator.si_prefix import safe_sympify
+
+        # `{...}` converts from time into s, so it means something only in
+        # FD. Done first, before anything else reads the expression.
+        expr_str = _unbrace_for(expr_str, domain)
 
         # pf() is answered before the ordinary path, because it wants its
         # arguments as numbers and gives back a sentence.
@@ -2161,7 +2207,7 @@ _PREFIX_UNITS = {"v": "V", "i": "A", "p": "W", "ap": "W", "s": "VA",
 def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
                    si: bool = False, approx: bool = False,
                    units: bool = False, real_only: bool = False,
-                   conditions=None):
+                   conditions=None, domain: str = ""):
     """Solve user equations against the circuit's answers -- the web
     counterpart of the calculator's solve()/cSolve(). Known answers are
     substituted in first, so an equation can be written directly in
@@ -2179,6 +2225,11 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
         import sympy as sp
 
         wanted = [sp.Symbol(u) for u in unknowns] if unknowns else []
+        # Same convention as everywhere else: brackets are FD's escape
+        # from its own s-domain rule, and mean nothing in TR.
+        equations = [_unbrace_for(e, domain) for e in equations]
+        if conditions:
+            conditions = [_unbrace_for(c, domain) for c in conditions]
         parsed_eqs = [_parse_equation(e) for e in equations]
         eqs = []
         for eq in parsed_eqs:

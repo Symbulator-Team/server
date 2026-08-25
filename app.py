@@ -332,10 +332,11 @@ def api_solveq():
     real_only = bool(data.get("real_only"))
 
     t0 = time.time()
+    domain = str(data.get("domain", "")).strip().lower()
     ok, payload = _run_in_process(
         "solveq_ui",
         (equations, unknowns, clean, digits, si, approx, units, real_only,
-         conditions))
+         conditions, domain))
     elapsed = round(time.time() - t0, 2)
     if not ok:
         return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
@@ -669,7 +670,8 @@ def api_evaluate():
     si = bool(data.get("si"))
     approx = bool(data.get("approx"))
     t0 = time.time()
-    ok, payload = _run_in_process("evaluate_ui", (expr, clean, digits, si, approx))
+    domain = str(data.get("domain", "")).strip().lower()
+    ok, payload = _run_in_process("evaluate_ui", (expr, clean, digits, si, approx, domain))
     elapsed = round(time.time() - t0, 2)
     if not ok:
         return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
