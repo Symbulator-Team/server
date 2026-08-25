@@ -256,19 +256,24 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
      declared, and the app's underline came through for what it did not, so
      Clear all inputs rendered underlined at rest while its neighbours did not.
      A shared file must not claim a class name a host might already use. Check
-     for collisions before naming anything here. */
-  .subbar nav button.subbar-action {
+     for collisions before naming anything here.
+
+     The selector is .subbar, not .subbar nav: an action may sit after
+     .subbar-spacer, at the right-hand end beside the theme toggle, which
+     puts it outside <nav>. The app's "Clear all inputs" does exactly that.
+     Adding nav back would silently strip the styling off any such button. */
+  .subbar button.subbar-action {
     appearance: none; background: none; border: 0; padding: 0;
     font-family: var(--sans, -apple-system, "Segoe UI", Roboto, Helvetica,
                   Arial, sans-serif);
     font-weight: 400; color: #dbe6f5; font-size: 0.875rem; line-height: 1.4;
     cursor: pointer; border-radius: 4px;
   }
-  .subbar nav button.subbar-action:hover { color: #fff; text-decoration: underline; }
-  .subbar nav button.subbar-action:focus-visible {
+  .subbar button.subbar-action:hover { color: #fff; text-decoration: underline; }
+  .subbar button.subbar-action:focus-visible {
     outline: 2px solid var(--sky, #8ec7f5); outline-offset: 3px;
   }
-  .subbar nav button.subbar-action:disabled {
+  .subbar button.subbar-action:disabled {
     color: #8ea3c4; cursor: default; text-decoration: none;
   }
 
@@ -759,26 +764,30 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 <div class="subbar">
   <div class="subbar-inner">
     <nav>
-      <!-- Clear all inputs lived beside the [ I N P U T S ] heading until
-           23 Aug 2026, pinned there with a transform -- which fought the
-           1px press nudge every button gets and made it fall 20px when
-           clicked (#72). In the ribbon it is in normal flow, so that whole
-           class of problem is gone rather than patched. It is a <button>
-           because it acts on the page, and .subbar-action so it does not
-           look like one: the ribbon is a row of links on all three sites. -->
-      <button type="button" id="clearAllBtn" class="subbar-action"
-        title="Empty every input and start over">Clear all inputs</button>
       <!-- server-only: Download points at this page's own "Run Symbulator 9
            locally" card, and that card is itself server-only -- it explains
            how to get the offline copy, which is meaningless once you are the
            offline copy. So the link has to go with it: left in, the offline
            builds would carry a Download that scrolls to an anchor
            build_local.py has removed, and clicking it would do nothing. -->
-      <a href="#runLocallyCard">Download</a>
+      <a href="#runLocallyCard">Download App</a>
       <!-- /server-only -->
       <a href="https://learn.symbulator.com">Documentation</a>
     </nav>
     <span class="subbar-spacer"></span>
+    <!-- Clear all inputs lived beside the [ I N P U T S ] heading until
+         23 Aug 2026, pinned there with a transform -- which fought the 1px
+         press nudge every button gets and made it fall 20px when clicked
+         (#72). In the ribbon it is in normal flow, so that whole class of
+         problem is gone rather than patched. It is a <button> because it
+         acts on the page, and .subbar-action so it does not look like one.
+
+         It sits after .subbar-spacer, at the right-hand end beside the
+         theme toggle, which is why banner.css styles .subbar-action from
+         .subbar rather than from .subbar nav -- this button is not in the
+         <nav>. -->
+    <button type="button" id="clearAllBtn" class="subbar-action"
+      title="Empty every input and start over">Clear all inputs</button>
     <button type="button" id="themeToggle" class="theme-toggle"
             aria-label="Switch to dark mode" title="Switch to dark mode"><svg viewBox="0 0 24 24" style="width:1.2em;height:1.2em;flex:none" fill="#8ec7f5" aria-hidden="true"><path d="M20.4 14.7A8.5 8.5 0 1 1 9.3 3.6a7 7 0 1 0 11.1 11.1Z"/></svg></button>
   </div>
@@ -1623,7 +1632,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-25 10:43 UTC
+  Symbulator 9 version 2026-08-25 11:36 UTC
 </footer>
 
 <script>
@@ -2297,6 +2306,7 @@ $('digits').addEventListener('change', () => {
 });
 $('nDigits').addEventListener('change', () => { if (last) solve(); });
 syncSettings();
+
 $('showUnits').addEventListener('change', () => { if (last) solve(); });
 $('useRms').addEventListener('change', () => { if (last) solve(); });
 $('polarPhasors').addEventListener('change', () => { if (last) solve(); });
@@ -3807,5 +3817,65 @@ themeToggleBtn.addEventListener('click', () => {
   syncThemeToggleLabel();
 });
 </script>
+  <!-- server-only: this opens the "Run Symbulator 9 locally" card when
+       the ribbon's "Download App" link, or the host notice, points at it.
+       Both of those are themselves server-only, so the handler goes with
+       them -- in the offline build there is no such card to open. It is a
+       separate <script> purely so these markers can strip it: they are
+       what build_local.py matches on, and a // comment is not. -->
+  <script>
+// a fragment link to a <details> scrolls to it but leaves it
+// shut, so "Download App" in the ribbon landed the reader on a collapsed
+// one-line summary with the explanation still folded away. Open it. Any
+// in-page link pointing at a <details> gets this, which also covers the
+// host notice's "Run Symbulator 9 locally" link -- same card, same intent.
+(function () {
+  function openTarget(hash) {
+    if (!hash || hash.length < 2) { return; }
+    var el = null;
+    try { el = document.getElementById(decodeURIComponent(hash.slice(1))); }
+    catch (e) { return; }
+    if (!el) { return; }
+    // Open the target itself, and any <details> it is nested inside --
+    // a card within a card would otherwise stay hidden.
+    var node = el;
+    while (node && node !== document.body) {
+      if (node.tagName === 'DETAILS') { node.open = true; }
+      node = node.parentElement;
+    }
+    if (el.scrollIntoView) {
+      el.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+  }
+
+  document.addEventListener('click', function (ev) {
+    var a = ev.target && ev.target.closest && ev.target.closest('a[href^="#"]');
+    if (!a) { return; }
+    var hash = a.getAttribute('href');
+    if (!hash || hash === '#') { return; }
+    var el = document.getElementById(hash.slice(1));
+    if (!el || !el.closest('details, [id]')) { return; }
+    // Let the browser set the hash, then open and scroll ourselves.
+    ev.preventDefault();
+    if (window.history && history.replaceState) {
+      history.replaceState(null, '', hash);
+    } else {
+      window.location.hash = hash;
+    }
+    openTarget(hash);
+  });
+
+  window.addEventListener('hashchange', function () {
+    openTarget(window.location.hash);
+  });
+  // Arriving with the fragment already set, as a shared link does.
+  if (window.location.hash) {
+    window.addEventListener('load', function () {
+      openTarget(window.location.hash);
+    });
+  }
+})();
+  </script>
+  <!-- /server-only -->
 </body>
 </html>
