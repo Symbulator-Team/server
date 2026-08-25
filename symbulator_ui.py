@@ -57,9 +57,18 @@ MAX_VARIABLES = 40
 # as it does on the calculator, and expand_shorthand turns a following
 # "(" into DiracDelta(. ASCII "delta(" works too, for anyone without
 # the character to hand.
-_ALLOWED = re.compile("^[A-Za-z0-9_,.:+\\-*/()\\[\\]{}'^ \u00b5\u03bc\u03b4]*$")
+# The angle sign and the two degree characters go with them: a polar
+# phasor is written `(20\u222030\u00b0)` in every textbook and in versions 7 and 8,
+# and expand_angle_notation turns it into a rectangular number before
+# anything downstream sees it. The masculine ordinal \u00ba is accepted
+# alongside the real degree sign because the two look identical and the
+# 2023 documentation uses both. The minus and en dash are there so a
+# negative angle copied from that documentation is read, not refused.
+_ALLOWED = re.compile("^[A-Za-z0-9_,.:+\\-*/()\\[\\]{}'^ \u00b5\u03bc\u03b4"
+                      "\u2220\u00b0\u00ba\u2212\u2013]*$")
 # Expert-mode equations/conditions additionally need "=".
-_ALLOWED_EQ = re.compile("^[A-Za-z0-9_,.=+\\-*/()\\[\\]{}'^ \u00b5\u03bc\u03b4]*$")
+_ALLOWED_EQ = re.compile("^[A-Za-z0-9_,.=+\\-*/()\\[\\]{}'^ \u00b5\u03bc\u03b4"
+                         "\u2220\u00b0\u00ba\u2212\u2013]*$")
 # The Solve panel's "Conditions / constraints" (solveq_ui) also allow
 # < and > (and, via >=/<=, both together) -- a post-solve filter, not a
 # substitution, so an actual inequality is meaningful there.
@@ -1829,8 +1838,12 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
             # Amplitude and angle, the way version 7 printed it:
             # 1.789 <26.57 degrees.
             z = sp.simplify(numbers[0])
-            magnitude = rounded(sp.Abs(z))
-            angle = rounded(sp.deg(sp.arg(z)))
+            # A magnitude and an angle are both real. Evaluating them from
+            # float inputs can leave a crumb of imaginary part behind --
+            # "19.3649 + 0.e-13*I" -- which is arithmetically nothing and
+            # visually a mess, so take the real part after evaluating.
+            magnitude = sp.re(rounded(sp.Abs(z)))
+            angle = sp.re(rounded(sp.deg(sp.arg(z))))
             plain = f"{magnitude}\u2220{angle}\u00b0"
             latex = (rf"{sp.latex(magnitude)} \angle "
                      rf"{sp.latex(angle)}^\circ")
