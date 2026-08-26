@@ -491,10 +491,12 @@ analysis: dc
 tool: th
 n1: a
 n2: b
-note: Read the answers at x = 3: ino is 1 A, and req divides by zero, so the equivalent resistance is infinite. The app will not take Add conditions alongside an equivalent, so the substitution is done by eye.
+note: Ask Evaluate for req under the same condition and the answer is infinite: the denominator is zero at x = 3, which is the value the symbol replaced.
 rounding: exact
 si: no
 units: yes
+evaluate: ino
+evaluate_conditions: x = 3
 
 
 [Bo2's Drill Exercise 3.13 (Tricky)]
@@ -509,10 +511,12 @@ analysis: dc
 tool: th
 n1: a
 n2: b
-note: Read the answers at x = 1: ino is -3 A, and req divides by zero, so the equivalent resistance is infinite.
+note: Ask Evaluate for req under the same condition and the answer is infinite.
 rounding: exact
 si: no
 units: yes
+evaluate: ino
+evaluate_conditions: x = 1
 
 
 [TR5's Exercise 4-6 (Symbolic, input resistance)]
