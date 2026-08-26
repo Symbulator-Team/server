@@ -1050,7 +1050,23 @@ def _alias_pattern(alias: dict):
     body = "|".join(re.escape(k) for k in sorted(alias, key=len, reverse=True))
     # Not preceded or followed by a name character, and not followed by "(" --
     # `pr(6,3)` is the parallel-resistor function, not the power in element r.
-    return re.compile(rf"(?<![\w.]) ({body}) (?![\w])(?!\s*\()".replace(" ", ""))
+    #
+    # The optional number in front is #94. Every calculator user writes
+    # `.2v1` and `3ir1`, and the multiplication in those is implied: it is
+    # made explicit further down the chain, in si_prefix. But this pattern
+    # runs *before* that, so without the number here the lookbehind sees the
+    # digit against the `v`, refuses to rewrite `v1` into `v_1`, and by the
+    # time the `*` arrives `v1` is an ordinary symbol. The circuit then
+    # solves -- in terms of a variable the reader thought was a node
+    # voltage, with nothing anywhere saying so.
+    #
+    # Consumed rather than merely allowed, so the guard still holds inside a
+    # name: in `x2v1` the number cannot start (there is an `x` before it) and
+    # the name cannot start (there is a digit before it), so nothing matches,
+    # which is right. Scientific notation is safe for a different reason --
+    # an alias is a quantity letter plus an element name, and `e3` is not one.
+    return re.compile(rf"(?<![\w.]) (\d*\.?\d*) ({body}) (?![\w])(?!\s*\()"
+                      .replace(" ", ""))
 
 
 def apply_answer_aliases(text: str, alias: dict) -> tuple:
@@ -1063,8 +1079,12 @@ def apply_answer_aliases(text: str, alias: dict) -> tuple:
     used = []
 
     def sub(m):
-        used.append(m.group(1))
-        return alias[m.group(1)]
+        number, name = m.group(1), m.group(2)
+        used.append(name)
+        # Put the implied multiplication in while we are here. Leaving it to
+        # si_prefix would work too, but only by accident of ordering, and
+        # this way the rewritten text says what it means.
+        return f"{number}*{alias[name]}" if number else alias[name]
 
     return pat.sub(sub, text), used
 
@@ -1681,7 +1701,10 @@ def _alias_mapping(values: dict, exclude=(), expr=None):
         key = _norm_name(k)
         if key in by_norm:
             clashes.add(key)
-        by_norm[key] = sp.sympify(_without_unit(vstr))
+        # Canonicalised on the way in: sp.sympify does not know the
+        # namespace, so a time-domain answer comes back carrying a plain
+        # `t` that matches nothing the user can type. See _canonical_time.
+        by_norm[key] = _canonical_time(sp.sympify(_without_unit(vstr)))
 
     mapping = {}
     symbols = expr.free_symbols if expr is not None else set()
@@ -1691,6 +1714,113 @@ def _alias_mapping(values: dict, exclude=(), expr=None):
             continue
         mapping[sym] = by_norm[key]
     return mapping
+
+
+#: The comparisons, as the predicate `refine()` can actually act on. A bare
+#: relational is not one: `refine(sqrt(x**2), x > 0)` hands the expression
+#: straight back, while `refine(sqrt(x**2), Q.positive(x))` gives `x`. So a
+#: condition is translated rather than passed through. `!=` is absent on
+#: purpose -- `_parse_condition` splits on the `=` inside it and would make
+#: nonsense of the left side, on the Solve card as much as here.
+_ASSUMPTION_FOR = {">": "positive", ">=": "nonnegative",
+                   "<": "negative", "<=": "nonpositive"}
+
+
+def _answers_time_symbol():
+    """The `t` everything Symbulator reads and writes is expressed in.
+
+    `Symbol("t", nonnegative=True)` -- see symbulator.laplace, where the
+    assumption is load-bearing and the docstring says in as many words not
+    to re-create it. `_allowed_namespace` already binds `t` to this one, so
+    every box on the page parses `t` correctly and always did."""
+    from symbulator.laplace import t as time_symbol
+
+    return time_symbol
+
+
+def _canonical_time(expr):
+    """A plain `Symbol("t")` rewritten as the one everything else uses.
+
+    This is #95, and it is the **answers** that need it, not the input.
+    A solved answer crosses back to the browser as a string and is read
+    again by `_alias_mapping` -- with bare `sp.sympify`, which knows
+    nothing of the namespace and so makes a plain `Symbol("t")`. A `t`
+    typed into any box is the nonnegative one. The two are different
+    symbols, subs() between them does nothing, and nothing says so. That
+    is why `t = to` in the Solve card looked exactly like it should pin
+    the time and never did, while `V = 10` in the same box worked.
+
+    Only `t` needs it: `s` is a plain symbol on both sides already.
+
+    Safe for impulses. DiracDelta collapses to 0 under `positive`, which
+    is why laplace chose `nonnegative`; under `nonnegative` both it and
+    Heaviside survive."""
+    import sympy as sp
+
+    if expr is None or not hasattr(expr, "subs"):
+        return expr
+    plain = sp.Symbol("t")
+    if plain in getattr(expr, "free_symbols", set()):
+        return expr.subs(plain, _answers_time_symbol())
+    return expr
+
+
+def _evaluate_conditions(conditions, values):
+    """Evaluate's Conditions box, split into the two things it can mean.
+
+    An equality whose left-hand side is a single name is a **substitution**:
+    `t = to` is the calculator's `vc|t=to`, which is what the box is mostly
+    for. A comparison is an **assumption**, translated into the predicate
+    refine() wants. An equality with anything else on the left would be a
+    little equation to solve, which is the Solve card's job, and is refused
+    here rather than quietly ignored.
+
+    Returns (substitutions, assumptions), or an error payload."""
+    import sympy as sp
+
+    lines = [ln.strip() for ln in (conditions or []) if str(ln).strip()]
+    subs_map, assumptions = {}, []
+    for line in lines:
+        try:
+            parsed = _parse_condition(line)
+        except Exception as exc:                              # noqa: BLE001
+            return _err(f"Could not read the condition `{line}`: "
+                        f"{_exc_text(exc)}")
+        if isinstance(parsed, sp.Equality):
+            left = _canonical_time(parsed.lhs)
+            if not isinstance(left, sp.Symbol):
+                return _err(
+                    f"`{line}` is an equation to solve rather than a value to "
+                    f"substitute, and Evaluate does not solve. Put a single "
+                    f"name on the left -- `t = to` -- or use the Solve card.")
+            right = _canonical_time(parsed.rhs)
+            right = right.subs(_alias_mapping(values, expr=right))
+            subs_map[left] = right
+            continue
+        op = getattr(parsed, "rel_op", None)
+        name = _ASSUMPTION_FOR.get(op)
+        if name is None:
+            return _err(
+                f"`{line}` is neither a value to substitute nor a comparison. "
+                f"Write `t = to` to substitute, or `pr1 > 0` to assume.")
+        side = _canonical_time(parsed.lhs - parsed.rhs)
+        side = side.subs(_alias_mapping(values, expr=side))
+        assumptions.append(getattr(sp.Q, name)(side))
+    return subs_map, assumptions
+
+
+def _apply_conditions(expr, subs_map, assumptions):
+    """The Conditions box, applied to one expression."""
+    import sympy as sp
+
+    if not subs_map and not assumptions:
+        return expr
+    expr = _canonical_time(expr)
+    if subs_map:
+        expr = expr.subs(subs_map)
+    if assumptions:
+        expr = sp.refine(expr, sp.And(*assumptions))
+    return expr
 
 
 def _unbrace_for(text: str, domain: str) -> str:
@@ -1981,7 +2111,8 @@ _PF_CALL = re.compile(r"^\s*pf\s*\((.*)\)\s*$", re.S)
 _TRANSFORM_CALL = re.compile(r"^\s*(s2t|t2s)\s*\((.*)\)\s*$", re.S)
 
 
-def _domain_transform(expr_str: str, values: dict):
+def _domain_transform(expr_str: str, values: dict, subs_map=None,
+                      assumptions=None):
     """`s2t(...)` / `t2s(...)` against the solved answers, or None."""
     m = _TRANSFORM_CALL.match(expr_str)
     if not m:
@@ -1995,6 +2126,7 @@ def _domain_transform(expr_str: str, values: dict):
     try:
         parsed = safe_sympify(expand_value_for_ui(inner))
         substituted = parsed.subs(_alias_mapping(values, expr=parsed))
+        substituted = _apply_conditions(substituted, subs_map, assumptions)
         got = (s2t if name == "s2t" else t2s)(sp.simplify(substituted))
     except Exception as exc:                                  # noqa: BLE001
         return _err(_exc_text(exc))
@@ -2019,7 +2151,8 @@ def _split_two_args(inside: str):
     return inside[:split_at], inside[split_at + 1:]
 
 
-def _power_factor(expr_str: str, values: dict):
+def _power_factor(expr_str: str, values: dict, subs_map=None,
+                  assumptions=None):
     """`pf(v, i)` against the solved answers, or None if this is not one."""
     m = _PF_CALL.match(expr_str)
     if not m:
@@ -2036,7 +2169,8 @@ def _power_factor(expr_str: str, values: dict):
     numbers = []
     for arg in args:
         parsed = safe_sympify(expand_value_for_ui(arg))
-        got = sp.simplify(parsed.subs(_alias_mapping(values, expr=parsed)))
+        got = parsed.subs(_alias_mapping(values, expr=parsed))
+        got = sp.simplify(_apply_conditions(got, subs_map, assumptions))
         if got.free_symbols:
             unknown = ", ".join(sorted(str(s) for s in got.free_symbols))
             return _err(f"`pf` needs numbers, and `{arg.strip()}` still "
@@ -2056,7 +2190,7 @@ def _power_factor(expr_str: str, values: dict):
 
 def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
                  si: bool = False, approx: bool = False,
-                 domain: str = ""):
+                 domain: str = "", conditions=None):
     """Evaluate a user expression against the solved values. Names match
     however they are spelled: `i_r1`, `i_R1`, `iR1` and `IR1` all find
     the same answer, since element names are lowercase by this point."""
@@ -2068,15 +2202,24 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
         # FD. Done first, before anything else reads the expression.
         expr_str = _unbrace_for(expr_str, domain)
 
+        # The Conditions box (#96). Read once, up front, so every form
+        # below gets the same substitutions and assumptions -- including
+        # pf(), whose arguments have to come out as numbers, and which is
+        # exactly where "at t = to" earns its keep.
+        conds = _evaluate_conditions(conditions, values)
+        if isinstance(conds, dict):
+            return conds                     # an error reading the box
+        subs_map, assumptions = conds
+
         # pf() is answered before the ordinary path, because it wants its
         # arguments as numbers and gives back a sentence.
-        power_factor = _power_factor(expr_str, values)
+        power_factor = _power_factor(expr_str, values, subs_map, assumptions)
         if power_factor is not None:
             return power_factor
 
         # A domain transform is answered with the ordinary formatting, so
         # it is folded back into `result` rather than returned whole.
-        transformed = _domain_transform(expr_str, values)
+        transformed = _domain_transform(expr_str, values, subs_map, assumptions)
         if isinstance(transformed, dict):
             return transformed          # an error from the transform
         if transformed is not None:
@@ -2102,6 +2245,7 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
         # the tool being broken.
         parsed = safe_sympify(expand_value_for_ui(expr_str))
         result = parsed.subs(_alias_mapping(values, expr=parsed))
+        result = _apply_conditions(result, subs_map, assumptions)
         result = sp.simplify(result)
         if si:
             shown = _si_format(result, digits)
@@ -2145,7 +2289,12 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
     try:
         import sympy as sp
 
-        wanted = [sp.Symbol(u) for u in unknowns] if unknowns else []
+        # Canonicalised like everything else: an unknown named `t` has to
+        # be the same symbol the equations and the answers carry, or solve()
+        # is asked for a symbol that does not appear in them and hands the
+        # system back unsolved. The other half of #95.
+        wanted = ([_canonical_time(sp.Symbol(u)) for u in unknowns]
+                  if unknowns else [])
         # Same convention as everywhere else: brackets are FD's escape
         # from its own s-domain rule, and mean nothing in TR.
         equations = [_unbrace_for(e, domain) for e in equations]
@@ -2174,9 +2323,13 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
             # the reals: x**2 = -1 simply has no solution, rather than
             # returning +/-j. The names are unchanged, so everything
             # downstream (units, labels) still works.
-            real_map = {s: sp.Symbol(str(s), real=True) for s in wanted}
+            # A symbol that already carries an assumption implying real --
+            # `t` is nonnegative -- is left alone: re-declaring it would
+            # throw that away and put the mismatch back.
+            real_map = {s: sp.Symbol(str(s), real=True)
+                        for s in wanted if not s.is_real}
             eqs = [eq.xreplace(real_map) for eq in eqs]
-            wanted = [real_map[s] for s in wanted]
+            wanted = [real_map.get(s, s) for s in wanted]
 
         sols = sp.solve(eqs, wanted, dict=True)
         if real_only:
@@ -2197,7 +2350,7 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
         had_sols = bool(sols)
         if conditions:
             parsed_conds = [_parse_condition(c) for c in conditions]
-            if real_only:
+            if real_only and real_map:
                 # The unknowns were re-declared as real above, so a
                 # solution is keyed by Symbol("w", real=True) while the
                 # condition was parsed against a bare Symbol("w"). Those

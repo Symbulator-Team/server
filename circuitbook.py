@@ -94,7 +94,8 @@ _KEYS = {
     # The Evaluate box, and the standalone "Solve equations" tool -- both
     # separate from a circuit's own Expert Mode (equation/condition/
     # unknowns above), which is why they get their own key names instead
-    # of colliding with those.
+    # of colliding with those. Evaluate's Conditions box is one of the
+    # repeatable keys, in _MULTI below, since it holds one per line.
     "evaluate": "evaluate",
     "solve_unknowns": "solve_unknowns",
     "solve_real_only": "solve_real_only",
@@ -106,6 +107,11 @@ _KEYS = {
 # and kept as a circuit line rather than quietly dropped.
 _MULTI = {"equations": "equations",
           "conditions": "conditions",
+          # Evaluate's own Conditions box (#96). Named for its card, like
+          # `solve_conditions` is, so it cannot collide with a circuit's
+          # Expert Mode `conditions` above -- three different boxes, three
+          # keys, and a file that says which is which.
+          "evaluate_conditions": "evaluate_conditions",
           "solve_equations": "solve_equations",
           "solve_conditions": "solve_conditions"}
 
@@ -260,6 +266,8 @@ def format_book(circuits: List[dict]) -> str:
         extra: List[str] = []
         if c.get("evaluate"):
             extra.append(f"evaluate: {c['evaluate']}")
+        for val in c.get("evaluate_conditions", []) or []:
+            extra.append(f"evaluate_conditions: {val}")
         for val in c.get("solve_equations", []) or []:
             extra.append(f"solve_equations: {val}")
         val = c.get("solve_unknowns")

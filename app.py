@@ -669,9 +669,30 @@ def api_evaluate():
     digits = _clean_digits(data.get("digits"))
     si = bool(data.get("si"))
     approx = bool(data.get("approx"))
+    # The Conditions box (#96) -- read and guarded exactly as the Solve
+    # card's is, including `and` between clauses, so the two boxes accept
+    # the same things. _ALLOWED is the wrong guard here: it has no `=`,
+    # `<` or `>` in it, because it is for a single expression.
+    raw_conds = data.get("conditions") or ""
+    if isinstance(raw_conds, list):
+        conditions = [str(x).strip() for x in raw_conds if str(x).strip()]
+    else:
+        conditions = [ln.strip() for ln in str(raw_conds).splitlines()
+                      if ln.strip()]
+    conditions = _expand_and(conditions)
+    if len(conditions) > _MAX_SOLVE_EQS:
+        return jsonify({"ok": False,
+                        "error": f"Too many conditions "
+                                 f"(max {_MAX_SOLVE_EQS})."}), 400
+    for cond in conditions:
+        if len(cond) > MAX_EXTRA_LEN or not _ALLOWED_COND.match(cond) or "__" in cond:
+            return jsonify({"ok": False,
+                            "error": f"Condition contains invalid "
+                                     f"characters: {cond!r}"}), 400
     t0 = time.time()
     domain = str(data.get("domain", "")).strip().lower()
-    ok, payload = _run_in_process("evaluate_ui", (expr, clean, digits, si, approx, domain))
+    ok, payload = _run_in_process("evaluate_ui", (expr, clean, digits, si,
+                                                  approx, domain, conditions))
     elapsed = round(time.time() - t0, 2)
     if not ok:
         return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422

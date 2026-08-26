@@ -903,7 +903,8 @@ units: yes</pre>
         <code>rounding</code> (exact/approx/a number of significant
         digits), <code>si</code>, <code>units</code> and <code>rms</code>
         (each yes/no); and, if you were using them when you saved,
-        <code>evaluate</code>, the standalone equation solver's
+        <code>evaluate</code> with its own
+        <code>evaluate_conditions</code>, the standalone equation solver's
         <code>solve_equations</code> / <code>solve_conditions</code> /
         <code>solve_unknowns</code> / <code>solve_real_only</code>, and the
         plot tool's <code>plottool</code> (time/bode) /
@@ -1302,6 +1303,19 @@ units: yes</pre>
         <div><input type="text" id="evalExpr" placeholder="solve a circuit first…" disabled></div>
         <div><button id="evalBtn" disabled>Evaluate</button></div>
       </div>
+      <div class="row" style="margin-top:.7rem">
+        <div>
+          <label for="evalConds">Conditions
+            <span class="hint">— one per line. <code>t = to</code> substitutes
+            a value before evaluating, the way the calculator&#39;s
+            <code>|</code> does; <code>pr1 &gt; 0</code> states an assumption.
+            Use <code>&gt;=</code> and <code>&lt;=</code>, not <code>=&gt;</code>
+            and <code>=&lt;</code></span>
+          </label>
+          <textarea id="evalConds" spellcheck="false" style="min-height:2.4rem"
+            placeholder="solve a circuit first…" disabled></textarea>
+        </div>
+      </div>
       <div id="evalOut" class="lcd"></div>
     </details>
   </div>
@@ -1632,7 +1646,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-26 03:43 UTC
+  Symbulator 9 version 2026-08-26 05:35 UTC
 </footer>
 
 <script>
@@ -1840,7 +1854,7 @@ const STALE_ON_CHANGE = [
   [['tool', 'equivType', 'domain', 'omega', 'vars', 'limitVars', 'n1', 'n2', 'kind'], ['solve']],
   [['eqs', 'conds', 'unks', 'expertEnabled'], ['solve', 'plot']],
   [['digits', 'nDigits', 'siUnits', 'showUnits', 'useRms', 'polarPhasors'], ['solve', 'evaluate', 'solveq']],
-  [['evalExpr'], ['evaluate']],
+  [['evalExpr', 'evalConds'], ['evaluate']],
   [['solveqEqs', 'solveqUnks', 'solveqConds', 'solveqReal'], ['solveq']],
   [['plotTool', 'plotKey', 'plotMin', 'plotMax', 'plotN'], ['plot']],
 ];
@@ -1878,6 +1892,8 @@ function activatePostSolve() {
   $('resultsCard').classList.remove('inactive');
   $('evalExpr').disabled = false;
   $('evalExpr').placeholder = 'e.g. v2 - v3, or p_r1 + p_r2';
+  $('evalConds').disabled = false;
+  $('evalConds').placeholder = 'e.g. t = to';
   $('evalBtn').disabled = false;
   $('evalCard').classList.remove('inactive');
   $('solveqEqs').disabled = false;
@@ -1908,6 +1924,8 @@ function clearResults() {
   $('evalOut').innerHTML = '';
   $('evalExpr').disabled = true;
   $('evalExpr').placeholder = 'solve a circuit first…';
+  $('evalConds').disabled = true;
+  $('evalConds').placeholder = 'solve a circuit first…';
   $('evalBtn').disabled = true;
   $('evalCard').classList.add('inactive');
   $('solveqOut').innerHTML = '';
@@ -2077,6 +2095,7 @@ function applyCircuit(c) {
   // disabled until the circuit is solved (see activatePostSolve), but
   // pre-filling them now means they're ready the moment it is.
   $('evalExpr').value = c.evaluate || '';
+  $('evalConds').value = (c.evaluate_conditions || []).join('\n');
   $('solveqEqs').value = (c.solve_equations || []).join('\n');
   $('solveqConds').value = (c.solve_conditions || []).join('\n');
   $('solveqUnks').value = c.solve_unknowns || '';
@@ -2422,6 +2441,7 @@ function inputsSnapshot() {
     // Evaluate and the standalone "Solve equations" tool, if either has
     // something in it right now.
     evaluate: $('evalExpr').value.trim(),
+    evaluate_conditions: linesOf($('evalConds').value),
     solve_equations: linesOf($('solveqEqs').value),
     solve_unknowns: $('solveqUnks').value.trim(),
     solve_conditions: linesOf($('solveqConds').value),
@@ -2716,7 +2736,7 @@ function clearAllInputs() {
   $('useRms').checked = false;
   $('polarPhasors').checked = false;
   // The other three tools
-  $('evalExpr').value = '';
+  $('evalExpr').value = ''; $('evalConds').value = '';
   $('solveqEqs').value = ''; $('solveqConds').value = ''; $('solveqUnks').value = '';
   $('solveqReal').checked = false;
   $('plotKey').value = ''; $('plotMin').value = ''; $('plotMax').value = '';
@@ -3426,6 +3446,7 @@ async function evaluate() {
       // The domain rides with the values: `{...}` converts from time into
       // s, so it means something only when the answers are in s.
       body: JSON.stringify({ expr: $('evalExpr').value, values: last.values,
+                             conditions: $('evalConds').value,
                              domain: last.domain || '',
                              ...roundingState(), si: $('siUnits').checked })
     });
@@ -3450,7 +3471,8 @@ async function evaluate() {
     // Remember this for the download area -- but only useful there as long
     // as the expression field still holds the same expression that produced
     // it (see the download builder below).
-    lastEval = { expr: $('evalExpr').value, plain: data.plain };
+    lastEval = { expr: $('evalExpr').value, conds: $('evalConds').value,
+                 plain: data.plain };
     markFresh('evaluate');
     if (mjReady) await MathJax.typesetPromise([box]);
   } catch (e) {
@@ -3757,12 +3779,17 @@ $('dlBtn').addEventListener('click', () => {
   // Include Evaluate / Solve results too, but only if the fields still hold
   // the same inputs that produced them -- otherwise they no longer match
   // what's on screen and would be misleading in the downloaded file.
-  if (lastEval && lastEval.expr === $('evalExpr').value) {
+  if (lastEval && lastEval.expr === $('evalExpr').value &&
+      lastEval.conds === $('evalConds').value) {
     const sols = (lastSolve && lastSolve.solutions) || [];
     parts.push(sols.length > 1
       ? `=== Evaluate (from solution ${(Number($('solutionSel').value) || 0) + 1}) ===`
       : '=== Evaluate ===');
     parts.push(`Expression: ${lastEval.expr}`);
+    if (lastEval.conds.trim()) {
+      parts.push('Conditions:');
+      parts.push(lastEval.conds.trim());
+    }
     parts.push(`Result: ${lastEval.plain}`);
     parts.push('');
   }
