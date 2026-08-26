@@ -1,5 +1,54 @@
 # Symbulator circuit book
+
 title: Circuits for Lesson 2 of the Tutorial
+
+[AS5's Figure 2.29]
+
+ev,a,0,v
+r1,a,c,r1
+r2,c,0,r2
+
+analysis: dc
+note: Symbolic all through: the answers come back as formulas.
+rounding: exact
+si: no
+units: yes
+evaluate: -pev
+
+
+[B11's Example 5.6 - with the Solve equations card]
+
+e,1,0,e
+r1,1,2,r1
+r2,2,3,4'k
+r3,3,0,6'k
+
+analysis: dc
+note: Solve the circuit first, then use the Solve equations card.
+rounding: exact
+si: no
+units: yes
+solve_equations: re = 12000
+solve_equations: ir3 = 0.006
+solve_unknowns: e, r1
+
+
+[B11's Example 5.6 - using Expert Mode]
+
+e,1,0,e
+r1,1,2,rx
+r2,2,3,4'k
+r3,3,0,6'k
+
+analysis: dc
+note: The same problem, with the two facts handed over before solving.
+unknowns: e, rx
+equations: re = 12000
+equations: ir3 = 0.006
+rounding: exact
+si: no
+units: yes
+
 
 [HK5's Figure 1-24a]
 
@@ -10,11 +59,11 @@ r5,2,1,5
 evx,2,0,vx
 
 analysis: dc
-unknowns: vx
-equations: ir5=12
 rounding: exact
 si: no
 units: yes
+solve_equations: ir5 = 12
+solve_unknowns: vx
 
 
 [B11's Example 6.19]
@@ -25,8 +74,10 @@ r2,1,0,r2
 r3,1,0,r3
 
 analysis: dc
-unknowns: e,r2,r3
-equations: ir1=8'm and ir2=10'm and ir3=2'm
+unknowns: e, r2, r3
+equations: ir1 = 0.008
+equations: ir2 = 0.010
+equations: ir3 = 0.002
 rounding: exact
 si: no
 units: yes
@@ -42,8 +93,12 @@ rl1,a,0,rl1
 rl2,b,0,rl2
 
 analysis: dc
-unknowns: r1,r2,r3,rl1,rl2
-equations: irl1=20'm and vrl1=60 and irl2=10'm and vrl2=20 and -ie=50'm
+unknowns: r1, r2, r3, rl1, rl2
+equations: irl1 = 0.020
+equations: vrl1 = 60
+equations: irl2 = 0.010
+equations: vrl2 = 20
+equations: -ie = 0.050
 rounding: exact
 si: no
 units: yes

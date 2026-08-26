@@ -1686,6 +1686,31 @@ def bode_ui(desc: str, key: str, f_min: float, f_max: float, n: int,
         return _err(_exc_text(exc))
 
 
+def _aliases_from_values(values: dict) -> dict:
+    """{sans-underscore spelling: the name the answers actually use}.
+
+    Expert mode builds this from the circuit's elements, before anything is
+    solved. The Solve card is handed the answers instead and never had one,
+    so its equations went to SymPy as typed -- and `re` and `im` are SymPy's
+    real- and imaginary-part functions, so `re = 12000` died with
+    "SympifyError: re" while the identical line worked in expert mode. The
+    documentation instructs exactly that line, which is how it was found.
+
+    A spelling that two different answers would share is dropped rather than
+    guessed at."""
+    out, ambiguous = {}, set()
+    for key in values:
+        short = key.replace("_", "")
+        if short == key:
+            continue
+        if short in out and out[short] != key:
+            ambiguous.add(short)
+        out[short] = key
+    for short in ambiguous:
+        out.pop(short, None)
+    return out
+
+
 def _alias_mapping(values: dict, exclude=(), expr=None):
     """Map the symbols in `expr` onto the circuit's solved answers,
     ignoring case and underscores so every spelling of a name finds its
@@ -2300,6 +2325,17 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
         equations = [_unbrace_for(e, domain) for e in equations]
         if conditions:
             conditions = [_unbrace_for(c, domain) for c in conditions]
+        # Answer names, spelled the way the results show them, rewritten to
+        # the names the values are keyed by -- the same courtesy expert mode
+        # has always had. Unknowns are deliberately left alone: they are
+        # names the reader is inventing, not answers, and _alias_mapping
+        # already matches them either way round.
+        alias = _aliases_from_values(values)
+        if alias:
+            equations = [apply_answer_aliases(e, alias)[0] for e in equations]
+            if conditions:
+                conditions = [apply_answer_aliases(c, alias)[0]
+                              for c in conditions]
         parsed_eqs = [_parse_equation(e) for e in equations]
         eqs = []
         for eq in parsed_eqs:
