@@ -1,0 +1,86 @@
+# Symbulator circuit book
+
+title: Circuits for Lesson 11 of the Tutorial
+
+[A low-pass RC (the Bode plot)]
+
+e,1,0,1
+r1,1,2,1000
+c1,2,0,1e-6
+
+analysis: ac
+omega: 1
+note: The Plot card re-solves the circuit at every frequency, which is why it takes the circuit and an answer's name rather than an expression.
+rounding: 5
+si: no
+units: yes
+rms: no
+polar: no
+plottool: bode
+plotkey: v_2
+plotmin: 10
+plotmax: 100000
+plotpoints: 300
+
+
+[AS7's Example 14.7 (series resonance)]
+
+e,1,0,20
+r,1,2,2
+l,2,3,1'm
+c,3,0,.4'u
+
+analysis: ac
+omega: w
+note: For the bandwidth frequencies, solve abs(ze) = sqrt(2)*2 with w<50000 and then w>50000: 49010 and 51010 rad/s.
+rounding: 5
+si: no
+units: yes
+rms: no
+polar: no
+solve_equations: im(ze) = 0
+solve_unknowns: w
+solve_conditions: w>0
+solve_real_only: yes
+
+
+[AS7's Example 14.8 (parallel resonance)]
+
+e,1,0,10
+r,1,0,8'k
+l,1,0,.2'm
+c,1,0,8'u
+
+analysis: ac
+omega: w
+note: The chapter uses im(ie) rather than im(ze) here because the calculator's numerical search could not find so sharp a peak. Version 9 solves symbolically and would manage either, but the equation says something true: at resonance the source's current is in phase with its voltage.
+rounding: 5
+si: no
+units: yes
+rms: no
+polar: no
+solve_equations: im(ie) = 0
+solve_unknowns: w
+solve_conditions: w>0
+solve_real_only: yes
+
+
+[AS7's Example 14.9 (resonance from a node voltage)]
+
+j,0,1,1
+c,1,0,.1
+r1,1,0,10
+l,1,2,2
+r2,2,0,2
+
+analysis: ac
+omega: w
+rounding: 5
+si: no
+units: yes
+rms: no
+polar: no
+solve_equations: im(v1) = 0
+solve_unknowns: w
+solve_conditions: w>0
+solve_real_only: yes

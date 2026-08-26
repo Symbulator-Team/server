@@ -1,0 +1,91 @@
+# Symbulator circuit book
+
+title: Circuits for Lesson 10 of the Tutorial
+
+[AS7's Example 13.1 (mutual inductance in jOhm)]
+
+e,1,0,12
+r1,1,2,-4j
+r2,2,0,5j
+m,r2,r3,3j
+r3,3,0,6j
+r4,3,0,12
+
+analysis: ac
+omega: omega
+note: The coils are given in jOhm, so they are r elements with imaginary values and the mutual matches. The dotted end of each coupled element is named first.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Practice Problem 13.1]
+
+e,1,0,(200∠45°)
+r1,1,2,4
+r2,2,0,8j
+m,r2,r3,1j
+r3,0,o,5j
+r4,o,0,10
+
+analysis: ac
+omega: omega
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Example 13.2 (mesh currents)]
+
+e,1,0,100
+r1,1,2,4-3j
+r2,2,0,6j
+m,r2,r3,2j
+r3,3,2,8j
+r4,3,0,5
+
+analysis: ac
+omega: omega
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Figure 13.33 (ideal transformer, symbolic)]
+
+t,2,3,1,n
+r2,3,4,z2
+e2,4,0,vs2
+
+analysis: dc
+tool: th
+n1: 2
+n2: 0
+note: The transformer refers the source by the turns ratio and the impedance by its square, which is what an ideal one does. Everything here is a name.
+rounding: exact
+si: no
+units: yes
+
+
+[AS7's Example 13.8 (ideal transformer, opposite dots)]
+
+e,1,0,120
+r1,1,2,4-6j
+t,2,3,1,-2
+ro,3,0,20
+
+analysis: ac
+omega: omega
+note: One turn count is negative because the dots are of opposite polarity; which of the two you negate makes no difference.
+rounding: 4
+si: no
+units: yes
+rms: yes
+polar: yes
+evaluate: -se

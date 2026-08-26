@@ -1,0 +1,179 @@
+# Symbulator circuit book
+
+title: Circuits for Lesson 13 of the Tutorial
+
+[AS7's Example 19.1 (z parameters)]
+
+r1,1,2,20
+r2,2,0,40
+r3,2,3,30
+
+analysis: dc
+tool: port
+n1: 1
+n2: 3
+kind: z
+rounding: exact
+si: no
+units: yes
+
+
+[AS7's Example 19.2 (a two-port as an element)]
+
+e,1,0,100
+z,1,2
+r,2,0,10
+
+analysis: ac
+omega: omega
+note: The four parameters are pinned in Expert Mode, which works here because this is a plain solve rather than an equivalent.
+equations: z11 = 40
+equations: z12 = 20j
+equations: z21 = 30j
+equations: z22 = 50
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Example 19.3 (y parameters)]
+
+r1,1,0,4
+r2,1,2,2
+r3,2,0,8
+
+analysis: dc
+tool: port
+n1: 1
+n2: 2
+kind: y
+rounding: exact
+si: no
+units: yes
+
+
+[AS7's Example 19.4 (y parameters around a dependent source)]
+
+r1,1,2,8
+r2,2,0,2
+r3,2,3,4
+j,2,3,2*ir1
+
+analysis: dc
+tool: port
+n1: 1
+n2: 3
+kind: y
+rounding: exact
+si: no
+units: yes
+
+
+[AS7's Example 19.5 (h parameters)]
+
+r1,1,2,2
+r2,2,0,6
+r3,2,3,3
+
+analysis: dc
+tool: port
+n1: 1
+n2: 3
+kind: h
+rounding: exact
+si: no
+units: yes
+
+
+[AS7's Example 19.6 (Thevenin at the output port)]
+
+e,1,0,60
+r,1,2,40
+h,2,3
+
+analysis: dc
+tool: th
+n1: 3
+n2: 0
+note: The equivalent tools take no Expert Mode equations, so the answers come back as formulas in the h parameters and the numbers go in afterwards. Naming the four as unknowns is what makes their equations bite.
+rounding: 4
+si: no
+units: yes
+solve_equations: x = vth
+solve_equations: y = req
+solve_equations: h11 = 1000
+solve_equations: h12 = -2
+solve_equations: h21 = 10
+solve_equations: h22 = 2e-4
+solve_unknowns: x, y, h11, h12, h21, h22
+
+
+[AS7's Example 19.7 (g parameters in s)]
+
+r1,1,2,s
+r2,2,0,1
+r3,2,3,1/s
+
+analysis: dc
+tool: port
+n1: 1
+n2: 3
+kind: g
+note: The chapter runs this in FD, which the two-port tool refuses -- it works in DC and AC only. Writing the inductor and capacitor as their s-domain impedances instead, and solving in DC, gives the chapter's four answers exactly. See #114.
+rounding: exact
+si: no
+units: yes
+
+
+[AS7's Practice Problem 19.7 (a ladder in s)]
+
+ra,1,2,s
+rb,2,0,1
+rc,2,3,s
+rd,3,0,1
+
+analysis: dc
+tool: port
+n1: 1
+n2: 3
+kind: g
+note: The same substitution as the previous entry: the two inductors become impedances of s.
+rounding: exact
+si: no
+units: yes
+
+
+[AS7's Example 19.8 (transmission parameters)]
+
+r1,1,2,10
+r2,2,0,20
+e,2,3,3*ir1
+
+analysis: dc
+tool: port
+n1: 1
+n2: 3
+kind: a
+rounding: 4
+si: no
+units: yes
+
+
+[Gain Example 1 (the gain tool)]
+
+es,3,0,1
+rs,3,1,2
+rl,2,0,20
+y,1,2
+
+analysis: dc
+note: The gains come from the gain mini-tool, given v1, iy1, v2 and iy2 -- not something an input file can carry, so they are recorded here. The source is 1 V because its value cancels out of a gain.
+equations: y11 = 0.4
+equations: y12 = -0.002
+equations: y21 = -5
+equations: y22 = 0.04
+rounding: 4
+si: no
+units: yes

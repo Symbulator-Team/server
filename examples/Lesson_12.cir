@@ -1,0 +1,93 @@
+# Symbulator circuit book
+
+title: Circuits for Lesson 12 of the Tutorial
+
+[AS7's Example 16.1 (in TR, the one-step way)]
+
+e,1,0,t2s(u(t))
+r1,1,2,1
+r2,2,o,5
+c,2,0,1/3,0
+l,o,0,1,0
+
+analysis: tr
+note: This problem does not need the s-domain at all: the source is a function of time and so is the wanted answer. The t2s around the value is because version 9 reads TR sources in the s-domain.
+rounding: exact
+si: no
+units: yes
+
+
+[AS7's Example 16.1 (in FD, everything as an impedance)]
+
+e,1,0,1/s
+r1,1,2,1
+r2,2,o,5
+r3,2,0,3/s
+r4,o,0,s
+
+analysis: fd
+note: The capacitor written as 3/s and the inductor as s, to show it can be done. Only valid because the initial conditions are zero.
+rounding: exact
+si: no
+units: yes
+
+
+[AS7's Example 16.1 (in FD, farads and henries)]
+
+e,1,0,1/s
+r1,1,2,1
+r2,2,o,5
+c,2,0,1/3,0
+l,o,0,1,0
+
+analysis: fd
+note: The same answer with the schematic's own units, which is what you would actually type.
+rounding: exact
+si: no
+units: yes
+
+
+[AS7's Example 16.1 (in FD, and back to time)]
+
+e,1,0,t2s(u(t))
+r1,1,2,1
+r2,2,o,5
+c,2,0,1/3,0
+l,o,0,1,0
+
+analysis: fd
+note: t2s on the way in, s2t on the way out. Both work anywhere an expression is accepted.
+rounding: exact
+si: no
+units: yes
+evaluate: s2t(vo)
+
+
+[AS7's Practice Problem 16.1]
+
+e,1,0,t2s(u(t))
+r1,1,2,6
+c,1,0,1/4,0
+l,1,o,2,0
+r2,o,0,3
+
+analysis: fd
+rounding: exact
+si: no
+units: yes
+evaluate: s2t(vo)
+
+
+[NR11's Example 13.7 (transfer function)]
+
+e,1,0,vs
+r1,1,2,1'k
+c,2,0,1'µ
+r2,2,o,1'k
+
+analysis: fd
+note: A transfer function needs no special tool: solve with a symbolic source and divide.
+rounding: exact
+si: no
+units: yes
+evaluate: vo/vs
