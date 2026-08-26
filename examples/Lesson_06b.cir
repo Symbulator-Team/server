@@ -1,0 +1,253 @@
+# Symbulator circuit book
+
+title: Circuits for Lesson 6 of the Tutorial (Part 2)
+
+[Bo2's Example 5.6 (DC, before the switch)]
+
+e,2,0,10
+r1,2,1,1
+c,1,0,1/4
+r4,1,0,4
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Example 5.6 (TR, 0 < t <= 1 s)]
+
+c,1,0,1/4,8
+r4,1,0,4
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Example 5.6 (TR, t > 1 s)]
+
+c,1,0,1/4,2.943
+re,1,0,[4,6]
+
+analysis: tr
+note: t here counts from the start of this interval, so the chapter writes the answer with (t-1) in it. The initial condition is the previous interval's voltage at t = 1.
+rounding: 4
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.6 (DC)]
+
+e,1,0,9
+r9,1,0,9
+r3,1,2,3
+l,2,0,6
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.6 (TR, 0 < t <= 2 s)]
+
+r,1,0,9+3
+l,1,0,6,3
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.6 (TR, t > 2 s)]
+
+r,1,0,[9+3,4]
+l,1,0,6,.055
+
+analysis: tr
+rounding: 3
+si: no
+units: yes
+
+
+[Bo2's Figure 5.19 (step source, RC)]
+
+e,1,0,V*Heaviside(t)
+r,1,2,r
+c,2,0,c,0
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Figure 5.24 (step source, RL)]
+
+e,1,0,V*Heaviside(t)
+l,1,2,l,0
+r,2,0,r
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.7 (numerical step)]
+
+e,1,0,12
+r4,1,2,4
+l,2,3,2,0
+r2,3,0,2
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Figure 5.26 (step current source)]
+
+j,0,1,i*Heaviside(t)
+c,1,0,c,0
+r,1,0,r
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Example 5.7 (Op Amp, step)]
+
+e,1,0,1
+o,1,2,o
+c,2,o,1/8,0
+r2,2,o,2
+r1,2,0,1
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.8 (Op Amp, step)]
+
+e,1,0,1
+r1,1,2,1
+r2,2,o,2
+c,2,o,1/8,0
+o,0,2,o
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's p249 F5.28 (TR, first interval)]
+
+e,1,0,V*Heaviside(t)
+r,1,2,r
+c,2,0,c,0
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's p249 F5.28 (TR, second interval)]
+
+r,0,2,r
+c,2,0,c,v-e^(-to/(c*r))*v
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.9 (TR, first interval)]
+
+e,1,0,V*Heaviside(t)
+l,1,2,l,0
+r,2,0,r
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.9 (TR, second interval)]
+
+l,0,2,l,v/r-e^(-to*r/l)*v/r
+r,2,0,r
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Figure 5.36 (DC, first interval)]
+
+e,1,0,2
+r3,1,2,3
+r5,2,3,5
+c,3,0,1
+j,0,2,2*ir3
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Figure 5.36 (TR, second interval)]
+
+e,1,0,-4
+r3,1,2,3
+r5,2,3,5
+c,3,0,1,2
+j,0,2,2*ir3
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.11 (DC)]
+
+e,1,0,1
+o,1,2,o
+c,2,o,1/4
+r2,2,o,2
+r1,2,0,1
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.11 (TR)]
+
+e,1,0,3
+o,1,2,o
+c,2,o,1/4,-2
+r2,2,o,2
+r1,2,0,1
+
+analysis: tr
+note: The chapter introduces the `only` tool here and says to list vc in it. Doing that empties the results, so this entry leaves it off -- see #110.
+rounding: exact
+si: no
+units: yes

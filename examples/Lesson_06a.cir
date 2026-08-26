@@ -1,0 +1,274 @@
+# Symbulator circuit book
+
+title: Circuits for Lesson 6 of the Tutorial (Part 1)
+
+[Bo2's Example 4.15]
+
+j,0,1,t
+c,1,0,2,0
+
+analysis: tr
+note: The Solve card is how version 9 does the calculator's `|t=2`. Naming t as an unknown is what makes the second equation bite.
+rounding: exact
+si: no
+units: yes
+solve_equations: x = vc
+solve_equations: t = 2
+solve_unknowns: x, t
+
+
+[Bo2's Example 5.1 (DC, for the initial condition)]
+
+e,1,0,V
+r1,1,2,r1
+c,2,0,c
+r,2,0,r
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Example 5.1 (TR)]
+
+c,2,0,c,r*v/(r+r1)
+r,2,0,r
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.1 (DC)]
+
+j,0,1,2
+r,1,0,3
+c,1,0,1/12
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.1 (TR)]
+
+j,0,1,0
+r,1,0,3
+c,1,0,1/12,vc0
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's p224 5.2 (DC)]
+
+e,1,0,12
+r3,1,2,3
+r6,2,0,6
+r4,2,3,4
+c,3,0,1/12
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's p224 5.2 (TR)]
+
+e,1,0,0
+r3,1,2,3
+r6,2,0,6
+r4,2,3,4
+c,3,0,1/12,8
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.2 (DC)]
+
+j,0,1,6
+r10,1,0,3
+r12,1,2,3
+r20,2,0,3
+c,2,0,1/10
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.2 (TR)]
+
+r10,1,0,3
+r12,1,2,3
+r20,2,0,3
+c,2,0,1/10,6
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Figure 5.10a]
+
+l,1,0,l,il0
+r,1,0,r
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Example 5.3 (DC)]
+
+e,1,0,v
+r1,1,2,r1
+l,2,0,l
+r2,2,0,r
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Example 5.3 (TR)]
+
+l,2,0,l,v/r1
+r2,2,0,r
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.3 (DC)]
+
+e,1,0,8
+r4,1,2,4
+l,2,0,1
+r12,2,0,12
+
+analysis: dc
+note: The chapter asks for ir1 here; this circuit's resistors are r4 and r12, and the 2 A it prints is ir4.
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.3 (TR)]
+
+e,1,0,0
+r4,1,2,4
+l,2,0,1,2
+r12,2,0,12
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's p230 (Dependent source)]
+
+r,v,0,r
+j,v,0,2*ir
+l,v,0,l,5
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.4 (Dependent source, DC)]
+
+ei,1,0,12
+r6,1,2,6
+l,2,0,16
+r8,2,3,8
+ed,3,0,3*vr8
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.4 (Dependent source, TR)]
+
+l,2,0,16,2
+r8,2,3,8
+ed,3,0,3*vr8
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Example 5.5 (Op Amp, DC)]
+
+e,3,0,4
+r2,3,1,2
+r5,1,o,5
+c,1,o,1/20
+o,0,1,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Example 5.5 (Op Amp, TR)]
+
+r2,0,1,2
+r5,1,o,5
+c,1,o,1/20,10
+o,0,1,o
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.5 (Op Amp, DC)]
+
+e,2,0,4
+o,2,1,o
+c,o,1,1/20
+r5,o,1,5
+r2,1,0,2
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 5.5 (Op Amp, TR)]
+
+o,0,1,o
+c,o,1,1/20,10
+r5,o,1,5
+r2,1,0,2
+
+analysis: tr
+rounding: exact
+si: no
+units: yes
