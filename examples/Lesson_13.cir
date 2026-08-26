@@ -175,3 +175,21 @@ equations: y22 = 0.04
 rounding: 4
 si: no
 units: yes
+
+
+[Gain Example 2 (z parameters)]
+
+es,3,0,1
+rs,3,1,5
+rl,2,0,2
+z,1,2
+
+analysis: dc
+note: The second gain example, restored to the chapter on 27 Aug 2026 -- both 2023 pages carried it and the conversion dropped it. Same shape as the first with z parameters instead of y. Given v1, iz1, v2 and iz2, the gain mini-tool answers Av 4, Ai -2, Ap 8 and Zi 1 ohm.
+equations: z11 = 4
+equations: z12 = 1.5
+equations: z21 = 10
+equations: z22 = 3
+rounding: 4
+si: no
+units: yes
