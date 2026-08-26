@@ -1,0 +1,333 @@
+# Symbulator circuit book
+
+title: Circuits for Lesson 5 of the Tutorial (Part 1)
+
+[Bo2's Drill Exercise 3.2]
+
+e,1,0,.1
+r12,1,2,1'k
+r2o,2,o,10'k
+r30,3,0,1'k
+r3o,3,o,20'k
+o,3,2,o
+
+analysis: dc
+note: The op amp's power is negative, so it delivers 0.63 mW to the circuit rather than absorbing it.
+rounding: 2
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 3.11 (Thevenin)]
+
+e,1,0,vs
+r1,2,0,r1
+r2,2,3,r2
+o,1,2,3
+
+analysis: dc
+note: The chapter reaches for Thevenin / Norton here, which version 9 refuses outright: an ideal op amp has zero output resistance, so the short-circuit round divides by zero. A plain solve gets the same answer -- the Thevenin voltage of an unloaded output is the open-circuit node voltage, v3.
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Example 5.2]
+
+e,2,0,1.
+r5,1,0,5'k
+r4,1,o,40'k
+r2,o,0,20'k
+o,2,1,o
+
+analysis: dc
+rounding: 2
+si: no
+units: yes
+
+
+[Bo2's Figure 3.3 (Inverting)]
+
+e,2,0,vs
+r1,2,1,r1
+r2,1,o,r2
+o,1,0,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+evaluate: vo/vs
+
+
+[AS2's Figure 5.10 (Inverting)]
+
+e,2,0,vi
+r1,2,1,r1
+rf,1,o,rf
+o,0,1,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Example 5.3 (Inverting)]
+
+e,2,0,.5
+r1,2,1,10'k
+rf,1,o,25'k
+o,0,1,o
+
+analysis: dc
+rounding: 3
+si: no
+units: yes
+
+
+[TR5's Exercise 4-11 (Inverting)]
+
+e,1,0,vs
+r1,1,2,10'k
+r2,2,o,33'k
+o,0,2,o
+
+analysis: dc
+note: For the other two, put vs = -4 then vs = 6 in Evaluate's Conditions box: 13.2 and -19.8. The op amp is limited to +/-15 V, so the real answer for vs = 6 is -15.
+rounding: 3
+si: no
+units: yes
+evaluate: vo
+evaluate_conditions: vs = 2
+
+
+[AS2's Practice Problem 5.3 (Inverting)]
+
+e,2,0,40'm
+r1,2,1,5'k
+rf,1,o,15'k
+o,0,1,o
+
+analysis: dc
+rounding: 3
+si: no
+units: yes
+
+
+[AS2's Example 5.4 (Inverting)]
+
+e6,1,0,6
+r1,1,a,20'k
+e2,b,0,2
+rf,a,o,40'k
+o,a,b,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[TR5's Example 4-14 (Inverting, in full)]
+
+e,1,0,vs
+r1,1,b,r1
+r2,b,0,r2
+r3,b,a,r3
+r4,a,o,r4
+o,0,a,o
+rl,o,0,rl
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+evaluate: vo/vs
+
+
+[TR5's Example 4-14 (Inverting, the quicker way)]
+
+e,1,0,1
+r1,1,b,r1
+r2,b,0,r2
+r3,b,a,r3
+r4,a,o,r4
+o,0,a,o
+rl,o,0,1
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+evaluate: vo/v1
+
+
+[AS2's Practice Problem 5.4a (Transresistance)]
+
+j,0,1,is1
+r,1,o,r
+o,0,1,o
+
+analysis: dc
+note: The chapter says to evaluate vo/is; the source is called is1 here, since `is` is a Python keyword.
+rounding: exact
+si: no
+units: yes
+evaluate: vo/is1
+
+
+[AS2's Practice Problem 5.4b (Transresistance)]
+
+j,0,1,is1
+r1,1,2,r1
+r2,2,0,r2
+r3,2,o,r3
+o,0,1,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+evaluate: vo/is1
+
+
+[Bo2's Example 3.1 (Non-Inverting Amplifier)]
+
+e,p,0,v2
+r1,1,0,r1
+r2,1,o,r2
+o,p,1,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+evaluate: vo/v1
+
+
+[AS2's Figure 5.16 (Non-Inverting Amplifier)]
+
+e,2,0,vi
+r1,0,1,r1
+rf,1,o,rf
+o,2,1,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[TR5's Example 4-13 (Non-Inverting, in one)]
+
+e,1,0,vs
+r1,1,2,r1
+r2,2,0,r2
+o,2,3,o
+r3,o,3,r3
+r4,3,0,r4
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+evaluate: vo/vs
+
+
+[TR5's Example 4-13 (the left half)]
+
+e,1,0,vs
+r1,1,2,r1
+r2,2,0,r2
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+evaluate: v2/vs
+
+
+[TR5's Example 4-13 (the right half)]
+
+e,2,0,1
+o,2,3,o
+r3,o,3,r3
+r4,3,0,r4
+
+analysis: dc
+note: The product of this and the previous entry is the whole circuit's gain.
+rounding: exact
+si: no
+units: yes
+evaluate: vo/v2
+
+
+[AS2's Figure 5.17 (Voltage Follower)]
+
+e,1,0,vi
+o,1,o,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[TR5's Figure 4-32 (Voltage Follower, the source alone)]
+
+e,1,0,1.5
+rs,1,2,2'k
+
+analysis: dc
+tool: th
+n1: 2
+n2: 0
+note: The chapter writes the load power as prL|L=1000, which version 9 has no equivalent for; this is the algebraic form Lesson 4 uses.
+rounding: 5
+si: no
+units: yes
+evaluate: vth^2*1000/(req+1000)^2
+
+
+[TR5's Figure 4-32 (Voltage Follower, buffered)]
+
+e,1,0,1.5
+rs,1,2,2'k
+o,2,o,o
+rl,o,0,1'k
+
+analysis: dc
+note: The load draws more than the bare source could deliver, because the ideal op amp in the schematic stands in for a real one with its own supply.
+rounding: 3
+si: no
+units: yes
+
+
+[AS2's Example 5.5 (Inverting)]
+
+e1,1,0,6
+r4,1,a,4'k
+r10,a,o,10'k
+e4,b,0,4
+o,b,a,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Practice Problem 5.5 (Non-Inverting)]
+
+e,1,0,3
+r4,1,2,4'k
+r8,2,0,8'k
+r2,3,0,2'k
+r5,3,o,5'k
+o,2,3,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes

@@ -1,0 +1,388 @@
+# Symbulator circuit book
+
+title: Circuits for Lesson 5 of the Tutorial (Part 2)
+
+[Bo2's Example 3.2 (Adder or Summing)]
+
+ea,3,0,va
+eb,2,0,vb
+r31,3,1,r1
+r21,2,1,r1
+r1o,1,o,r2
+o,0,1,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Figure 5.21 (Adder or Summing)]
+
+e1,b,0,v1
+e2,c,0,v2
+e3,d,0,v3
+r1,b,a,r1
+r2,c,a,r2
+r3,d,a,r3
+rf,a,o,rf
+o,0,a,o
+
+analysis: dc
+note: The chapter asks Evaluate for expand(vo). Version 9 has no expand, and this circuit's rf would defeat the Evaluate card anyway, so read vo from the results instead.
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Example 5.6 (Adder or Summing)]
+
+e1,1,0,1
+e2,2,0,2
+r1,2,a,5'k
+r2,1,a,2.5'k
+r3,a,o,10'k
+r4,o,0,2'k
+o,0,a,o
+
+analysis: dc
+rounding: 3
+si: no
+units: yes
+
+
+[AS2's Practice Problem 5.6 (Adder or Summing)]
+
+e2,2,0,1.5
+e1,1,0,2
+e6,6,0,1.2
+r2,2,8,20'k
+r1,1,8,10'k
+r6,6,8,6'k
+r8,8,o,8'k
+r4,o,0,4'k
+o,0,8,o
+
+analysis: dc
+rounding: 4
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 3.3 (Difference)]
+
+ea,4,0,va
+eb,3,0,vb
+r1,4,1,r1
+r2,1,o,r2
+r3,3,2,r1
+r4,2,0,r2
+o,2,1,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[TR5's Exercise 4-13 (Difference)]
+
+e1,3,0,v1
+e2,4,0,v2
+r1,3,5,10'k
+r2,4,6,10'k
+r3,5,o,40'k
+r4,6,0,15'k
+o,6,5,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Figure 5.24 (Difference)]
+
+e1,d,0,v1
+e2,c,0,v2
+r1,d,a,r1
+r3,c,b,r3
+r2,a,o,r2
+r4,b,0,r4
+o,b,a,o
+
+analysis: dc
+note: Kept for the next three entries, which are this same circuit under different conditions.
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Figure 5.24 (Subtractor)]
+
+e1,d,0,v1
+e2,c,0,v2
+r1,d,a,r1
+r3,c,b,r3
+r2,a,o,r2
+r4,b,0,r4
+o,b,a,o
+
+analysis: dc
+note: The same circuit with the two equalities the problem gives, put in Expert Mode's Add conditions so the answer comes back already reduced.
+conditions: r2 = r1
+conditions: r3 = r4
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Example 5.7 (the v1 factor)]
+
+e1,d,0,v1
+e2,c,0,v2
+r1,d,a,r1
+r3,c,b,r3
+r2,a,o,r2
+r4,b,0,r4
+o,b,a,o
+
+analysis: dc
+note: Conditions on the inputs rather than the resistors. This factor has to equal -5 for the design asked for.
+conditions: v1 = 1
+conditions: v2 = 0
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Example 5.7 (the v2 factor)]
+
+e1,d,0,v1
+e2,c,0,v2
+r1,d,a,r1
+r3,c,b,r3
+r2,a,o,r2
+r4,b,0,r4
+o,b,a,o
+
+analysis: dc
+note: This factor has to equal 3. Solving the two together for r2 and r4 gives r2 = 5*r1 and r4 = r3.
+conditions: v1 = 0
+conditions: v2 = 1
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Example 5.7 (checking the design)]
+
+e1,d,0,v1
+e2,c,0,v2
+r1,d,a,10'k
+r3,c,b,20'k
+r2,a,o,50'k
+r4,b,0,20'k
+o,b,a,o
+
+analysis: dc
+note: The same circuit with the book's values in place: r1 = 10k, r2 = 50k, r3 = 20k, r4 = 20k.
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Practice Problem 5.8 (Instrumentation)]
+
+e1,1,0,8.
+e2,2,0,8.01
+o1,1,3,3
+o2,2,4,4
+r1,3,5,20'k
+r2,4,6,20'k
+r3,5,o,40'k
+r4,6,0,40'k
+o3,6,5,o
+r5,o,0,10'k
+
+analysis: dc
+rounding: 3
+si: no
+units: yes
+
+
+[Bo2's Example 3.3 (Cascade)]
+
+e,1,0,vs
+r12,1,2,1/g1
+r14,1,4,1/g2
+r4o,4,o,1/g3
+r2o,2,o,1/g4
+r23,2,3,1/g
+r34,3,4,1/g
+o1,0,2,3
+o2,0,4,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 3.4 (Cascade)]
+
+e,1,0,vs
+r1,2,o,1/1
+r2,1,2,1/2
+r3,2,3,1/3
+r4,4,0,1/4
+r5,4,o,1/5
+o1,0,2,3
+o2,3,4,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Example 5.9 (Cascade)]
+
+e,1,0,20'm
+o1,1,2,a
+o2,a,b,o
+ro,o,b,10'k
+r4,b,0,4'k
+r2,a,2,12'k
+r3,2,0,3'k
+
+analysis: dc
+rounding: 3
+si: no
+units: yes
+
+
+[AS2's Practice Problem 5.9 (Cascade)]
+
+e,1,0,4
+o1,1,2,2
+o2,2,3,o
+ro,3,0,4'k
+r6,3,o,6'k
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Practice Problem 5.10 (Cascade)]
+
+e1,1,0,2
+e2,2,0,1.5
+o1,1,3,3
+r1,2,5,10'k
+r2,3,6,20'k
+r5,5,4,50'k
+o2,0,5,4
+r3,6,4,30'k
+r6,6,o,60'k
+o3,0,6,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[TR5's Example 4-16 (Cascade)]
+
+e1,2,0,v1
+e5,3,0,5
+r1,2,4,5'k
+r2,3,4,10'k
+o1,0,4,a
+r3,4,a,10'k
+r4,4,o,20'k
+o2,a,5,o
+r5,5,o,20'k
+r6,5,0,10'k
+
+analysis: dc
+note: The chapter asks Evaluate for expand(vo); read vo from the results instead.
+rounding: exact
+si: no
+units: yes
+
+
+[TR5's Exercise 4-14 (Cascade)]
+
+e1,3,0,v1
+r1,3,4,10'k
+o1,0,4,5
+r2,4,5,40'k
+r3,5,7,20'k
+e2,6,0,v2
+r4,6,7,10'k
+r5,7,o,40'k
+o2,0,7,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Example 5.10 (Cascade)]
+
+e1,1,0,1
+e2,2,0,2
+r2,1,3,2'k
+r4,2,4,4'k
+r6,3,a,6'k
+r8,4,b,8'k
+r5,a,c,5'k
+r15,b,c,15'k
+r10,c,o,10'k
+oa,0,3,a
+ob,0,4,b
+oc,0,c,o
+
+analysis: dc
+rounding: 4
+si: no
+units: yes
+
+
+[TR5's Example 4-17 (Cascade)]
+
+r1,5,0,r1
+r2,5,a,r2
+r3,a,6,r3
+r4,6,o,r4
+e1,3,0,v1
+e2,4,0,v2
+o1,3,5,a
+o2,4,6,o
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[TR5's Example 4-18 (Multiple)]
+
+e2,a,0,v2
+e1,f,0,v1
+o2,a,c,b
+o1,f,d,e
+r1,b,c,r1
+r2,c,d,r2
+r3,d,e,r3
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+evaluate: vb-ve
