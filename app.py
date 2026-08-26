@@ -459,9 +459,6 @@ def api_solve():
     err = _validate(desc, domain, omega, variables)
     if not err:
         err = _validate_extras(extra_equations, extra_unknowns, extra_conditions)
-    if not err and tool != "solve" and (extra_equations or extra_unknowns
-                                        or extra_conditions):
-        err = "Added equations/unknowns/conditions only apply to Solve circuit."
     if not err and tool not in _VALID_TOOLS:
         err = "Unknown tool."
     if not err and tool != "solve":

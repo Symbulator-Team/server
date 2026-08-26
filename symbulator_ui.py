@@ -1308,6 +1308,17 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                 tkw["omega"] = sp.sympify(omega)
                 if use_rms:
                     tkw["use_rms"] = True
+            # Expert mode applies here too. These tools run one or two
+            # solves of their own, and the extras go into each of them --
+            # the original barred expert mode from the equivalents, but
+            # nothing in the physics asked for that. See th()'s docstring
+            # for the one case where per-round is the wrong reading.
+            if extra_equations:
+                tkw["equations"] = extra_equations
+            if extra_unknowns:
+                tkw["unknowns"] = extra_unknowns
+            if extra_conditions:
+                tkw["conditions"] = extra_conditions
             named = []          # [(display key, expr)]
             if tool == "th":
                 eq = th(desc, n1, n2, **tkw)
