@@ -1,0 +1,49 @@
+# Symbulator circuit book
+title: Circuits for Lesson 2 of the Tutorial
+
+[HK5's Figure 1-24a]
+
+e18,1,0,18
+ra,1,0,ra
+r6,1,0,6
+r5,2,1,5
+evx,2,0,vx
+
+analysis: dc
+unknowns: vx
+equations: ir5=12
+rounding: exact
+si: no
+units: yes
+
+
+[B11's Example 6.19]
+
+e,1,0,e
+r1,1,0,2'k
+r2,1,0,r2
+r3,1,0,r3
+
+analysis: dc
+unknowns: e,r2,r3
+equations: ir1=8'm and ir2=10'm and ir3=2'm
+rounding: exact
+si: no
+units: yes
+
+
+[B11's Example 7.12]
+
+e,a,c,72
+r1,a,b,r1
+r2,b,0,r2
+r3,0,c,r3
+rl1,a,0,rl1
+rl2,b,0,rl2
+
+analysis: dc
+unknowns: r1,r2,r3,rl1,rl2
+equations: irl1=20'm and vrl1=60 and irl2=10'm and vrl2=20 and -ie=50'm
+rounding: exact
+si: no
+units: yes

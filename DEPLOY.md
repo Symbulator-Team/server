@@ -10,10 +10,13 @@ today.
 ## Files
 
 - `app.py` -- the whole backend (routes, validation, solver subprocess with timeout)
-- `examples.cir` -- **the examples dropdown.** Plain text, edit freely;
-  the server re-reads it on every page load, so no restart is needed.
-  The file's own header comment documents the format. If it's missing or
-  unparseable the site still runs, just without examples.
+- `examples/` -- **the built-in examples**: one `.cir` file each, shown in
+  the menu by the `title:` line inside them. The folder is listed on every
+  request, so files can be added, edited or removed with no restart.
+  `Showcase.cir` carries the header comment that documents the format. If
+  the folder is missing or empty the site still runs, just without examples.
+  The offline build cannot list a folder, so `build_local.py` writes
+  `examples/examples.json` beside them and `--check` keeps it honest.
 - `circuitbook.py` -- parser/formatter for that same format, shared by
   the examples file and by user uploads
 - `templates/index.html` -- the whole frontend (one page)

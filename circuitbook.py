@@ -1,7 +1,7 @@
 """
 The "circuit book" format: a plain-text file holding one or more named
-circuits, used both for the site's built-in examples (examples.cir) and
-for files users upload.
+circuits, used both for the site's built-in examples (the .cir files
+in examples/) and for files users upload.
 
     [Voltage divider (DC)]
 
@@ -126,6 +126,7 @@ _KEY_RE = re.compile(r"^(?P<key>[A-Za-z][A-Za-z0-9_]*)\s*:\s*(?P<val>.*)$")
 
 MAX_CIRCUITS = 200
 MAX_NAME_LEN = 80
+MAX_TITLE_LEN = 120
 
 
 def _truthy(val: str) -> bool:
@@ -133,14 +134,18 @@ def _truthy(val: str) -> bool:
     return val.strip().lower() in _TRUE_WORDS
 
 
-def parse_book(text: str) -> Tuple[List[dict], List[str]]:
-    """Parse circuit-book text. Returns (circuits, warnings). Each
+def parse_book(text: str) -> Tuple[List[dict], List[str], str]:
+    """Parse circuit-book text. Returns (circuits, warnings, title). Each
     circuit is a dict with "name", "desc" (newline-joined circuit
-    lines) and whatever metadata fields were given."""
+    lines) and whatever metadata fields were given.
+
+    `title` is the file's own name for itself, from a `title:` line above
+    the first entry, and is "" when the file does not give one."""
     circuits: List[dict] = []
     warnings: List[str] = []
     current: dict | None = None
     lines: List[str] = []
+    title = ""
 
     def flush():
         """Close out the circuit being accumulated in `current`/`lines`
@@ -178,6 +183,13 @@ def parse_book(text: str) -> Tuple[List[dict], List[str]]:
             continue
 
         if current is None:
+            # A `title:` above the first [Name] is the file's own title --
+            # what the interface shows in place of the filename. Anything
+            # else up here is still a stray.
+            km = _KEY_RE.match(line)
+            if km and km.group("key").lower() == "title":
+                title = km.group("val").strip()[:MAX_TITLE_LEN]
+                continue
             warnings.append(f"Line {lineno} appears before the first [Name] heading; ignored.")
             continue
 
@@ -203,14 +215,14 @@ def parse_book(text: str) -> Tuple[List[dict], List[str]]:
     flush()
     if not circuits and not warnings:
         warnings.append("No circuits found. Each circuit needs a [Name] heading.")
-    return circuits, warnings
+    return circuits, warnings, title
 
 
 def _bool_word(val) -> str:
     return "yes" if val else "no"
 
 
-def format_book(circuits: List[dict]) -> str:
+def format_book(circuits: List[dict], title: str = "") -> str:
     """Render circuits back out as circuit-book text -- the inverse of
     parse_book, so a session can be saved and re-loaded. Each circuit is
     written in the same order "Save this circuit to the input file"
@@ -218,6 +230,10 @@ def format_book(circuits: List[dict]) -> str:
     (if applicable) Expert Mode, then Settings, then Evaluate /
     Solve-equations / Plot, if any of those were in use."""
     out: List[str] = ["# Symbulator circuit book", ""]
+    # The file's own title, above every entry, so a file that was given one
+    # keeps it when it is saved and downloaded again.
+    if title.strip():
+        out.extend([f"title: {title.strip()[:MAX_TITLE_LEN]}", ""])
     for index, c in enumerate(circuits):
         # Two blank lines before every circuit but the first, so each block
         # stands clearly apart when the file is read or edited by hand.

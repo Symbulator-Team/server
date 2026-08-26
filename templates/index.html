@@ -577,6 +577,35 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .eval-row { display: flex; gap: .8rem; flex-wrap: wrap; align-items: flex-end; }
   .eval-row > div:first-child { flex: 1 1 260px; }
   .dl-row { display: flex; gap: 1.4rem; flex-wrap: wrap; align-items: center; }
+  /* The built-in examples menu: a list of input files under the link.
+     Positioned against the row rather than the page, so it opens where it
+     was clicked. */
+  .examples-menu { position: relative; display: inline-block; }
+  .examples-menu > summary { list-style: none; cursor: pointer; }
+  .examples-menu > summary::-webkit-details-marker { display: none; }
+  .examples-panel {
+    position: absolute; z-index: 20; top: 100%; left: 0; margin-top: .35rem;
+    min-width: 15rem; max-width: 22rem;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 8px; padding: .5rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,.18);
+  }
+  .examples-panel-head {
+    margin: .1rem .35rem .4rem; font-size: .72rem; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+  }
+  .examples-panel ul { list-style: none; margin: 0; padding: 0; }
+  .examples-panel li + li { margin-top: .1rem; }
+  .examples-panel button {
+    display: block; width: 100%; text-align: left;
+    background: none; border: 0; border-radius: 6px;
+    padding: .38rem .35rem; font: inherit; color: inherit; cursor: pointer;
+  }
+  .examples-panel button:hover, .examples-panel button:focus-visible {
+    background: var(--code-bg);
+  }
+  .examples-none { padding: .38rem .35rem; color: var(--muted); }
+
   /* The Input File buttons. Deliberately not .dl-row: that rule styles
      its own <label> children for checkboxes, which would outrank
      .uploadlbl and leave the Upload control a different size and
@@ -836,11 +865,23 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     </div>
 
     <!-- Which file is open. Upload replaces it, "New file" starts an empty
-         one, and "Built-in examples" goes back to the read-only set -- the
-         last of which is only offered when they are not already showing. -->
+         one, and "Built-in examples" opens the menu of supplied files. That
+         link is always shown: it is the way back to the set. -->
     <div class="actions" id="fileActions" style="margin-top:.7rem">
       <button type="button" id="newFileBtn" class="linkish">New file</button>
-      <button type="button" id="openExamplesBtn" class="linkish" hidden>Built-in examples</button>
+      <!-- The built-in examples are a set of input files now, not one file,
+           so the link opens a list of them rather than loading anything.
+           A <details> because it wants no JavaScript to open and close, and
+           the keyboard reaches it the same way it reaches every other
+           disclosure on the page. It stays visible at all times: it is the
+           way back to the set once a reader has opened one of them. -->
+      <details class="examples-menu" id="examplesMenu">
+        <summary class="linkish" id="openExamplesBtn">Built-in examples</summary>
+        <div class="examples-panel">
+          <p class="examples-panel-head">Choose an input file</p>
+          <ul id="examplesList"></ul>
+        </div>
+      </details>
     </div>
 
     <span class="examples" style="display:block;margin-top:.9rem">
@@ -864,7 +905,16 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
         with its name in square brackets, followed by the element lines and
         then its settings. The file extension is <code>.cir</code>.
       </p>
+      <p style="font-size:.9rem;color:var(--muted)">
+        A file may also name itself, with a <code>title:</code> line above the
+        first entry — <code>title: Circuits for Lesson 1 of the Tutorial</code>.
+        That title is what the interface shows in place of the filename, and
+        it is what the supplied examples are listed by. A file without one is
+        shown by its filename instead.
+      </p>
 <pre style="background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;font-size:.84rem;overflow-x:auto"># comments start with a hash
+
+title: A couple of problems
 
 [Problem 1 — divider]
 
@@ -1646,7 +1696,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-26 07:37 UTC
+  Symbulator 9 version 2026-08-26 10:05 UTC
 </footer>
 
 <script>
@@ -1948,24 +1998,29 @@ function clearResults() {
 }
 
 // ---- Circuit picker: built-in examples, or an opened file ----------
-// `builtIn` is kept so "Reload Examples" costs no second round trip.
 // `picker` doubles as the live Input File described in "About input file
-// (.cir) format":
-// uploading a file replaces it, "add this circuit to the file" appends
-// or updates an entry in it, and "download the file" writes it out.
-// `builtIn` is the read-only example set that ships with the app; `picker`
-// is whatever the dropdown is currently listing. They used to be the same
-// list you could also write into, which meant saving a circuit appended it
-// to the examples and downloading handed you all of them back as one file.
-// An input file is now a separate thing you open, write to and export:
+// (.cir) format": uploading a file replaces it, "add this circuit to the
+// file" appends or updates an entry in it, and "download the file" writes
+// it out. `picker` is whatever the dropdown is currently listing.
 //
-//   openFile === null      the examples are showing; nothing is writable
-//   openFile = {name, entries}   a real file, uploaded or created here
+// The supplied examples used to be a separate array you could not write
+// into, and the dropdown showed either them or a file. They are now simply
+// input files themselves -- a folder of them, each with its own title --
+// so there is one kind of thing, and read-only is a property of the file
+// rather than a second mode:
+//
+//   openFile === null            nothing is open
+//   openFile = {name, title, entries}            a file you can write to
+//   openFile = {..., builtin: true}   one of the supplied examples, which
+//                                     is read-only: no saving, renaming or
+//                                     deleting, though it can be downloaded
 //
 // `currentEntry` is the entry the inputs on screen came from -- held as a
 // reference rather than a name or an index, so renaming or reordering
 // cannot lose track of it, and two entries may share a name harmlessly.
-let builtIn = [], picker = [];
+// The supplied set, as [{name, title}] -- the list behind the menu, not
+// the entries of any one of them.
+let exampleFiles = [], picker = [];
 let openFile = null;
 let currentEntry = null;
 // What the inputs looked like when the current entry was loaded or last
@@ -2168,21 +2223,76 @@ async function loadExamples() {
   try {
     const r = await fetch('/api/examples');
     const data = await r.json();
-    builtIn = data.circuits || [];
+    exampleFiles = data.files || [];
   } catch (e) {
     // Only a genuine failure to reach the examples belongs here. Restoring
     // used to sit inside this try, so a damaged workspace surfaced as "this
     // page cannot reach a maths engine" -- and never got cleared, so it did
     // so on every visit afterwards.
-    builtIn = [];
+    exampleFiles = [];
     showHostNotice();
   }
+  buildExamplesMenu();
   // Either way the picker gets populated: a restored workspace wins, since
   // it means a file is open and showing the examples would look like losing
   // it, and otherwise the examples are what belongs there.
-  if (!restoreState()) { currentEntry = null; showFile(null); }
+  // A restored workspace wins; otherwise the first input file of the set
+  // opens, so there is always something to press Solve on.
+  if (!restoreState()) {
+    currentEntry = null;
+    if (exampleFiles.length) { openExampleFile(exampleFiles[0].name, true); }
+    else { showFile(null); }
+  }
 }
 loadExamples();
+
+// The menu behind "Built-in examples": one line per input file, showing the
+// title the file gives itself rather than its filename.
+function buildExamplesMenu() {
+  const list = $('examplesList');
+  list.innerHTML = '';
+  if (!exampleFiles.length) {
+    const li = document.createElement('li');
+    li.className = 'examples-none';
+    li.textContent = 'none available';
+    list.appendChild(li);
+    return;
+  }
+  exampleFiles.forEach(f => {
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = f.title || f.name;
+    b.addEventListener('click', () => {
+      $('examplesMenu').open = false;
+      openExampleFile(f.name);
+    });
+    li.appendChild(b);
+    list.appendChild(li);
+  });
+}
+
+// Open one of them. `quiet` is the first load at startup, where there is
+// nothing yet to discard and nothing to say about it.
+async function openExampleFile(name, quiet) {
+  if (!quiet && (!okToDiscardEdits() || !okToDiscardUntiedInputs()
+                 || !okToReplaceFile())) return;
+  try {
+    const r = await fetch('/api/examples?file=' + encodeURIComponent(name));
+    const data = await r.json();
+    if (!data.ok) {
+      showNote(data.error || 'Could not open that input file.', true);
+      return;
+    }
+    exported = true;
+    currentEntry = null;
+    showFile({ name: name, title: data.title || name,
+               entries: data.circuits || [], builtin: true });
+    if (!quiet) showNote('', false);
+  } catch (e) {
+    showHostNotice();
+  }
+}
 
 // The file input stays hidden; the button in front of it is what people
 // (and keyboards) actually reach.
@@ -2511,7 +2621,9 @@ function hasUnsavedEdits() {
 //   tied to an entry, changed          -> Update, then Save
 function refreshEntryLinks() {
   const hasInputs = $('desc').value.trim() !== '';
-  const tied = currentEntry !== null && openFile !== null
+  // A supplied example is read-only, so nothing here is offered for one.
+  const writable = openFile !== null && !openFile.builtin;
+  const tied = currentEntry !== null && writable
                && openFile.entries.indexOf(currentEntry) !== -1;
   const changed = tied && hasUnsavedEdits();
   $('updateEntryBtn').hidden = !(hasInputs && tied && changed);
@@ -2523,15 +2635,16 @@ function refreshEntryLinks() {
   $('deleteEntryBtn').hidden = !tied;
 }
 
-// Adopt `entries` as the dropdown's list. `file` is null for the read-only
-// examples, or {name, entries} for a real file.
+// Adopt `file` as the open input file. Null means none is open, which
+// happens only if the supplied set cannot be reached.
 function showFile(file) {
   openFile = file;
-  const entries = file ? file.entries : builtIn;
-  const label = file ? 'Entries in ' + file.name + ':' : 'Some examples you can try: ';
+  const entries = file ? file.entries : [];
+  const label = file ? 'Entries in ' + (file.title || file.name) + ': '
+                     : 'No input file open: ';
   populatePicker(entries, label,
-                 entries.length ? '— choose —' : (file ? '— no entries yet —' : '— none defined —'));
-  $('openExamplesBtn').hidden = (file === null);
+                 entries.length ? '— choose an entry —'
+                                : (file ? '— no entries yet —' : '— none —'));
   $('downloadFileBtn').disabled = !(file && file.entries.length);
   refreshEntryLinks();
   persistState();
@@ -2540,7 +2653,10 @@ function showFile(file) {
 // Nothing here has reached disk, so warn before replacing a file that has
 // entries only this browser knows about. Returns false if the user backs out.
 function okToReplaceFile() {
-  if (!openFile || !openFile.entries.length || exported) return true;
+  // A supplied example holds nothing of the reader's, so there is
+  // nothing to lose by replacing it.
+  if (!openFile || openFile.builtin || !openFile.entries.length
+      || exported) return true;
   const n = openFile.entries.length;
   return window.confirm(
     `${openFile.name} has ${n} ${n === 1 ? 'entry' : 'entries'} you have not downloaded. ` +
@@ -2577,7 +2693,9 @@ $('addToFileBtn').addEventListener('click', () => {
   // first and then asking meant cancelling the second prompt left the user
   // moved off the examples onto an empty file they never agreed to.
   let newFileName = null;
-  if (!openFile) {
+  // Saving out of a supplied example starts a file of the reader's own:
+  // the examples themselves cannot be written to.
+  if (!openFile || openFile.builtin) {
     const fname = window.prompt('Name for the new input file:', 'circuits.cir');
     if (fname === null) return;
     newFileName = cleanFileName(fname);
@@ -2622,14 +2740,6 @@ $('newFileBtn').addEventListener('click', () => {
   currentEntry = null;
   showFile({ name: clean, entries: [] });
   showNote(`Started ${clean}. It has no entries yet.`, false);
-});
-
-$('openExamplesBtn').addEventListener('click', () => {
-  if (!okToDiscardEdits() || !okToReplaceFile()) return;
-  exported = true;
-  currentEntry = null;
-  showFile(null);
-  showNote('', false);
 });
 
 // Renaming is safe because identity is the entry object: the name is just
@@ -2685,7 +2795,8 @@ $('downloadFileBtn').addEventListener('click', async () => {
   try {
     const r = await fetch('/api/export', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ circuits: openFile.entries })
+      body: JSON.stringify({ circuits: openFile.entries,
+                             title: openFile.title || '' })
     });
     const data = await r.json();
     if (!data.ok) { showNote(data.error || 'Could not build that file.', true); return; }

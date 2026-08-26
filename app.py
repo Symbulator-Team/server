@@ -39,8 +39,11 @@ app = Flask(__name__)
 MAX_UPLOAD_BYTES = 512 * 1024
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES
 
-EXAMPLES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             "examples.cir")
+EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "examples")
+#: A file the reader may ask for by name. Kept deliberately tight: this
+#: is a name arriving from a query string and being joined to a path.
+_EXAMPLE_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,79}\.cir$")
 
 # ---------------------------------------------------------------------------
 # Limits and validation
@@ -177,18 +180,63 @@ def _decode(data: bytes) -> str:
 
 @app.get("/api/examples")
 def api_examples():
-    """The built-in examples, re-read from examples.cir on every call so
-    the file can be edited without restarting the server."""
+    """The built-in examples: a folder of input files, each with its own
+    title.
+
+    With no arguments this lists the set -- the folder is read on every
+    call, so a file can be added or edited without restarting. With
+    `?file=` it returns that one file's entries.
+
+    The offline build cannot do the listing half: it has no server, and a
+    fetch cannot enumerate a directory. It reads `examples/examples.json`
+    instead, which build_local.py writes from this same folder and
+    `build_local.py --check` keeps honest. Both ends therefore answer the
+    same shape, and the front end does not know which it is talking to."""
+    wanted = (request.args.get("file") or "").strip()
+
+    if wanted:
+        if not _EXAMPLE_NAME_RE.match(wanted):
+            return jsonify({"ok": False, "error": "No such example."}), 400
+        path = os.path.join(EXAMPLES_DIR, wanted)
+        # realpath before comparing: the pattern above already refuses a
+        # separator, and this refuses anything that reaches outside the
+        # folder by some route the pattern did not anticipate.
+        if os.path.dirname(os.path.realpath(path)) != os.path.realpath(EXAMPLES_DIR):
+            return jsonify({"ok": False, "error": "No such example."}), 400
+        try:
+            with open(path, "rb") as fh:
+                text = _decode(fh.read())
+        except OSError:
+            return jsonify({"ok": False, "error": "No such example."}), 404
+        circuits, warnings, title = parse_book(text)
+        return jsonify({"ok": True, "name": wanted, "title": title,
+                        "circuits": circuits, "warnings": warnings})
+
+    return jsonify({"ok": True, "files": _example_files()})
+
+
+def _example_files() -> list:
+    """[{name, title}] for the examples folder, in filename order.
+
+    Filename order is the reader-visible order, which is why the files are
+    named Lesson_01 and not Lesson1: it is what puts lesson 10 after
+    lesson 9 rather than after lesson 1."""
+    out = []
     try:
-        with open(EXAMPLES_PATH, "rb") as fh:
-            text = _decode(fh.read())
-    except FileNotFoundError:
-        return jsonify({"ok": True, "circuits": [], "warnings": []})
-    except OSError as exc:
-        return jsonify({"ok": True, "circuits": [],
-                        "warnings": [f"Could not read examples file: {exc}"]})
-    circuits, warnings = parse_book(text)
-    return jsonify({"ok": True, "circuits": circuits, "warnings": warnings})
+        names = sorted(os.listdir(EXAMPLES_DIR))
+    except OSError:
+        return out
+    for name in names:
+        if not _EXAMPLE_NAME_RE.match(name):
+            continue
+        try:
+            with open(os.path.join(EXAMPLES_DIR, name), "rb") as fh:
+                text = _decode(fh.read())
+        except OSError:
+            continue
+        _circuits, _warnings, title = parse_book(text)
+        out.append({"name": name, "title": title or name})
+    return out
 
 
 @app.post("/api/upload")
@@ -207,14 +255,14 @@ def api_upload():
     if not data.strip():
         return jsonify({"ok": False, "error": "That file is empty."}), 400
 
-    circuits, warnings = parse_book(_decode(data))
+    circuits, warnings, title = parse_book(_decode(data))
     if not circuits:
         return jsonify({"ok": False,
                         "error": "No circuits found in that file. Each circuit "
                                  "needs a [Name] heading above its element lines.",
                         "warnings": warnings}), 400
     name = os.path.basename(fh.filename or "uploaded file")[:80]
-    return jsonify({"ok": True, "filename": name,
+    return jsonify({"ok": True, "filename": name, "title": title,
                     "circuits": circuits, "warnings": warnings})
 
 
@@ -224,7 +272,8 @@ def api_export():
     so the user can download it and open it again later (or keep
     building it up). Nothing is stored on the server -- the list of
     circuits comes in whole with every call."""
-    from circuitbook import format_book, MAX_CIRCUITS, MAX_NAME_LEN
+    from circuitbook import (format_book, MAX_CIRCUITS, MAX_NAME_LEN,
+                             MAX_TITLE_LEN)
 
     data = request.get_json(silent=True) or {}
     raw_circuits = data.get("circuits")
@@ -248,7 +297,7 @@ def api_export():
         # a saved circuit always has *some* Settings state, unlike the
         # "if present" fields above. "units" defaults to True (unlike the
         # other three): a circuit dict that never touched Settings at all
-        # (e.g. parsed straight from examples.cir, which doesn't spell out
+        # (e.g. parsed straight from a supplied example, which doesn't spell out
         # every default) means "show units", same as a fresh page load --
         # bool(None) would wrongly read that silence as "off".
         for field in ("si", "rms", "solve_real_only"):
@@ -265,7 +314,8 @@ def api_export():
 
     if not circuits:
         return jsonify({"ok": False, "error": "Nothing to save yet."}), 400
-    return jsonify({"ok": True, "text": format_book(circuits)})
+    title = str(data.get("title") or "")[:MAX_TITLE_LEN]
+    return jsonify({"ok": True, "text": format_book(circuits, title)})
 
 
 
