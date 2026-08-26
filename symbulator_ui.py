@@ -180,6 +180,184 @@ def _expand_and(items):
     return out
 
 
+# ---------------------------------------------------------------------------
+# The Define field
+# ---------------------------------------------------------------------------
+#
+# `Define vx=va-vb` on the calculator put vx in the machine's own variable
+# space, and every later mention of vx -- including inside the string passed
+# to s\th() -- resolved against it. Version 9 parses text, so there is no
+# such space to put anything in; the equivalent is to expand the name before
+# the text is read. That is all this is: a substitution pass that runs first,
+# so everything downstream sees exactly what the reader would have typed by
+# hand.
+#
+# It replaces whole identifiers, never substrings. Symbulator's namespace is
+# thick with one-letter prefixes -- v, i, p, r, e, j, s -- so `Define x = 3`
+# under a substring rule would quietly turn `rx` into `r3` and `vx` into
+# `v3`. The calculator matched whole names too.
+
+MAX_DEFINES = 20
+_DEFINE_LINE_RE = re.compile(r"^\s*([A-Za-z][A-Za-z0-9_]*)\s*=\s*(\S.*?)\s*$")
+_IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def parse_defines(lines):
+    """{name: expression} in the order given, or ({}, "why not").
+
+    Each line is `name = expression`. A name may be defined once, and a
+    definition may use earlier names -- see `expand_defines` -- but not
+    itself, directly or round a chain.
+    """
+    table = {}
+    if not lines:
+        return table, None
+    if isinstance(lines, str):
+        lines = [ln for ln in re.split(r"[\r\n]+", lines) if ln.strip()]
+    if len(lines) > MAX_DEFINES:
+        return {}, f"Too many definitions (max {MAX_DEFINES})."
+    for raw in lines:
+        if not isinstance(raw, str) or not raw.strip():
+            continue
+        if len(raw) > MAX_EXTRA_LEN:
+            return {}, f"Definition is too long: {raw[:40]!r}"
+        m = _DEFINE_LINE_RE.match(raw)
+        if not m:
+            return {}, (f"Each definition needs the form name = expression: "
+                        f"{raw.strip()[:60]!r}")
+        name, expr = m.group(1), m.group(2)
+        if not _ALLOWED_EQ.match(expr) or "__" in expr:
+            return {}, f"Definition contains invalid characters: {raw.strip()[:60]!r}"
+        if name in table:
+            return {}, f"{name} is defined twice."
+        table[name] = expr
+    err = _defines_cycle(table)
+    if err:
+        return {}, err
+    return table, None
+
+
+def _defines_cycle(table):
+    """Message naming a circular definition, or None.
+
+    Refusing beats expanding to a depth limit: a cycle is always a mistake,
+    and the reader is better told which name closes the loop than handed a
+    half-expanded expression."""
+    state = {}                      # name -> 1 visiting, 2 done
+
+    def walk(name, trail):
+        if state.get(name) == 2:
+            return None
+        if state.get(name) == 1:
+            loop = " -> ".join(trail[trail.index(name):])
+            return f"Circular definition: {loop}"
+        state[name] = 1
+        for ident in _IDENT_RE.findall(table.get(name, "")):
+            if ident in table:
+                found = walk(ident, trail + [ident])
+                if found:
+                    return found
+        state[name] = 2
+        return None
+
+    for name in table:
+        found = walk(name, [name])
+        if found:
+            return found
+    return None
+
+
+# A single token: a name, a number, an SI-prefixed value (10'k), or the
+# bare engineering shorthand (1k). Anything carrying an operator is not.
+_ATOM_RE = re.compile(r"^[A-Za-z0-9_.']+$")
+
+
+def _wrapped(expr: str) -> str:
+    """A definition as it goes into the text: bracketed unless it is a
+    single token.
+
+    The exception is not cosmetic. Bracketing `1k` gives `(1k)`, which the
+    ambiguity check no longer recognises as the bare engineering shorthand
+    it is -- so the question of whether the reader meant 1000 or 1*k would
+    go unasked, and the parse would fail further downstream with a much
+    worse message."""
+    return expr if _ATOM_RE.match(expr.strip()) else f"({expr})"
+
+
+def expand_defines(text, table):
+    """Every defined name in `text` replaced by its expression.
+
+    Bracketed, because a definition is a phrase and not a token: with
+    `a = 1+2`, `3*a` has to become `3*(1+2)` and not `3*1+2`. A definition
+    that is already a single number or name is dropped in bare, so chains
+    do not pile up brackets around nothing.
+
+    Repeated until nothing changes, so a definition may be written in terms
+    of another whichever order the two were entered. parse_defines has
+    already refused cycles, so this terminates; the counter is a belt on
+    top of that brace."""
+    if not text or not table:
+        return text
+    out = str(text)
+    for _ in range(MAX_DEFINES + 1):
+        new = _IDENT_RE.sub(
+            lambda m: (_wrapped(table[m.group(0)]) if m.group(0) in table
+                       else m.group(0)), out)
+        if new == out:
+            return out
+        out = new
+    return out
+
+
+def expand_defines_in_desc(desc, table):
+    """The same, but only in a circuit description's *values*.
+
+    Names and nodes are left alone: `Define r1 = 5` must not rename the
+    element r1, and a node called `a` must stay a node. _IDENTIFIER_FIELD_IDX
+    is the same map prepare_inputs uses to draw that line."""
+    if not desc or not table:
+        return desc
+    from symbulator.elements import parse_circuit, _IDENTIFIER_FIELD_IDX
+    try:
+        elements = parse_circuit(desc, expand_si=False)
+    except Exception:
+        # Not parseable yet. Leave it be and let the real validation say so
+        # -- expanding blind would have to treat names and nodes as values.
+        return desc
+    changed = False
+    for el in elements:
+        ident = _IDENTIFIER_FIELD_IDX.get(el.kind, ())
+        for idx in range(len(el.fields)):
+            if idx in ident:
+                continue
+            new = expand_defines(el.fields[idx], table)
+            if new != el.fields[idx]:
+                el.fields[idx] = new
+                changed = True
+    if not changed:
+        return desc
+    return ":".join(e.name + "," + ",".join(e.fields) for e in elements)
+
+
+def define_shadow_notices(table, desc):
+    """Warn where a definition takes over a name the circuit itself answers.
+
+    `Define ir1 = 5` on a circuit containing r1 replaces every mention of
+    that current with 5, including the ones meant as the real answer. That
+    is legal and occasionally wanted, so it warns rather than refuses."""
+    if not table or not desc:
+        return []
+    from symbulator.elements import parse_circuit
+    try:
+        elements = parse_circuit(desc, expand_si=False)
+    except Exception:
+        return []
+    answers = set(answer_aliases(elements) or {})
+    clash = [n for n in table if n in answers]
+    return [f"{n} is both a definition and one of this circuit's own answers; "
+            f"the definition wins everywhere it appears." for n in clash]
+
+
 def _validate_extras(equations, unknowns, conditions) -> str | None:
     """Validate the expert-mode extras (lists of strings)."""
     for label, items, rx in (("equation", equations, _ALLOWED_EQ),

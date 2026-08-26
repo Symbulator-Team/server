@@ -1124,6 +1124,20 @@ units: yes</pre>
     <textarea id="desc" spellcheck="false" style="margin-top:.9rem"
       placeholder="e1,1,0,5&#10;r1,1,2,1'k&#10;r2,2,0,1'k"></textarea>
 
+    <!-- The Define field. Versions 7 and 8 had `Define vx=va-vb`, which the
+         calculator resolved wherever the name was typed. Version 9 parses
+         text and has no such variable space, so the equivalent is to expand
+         the name before anything reads it -- which is what this does, to
+         every input on the page and not only the netlist above. -->
+    <label for="defines" style="margin-top:.9rem">Define
+      <span class="hint">— one per line, <code>name = expression</code>.
+      Each name is replaced wherever it appears, in the circuit and in every
+      other box. E.g. <code>vx = va-vb</code>, then use <code>vx</code> as a
+      dependent source's value.</span>
+    </label>
+    <textarea id="defines" spellcheck="false" rows="2"
+      placeholder="vx = va-vb"></textarea>
+
     <!-- The impulse is spelled with a Greek delta, which most keyboards
          cannot type. Rather than make people hunt for a character map, put
          it a click away -- but only in the two analyses where an impulse
@@ -1696,7 +1710,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-26 11:40 UTC
+  Symbulator 9 version 2026-08-26 12:09 UTC
 </footer>
 
 <script>
@@ -1901,6 +1915,7 @@ function markAllStale() { markStale('solve', 'evaluate', 'solveq', 'plot'); }
 // Expert Mode fields but not the display settings.
 const STALE_ON_CHANGE = [
   [['desc'], ['solve', 'plot']],
+  [['defines'], ['solve', 'evaluate', 'solveq', 'plot']],
   [['tool', 'equivType', 'domain', 'omega', 'vars', 'limitVars', 'n1', 'n2', 'kind'], ['solve']],
   [['eqs', 'conds', 'unks', 'expertEnabled'], ['solve', 'plot']],
   [['digits', 'nDigits', 'siUnits', 'showUnits', 'useRms', 'polarPhasors'], ['solve', 'evaluate', 'solveq']],
@@ -2149,6 +2164,8 @@ function applyCircuit(c) {
   // Evaluate and the standalone "Solve equations" tool -- both stay
   // disabled until the circuit is solved (see activatePostSolve), but
   // pre-filling them now means they're ready the moment it is.
+  $('defines').value = (c.defines || []).join('
+');
   $('evalExpr').value = c.evaluate || '';
   $('evalConds').value = (c.evaluate_conditions || []).join('\n');
   $('solveqEqs').value = (c.solve_equations || []).join('\n');
@@ -2550,6 +2567,7 @@ function inputsSnapshot() {
     polar: $('polarPhasors').checked,
     // Evaluate and the standalone "Solve equations" tool, if either has
     // something in it right now.
+    defines: linesOf($('defines').value),
     evaluate: $('evalExpr').value.trim(),
     evaluate_conditions: linesOf($('evalConds').value),
     solve_equations: linesOf($('solveqEqs').value),
@@ -2846,6 +2864,7 @@ function clearAllInputs() {
   $('showUnits').checked = true;
   $('useRms').checked = false;
   $('polarPhasors').checked = false;
+  $('defines').value = '';
   // The other three tools
   $('evalExpr').value = ''; $('evalConds').value = '';
   $('solveqEqs').value = ''; $('solveqConds').value = ''; $('solveqUnks').value = '';
@@ -3182,6 +3201,7 @@ async function solve(suffixChoices) {
   try {
     const body = {
       desc: $('desc').value,
+      defines: linesOf($('defines').value),
       domain: domainSel.value,
       omega: $('omega').value,
       variables: $('vars').value,
@@ -3405,6 +3425,7 @@ async function plot() {
   try {
     const body = {
       desc: $('desc').value, tool: tool === 'bode' ? 'bode' : 'time',
+      defines: linesOf($('defines').value),
       key: $('plotKey').value, min: $('plotMin').value, max: $('plotMax').value,
       n: $('plotN').value,
       ...expertFields()
@@ -3558,6 +3579,7 @@ async function evaluate() {
       // s, so it means something only when the answers are in s.
       body: JSON.stringify({ expr: $('evalExpr').value, values: last.values,
                              conditions: $('evalConds').value,
+                             defines: linesOf($('defines').value),
                              domain: last.domain || '',
                              ...roundingState(), si: $('siUnits').checked })
     });
@@ -3612,6 +3634,7 @@ async function solveEquations() {
         equations: $('solveqEqs').value,
         unknowns: $('solveqUnks').value,
         conditions: $('solveqConds').value,
+        defines: linesOf($('defines').value),
         values: last.values,
         domain: last.domain || '',
         ...roundingState(),

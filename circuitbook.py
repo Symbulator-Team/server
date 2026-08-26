@@ -107,6 +107,10 @@ _KEYS = {
 # and kept as a circuit line rather than quietly dropped.
 _MULTI = {"equations": "equations",
           "conditions": "conditions",
+          # The Define field: `name = expression` shorthands, expanded
+          # into every input before anything is parsed. Repeatable, one
+          # definition per line, so plural like the rest of this group.
+          "defines": "defines",
           # Evaluate's own Conditions box (#96). Named for its card, like
           # `solve_conditions` is, so it cannot collide with a circuit's
           # Expert Mode `conditions` above -- three different boxes, three
@@ -247,8 +251,13 @@ def format_book(circuits: List[dict], title: str = "") -> str:
         # 1. Circuit description.
         out.append(c.get("desc", "").strip())
 
-        # 2. Analysis type, then (if applicable) Expert Mode.
+        # 2. The Define field, then analysis type, then (if applicable)
+        # Expert Mode. Definitions come first because they are read before
+        # anything else is: they belong directly under the netlist they
+        # rewrite, not among the settings.
         analysis: List[str] = []
+        for val in c.get("defines", []) or []:
+            analysis.append(f"defines: {val}")
         for key, field in (("analysis", "domain"), ("omega", "omega"),
                            ("variables", "vars"), ("tool", "tool"),
                            ("n1", "n1"), ("n2", "n2"), ("kind", "kind"),

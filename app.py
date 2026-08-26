@@ -60,6 +60,8 @@ from symbulator_ui import (                                   # noqa: E402
     normalise_imaginary,
     plot_time_ui, bode_ui,
     _validate, _validate_extras, _expand_and, _clean_digits, _exc_text,
+    parse_defines, expand_defines, expand_defines_in_desc,
+    define_shadow_notices,
     _ALLOWED, _ALLOWED_EQ, _ALLOWED_COND, _VARNAME,
     MAX_DESC_LEN, MAX_OMEGA_LEN, MAX_VARIABLES, MAX_EXTRA, MAX_EXTRA_LEN,
     MAX_PLOT_POINTS, VALID_DOMAINS,
@@ -344,6 +346,14 @@ def api_solveq():
                       if ln.strip()]
     conditions = _expand_and(conditions)
 
+    defines, define_err = parse_defines(data.get("defines") or "")
+    if define_err:
+        return jsonify({"ok": False, "error": define_err}), 400
+    if defines:
+        equations = [expand_defines(e, defines) for e in equations]
+        conditions = [expand_defines(c, defines) for c in conditions]
+        unknowns = [expand_defines(u, defines) for u in unknowns]
+
     if not equations:
         return jsonify({"ok": False,
                         "error": "Enter at least one equation to solve."}), 400
@@ -456,6 +466,20 @@ def api_solve():
                       re.split(r"[,\s]+", str(data.get("unknowns") or ""))
                       if u.strip()]
 
+    # The Define field, expanded before anything else looks at the text --
+    # including the ambiguity check below, so a definition that introduces
+    # a bare "1k" is questioned exactly as if it had been typed inline.
+    defines, define_err = parse_defines(_lines("defines"))
+    if define_err:
+        return jsonify({"ok": False, "error": define_err}), 400
+    define_notices = []
+    if defines:
+        define_notices = define_shadow_notices(defines, desc)
+        desc = expand_defines_in_desc(desc, defines)
+        extra_equations = [expand_defines(e, defines) for e in extra_equations]
+        extra_conditions = [expand_defines(c, defines) for c in extra_conditions]
+        extra_unknowns = [expand_defines(u, defines) for u in extra_unknowns]
+
     err = _validate(desc, domain, omega, variables)
     if not err:
         err = _validate_extras(extra_equations, extra_unknowns, extra_conditions)
@@ -548,10 +572,10 @@ def api_solve():
         # The notes matter most when the solve failed: "normalised '5*i'
         # to '5j'" is often the explanation for the error underneath it.
         return jsonify({"ok": False, "error": payload, "elapsed": elapsed,
-                        "notes": imaginary_notes}), 422
+                        "notes": define_notices + imaginary_notes}), 422
 
     payload.setdefault("notes", [])
-    payload["notes"] = imaginary_notes + list(payload["notes"])
+    payload["notes"] = define_notices + imaginary_notes + list(payload["notes"])
     # solve_ui may have switched "exact" to "approximate" itself (an
     # approximate value was found in the inputs) -- echo back what it
     # actually used, not what was requested, so the UI can reflect it.
@@ -646,6 +670,15 @@ def api_plot():
                       re.split(r"[,\s]+", str(data.get("unknowns") or ""))
                       if u.strip()]
 
+    defines, define_err = parse_defines(_lines("defines"))
+    if define_err:
+        return jsonify({"ok": False, "error": define_err}), 400
+    if defines:
+        desc = expand_defines_in_desc(desc, defines)
+        extra_equations = [expand_defines(e, defines) for e in extra_equations]
+        extra_conditions = [expand_defines(c, defines) for c in extra_conditions]
+        extra_unknowns = [expand_defines(u, defines) for u in extra_unknowns]
+
     err = None
     if not desc:
         err = "Please enter a circuit description."
@@ -700,9 +733,14 @@ def api_evaluate():
     data = request.get_json(silent=True) or {}
     expr = str(data.get("expr", "")).strip()
     values = data.get("values") or {}
+    defines, define_err = parse_defines(data.get("defines") or "")
+    if define_err:
+        return jsonify({"ok": False, "error": define_err}), 400
 
     if not expr:
         return jsonify({"ok": False, "error": "Enter an expression to evaluate."}), 400
+    if defines:
+        expr = expand_defines(expr, defines)
     if len(expr) > _EXPR_MAX or not _ALLOWED.match(expr) or "__" in expr:
         return jsonify({"ok": False, "error": "Expression contains invalid characters."}), 400
     if not isinstance(values, dict) or len(values) > 300:
@@ -727,6 +765,8 @@ def api_evaluate():
         conditions = [ln.strip() for ln in str(raw_conds).splitlines()
                       if ln.strip()]
     conditions = _expand_and(conditions)
+    if defines:
+        conditions = [expand_defines(c, defines) for c in conditions]
     if len(conditions) > _MAX_SOLVE_EQS:
         return jsonify({"ok": False,
                         "error": f"Too many conditions "
