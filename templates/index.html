@@ -583,6 +583,11 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .examples-menu { position: relative; display: inline-block; }
   .examples-menu > summary { list-style: none; cursor: pointer; }
   .examples-menu > summary::-webkit-details-marker { display: none; }
+  /* Hangs below the summary by default; sizeExamplesMenu() flips it above
+     when the window is short enough that there is more room up there. */
+  .examples-panel.flip-up {
+    top: auto; bottom: 100%; margin-top: 0; margin-bottom: .35rem;
+  }
   .examples-panel {
     position: absolute; z-index: 20; top: 100%; left: 0; margin-top: .35rem;
     min-width: 15rem; max-width: 22rem;
@@ -594,7 +599,19 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     margin: .1rem .35rem .4rem; font-size: .72rem; font-weight: 600;
     letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
   }
-  .examples-panel ul { list-style: none; margin: 0; padding: 0; }
+  /* The list has to be bounded. This menu was written when there were six
+     input files and grew to nineteen as the tutorial's lessons were added;
+     an absolutely-positioned panel with no ceiling simply ran twelve
+     hundred pixels down a seven-hundred-pixel window, with the last
+     lessons off the bottom of the screen and no way to reach them.
+     `min()` so it is short on a laptop and not silly on a tall monitor,
+     and `overscroll-behavior` so reaching the end of the list does not
+     start scrolling the page behind it. */
+  .examples-panel ul {
+    list-style: none; margin: 0; padding: 0;
+    max-height: min(24rem, 55vh); overflow-y: auto;
+    overscroll-behavior: contain;
+  }
   .examples-panel li + li { margin-top: .1rem; }
   .examples-panel button {
     display: block; width: 100%; text-align: left;
@@ -1710,7 +1727,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-26 13:17 UTC
+  Symbulator 9 version 2026-08-26 20:13 UTC
 </footer>
 
 <script>
@@ -2164,8 +2181,7 @@ function applyCircuit(c) {
   // Evaluate and the standalone "Solve equations" tool -- both stay
   // disabled until the circuit is solved (see activatePostSolve), but
   // pre-filling them now means they're ready the moment it is.
-  $('defines').value = (c.defines || []).join('
-');
+  $('defines').value = (c.defines || []).join('\n');
   $('evalExpr').value = c.evaluate || '';
   $('evalConds').value = (c.evaluate_conditions || []).join('\n');
   $('solveqEqs').value = (c.solve_equations || []).join('\n');
@@ -2288,6 +2304,40 @@ function buildExamplesMenu() {
     list.appendChild(li);
   });
 }
+
+// How tall the list may be, measured rather than guessed. The panel hangs
+// below a summary that sits some way down the page, so a CSS ceiling alone
+// cannot know how much room is left underneath it -- with nineteen input
+// files a 55vh cap still ran the panel past the bottom of the window. This
+// gives the list whatever is actually there, with a floor so it never
+// collapses to a sliver on a short window.
+function sizeExamplesMenu() {
+  const menu = $('examplesMenu');
+  if (!menu || !menu.open) return;
+  const panel = menu.querySelector('.examples-panel');
+  const list = $('examplesList');
+  if (!panel || !list) return;
+
+  // Measure unconstrained first, and from the summary rather than the panel:
+  // the panel's own top moves once we flip it, and measuring a thing to
+  // decide where to put it has to start from something that does not.
+  list.style.maxHeight = '';
+  panel.classList.remove('flip-up');
+  const anchor = menu.querySelector('summary').getBoundingClientRect();
+  const chrome = panel.getBoundingClientRect().height
+                 - list.getBoundingClientRect().height;
+  const gap = 6, edge = 12;
+  const below = window.innerHeight - anchor.bottom - gap - chrome - edge;
+  const above = anchor.top - gap - chrome - edge;
+
+  // Hang it downwards unless there is meaningfully more room the other way,
+  // which is what happens on a short window with the menu halfway down it.
+  const up = above > below;
+  panel.classList.toggle('flip-up', up);
+  list.style.maxHeight = Math.max(120, up ? above : below) + 'px';
+}
+$('examplesMenu').addEventListener('toggle', sizeExamplesMenu);
+window.addEventListener('resize', sizeExamplesMenu);
 
 // Open one of them. `quiet` is the first load at startup, where there is
 // nothing yet to discard and nothing to say about it.
