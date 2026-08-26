@@ -547,14 +547,14 @@ units: yes
 [TR5's Example 4-8 (Symbolic)]
 
 ei,a,0,vs
-ed,1,0,μ*(vx)
+ed,1,0,μ*(va-vb)
 ro,b,1,ro
 
 analysis: dc
 tool: th
 n1: b
 n2: 0
-note: The calculator defines vx as va-vb before running this. Version 9 has no equivalent, so vx stays a free symbol and the answers come back in terms of it.
+note: The calculator defines vx as va-vb first; version 9 writes the node difference straight into the source's value.
 rounding: exact
 si: no
 units: yes
