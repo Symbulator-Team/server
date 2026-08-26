@@ -849,167 +849,86 @@ def _with_unit(plain: str, latex: str, unit: str, show: bool):
 # Names that cannot be used, because their answers collide
 # --------------------------------------------------------------------------
 #
-# SymPy parses the user's input before Symbulator sees it, and it owns a lot
-# of short names. An element called `e` produces the answer `re`, which is
-# SymPy's real-part function; a short called `s` produces `is`, a Python
-# keyword. Those inputs do not fail cleanly -- they are read as the function
-# and quietly mean something else.
+# An element called `s` produces the answer `is`, which is a Python keyword;
+# such an input does not fail cleanly, it is read as something else.
 #
-# This list is generated, not hand-picked: for every name Python or SymPy
-# owns, ask whether Symbulator could produce it as <quantity><element> --
-# with the element's name starting with its kind letter, the quantity drawn
-# from what that kind actually reports (measured by probing each kind in DC
-# and AC), and the port suffixes a transformer or two-port adds. Names that
-# cannot arise are not listed: there is no element kind `i`, so `pi` is
-# impossible and `i` is not banned.
+# Derived, not listed. Until 26 Aug 2026 this was a hand-generated table of
+# 129 element names and 6 node names, built by asking what Symbulator could
+# produce as <quantity><element> for every name Python or SymPy owns. It was
+# measured that day against the namespace the parser really has, and **none
+# of the 129 was dangerous**:
 #
-# Roberto's ruling, 24 Aug 2026: an outright ban, not a warning. Warnings
-# are for ambiguity -- where the user might have meant either reading. This
-# is not ambiguous; it is a name that cannot work.
+#   * `_allowed_namespace()` exposes 35 curated names -- the trig set,
+#     exp/log, Heaviside/DiracDelta, pr, re, im, a few constants -- and every
+#     other identifier is already a plain Symbol. So `solve_poly_system`,
+#     `prime_valuation` and 124 others were guarding a namespace that is not
+#     there. SymPy's `sec` is not there either, which is why `ec` is a
+#     perfectly good element name.
+#   * Of the 35, the callable ones cannot be shadowed: `_alias_pattern` ends
+#     with `(?!\s*\()`, so `re(x)` and `pr(6,3)` are never rewritten however
+#     the circuit is named. Only a *bare* token is, and a bare function name
+#     means nothing in an expression.
 #
-# The documentation was renamed off `e` (113 circuits, e -> e1) before this
-# landed, since `e` was its standard name for a lone source.
+# That leaves names a keyword would produce. Deriving them keeps the guard
+# honest: add a constant to the namespace and it is covered automatically,
+# rather than by remembering to edit a list.
+#
+# The element name must also start with its kind letter, so most collisions
+# cannot arise at all -- there is no element kind `i`, so `pi` is impossible
+# and `i` is not banned.
 
-BANNED_ELEMENT_NAMES = {
-    'e': ('re', "a SymPy function"),
-    's': ('is', 'a Python keyword'),
-    'ec': ('sec', "a SymPy function"),
-    'em': ('rem', "a SymPy function"),
-    'er': ('per', "a SymPy function"),
-    'ow': ('pow', 'a Python builtin'),
-    'ech': ('sech', "a SymPy function"),
-    'eta': ('zeta', "a SymPy function"),
-    'ets': ('sets', "a SymPy module"),
-    'gcd': ('igcd', "a SymPy function"),
-    'lcm': ('ilcm', "a SymPy function"),
-    'lex': ('ilex', "a SymPy name"),
-    'lot': ('plot', "a SymPy function"),
-    'oly': ('poly', "a SymPy function"),
-    'rem': ('prem', "a SymPy function"),
-    'rod': ('prod', "a SymPy function"),
-    'eros': ('zeros', "a SymPy function"),
-    'olve': ('solve', "a SymPy function"),
-    'olys': ('polys', "a SymPy module"),
-    'repr': ('srepr', "a SymPy function"),
-    'rime': ('prime', "a SymPy function"),
-    'ring': ('sring', "a SymPy function"),
-    'efine': ('refine', "a SymPy function"),
-    'eries': ('series', "a SymPy function"),
-    'eterr': ('seterr', "a SymPy function"),
-    'eturn': ('return', 'a Python keyword'),
-    'exquo': ('pexquo', "a SymPy function"),
-    'grlex': ('igrlex', "a SymPy name"),
-    'osify': ('posify', "a SymPy function"),
-    'retty': ('pretty', "a SymPy function"),
-    'educed': ('reduced', "a SymPy function"),
-    'elease': ('release', "a SymPy module"),
-    'eshape': ('reshape', "a SymPy function"),
-    'esidue': ('residue', "a SymPy function"),
-    'olvers': ('solvers', "a SymPy module"),
-    'olylog': ('polylog', "a SymPy function"),
-    'owsimp': ('powsimp', "a SymPy function"),
-    'review': ('preview', "a SymPy function"),
-    'rimenu': ('primenu', "a SymPy function"),
-    'rimepi': ('primepi', "a SymPy function"),
-    'roduct': ('product', "a SymPy function"),
-    'solate': ('isolate', "a SymPy function"),
-    'sprime': ('isprime', "a SymPy function"),
-    'equence': ('sequence', "a SymPy function"),
-    'grevlex': ('igrevlex', "a SymPy name"),
-    'lotting': ('plotting', "a SymPy module"),
-    'olarify': ('polarify', "a SymPy function"),
-    'olveset': ('solveset', "a SymPy function"),
-    'refixes': ('prefixes', "a SymPy function"),
-    'rinting': ('printing', "a SymPy module"),
-    'eal_root': ('real_root', "a SymPy function"),
-    'ectorize': ('vectorize', "a SymPy name"),
-    'esultant': ('resultant', "a SymPy function"),
-    'olygamma': ('polygamma', "a SymPy function"),
-    'ostfixes': ('postfixes', "a SymPy function"),
-    'owdenest': ('powdenest', "a SymPy function"),
-    'revprime': ('prevprime', "a SymPy function"),
-    'rimitive': ('primitive', "a SymPy function"),
-    'rimorial': ('primorial', "a SymPy function"),
-    'rint_gtk': ('print_gtk', "a SymPy function"),
-    's_convex': ('is_convex', "a SymPy function"),
-    'eal_roots': ('real_roots', "a SymPy function"),
-    'olar_lift': ('polar_lift', "a SymPy function"),
-    'rimeomega': ('primeomega', "a SymPy function"),
-    'rimerange': ('primerange', "a SymPy function"),
-    'rint_glsl': ('print_glsl', "a SymPy function"),
-    'rint_tree': ('print_tree', "a SymPy function"),
-    's_perfect': ('is_perfect', "a SymPy function"),
-    'efine_root': ('refine_root', "a SymPy function"),
-    'eriodicity': ('periodicity', "a SymPy function"),
-    'ermutedims': ('permutedims', "a SymPy function"),
-    'ollard_pm1': ('pollard_pm1', "a SymPy function"),
-    'ollard_rho': ('pollard_rho', "a SymPy function"),
-    'rint_ccode': ('print_ccode', "a SymPy function"),
-    'rint_fcode': ('print_fcode', "a SymPy function"),
-    'rint_latex': ('print_latex', "a SymPy function"),
-    'rint_rcode': ('print_rcode', "a SymPy function"),
-    's_abundant': ('is_abundant', "a SymPy function"),
-    's_amicable': ('is_amicable', "a SymPy function"),
-    'eparatevars': ('separatevars', "a SymPy function"),
-    'olve_linear': ('solve_linear', "a SymPy function"),
-    'retty_print': ('pretty_print', "a SymPy function"),
-    'rime_decomp': ('prime_decomp', "a SymPy function"),
-    'rimefactors': ('primefactors', "a SymPy function"),
-    'rint_jscode': ('print_jscode', "a SymPy function"),
-    'rint_mathml': ('print_mathml', "a SymPy function"),
-    'rint_python': ('print_python', "a SymPy function"),
-    's_deficient': ('is_deficient', "a SymPy function"),
-    's_monotonic': ('is_monotonic', "a SymPy function"),
-    'erfect_power': ('perfect_power', "a SymPy function"),
-    'lot_backends': ('plot_backends', "a SymPy name"),
-    'lot_implicit': ('plot_implicit', "a SymPy function"),
-    's_carmichael': ('is_carmichael', "a SymPy function"),
-    's_decreasing': ('is_decreasing', "a SymPy function"),
-    's_increasing': ('is_increasing', "a SymPy function"),
-    'termonomials': ('itermonomials', "a SymPy function"),
-    'emove_handler': ('remove_handler', "a SymPy function"),
-    'oly_from_expr': ('poly_from_expr', "a SymPy function"),
-    'rimitive_root': ('primitive_root', "a SymPy function"),
-    'educed_totient': ('reduced_totient', "a SymPy function"),
-    'lot_parametric': ('plot_parametric', "a SymPy function"),
-    'rime_valuation': ('prime_valuation', "a SymPy function"),
-    'roper_divisors': ('proper_divisors', "a SymPy function"),
-    's_quad_residue': ('is_quad_residue', "a SymPy function"),
-    'egister_handler': ('register_handler', "a SymPy function"),
-    'rincipal_branch': ('principal_branch', "a SymPy function"),
-    'rint_maple_code': ('print_maple_code', "a SymPy function"),
-    'eriodic_argument': ('periodic_argument', "a SymPy function"),
-    'olve_poly_system': ('solve_poly_system', "a SymPy function"),
-    'rimitive_element': ('primitive_element', "a SymPy function"),
-    's_mersenne_prime': ('is_mersenne_prime', "a SymPy function"),
-    's_nthpow_residue': ('is_nthpow_residue', "a SymPy function"),
-    's_primitive_root': ('is_primitive_root', "a SymPy function"),
-    'olve_triangulated': ('solve_triangulated', "a SymPy function"),
-    'reorder_traversal': ('preorder_traversal', "a SymPy name"),
-    'educe_inequalities': ('reduce_inequalities', "a SymPy function"),
-    'olve_linear_system': ('solve_linear_system', "a SymPy function"),
-    'ostorder_traversal': ('postorder_traversal', "a SymPy function"),
-    's_zero_dimensional': ('is_zero_dimensional', "a SymPy function"),
-    'roper_divisor_count': ('proper_divisor_count', "a SymPy function"),
-    'educe_abs_inequality': ('reduce_abs_inequality', "a SymPy function"),
-    'olve_poly_inequality': ('solve_poly_inequality', "a SymPy function"),
-    'olve_linear_system_LU': ('solve_linear_system_LU', "a SymPy function"),
-    's_strictly_decreasing': ('is_strictly_decreasing', "a SymPy function"),
-    's_strictly_increasing': ('is_strictly_increasing', "a SymPy function"),
-    'educe_abs_inequalities': ('reduce_abs_inequalities', "a SymPy function"),
-    'olve_undetermined_coeffs': ('solve_undetermined_coeffs', "a SymPy function"),
-    'olve_rational_inequalities': ('solve_rational_inequalities', "a SymPy function"),
-    'olve_univariate_inequality': ('solve_univariate_inequality', "a SymPy function"),
-}
+_BANNED_CACHE = {}
 
-BANNED_NODE_NAMES = {
-    'ar': ('var', "a SymPy function"),
-    'iete': ('viete', "a SymPy function"),
-    'ring': ('vring', "a SymPy function"),
-    'field': ('vfield', "a SymPy function"),
-    'ectorize': ('vectorize', "a SymPy name"),
-    'ariations': ('variations', "a SymPy function"),
-}
+
+def _collidable_names() -> dict:
+    """{produced name: what owns it} -- names a bare token could shadow.
+
+    A callable is safe: the alias pattern will not rewrite `name(`, and a
+    bare function name is not an expression. A non-callable is not safe --
+    `pi` used bare is a number, and silently meaning something else is
+    exactly the failure this guards."""
+    import keyword
+
+    from symbulator.si_prefix import _allowed_namespace
+
+    owned = {name: "a Python keyword" for name in keyword.kwlist}
+    for name, obj in _allowed_namespace(True).items():
+        if not callable(obj):
+            owned.setdefault(name, "a name Symbulator reserves")
+    return owned
+
+
+def banned_element_names() -> dict:
+    """{element name: (answer it would produce, what owns that)}."""
+    if "elements" not in _BANNED_CACHE:
+        out = {}
+        for kind, quantities in _QUANTITIES_BY_KIND.items():
+            # An empty tuple is a real answer: a mutual inductance reports
+            # nothing, so it can produce no alias and ban no name. Do not
+            # fall back to the defaults here.
+            for quantity in quantities:
+                for produced, owner in _collidable_names().items():
+                    if not produced.startswith(quantity):
+                        continue
+                    name = produced[len(quantity):]
+                    # The name has to be one a user could actually write:
+                    # it starts with the kind letter.
+                    if name and name.startswith(kind):
+                        out[name] = (produced, owner)
+        _BANNED_CACHE["elements"] = out
+    return _BANNED_CACHE["elements"]
+
+
+def banned_node_names() -> dict:
+    """Same, for nodes, whose only answer is a voltage."""
+    if "nodes" not in _BANNED_CACHE:
+        out = {}
+        for produced, owner in _collidable_names().items():
+            for quantity in _NODE_QUANTITIES:
+                if produced.startswith(quantity) and len(produced) > len(quantity):
+                    out[produced[len(quantity):]] = (produced, owner)
+        _BANNED_CACHE["nodes"] = out
+    return _BANNED_CACHE["nodes"]
 
 
 def banned_name_errors(elements) -> list:
@@ -1019,9 +938,10 @@ def banned_name_errors(elements) -> list:
 
     out, seen = [], set()
     for el in elements:
-        if el.name in BANNED_ELEMENT_NAMES and el.name not in seen:
+        banned = banned_element_names()
+        if el.name in banned and el.name not in seen:
             seen.add(el.name)
-            produces, owner = BANNED_ELEMENT_NAMES[el.name]
+            produces, owner = banned[el.name]
             out.append(
                 f"`{el.name}` cannot be used as an element name. Its answers "
                 f"would be spelled `{produces}`, and {produces} is already "
@@ -1031,9 +951,10 @@ def banned_name_errors(elements) -> list:
             if idx >= len(el.fields):
                 continue
             node = el.fields[idx]
-            if node in BANNED_NODE_NAMES and node not in seen:
+            banned_nodes = banned_node_names()
+            if node in banned_nodes and node not in seen:
                 seen.add(node)
-                produces, owner = BANNED_NODE_NAMES[node]
+                produces, owner = banned_nodes[node]
                 out.append(
                     f"`{node}` cannot be used as a node name. Its voltage "
                     f"would be spelled `{produces}`, and {produces} is "
