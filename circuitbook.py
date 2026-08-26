@@ -91,6 +91,10 @@ _KEYS = {
     "si": "si",
     "units": "units",
     "rms": "rms",
+    # Show AC answers as polar phasors. The front end has always saved and
+    # restored this, but it was missing here, so it was dropped on the way
+    # into the file and every reload came back rectangular.
+    "polar": "polar",
     # The Evaluate box, and the standalone "Solve equations" tool -- both
     # separate from a circuit's own Expert Mode (equation/condition/
     # unknowns above), which is why they get their own key names instead
@@ -122,7 +126,7 @@ _MULTI = {"equations": "equations",
 # JSON fields (the _KEYS values above, not the file-text keys) that are
 # booleans rather than plain text -- parse_book converts their text
 # ("yes"/"no"/...) to real True/False so the front end never has to.
-_BOOL_FIELDS = {"si", "units", "rms", "solve_real_only"}
+_BOOL_FIELDS = {"si", "units", "rms", "polar", "solve_real_only"}
 _TRUE_WORDS = {"yes", "true", "1", "on"}
 
 _SECTION_RE = re.compile(r"^\[(?P<name>.+)\]\s*$")
@@ -286,6 +290,9 @@ def format_book(circuits: List[dict], title: str = "") -> str:
         # there. Left out entirely unless the analysis is AC.
         if (c.get("domain") or "dc").strip().lower() == "ac":
             meta.append(f"rms: {_bool_word(c.get('rms'))}")
+            # Polar form is an AC-only display too: outside AC every answer
+            # is real or a function of s or t, and the checkbox greys out.
+            meta.append(f"polar: {_bool_word(c.get('polar'))}")
 
         # 4. Evaluate / Solve-equations / Plot, if any were in use.
         extra: List[str] = []

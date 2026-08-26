@@ -1,0 +1,268 @@
+# Symbulator circuit book
+
+title: Circuits for Lesson 7 of the Tutorial
+
+[AS7's Example 9.9]
+
+e,1,0,10
+r1,1,2,5
+c,2,0,.1
+
+analysis: ac
+omega: 4
+note: The first AC problem. The source is the phasor of 10 cos(4t), and the capacitor is in farads, which is why the frequency is needed.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Practice Problem 9.9]
+
+e,1,0,(20∠30°)
+r1,1,2,4
+l,2,0,.2
+
+analysis: ac
+omega: 10
+note: The source is written in polar form, which version 9 reads as typed.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Example 9.10]
+
+ca,1,2,2'm
+r1,2,3,3
+cb,3,0,10'm
+l1,2,4,.2
+r2,4,0,8
+
+analysis: ac
+omega: 50
+tool: er
+n1: 1
+n2: 0
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: no
+
+
+[AS7's Problem 9.35]
+
+e,1,0,50
+r,1,2,10
+c,2,3,5'm
+l,3,0,20'm
+
+analysis: ac
+omega: 200
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Problem 9.39]
+
+e,1,0,12
+r1,1,0,4+20j+[16,-14j+25j]
+
+analysis: ac
+omega: 1
+note: Every value is already an impedance, so the frequency is asked for but never used. The bracket shorthand does the parallel reduction inside the value.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Problem 9.73]
+
+r10,1,0,6j
+r20,2,0,8j
+r30,3,0,8j
+r40,4,0,12j
+r12,1,2,2
+r23,2,3,-6j
+r34,3,4,4
+r14,1,4,-4j
+
+analysis: ac
+omega: 1
+tool: er
+n1: 1
+n2: 0
+note: Eight impedances and no source, so this is the equivalent-impedance tool rather than a solve.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: no
+
+
+[AS7's Example 10.1 (Dependent source)]
+
+e,1,0,20
+r1,1,2,10
+cx,2,0,.1
+l1,2,3,1
+j1,0,3,2*icx
+l2,3,0,.5
+
+analysis: ac
+omega: 4
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Practice Problem 10.1 (Dependent source)]
+
+j,0,1,10
+rx,1,0,2
+c,1,2,.2
+l,2,0,2
+r,2,3,4
+e,3,0,3*vrx
+
+analysis: ac
+omega: 2
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Example 10.13 (Dependent source)]
+
+e,1,0,(8∠-40°)
+r1,1,2,4'k
+co,2,0,2'µ
+l1,2,3,50'm
+j1,0,3,.5*ico
+ro,3,0,2'k
+
+analysis: ac
+omega: 1000
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Example 10.14 (Dependent source)]
+
+j1,0,1,3
+r1,1,0,1
+rx,1,0,-1j
+r3,1,2,-2j
+j2,1,2,.2*vrx
+r4,1,2,2+2j
+r5,2,0,-1j
+r6,2,3,2+2j
+e,3,0,(18∠30°)
+
+analysis: ac
+omega: 1
+note: Values all in ohms again, so the frequency does not matter.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Problem 9.89 (at 2 kHz, as the book asks)]
+
+c,1,0,c
+r1,1,2,10
+l,2,0,5'm
+
+analysis: ac
+omega: 2*pi*2e3
+tool: er
+n1: 1
+n2: 0
+note: The omega box takes an expression, so the frequency in hertz can be converted in place. Real solutions only, or the answer carries an im(c) term.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: no
+solve_equations: im(zeq) = 0
+solve_unknowns: c
+solve_real_only: yes
+
+
+[AS7's Problem 9.89 (at 2000 rad/s, as it was meant)]
+
+c,1,0,c'µ
+r1,1,2,10
+l,2,0,5'm
+
+analysis: ac
+omega: 2000
+tool: er
+n1: 1
+n2: 0
+note: The capacitance is declared as c'u, so the answer comes out in microfarads. Roberto's reading is that the book asked for 2 kHz when it meant 2000 rad/s.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: no
+solve_equations: im(zeq) = 0
+solve_unknowns: c
+solve_real_only: yes
+
+
+[AS7's Problem 10.69 (Symbolic)]
+
+e,1,0,vs
+c,1,2,c
+r1,2,o,r
+o,0,2,o
+
+analysis: ac
+omega: omega
+note: The omega box takes a name as readily as a number, so the answer comes back as a function of it.
+rounding: exact
+si: no
+units: yes
+rms: no
+polar: no
+evaluate: vo/vs
+
+
+[AS7's Problem 10.77 (Symbolic)]
+
+e,1,0,vs
+r1,1,2,r1
+ca,2,0,ca
+r3,0,3,r3
+o,2,3,o
+cb,3,o,cb
+r2,3,o,r2
+
+analysis: ac
+omega: omega
+note: Everything symbolic including the frequency -- about the limit of what is worth solving this way.
+rounding: exact
+si: no
+units: yes
+rms: no
+polar: no
+evaluate: vo/vs
