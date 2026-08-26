@@ -1,0 +1,235 @@
+# Symbulator circuit book
+
+title: Circuits for Lesson 9 of the Tutorial
+
+[AS7's Examples 12.2 & 12.6 (balanced wye-wye)]
+
+ea0,ag,0,(110∠0°)
+eb0,bg,0,(110∠-120°)
+ec0,cg,0,(110∠120°)
+rat,ag,ad,5-2j
+rbt,bg,bd,5-2j
+rct,cg,cd,5-2j
+ra0,ad,0,10+8j
+rb0,bd,0,10+8j
+rc0,cd,0,10+8j
+
+analysis: ac
+omega: omega
+note: The centre of both wyes can be node 0 only because the system is balanced. Complex power at the source is -2086.2 - 834.5j VA, and at the load sra0+srb0+src0 = 1390.8 + 1112.6j VA.
+rounding: 4
+si: no
+units: yes
+rms: yes
+polar: yes
+evaluate: sea0+seb0+sec0
+
+
+[AS7's Practice Problem 12.2 & 12.6 (three impedances a line)]
+
+ea0,ag,0,(120∠30°)
+eb0,bg,0,(120∠-90°)
+ec0,cg,0,(120∠150°)
+rag,ag,as,.4+.3j
+rbg,bg,bs,.4+.3j
+rcg,cg,cs,.4+.3j
+rat,as,ad,.6+.7j
+rbt,bs,bd,.6+.7j
+rct,cs,cd,.6+.7j
+ra0,ad,0,24+19j
+rb0,bd,0,24+19j
+rc0,cd,0,24+19j
+
+analysis: ac
+omega: omega
+note: Line voltages depend on where you stand: vag-vbg is 207.8 at 60 deg at the generator, 204.6 at 60.03 at the start of the line, 198.7 at 59.71 at its end. Source complex power -1054 - 842.9j VA.
+rounding: 4
+si: no
+units: yes
+rms: yes
+polar: yes
+evaluate: sea0+seb0+sec0
+
+
+[AS7's Example 12.10 (unbalanced wye-wye)]
+
+ea,a,0,(120∠0°)
+eb,b,0,(120∠-120°)
+ec,c,0,(120∠120°)
+ra,a,n,5j
+rb,b,n,10
+rc,c,n,-10j
+
+analysis: ac
+omega: omega
+note: Unbalanced, so the load's centre needs its own node and its voltage is not zero. Complex power is conserved: sea+seb+sec+sra+srb+src comes to nothing.
+rounding: 4
+si: no
+units: yes
+rms: yes
+polar: yes
+evaluate: vn
+
+
+[AS7's Example 12.9 (unbalanced, with a neutral)]
+
+ea,a,0,(100∠0°)
+eb,b,0,(100∠120°)
+ec,c,0,(100∠-120°)
+sn,0,n
+ra,a,n,15
+rb,b,n,10+5j
+rc,c,n,6-8j
+
+analysis: ac
+omega: omega
+note: Not RMS this time. The neutral is a short circuit, and it carries a current precisely because the load is unbalanced.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Example 12.3 (balanced wye-delta)]
+
+ea0,a,0,(100∠10°)
+eb0,b,0,(100∠-110°)
+ec0,c,0,(100∠130°)
+rab,a,b,8+4j
+rca,c,a,8+4j
+rbc,b,c,8+4j
+
+analysis: ac
+omega: omega
+note: The line current is root-three times the phase current and lags it by 30 degrees, which the answers show.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+evaluate: -iea0
+
+
+[AS7's Example 12.11 (wye-delta with line impedances)]
+
+ea1,na1,0,100
+eb1,nb1,0,(100∠-120°)
+ec1,nc1,0,(100∠120°)
+raa,na1,na2,1
+rbb,nb1,nb2,1
+rcc,nc1,nc2,1
+rac,na2,nc2,100+24*pi*j
+rcb,nc2,nb2,100+24*pi*j
+rba,nb2,na2,100+24*pi*j
+
+analysis: ac
+omega: omega
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+evaluate: vna2-vnb2
+
+
+[AS7's Example 12.4 (balanced delta-delta)]
+
+e0a,0,ag,(330∠120°)
+eb0,bg,0,(330∠-120°)
+sat,ag,ad
+sbt,bg,bd
+sct,0,cd
+rab,ad,bd,20-15j
+rbc,bd,cd,20-15j
+rca,cd,ad,20-15j
+
+analysis: ac
+omega: omega
+note: A triangle of three voltage sources cannot be solved -- the third adds an unknown but no information -- so the source opposite the ground node is left out. Everything outside the delta is right; the currents inside the generator are not.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Practice Problem 12.9 (unbalanced delta-delta)]
+
+e0a,0,ag,(440∠120°)
+eb0,bg,0,(440∠-120°)
+sla,ag,ad
+slb,bg,bd
+slc,0,cd
+rab,ad,bd,10-5j
+rbc,bd,cd,16
+rca,cd,ad,8+6j
+
+analysis: ac
+omega: omega
+note: Unbalanced, so all three differ in magnitude as well as angle.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Practice Problem 12.10 (unbalanced, with power)]
+
+e0a,0,ag,(220∠-120°)
+eb0,bg,0,(220∠120°)
+sla,ag,ad
+slb,bg,bd
+slc,0,cd
+rab,ad,bd,-5j
+rbc,bd,cd,10j
+rca,cd,ad,10
+
+analysis: ac
+omega: omega
+rounding: 4
+si: no
+units: yes
+rms: yes
+polar: yes
+evaluate: prca+prab+prbc
+
+
+[AS7's Example 12.12 (unbalanced delta-delta)]
+
+e0a,0,ag,(208∠130°)
+eb0,bg,0,(208∠-110°)
+rla,ag,ad,2+5j
+rlb,bg,bd,2+5j
+rlc,0,cd,2+5j
+rab,ad,bd,50
+rbc,bd,cd,30j
+rca,cd,ad,-40j
+
+analysis: ac
+omega: omega
+note: The generator current Iab cannot be had this way: it is a current inside the delta, and the two-source trick gives up exactly that.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+
+[AS7's Example 12.5 (balanced delta-wye)]
+
+eca,c,a,(210∠120°)
+ebc,b,c,(210∠-120°)
+ra,a,0,40+25j
+rb,b,0,40+25j
+rc,c,0,40+25j
+
+analysis: ac
+omega: omega
+note: Node 0 here is the centre of the load's wye, not a node of the source at all.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes

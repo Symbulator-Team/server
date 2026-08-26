@@ -1,0 +1,151 @@
+# Symbulator circuit book
+
+title: Circuits for Lesson 8 of the Tutorial
+
+[AS7's Example 11.5 (maximum average power)]
+
+e,1,0,10
+r1,1,2,4
+r2,2,0,8-6j
+r3,2,3,5j
+
+analysis: ac
+omega: omega
+tool: th
+n1: 3
+n2: 0
+note: The load that draws the most power is the conjugate of zeq. Version 9 has no separate apmax: in AC, pmax is already the average maximum power.
+rounding: 5
+si: no
+units: yes
+rms: no
+polar: no
+
+
+[AS7's Example 11.10 (power factor)]
+
+e,1,0,30
+r1,1,2,6
+r2,2,0,-2j
+r3,2,0,4
+
+analysis: ac
+omega: omega
+note: The power factor comes from the pf mini-tool, given ve and -ie: 0.97342 leading. The minus sign matters -- ie is the current into the source, and without it the tool says lagging.
+rounding: 5
+si: no
+units: yes
+rms: yes
+polar: no
+evaluate: -pe
+
+
+[AS7's Example 11.13 (complex power)]
+
+e,1,0,220
+r1,1,2,4+2j
+r2,2,0,15-10j
+
+analysis: ac
+omega: omega
+rounding: 5
+si: no
+units: yes
+rms: yes
+polar: no
+evaluate: -se
+
+
+[AS7's Practice Problem 11.10]
+
+e,1,0,165
+r1,1,2,10
+r2,2,0,4j
+r3,2,3,8
+r4,3,0,-6j
+
+analysis: ac
+omega: omega
+note: pf with ve and -ie reads 0.93595 lagging.
+rounding: 5
+si: no
+units: yes
+rms: yes
+polar: no
+evaluate: -pe
+
+
+[AS7's Problem 11.97 (transmission line)]
+
+evs,1,0,240
+rl1,1,2,.1+1j
+rl,2,3,100+1j
+rl2,3,0,.1+1j
+
+analysis: ac
+omega: omega
+rounding: 5
+si: no
+units: yes
+rms: yes
+polar: no
+
+
+[AS7's Problem 11.75 (a and b, the power system)]
+
+e,1,0,240
+r1,1,0,80-50j
+r2,1,0,120+70j
+r3,1,0,60
+
+analysis: ac
+omega: omega
+note: pf with ve and -ie reads 0.99805 leading, which is what makes part (c) come out the way it does.
+rounding: 5
+si: no
+units: yes
+rms: yes
+polar: no
+evaluate: -se
+
+
+[AS7's Problem 11.75 (c, trying a capacitor)]
+
+e,1,0,240
+r1,1,0,80-50j
+r2,1,0,120+70j
+r3,1,0,60
+c,1,0,x
+
+analysis: ac
+omega: 2*pi*50
+note: No positive capacitance can work: part (b) showed the load is already leading, so a capacitor pushes it further the wrong way. Probably why the textbook gives no number here.
+rounding: 5
+si: no
+units: yes
+rms: yes
+polar: no
+solve_equations: im(se) = 0
+solve_unknowns: x
+solve_real_only: yes
+
+
+[AS7's Problem 11.75 (c, an inductor instead)]
+
+e,1,0,240
+r1,1,0,80-50j
+r2,1,0,120+70j
+r3,1,0,60
+l,1,0,x
+
+analysis: ac
+omega: 2*pi*50
+note: Positive, and putting it back in as the inductor's value brings the power factor to 1.
+rounding: 5
+si: no
+units: yes
+rms: yes
+polar: no
+solve_equations: im(se) = 0
+solve_unknowns: x
+solve_real_only: yes
