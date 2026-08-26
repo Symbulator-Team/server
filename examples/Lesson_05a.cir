@@ -26,7 +26,10 @@ r2,2,3,r2
 o,1,2,3
 
 analysis: dc
-note: The chapter reaches for Thevenin / Norton here, which version 9 refuses outright: an ideal op amp has zero output resistance, so the short-circuit round divides by zero. A plain solve gets the same answer -- the Thevenin voltage of an unloaded output is the open-circuit node voltage, v3.
+tool: th
+n1: 3
+n2: 0
+note: The tricky one. An ideal op amp holds its output voltage whatever current is drawn, so the short-circuit round has no solution -- and until 0.5.13 the whole answer was lost with it. Symbulator now measures the short instead of assuming it, and reports what the chapter asserts but never shows: the Norton current is unbounded and the Thevenin resistance is 0.
 rounding: exact
 si: no
 units: yes

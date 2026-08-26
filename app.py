@@ -486,8 +486,9 @@ def api_solve():
     if not err and tool not in _VALID_TOOLS:
         err = "Unknown tool."
     if not err and tool != "solve":
-        if domain not in ("dc", "ac"):
-            err = "Thevenin / impedance / two-port tools work in DC or AC only."
+        if domain not in ("dc", "ac", "fd"):
+            err = ("Thevenin / impedance / two-port tools work in DC, AC "
+                   "or FD -- not in the time domain.")
         elif not (_NODE_RE.match(n1) and _NODE_RE.match(n2)):
             err = "Give the two port nodes (n1 and n2) for this tool."
         elif tool == "port" and kind not in ("z", "y", "h", "g", "a", "b"):

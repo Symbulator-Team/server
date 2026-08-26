@@ -590,7 +590,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   }
   .examples-panel {
     position: absolute; z-index: 20; top: 100%; left: 0; margin-top: .35rem;
-    min-width: 15rem; max-width: 22rem;
+    min-width: 15rem; max-width: 28rem;
     background: var(--card); border: 1px solid var(--line);
     border-radius: 8px; padding: .5rem;
     box-shadow: 0 6px 20px rgba(0,0,0,.18);
@@ -614,7 +614,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   }
   .examples-panel li + li { margin-top: .1rem; }
   .examples-panel button {
-    display: block; width: 100%; text-align: left;
+    display: block; min-width: 100%; white-space: nowrap; text-align: left;
     background: none; border: 0; border-radius: 6px;
     padding: .38rem .35rem; font: inherit; color: inherit; cursor: pointer;
   }
@@ -885,15 +885,21 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
          one, and "Built-in examples" opens the menu of supplied files. That
          link is always shown: it is the way back to the set. -->
     <div class="actions" id="fileActions" style="margin-top:.7rem">
-      <button type="button" id="newFileBtn" class="linkish">New file</button>
-      <!-- The built-in examples are a set of input files now, not one file,
-           so the link opens a list of them rather than loading anything.
-           A <details> because it wants no JavaScript to open and close, and
-           the keyboard reaches it the same way it reaches every other
-           disclosure on the page. It stays visible at all times: it is the
-           way back to the set once a reader has opened one of them. -->
+      <button type="button" id="newFileBtn" class="uploadlbl">Create new</button>
+    </div>
+
+    <!-- The built-in examples are a set of input files now, not one file,
+         so this opens a list of them rather than loading anything. A
+         <details> because it wants no JavaScript to open and close, and the
+         keyboard reaches it the same way it reaches every other disclosure
+         on the page. It stays visible at all times: it is the way back to
+         the set once a reader has opened one of them.
+
+         On its own line rather than in the row above, so its summary starts
+         at the left margin like every other collapsible header here. -->
+    <div style="margin-top:.9rem">
       <details class="examples-menu" id="examplesMenu">
-        <summary class="linkish" id="openExamplesBtn">Built-in examples</summary>
+        <summary class="linkish" id="openExamplesBtn">Built-in Examples</summary>
         <div class="examples-panel">
           <p class="examples-panel-head">Choose an input file</p>
           <ul id="examplesList"></ul>
@@ -1455,6 +1461,16 @@ units: yes</pre>
         <label><input type="checkbox" id="dlAns" checked disabled> answers found</label>
         <button id="dlBtn" disabled>Download</button>
       </div>
+      <p class="hint" style="margin:.9rem 0 0">
+        Or take the answers somewhere they can be worked on further:
+        <b>Export to SymPy</b> writes them out as a small Python script, so
+        every answer arrives as a SymPy expression you can expand, factor,
+        substitute into or plot. Paste it into a Python prompt, a Jupyter
+        notebook, or any online SymPy console.
+      </p>
+      <div class="dl-row" style="margin-top:.6rem">
+        <button id="sympyBtn" disabled>Export to SymPy</button>
+      </div>
     </details>
   </div>
 
@@ -1727,7 +1743,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-26 20:13 UTC
+  Symbulator 9 version 2026-08-26 22:42 UTC
 </footer>
 
 <script>
@@ -1756,10 +1772,12 @@ function syncFields() {
   // The second menu only makes sense once an equivalent has been asked for.
   $('equivField').style.display = toolSel.value === 'equiv' ? 'block' : 'none';
   if (tool !== 'solve') {
-    // th/er/port work in DC or AC only
-    if (domainSel.value === 'fd' || domainSel.value === 'tr') domainSel.value = 'dc';
+    // th/er/port take DC, AC and FD -- the solver's own three. Only the
+    // time domain is out: an equivalent is a statement about a circuit at
+    // a frequency, and tr() is the one analysis that has no such thing.
+    if (domainSel.value === 'tr') domainSel.value = 'dc';
     for (const opt of domainSel.options) {
-      opt.disabled = (opt.value === 'fd' || opt.value === 'tr');
+      opt.disabled = (opt.value === 'tr');
     }
   } else {
     for (const opt of domainSel.options) opt.disabled = false;
@@ -1986,6 +2004,7 @@ function activatePostSolve() {
   $('solveqBtn').disabled = false;
   $('solveqCard').classList.remove('inactive');
   for (const id of ['dlDesc', 'dlEqs', 'dlAns']) $(id).disabled = false;
+  $('sympyBtn').disabled = false;
   $('dlBtn').disabled = false;
   $('dlCard').classList.remove('inactive');
   $('miniBtn').disabled = false;
@@ -2024,6 +2043,7 @@ function clearResults() {
   $('plotOut').innerHTML = '<div class="lcd"><div class="placeholder">— no plot run yet —</div></div>';
   $('plotStatus').textContent = '';
   for (const id of ['dlDesc', 'dlEqs', 'dlAns']) $(id).disabled = true;
+  $('sympyBtn').disabled = true;
   $('dlBtn').disabled = true;
   $('dlCard').classList.add('inactive');
   markAllStale();
@@ -4001,6 +4021,120 @@ $('dlBtn').addEventListener('click', () => {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `symbulator_${last.tool === 'solve' ? last.domain : last.tool}.sym`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+// ---- Export results to SymPy -------------------------------------------
+//
+// Writes the answers out as a script that stands on its own: the imports,
+// one sp.symbols() call declaring everything the answers mention, and one
+// assignment per answer. What arrives at the other end is what the
+// calculator versions gave you for free -- the answers still in a system
+// that can do algebra to them.
+
+// Names that are SymPy's own, not the circuit's, and so are not symbols to
+// declare. `I` is the imaginary unit; the rest are functions and constants
+// the solver may leave in an answer.
+const SYMPY_OWN = new Set([
+  'I', 'pi', 'oo', 'zoo', 'E', 'exp', 'log', 'ln', 'sqrt',
+  'sin', 'cos', 'tan', 'asin', 'acos', 'atan',
+  'sinh', 'cosh', 'tanh', 'Abs', 're', 'im', 'arg', 'conjugate', 'sign',
+  'Heaviside', 'DiracDelta', 'Min', 'Max', 'Piecewise', 'Integer', 'Float',
+  'Rational', 'nan', 'true', 'false'
+]);
+
+function sympySymbolsIn(values) {
+  const found = new Set();
+  const ident = /(?<![\w.])([A-Za-z_]\w*)/g;
+  for (const expr of Object.values(values)) {
+    let m;
+    while ((m = ident.exec(String(expr))) !== null) {
+      if (!SYMPY_OWN.has(m[1])) found.add(m[1]);
+    }
+  }
+  return [...found].sort();
+}
+
+function sympyScript() {
+  const values = last.values || {};
+  const names = Object.keys(values).sort();
+  const domain = (last.domain || 'dc').toUpperCase();
+  const what = last.tool === 'solve' ? `a ${domain} analysis`
+                                     : `the ${last.tool} tool in ${domain}`;
+  const out = [];
+  out.push('# Symbulator 9 -- answers from ' + what + '.');
+  out.push('#');
+  out.push('# Circuit:');
+  for (const line of String(last.desc || '').split(/[\r\n:]+/)) {
+    if (line.trim()) out.push('#     ' + line.trim());
+  }
+  const sols = (lastSolve && lastSolve.solutions) || [];
+  if (sols.length > 1) {
+    out.push('#');
+    out.push('# This circuit has ' + sols.length + ' valid solutions. These are'
+             + ' the one that was on screen.');
+  }
+  out.push('#');
+  out.push('# Every answer below is an ordinary SymPy expression.');
+  out.push('');
+  out.push('import sympy as sp');
+  out.push('');
+  const syms = sympySymbolsIn(values);
+  if (syms.length) {
+    out.push(syms.join(', ') + (syms.length === 1 ? ',' : '')
+             + " = sp.symbols('" + syms.join(' ') + "')");
+    // The circuit's names must take precedence over SymPy's own, or an
+    // answer carrying `rf` is read as the rising factorial and the
+    // script dies on its first line -- the same trap as #105, one file
+    // over. sympify with these as locals settles it, and keeps exact
+    // rationals exact where bare Python would do float division.
+    out.push('');
+    out.push('# The circuit\'s own names win over SymPy\'s here:');
+    out.push('#   rf is a resistor, not the rising factorial.');
+    out.push('_ns = {' + syms.map(function (n) {
+      return JSON.stringify(n) + ': ' + n; }).join(', ') + '}');
+    out.push('_S = lambda text: sp.sympify(text, locals=_ns)');
+    out.push('');
+  }
+  if (!names.length) out.push('# (no answers to export)');
+  // sp.S() rather than the bare expression, and not for decoration. An
+  // exact answer like 3/500 pasted as plain Python is float division --
+  // 0.006, and the exactness this whole program is built on is gone at the
+  // first line. A whole answer such as 0 would arrive as a Python int, with
+  // no .subs() on it either. sp.S parses each one the way the app did.
+  for (const name of names) {
+    // JSON.stringify quotes and escapes it in a way Python reads the
+    // same, which beats hand-rolling the escaping for a string neither
+    // language should ever see a surprise in.
+    out.push(name + ' = ' + (syms.length ? '_S(' : 'sp.S(') + JSON.stringify(String(values[name])) + ')');
+  }
+  out.push('');
+  out.push('# For example:');
+  // An answer that still has symbols in it, so the example shows something.
+  // An answer that still has a symbol in it, so the example shows
+  // something worth doing rather than sp.expand(0). "oo" is letters
+  // without being a symbol, and an unbounded Norton current is exactly
+  // the answer there is nothing useful to expand about.
+  const symbolic = v => /[A-Za-z]/.test(v) && !/^-?(oo|zoo|nan)$/.test(v.trim());
+  const sample = names.find(n => symbolic(String(values[n])))
+                 || names.find(n => n.startsWith('v_')) || names[0];
+  if (sample) {
+    out.push('#     sp.expand(' + sample + ')');
+    out.push('#     sp.simplify(' + sample + ')');
+    if (syms.length) {
+      out.push('#     ' + sample + '.subs({' + syms[0] + ': 1000})');
+    }
+  }
+  return out.join('\n');
+}
+
+$('sympyBtn').addEventListener('click', () => {
+  if (!last) return;
+  const blob = new Blob([sympyScript()], { type: 'text/x-python' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'symbulator_results.py';
   a.click();
   URL.revokeObjectURL(a.href);
 });

@@ -247,7 +247,8 @@ r2,2,o,2
 r1,2,0,1
 
 analysis: tr
-note: The chapter introduces the `only` tool here and says to list vc in it. Doing that empties the results, so this entry leaves it off -- see #110.
+variables: vc
+note: The chapter introduces the `only` tool here, and this entry uses it: only vc is transformed back into time. On a circuit this small the saving is slight; on a heavy one it is the difference between fifteen seconds and ten.
 rounding: exact
 si: no
 units: yes

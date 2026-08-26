@@ -112,16 +112,15 @@ solve_unknowns: x, y, h11, h12, h21, h22
 
 [AS7's Example 19.7 (g parameters in s)]
 
-r1,1,2,s
-r2,2,0,1
-r3,2,3,1/s
+l,1,2,1
+r,2,0,1
+c,2,3,1
 
-analysis: dc
+analysis: fd
 tool: port
 n1: 1
 n2: 3
 kind: g
-note: The chapter runs this in FD, which the two-port tool refuses -- it works in DC and AC only. Writing the inductor and capacitor as their s-domain impedances instead, and solving in DC, gives the chapter's four answers exactly. See #114.
 rounding: exact
 si: no
 units: yes
@@ -129,17 +128,16 @@ units: yes
 
 [AS7's Practice Problem 19.7 (a ladder in s)]
 
-ra,1,2,s
-rb,2,0,1
-rc,2,3,s
-rd,3,0,1
+l1,1,2,1
+r1,2,0,1
+l2,2,3,1
+r2,3,0,1
 
-analysis: dc
+analysis: fd
 tool: port
 n1: 1
 n2: 3
 kind: g
-note: The same substitution as the previous entry: the two inductors become impedances of s.
 rounding: exact
 si: no
 units: yes

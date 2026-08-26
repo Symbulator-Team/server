@@ -1412,6 +1412,15 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             # symbols in the expression carry their own units.
             has_syms = bool(getattr(expr, "free_symbols", None))
             show_unit = units and not has_syms
+            # SymPy writes infinity "oo", which is a Python spelling
+            # and not something to put in front of a reader. It
+            # arrives here when th() finds a short-circuit current
+            # without bound; every formatter below would pass it
+            # through untouched.
+            if expr in (sp.oo, -sp.oo, sp.zoo):
+                sign = "-" if expr == -sp.oo else ""
+                return _with_unit(sign + "∞", sign + r"\infty",
+                                  unit, show_unit)
             if polar:
                 shown = _polar_format(expr, digits, unit, si)
                 if shown is not None:
@@ -1500,6 +1509,14 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             named = []          # [(display key, expr)]
             if tool == "th":
                 eq = th(desc, n1, n2, **tkw)
+                # th() sets this when the short-circuit round had to
+                # be reasoned about rather than solved. Without it a
+                # reader sees an equivalent resistance of 0 with
+                # nothing to say where it came from. getattr because
+                # the server variant takes symbulator from PyPI and
+                # may briefly be a release behind this file.
+                if getattr(eq, "note", ""):
+                    _notes.append(eq.note)
                 z_label = "req" if domain == "dc" else "zeq"
                 named = [("vth", eq.vth), ("ino", eq.ino),
                          (z_label, eq.z), ("pmax", eq.pmax)]
@@ -1544,12 +1561,25 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         if domain == "tr" and variables:
             # Accept the same casual, underscore/case-insensitive typing
             # ("v2", "V_2", "IR1") that Evaluate, Solve and the Plot key
-            # already do, instead of requiring the literal solved name --
-            # a name with no match passes through unchanged, so a genuine
-            # typo still comes back as "nothing to report" rather than
-            # being silently swallowed here.
-            kwargs["variables"] = [_resolve_name(v, _guard_elements)
-                                    for v in variables]
+            # already do, and turn a request for an element's voltage drop
+            # into the node voltages it is built from -- see
+            # _wanted_solver_keys.
+            #
+            # Anything left over is refused here. tr() skips a key it does
+            # not recognise without a word, so a name it cannot provide
+            # used to produce an empty page: no answers, no error, nothing
+            # to say why. That is what #110 was.
+            wanted, unknown = _wanted_solver_keys(variables, _guard_elements)
+            if unknown:
+                shown = ", ".join(sorted(set(unknown)))
+                return {"ok": False, "error":
+                        f"Cannot limit the results to {shown}. A transient "
+                        f"analysis answers in element currents and node "
+                        f"voltages -- an element's voltage drop, such as "
+                        f"v_r1, is worked out from its nodes and may be "
+                        f"asked for too. Powers are not available in TR. "
+                        f"Check the spelling against the names in Results."}
+            kwargs["variables"] = wanted
         if extra_equations:
             kwargs["equations"] = extra_equations
         if extra_unknowns:
@@ -1581,6 +1611,15 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             # symbols in the expression carry their own units.
             has_syms = bool(getattr(expr, "free_symbols", None))
             show_unit = units and not has_syms
+            # SymPy writes infinity "oo", which is a Python spelling
+            # and not something to put in front of a reader. It
+            # arrives here when th() finds a short-circuit current
+            # without bound; every formatter below would pass it
+            # through untouched.
+            if expr in (sp.oo, -sp.oo, sp.zoo):
+                sign = "-" if expr == -sp.oo else ""
+                return _with_unit(sign + "∞", sign + r"\infty",
+                                  unit, show_unit)
             if polar:
                 shown = _polar_format(expr, digits, unit, si)
                 if shown is not None:
@@ -1795,6 +1834,50 @@ def _normalize_underscore_names(text, canonical):
 MAX_PLOT_POINTS = 2000
 
 
+def _wanted_solver_keys(names, elements):
+    """(keys to ask tr() for, names it cannot provide).
+
+    A transient solve answers in element currents and node voltages, and
+    nothing else -- an element's voltage drop is derived from its two node
+    voltages once the transforms are done, and there are no powers in TR at
+    all. So a reader asking to be shown `v_r3` is really asking for the two
+    nodes r3 spans, and this says so: inverse Laplace is linear, so
+    transforming those and subtracting afterwards gives the same answer for
+    the same work.
+
+    Ground is dropped rather than requested. `v_0` is the constant zero and
+    the solver never carries a symbol for it, so asking would put this
+    straight back into the business of requesting names that do not exist.
+    """
+    solver_names = set()
+    drop_for = {}
+    for el in elements:
+        solver_names.add(f"i_{el.name}")
+        for n in (getattr(el, "n1", None), getattr(el, "n2", None)):
+            if n and n != "0":
+                solver_names.add(f"v_{n}")
+        if el.kind in "rlcejs":
+            nodes = [n for n in (getattr(el, "n1", None),
+                                 getattr(el, "n2", None))
+                     if n and n != "0"]
+            drop_for[f"v_{el.name}"] = [f"v_{n}" for n in nodes]
+
+    keys, unknown = [], []
+    for raw in names:
+        name = _resolve_name(raw, elements)
+        if name in solver_names:
+            wanted = [name]
+        elif name in drop_for:
+            wanted = drop_for[name]
+        else:
+            unknown.append(raw)
+            continue
+        for k in wanted:
+            if k not in keys:
+                keys.append(k)
+    return keys, unknown
+
+
 def _resolve_name(key: str, elements) -> str:
     """Match a casually-typed circuit quantity ("vx", "ir5") to its real
     solved name ("v_x", "i_r5"), the same underscore/case-insensitive way
@@ -1806,6 +1889,51 @@ def _resolve_name(key: str, elements) -> str:
     canonical = _circuit_canonical_names(elements)
     by_norm = {_norm_name(n): n for n in canonical}
     return by_norm.get(_norm_name(key), key)
+
+
+def _voltage_drop_nodes(name: str, elements):
+    """The two node-voltage keys an element's voltage drop is built from,
+    or None if `name` is not one.
+
+    Ground is returned as None rather than as `v_0`: the solver carries no
+    symbol for it, and its voltage is nothing.
+    """
+    for el in elements:
+        if name != f"v_{el.name}" or el.kind not in "rlcejs":
+            continue
+        n1, n2 = getattr(el, "n1", None), getattr(el, "n2", None)
+        return (f"v_{n1}" if n1 and n1 != "0" else None,
+                f"v_{n2}" if n2 and n2 != "0" else None)
+    return None
+
+
+def _drop_expression(values: dict, pair, name: str, free_of):
+    """values[n1] - values[n2] for a derived voltage drop, checked.
+
+    Raises the same PlotError the solver would, so a missing transform or a
+    leftover unknown reads the same way whichever route the plot took.
+    """
+    from symbulator.plotting import PlotError
+    import sympy as sp
+
+    parts = []
+    for key in pair:
+        if key is None:
+            parts.append(sp.Integer(0))
+            continue
+        if key not in values:
+            raise PlotError(
+                f"'{name}' needs {key}, which could not be transformed -- "
+                f"its inverse Laplace transform may have no closed form.")
+        parts.append(values[key])
+    expr = sp.simplify(parts[0] - parts[1])
+    free = expr.free_symbols - {free_of}
+    if free:
+        names = ", ".join(sorted(str(x) for x in free))
+        raise PlotError(
+            f"'{name}' still depends on {names}, which has no numeric value "
+            f"-- pin it with a condition before plotting.")
+    return expr
 
 
 def plot_time_ui(desc: str, key: str, t_min: float, t_max: float, n: int,
@@ -1835,10 +1963,32 @@ def plot_time_ui(desc: str, key: str, t_min: float, t_max: float, n: int,
                                      for c in extra_conditions]
         resolved = _resolve_name(key, elements)
 
-        t_values, y_values = time_samples(
-            desc, resolved, t_max=t_max, t_min=t_min, n=n,
-            equations=extra_equations or None, unknowns=extra_unknowns or None,
-            conditions=extra_conditions or None)
+        pair = _voltage_drop_nodes(resolved, elements)
+        if pair is None:
+            t_values, y_values = time_samples(
+                desc, resolved, t_max=t_max, t_min=t_min, n=n,
+                equations=extra_equations or None,
+                unknowns=extra_unknowns or None,
+                conditions=extra_conditions or None)
+        else:
+            # An element's voltage drop: transform the nodes it spans and
+            # subtract. See _drop_expression.
+            import numpy as np
+            import sympy as sp
+            from symbulator import tr as _tr
+            from symbulator.laplace import T as _T
+
+            wanted = [k for k in pair if k]
+            got = _tr(desc, variables=wanted,
+                      equations=extra_equations or None,
+                      unknowns=extra_unknowns or None,
+                      conditions=extra_conditions or None)
+            expr = _drop_expression(got.values, pair, resolved, _T)
+            fn = sp.lambdify(_T, expr, modules=["numpy"])
+            t_arr = np.linspace(t_min, t_max, n)
+            y_raw = np.asarray(fn(t_arr), dtype=complex)
+            y_arr = np.real(np.broadcast_to(y_raw, t_arr.shape))
+            t_values, y_values = t_arr.tolist(), y_arr.tolist()
         return _ok({"t": t_values, "y": y_values, "key": resolved, "notes": _notes})
     except PlotError as exc:
         return _err(str(exc))
@@ -1872,10 +2022,33 @@ def bode_ui(desc: str, key: str, f_min: float, f_max: float, n: int,
                                      for c in extra_conditions]
         resolved = _resolve_name(key, elements)
 
-        freq_values, mag_db, phase_deg = bode_samples(
-            desc, resolved, f_min=f_min, f_max=f_max, n=n,
-            equations=extra_equations or None, unknowns=extra_unknowns or None,
-            conditions=extra_conditions or None)
+        pair = _voltage_drop_nodes(resolved, elements)
+        if pair is None:
+            freq_values, mag_db, phase_deg = bode_samples(
+                desc, resolved, f_min=f_min, f_max=f_max, n=n,
+                equations=extra_equations or None,
+                unknowns=extra_unknowns or None,
+                conditions=extra_conditions or None)
+        else:
+            # The same expansion as the time plot, one domain over.
+            import numpy as np
+            import sympy as sp
+            from symbulator import fd as _fd
+            from symbulator.laplace import S as _S
+
+            got = _fd(desc, equations=extra_equations or None,
+                      unknowns=extra_unknowns or None,
+                      conditions=extra_conditions or None)
+            expr = _drop_expression(got.values, pair, resolved, _S)
+            fn = sp.lambdify(_S, expr, modules=["numpy"])
+            freq_arr = np.logspace(np.log10(f_min), np.log10(f_max), n)
+            h_raw = fn(1j * 2 * np.pi * freq_arr)
+            h = np.broadcast_to(np.asarray(h_raw, dtype=complex),
+                                freq_arr.shape)
+            with np.errstate(divide="ignore"):
+                mag_db = (20 * np.log10(np.abs(h))).tolist()
+            phase_deg = np.angle(h, deg=True).tolist()
+            freq_values = freq_arr.tolist()
         return _ok({"freq": freq_values, "mag_db": mag_db, "phase_deg": phase_deg,
                     "key": resolved, "notes": _notes})
     except PlotError as exc:
@@ -1909,6 +2082,93 @@ def _aliases_from_values(values: dict) -> dict:
     return out
 
 
+#: Functions that rearrange an expression rather than compute a new
+#: quantity from it. They have to be applied *after* the circuit's answers
+#: are substituted in, or they act on a bare symbol and vanish -- see
+#: _parse_with_rearrangers. `integrate` is deliberately not here: it can
+#: run unboundedly long on an expression a solver produced.
+_REARRANGERS = ("expand", "factor", "simplify", "cancel", "together",
+                "apart", "collect", "powsimp", "radsimp", "trigsimp",
+                "logcombine", "diff")
+
+
+def _parse_with_rearrangers(text: str, reserve_imaginary: bool = True):
+    """safe_sympify, but with the rearranging functions left unapplied.
+
+    Each is bound to an undefined function of the same name, so
+    `expand(vo)` parses as a call carrying `vo` rather than collapsing to
+    `vo` on the spot. `_apply_rearrangers` turns them into the real thing
+    once the answers are in.
+    """
+    import sympy as sp
+    from symbulator.si_prefix import (_allowed_namespace, _IDENT_RE,
+                                      check_expression_syntax)
+
+    check_expression_syntax(text)
+    ns = _allowed_namespace(reserve_imaginary)
+    used = set(_IDENT_RE.findall(text))
+    for name in _REARRANGERS:
+        if name in used:
+            ns[name] = sp.Function(name)
+    for name in used:
+        ns.setdefault(name, sp.Symbol(name))
+    return sp.sympify(text, locals=ns)
+
+
+def _apply_rearrangers(expr):
+    """(expression, whether any ran). Runs the deferred rearrangers.
+
+    A name that is not a real SymPy function is left as it is rather than
+    raising: it will surface as an unresolved symbol in the answer, which
+    is a clearer thing for a reader to see than a traceback.
+    """
+    import sympy as sp
+    if not getattr(expr, "replace", None):
+        return expr, False
+    used = False
+    for name in _REARRANGERS:
+        fn = getattr(sp, name, None)
+        if fn is None:
+            continue
+        try:
+            after = expr.replace(sp.Function(name), fn)
+        except Exception:
+            continue
+        if after != expr:
+            used = True
+        expr = after
+    return expr, used
+
+
+def _parse_answer(vstr: str):
+    """Read a solved answer back from its printed form.
+
+    Bare `sp.sympify` reads it against the whole of SymPy, which means any
+    answer carrying a symbol that shares a name with a SymPy function comes
+    back as that function. `rf` is the one that found this -- a natural
+    name for a feedback resistor, and also the rising factorial -- so
+    Lesson 5's op-amp answers turned into "bad operand type for unary -:
+    'FunctionClass'" the moment Evaluate touched them. `im`, `beta`,
+    `gamma`, `zeta`, `N`, `S`, `O` and `E` are all in the same trap. The
+    solve itself was never affected; only reading its answers back was.
+
+    `safe_sympify` reads against the small allowed namespace instead, so
+    every other identifier stays an ordinary symbol -- the same fix as the
+    one `re = 12000` needed in the Solve card, one layer further in.
+
+    The imaginary unit is handled by hand rather than by the flag, because
+    these strings are SymPy's *own output* rather than anything a reader
+    typed: SymPy always prints the unit as a capital `I`, so a lowercase
+    `i` or `j` here is a circuit symbol and nothing else. Lesson 6's
+    impulse problem, whose source amplitude is called `i`, is exactly the
+    case that the domain-sensitive flag would have got wrong.
+    """
+    from symbulator.si_prefix import safe_sympify
+    import sympy as sp
+    return safe_sympify(_without_unit(vstr),
+                        reserve_imaginary=False).subs(sp.Symbol("I"), sp.I)
+
+
 def _alias_mapping(values: dict, exclude=(), expr=None):
     """Map the symbols in `expr` onto the circuit's solved answers,
     ignoring case and underscores so every spelling of a name finds its
@@ -1924,10 +2184,10 @@ def _alias_mapping(values: dict, exclude=(), expr=None):
         key = _norm_name(k)
         if key in by_norm:
             clashes.add(key)
-        # Canonicalised on the way in: sp.sympify does not know the
+        # Canonicalised on the way in: sympify does not know the
         # namespace, so a time-domain answer comes back carrying a plain
         # `t` that matches nothing the user can type. See _canonical_time.
-        by_norm[key] = _canonical_time(sp.sympify(_without_unit(vstr)))
+        by_norm[key] = _canonical_time(_parse_answer(vstr))
 
     mapping = {}
     symbols = expr.free_symbols if expr is not None else set()
@@ -2466,10 +2726,19 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
         # refused in Evaluate while the identical text was accepted as an
         # element's value -- the sort of inconsistency a reader reads as
         # the tool being broken.
-        parsed = safe_sympify(expand_value_for_ui(expr_str))
+        parsed = _parse_with_rearrangers(expand_value_for_ui(expr_str))
         result = parsed.subs(_alias_mapping(values, expr=parsed))
         result = _apply_conditions(result, subs_map, assumptions)
-        result = sp.simplify(result)
+        # After the substitution, not before: expand() of a bare `vo` is
+        # `vo`, and the rearrangement would be thrown away by the very
+        # substitution that gives it something to work on.
+        result, rearranged = _apply_rearrangers(result)
+        # And no simplify() over the top of one. Asking to expand an answer
+        # is asking for a particular arrangement of it; simplify would
+        # gather it straight back up, so the card would appear to ignore
+        # what was typed. Everything else still gets tidied as before.
+        if not rearranged:
+            result = sp.simplify(result)
         if si:
             shown = _si_format(result, digits)
             if shown is not None:
