@@ -618,7 +618,8 @@ r4,o,0,5'k
 j,0,o,100'm*vr2
 
 analysis: dc
-rounding: 4
+note: Five significant digits, so re reads 10952 as the chapter prints it. vo then shows 0.90413 rather than the chapter's .904 -- the same number, one place further on.
+rounding: 5
 si: no
 units: yes
 
