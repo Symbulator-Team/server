@@ -1,5 +1,60 @@
 # Symbulator circuit book
+
 title: Circuits for Lesson 3 of the Tutorial
+
+[B11's Example 8.1]
+
+j,0,1,10'm
+r1,1,0,20'k
+
+analysis: dc
+rounding: 3
+si: yes
+units: yes
+
+
+[Bo2's Example 2.2 (Conductances)]
+
+j10,1,0,2
+r12,1,2,1
+r20,2,0,1/4
+r30,3,0,1/3
+r13,1,3,1/2
+j32,3,2,3
+
+analysis: dc
+rounding: 3
+si: no
+units: yes
+
+
+[B11's Example 7.4 (Parallel reduction)]
+
+e,1,0,16.8
+r1,1,2,9
+r2,1,2,6
+r3,2,3,4
+re1,3,0,[6,3]
+r6,2,0,3
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+evaluate: -ie
+
+
+[B11's Example 6.22 (Partial reduction)]
+
+jt,0,1,12'm
+r1,1,0,1'k
+re,1,0,[10'k,22'k]
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
 
 [B11's Example 8.2]
 
@@ -22,7 +77,7 @@ r8,0,2,8
 j8,2,0,8
 
 analysis: dc
-rounding: exact
+rounding: 3
 si: no
 units: yes
 
@@ -41,7 +96,7 @@ si: no
 units: yes
 
 
-[Bo2's Drill Exercise 2.2]
+[Bo2's Drill Exercise 2.2 (Conductances)]
 
 r10,1,0,1/3
 r12,1,2,1/2
@@ -52,7 +107,7 @@ j12,1,2,17
 j03,0,3,2
 
 analysis: dc
-rounding: exact
+rounding: 3
 si: no
 units: yes
 
@@ -69,17 +124,17 @@ rx,3,4,rx
 
 analysis: dc
 unknowns: rx
-equations: ir2=4
+equations: ir2 = 4
 rounding: exact
 si: no
 units: yes
 
 
-[HK5's Example 2.2]
+[HK5's Example 2.2 (Conductances)]
 
-j01,0,1,8
-j30,3,0,25
-j21,2,1,3
+j01,0,1,-8
+j30,3,0,-25
+j21,2,1,-3
 r12,1,2,1/3
 r23,2,3,1/2
 r13,1,3,1/4
@@ -100,12 +155,12 @@ e2,1,2,5
 r2,0,2,2
 
 analysis: dc
-rounding: exact
+rounding: 3
 si: no
 units: yes
 
 
-[Bo2's Example 2.5]
+[Bo2's Example 2.5 (Conductances)]
 
 j,0,1,3
 e,3,2,3
@@ -115,9 +170,10 @@ r30,3,0,1/5
 r13,1,3,1/2
 
 analysis: dc
-rounding: exact
+rounding: 3
 si: no
 units: yes
+evaluate: -ie
 
 
 [B11's Example 8.22]
@@ -130,7 +186,7 @@ r2,2,0,2
 j2,2,0,4
 
 analysis: dc
-rounding: exact
+rounding: 4
 si: no
 units: yes
 
@@ -143,7 +199,7 @@ r2,1,0,12
 j,0,1,1
 
 analysis: dc
-rounding: exact
+rounding: 3
 si: no
 units: yes
 
@@ -158,7 +214,7 @@ r3,a,3,2
 e2,0,3,12
 
 analysis: dc
-rounding: exact
+rounding: 3
 si: no
 units: yes
 
@@ -172,7 +228,7 @@ j,1,2,2
 r3,2,0,10
 
 analysis: dc
-rounding: exact
+rounding: 4
 si: no
 units: yes
 
@@ -185,9 +241,10 @@ r2,a,b,40
 r3,a,b,60
 
 analysis: dc
-rounding: exact
+rounding: 3
 si: no
 units: yes
+evaluate: va-vb
 
 
 [RM3's Example 9-12 (Step 2)]
@@ -199,11 +256,12 @@ r4,a,b,240
 j,a,b,i4
 
 analysis: dc
-unknowns: i4
-equations: ir4+ij
-rounding: exact
+note: Or solve `ir4+ij = 0.2` instead, for the same answer.
+rounding: 3
 si: no
 units: yes
+solve_equations: va-vb = 12
+solve_unknowns: i4
 
 
 [RM3's Example 8-13]
@@ -217,12 +275,12 @@ e1,1,b,10
 e2,b,2,8
 
 analysis: dc
-rounding: exact
+rounding: 3
 si: no
 units: yes
 
 
-[B11's Example 6.3]
+[B11's Example 6.3 (Hidden source)]
 
 j,0,1,6
 r1,1,2,2
@@ -246,13 +304,13 @@ j,0,3,ix
 
 analysis: dc
 unknowns: ix
-equations: ir8=5
+equations: ir8 = 5
 rounding: exact
 si: no
 units: yes
 
 
-[B11's Example 6.22]
+[B11's Example 6.22 (Hidden source)]
 
 jt,0,1,12'm
 r1,1,0,1'k
@@ -260,17 +318,393 @@ r2,1,0,10'k
 r3,1,0,22'k
 
 analysis: dc
+rounding: 4
+si: yes
+units: yes
+
+
+[B11's Example 6.21 (Hidden source, Expert)]
+
+js,0,1,is1
+r1,1,0,6
+r2,1,0,3
+r3,1,0,1
+
+analysis: dc
+unknowns: is1
+equations: ir2 = 2'm
+rounding: 3
+si: no
+units: yes
+
+
+[Bo2's Example 1.9]
+
+ji,0,1,2
+r1,1,0,3
+jd,0,1,4*v1
+r2,1,0,5
+
+analysis: dc
 rounding: exact
 si: no
 units: yes
 
 
-[B11's Example 6.21 (Expert)]
+[AS2's Practice Problem 2.7]
 
-js,0,1,is
-r1,1,0,6
-r2,1,0,3
-r3,1,0,1
+ji,0,o,6
+ro,o,0,2
+jd,o,0,iro/4
+r8,o,0,8
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[HK5's Example 1-3]
+
+ei,1,0,120
+r1,1,2,30
+ed,2,3,2*vra
+ra,0,3,15
+
+analysis: dc
+note: Three answers here: evaluate -pei, then -ped, then pr1+pra.
+rounding: exact
+si: no
+units: yes
+evaluate: -pei
+
+
+[AS2's Practice Problem 2.6]
+
+ei,x,1,35
+rx,x,0,10
+ed,0,2,2*vx
+ro,1,2,5
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Example 1.10]
+
+ei,1,0,2
+r1,1,2,1/3
+ed,3,2,4*ir1
+r2,3,0,1/5
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Example 2.6]
+
+e12,1,o,12
+ri,1,2,4
+ed,2,3,2*vo
+e4,0,3,4
+ro,o,0,6
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[HK5's Drill Problem 1.11]
+
+r1,x,0,30
+ei,1,x,12
+r2,1,2,8
+r3,2,3,7
+ed,3,0,4*vx
+
+analysis: dc
+rounding: 4
+si: no
+units: yes
+
+
+[AS2's Example 3.6]
+
+ei,a,0,24
+ro,a,b,10
+r12,b,0,12
+r4,b,c,4
+r24,a,c,24
+ed,c,0,4*iro
+
+analysis: dc
+rounding: 3
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 1.12]
+
+ei,1,0,10
+r1,1,2,1
+r2,2,3,2
+r3,2,0,3
+r4,3,0,2
+ed,2,3,ir1/2
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[AS2's Example 3.2]
+
+ji,0,1,3
+jd,3,0,2*ir2
+r2,1,2,2
+r4a,1,3,4
+r8,2,3,8
+r4b,2,0,4
+
+analysis: dc
+rounding: 3
+si: no
+units: yes
+
+
+[AS2's Example 3.4]
+
+r2,1,0,2
+e1,1,2,20
+j,0,2,10
+r6,2,3,6
+rx,1,4,3
+r4,3,0,4
+ed,3,4,3*vrx
+r1,4,0,1
+
+analysis: dc
+rounding: 4
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 2.6]
+
+j,0,1,6
+ei,3,1,6
+ed,2,3,3*v1
+r5,1,0,1/5
+r2,1,2,1/2
+r3,2,0,1/3
+r1,2,3,1
+r4,3,0,1
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Example 2.7]
+
+j,0,1,1
+r3,0,1,3
+r4,2,1,4
+r1,2,0,1
+r2,2,3,2
+r5,3,0,5
+ei,3,4,1.5
+ed,4,0,2*vr4
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Example 2.6]
+
+e1,0,1,1
+e2,3,4,.5
+ed,3,2,3*vr4
+j,0,4,2
+r4,1,2,1/4
+r1,2,0,1
+r8,3,0,1/8
+r2,2,4,1/2
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[HK5's Drill Problem 1-12]
+
+jl,x,0,5.6
+ra,0,x,18
+jb,0,x,.1*vx
+r9,0,x,9
+jr,0,x,2
+
+analysis: dc
+rounding: 3
+si: no
+units: yes
+
+
+[Bo2's Drill Exercise 1.10 (Expert)]
+
+es,2,0,vs
+jd,0,3,2*ir1
+r7,0,1,7
+r1,3,1,1
+r3,3,2,3
+r4,1,2,4
+
+analysis: dc
+unknowns: vs
+equations: vr4 = 4
+rounding: exact
+si: no
+units: yes
+evaluate: -ies
+
+
+[Bo2's Drill Exercise 1.11]
+
+e,1,0,12
+r1,1,2,1
+r4,2,0,4
+r10,2,3,10
+r6,3,0,6
+r2,3,4,2
+j,4,0,vr10/15
+
+analysis: dc
+rounding: 3
+si: no
+units: yes
+
+
+[TR5's Exercise 4.2]
+
+ji,0,x,is1
+r1,x,0,1'k
+r2,x,o,2'k
+jd,0,o,vx/500
+ro,o,0,500
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[TR5's Example 4.4]
+
+e,1,0,vs
+r1,1,2,50
+r2,2,o,1'k
+r3,o,0,100
+r4,o,0,5'k
+j,0,o,100'm*vr2
+
+analysis: dc
+rounding: 4
+si: no
+units: yes
+
+
+[TR5's Figure 4-4]
+
+js,0,1,is1
+r50,1,0,50
+rx,1,0,25
+jd,o,0,48*irx
+r3,o,0,300
+ro,o,0,500
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+evaluate: pro/(-pjs)
+
+
+[TR5's Example 4.1 (Symbolic)]
+
+ei,1,0,vs
+rs,1,2,rs
+rx,2,0,rp
+ed,0,3,r*irx
+rc,3,o,rc
+rl,o,0,rl
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[Bo2's Example 1.11 (Symbolic)]
+
+e,a,0,v1
+r1,a,3,r1
+rg,3,0,rg
+j,2,0,gm*vrg
+rd,2,0,rd
+rl,2,0,rl
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[TR5's Example 4-7 (Symbolic)]
+
+ji,0,a,is1
+re1,a,0,re1
+jd,b,a,beta*is1
+rl,b,0,rl
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[TR5's Exercise 4.3 (Symbolic)]
+
+ei,1,0,vs
+ed,2,0,μ*(vrx)
+r1,1,2,1/g1
+r2,2,o,1/g2
+rx,1,o,1/gx
+rl,o,0,1/gl
+
+analysis: dc
+rounding: exact
+si: no
+units: yes
+
+
+[TR5's Example 4.5 (Symbolic)]
+
+e1,1,0,vcc
+rb,1,b,rb
+e2,e,b,vgamma
+re1,e,0,re1
+rc,1,c,rc
+j,c,e,beta*irb
 
 analysis: dc
 rounding: exact
