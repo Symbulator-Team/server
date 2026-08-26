@@ -9,14 +9,14 @@ r1,a,c,r1
 r2,c,0,r2
 
 analysis: dc
-note: Symbolic all through: the answers come back as formulas.
+note: Symbolic all through: every answer is a formula.
 rounding: exact
 si: no
 units: yes
 evaluate: -pev
 
 
-[B11's Example 5.6 - with the Solve equations card]
+[B11's Example 5.6 (with the Solve equations card)]
 
 e,1,0,e
 r1,1,2,r1
@@ -33,7 +33,7 @@ solve_equations: ir3 = 0.006
 solve_unknowns: e, r1
 
 
-[B11's Example 5.6 - using Expert Mode]
+[B11's Example 5.6 (using Expert Mode)]
 
 e,1,0,e
 r1,1,2,rx
@@ -41,7 +41,7 @@ r2,2,3,4'k
 r3,3,0,6'k
 
 analysis: dc
-note: The same problem, with the two facts handed over before solving.
+note: The same problem with the two facts handed over before solving, so the whole circuit comes back numerical.
 unknowns: e, rx
 equations: re = 12000
 equations: ir3 = 0.006
@@ -59,6 +59,7 @@ r5,2,1,5
 evx,2,0,vx
 
 analysis: dc
+note: ra is never needed: the circuit's structure answers both questions without it.
 rounding: exact
 si: no
 units: yes
@@ -66,7 +67,7 @@ solve_equations: ir5 = 12
 solve_unknowns: vx
 
 
-[B11's Example 6.19]
+[B11's Example 6.19 (Expert)]
 
 e,1,0,e
 r1,1,0,2'k
@@ -83,7 +84,7 @@ si: no
 units: yes
 
 
-[B11's Example 7.12]
+[B11's Example 7.12 (Expert)]
 
 e,a,c,72
 r1,a,b,r1
@@ -93,12 +94,13 @@ rl1,a,0,rl1
 rl2,b,0,rl2
 
 analysis: dc
+note: Five significant digits, so r1 reads 1333.3 as the chapter prints it rather than the exact 4000/3.
 unknowns: r1, r2, r3, rl1, rl2
 equations: irl1 = 0.020
 equations: vrl1 = 60
 equations: irl2 = 0.010
 equations: vrl2 = 20
 equations: -ie = 0.050
-rounding: exact
+rounding: 5
 si: no
 units: yes

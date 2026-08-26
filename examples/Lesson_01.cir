@@ -10,10 +10,11 @@ r2,2,3,3'k
 r3,3,0,2'k
 
 analysis: dc
-note: The circuit the lesson is built around, solved step by step.
+note: The first simulation in the tutorial. The Evaluate line checks the power balance: the resistors consume exactly what the source delivers, so the four powers come to zero.
 rounding: 3
 si: yes
 units: yes
+evaluate: pr1 + pr2 + pr3 + pe
 
 
 [HK5's Figure 1-26]
@@ -24,9 +25,11 @@ e2,2,3,30
 r2,3,0,15
 
 analysis: dc
+note: The 30 V source consumes 60 W rather than delivering it, which is why -pe2 comes out negative.
 rounding: 3
 si: yes
 units: yes
+evaluate: pr1 + pr2 + pe1 + pe2
 
 
 [B11's Example 5.20]
@@ -83,6 +86,7 @@ analysis: dc
 rounding: 3
 si: yes
 units: yes
+evaluate: vb-va
 
 
 [B11's Figure 7.32]
@@ -103,12 +107,12 @@ units: yes
 
 [B11's Example 7.10]
 
-e,4,0,72
-r1,3,4,4'k
 r2,2,3,8'k
+r1,3,4,4'k
 r3,1,2,12'k
 r4,1,4,24'k
 r5,1,0,12'k
+e,4,0,72
 r6,4,5,12'k
 r7,5,0,9'k
 r8,5,6,3'k
@@ -160,7 +164,7 @@ rl2,b,0,20
 rl3,c,0,20
 
 analysis: dc
-rounding: 3
+rounding: 4
 si: yes
 units: yes
 
@@ -205,9 +209,11 @@ r2,b,c,4
 r3,b,0,5
 
 analysis: dc
+note: Also evaluate vb-vc, which is 7 V.
 rounding: 3
 si: yes
 units: yes
+evaluate: va-vc
 
 
 [B11's Example 8.24]
@@ -253,14 +259,14 @@ r6,2,5,6
 r7,5,0,9
 
 analysis: dc
-rounding: 3
+rounding: 4
 si: yes
 units: yes
 
 
-[RM3's Example 7-5]
+[RM3's Example 7-5 (Hidden source)]
 
-e1,1,0,12
+e1,1,0,12.
 r1,1,b,10
 r2,b,a,10
 r3,a,2,50
@@ -271,9 +277,10 @@ analysis: dc
 rounding: 3
 si: yes
 units: yes
+evaluate: va-vb
 
 
-[RM3's Figure 7-16]
+[RM3's Figure 7-16 (Hidden source)]
 
 r1,1,b,4'k
 r2,1,a,3'k
@@ -285,6 +292,8 @@ e1,1,0,-2
 e2,2,0,-10
 
 analysis: dc
+note: Also evaluate va-vb, which is -0.8 V.
 rounding: 3
 si: yes
 units: yes
+evaluate: (v1-v2)/irt
