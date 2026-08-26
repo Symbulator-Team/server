@@ -575,7 +575,7 @@ n2: 0
 note: For the other two loads, evaluate vth/(req+16) and vth/(req+36): 1.5 A and 0.75 A.
 rounding: exact
 si: no
-units: no
+units: yes
 evaluate: vth/(req+6)
 
 
@@ -594,7 +594,7 @@ n2: 0
 note: For the load current, evaluate vth/(req+1/4): 42/25 A.
 rounding: exact
 si: no
-units: no
+units: yes
 evaluate: vth*(1/4)/(req+1/4)
 
 
@@ -612,7 +612,7 @@ n2: 0
 note: For the other loads, evaluate vth/(req+2000) and vth/(req+5000): .00321 A and .00173 A.
 rounding: exact
 si: no
-units: no
+units: yes
 evaluate: vth/(req+0)
 
 
@@ -632,7 +632,7 @@ n1: 3
 n2: 0
 rounding: exact
 si: no
-units: no
+units: yes
 evaluate: vth*1/(req+1)
 
 
@@ -651,7 +651,7 @@ n1: 2
 n2: 0
 rounding: 3
 si: no
-units: no
+units: yes
 evaluate: vth/(req+192)
 
 
@@ -671,7 +671,7 @@ n2: 0
 note: For the 6 ohm load, evaluate vth*6/(req+6): 22.5 V.
 rounding: exact
 si: no
-units: no
+units: yes
 evaluate: vth*3/(req+3)
 
 
@@ -689,7 +689,7 @@ n1: 3
 n2: 0
 rounding: 3
 si: no
-units: no
+units: yes
 evaluate: vth*5/(req+5)
 
 
@@ -708,7 +708,7 @@ n2: 0
 note: For the other loads, evaluate ino*req/(req+1e4), ino*req/(req+5e4) and ino*req/(req+1e5): .000808, .000457 and .000296 A.
 rounding: exact
 si: no
-units: no
+units: yes
 evaluate: ino*req/(req+0)
 
 
@@ -759,7 +759,7 @@ n2: 0
 note: For the 8.2k load, evaluate vth^2*8200./(req+8200.)^2: .57 W.
 rounding: 3
 si: no
-units: no
+units: yes
 evaluate: vth^2*68000./(req+68000.)^2
 
 

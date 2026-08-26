@@ -1332,7 +1332,16 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                 plain, latex = fmt0(expr, unit)
                 answers.append({"name": key, "label": label,
                                 "plain": plain, "latex": latex})
-                flat[key] = plain
+                # The raw expression, not the formatted string. `values` is
+                # what the Evaluate and Solve cards substitute into and what
+                # a downloaded file records, and the normal solve path below
+                # fills it with str(expr) for exactly that reason. Storing
+                # the display text here meant `req` arrived as "4.0 Ohm",
+                # which the evaluator drops as unparseable -- so the
+                # documented `vth/(req+6)` came back as `30.0/(req + 6)`
+                # with units on, and carried the rounding error of the
+                # display with units off.
+                flat[key] = str(expr)
             return _ok({"nodes": [], "elements": [], "extras": answers,
                         "values": flat, "equations": [], "notes": _notes,
                         "approx": approx, "approx_forced": approx_forced})

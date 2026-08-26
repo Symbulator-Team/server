@@ -82,7 +82,7 @@ n2: 0
 note: For the other two loads, evaluate vth/(req+10) and vth/(req+100): 0.5 A and 0.059 A.
 rounding: exact
 si: no
-units: no
+units: yes
 evaluate: vth/(req+2)
 
 
