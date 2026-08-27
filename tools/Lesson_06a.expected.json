@@ -1,0 +1,23 @@
+{
+ "Bo2's Example 4.15": "vc grows while the ramp source runs; at t = 2 it is 1 V",
+ "Bo2's Example 5.1 (DC, for the initial condition)": "vc = r*V/(r + r1)",
+ "Bo2's Example 5.1 (TR)": "vc = r*v*exp(-t/(c*r))/(r + r1)",
+ "Bo2's Drill Exercise 5.1 (DC)": "vc = 6, ic = 0",
+ "Bo2's Drill Exercise 5.1 (TR)": "vc = 6*exp(-4*t), ic = -2*exp(-4*t)",
+ "Bo2's p224 5.2 (DC)": "vc = 8, ic = 0, v2 = 8",
+ "Bo2's p224 5.2 (TR)": "vc = 8*exp(-2*t), ic = -4*exp(-2*t)/3, v2 = 8*exp(-2*t)/3",
+ "Bo2's Drill Exercise 5.2 (DC)": "vc = 6, ic = 0, v1 = 12",
+ "Bo2's Drill Exercise 5.2 (TR)": "vc = 6*exp(-5*t), ic = -3*exp(-5*t), v1 = 3*exp(-5*t)",
+ "Bo2's Figure 5.10a": "il = il0*exp(-r*t/l), vl and vr the matching voltages",
+ "Bo2's Example 5.3 (DC)": "il = v/r1",
+ "Bo2's Example 5.3 (TR)": "il = v*exp(-r*t/l)/r1",
+ "Bo2's Drill Exercise 5.3 (DC)": "il = 2, vl = 0, ir4 = 2",
+ "Bo2's Drill Exercise 5.3 (TR)": "il = 2*exp(-3*t), vl = -6*exp(-3*t), ir4 = 3*exp(-3*t)/2",
+ "Bo2's p230 (Dependent source)": "il = 5*exp(-r*t/(3*l))",
+ "Bo2's Drill Exercise 5.4 (Dependent source, DC)": "il = 2, vl = 0",
+ "Bo2's Drill Exercise 5.4 (Dependent source, TR)": "il = 2*exp(-2*t), vl = -64*exp(-2*t)",
+ "Bo2's Example 5.5 (Op Amp, DC)": "vc = 10, ic = 0, vo = -10",
+ "Bo2's Example 5.5 (Op Amp, TR)": "vc = 10*exp(-4*t), ic = -2*exp(-4*t), vo = -10*exp(-4*t)",
+ "Bo2's Drill Exercise 5.5 (Op Amp, DC)": "vc = 10, ic = 0, vo = 14",
+ "Bo2's Drill Exercise 5.5 (Op Amp, TR)": "vc = 10*exp(-4*t), ic = -2*exp(-4*t), vo = 10*exp(-4*t)"
+}

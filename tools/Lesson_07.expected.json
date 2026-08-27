@@ -1,0 +1,16 @@
+{
+ "AS7's Example 9.9": "ir1 = 1.789 at 26.57 deg, vc = 4.472 at -63.43 deg",
+ "AS7's Practice Problem 9.9": "ir1 = 4.472 at 3.43 deg, vl = 8.944 at 93.43 deg",
+ "AS7's Example 9.10": "zeq = 3.22 - 11.07j",
+ "AS7's Problem 9.35": "ir = 4.789 at -16.70 deg",
+ "AS7's Problem 9.39": "ir1 = 0.4145 at -71.60 deg",
+ "AS7's Problem 9.73": "zeq = 0.3794 + 1.46j",
+ "AS7's Example 10.1 (Dependent source)": "icx = 7.589 at 108.4 deg",
+ "AS7's Practice Problem 10.1 (Dependent source)": "v1 = 11.33 at 60.02 deg, v2 = 33.02 at 57.13 deg",
+ "AS7's Example 10.13 (Dependent source)": "vro = 1.550 at -95.18 deg, ico = 0.003264 at -3.743 deg",
+ "AS7's Example 10.14 (Dependent source)": "v1 = 2.708 at -56.73 deg, v2 = 6.914 at -80.70 deg",
+ "AS7's Problem 9.89 (at 2 kHz, as the book asks)": "c = 0.000001235, that is 1.235 uF -- not the book's answer",
+ "AS7's Problem 9.89 (at 2000 rad/s, as it was meant)": "c = 25, that is 25 uF, which is the book's answer",
+ "AS7's Problem 10.69 (Symbolic)": "vo/vs = -I*c*omega*r",
+ "AS7's Problem 10.77 (Symbolic)": "a ratio in ca, cb, r1, r2, r3 and omega, arranged differently from the book's but the same expression"
+}

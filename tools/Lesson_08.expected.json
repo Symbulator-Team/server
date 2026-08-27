@@ -1,0 +1,10 @@
+{
+ "AS7's Example 11.5 (maximum average power)": "zeq = 2.933 + 4.467j, pmax = 2.367",
+ "AS7's Example 11.10 (power factor)": "-pe = 125.4 W delivered",
+ "AS7's Example 11.13 (complex power)": "-se = 2163.8 - 911.1j, sr1 = 455.5 + 227.8j, sr2 = 1708.2 - 1138.8j",
+ "AS7's Practice Problem 11.10": "-pe = 2007.1 W",
+ "AS7's Problem 11.97 (transmission line)": "prl = 573.2 W absorbed by the load",
+ "AS7's Problem 11.75 (a and b, the power system)": "-se = 1835.9 - 114.7j VA",
+ "AS7's Problem 11.75 (c, trying a capacitor)": "x = -6.34e-6 F, a negative capacitance",
+ "AS7's Problem 11.75 (c, an inductor instead)": "x = 1.5987 H, which is the real answer"
+}

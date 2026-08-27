@@ -1,0 +1,9 @@
+{
+ "HK5's Drill Problem 1-13": "is1 = -2, is2 = 3, is3 = -8, is4 = -0.5",
+ "AS2's Practice Problem 2.15": "re = 40, ir13 = 2.5",
+ "B11's Example 8.29 (step by step)": "req = 2.89",
+ "RM3's Practice Problem 9-4": "vth = 880 mV, ino = 50 mA, req = 17.6, pmax = 11 mW",
+ "B11's Example 9.6": "vth = 6, req = 2, and the load current 1.5",
+ "RM3's Example 9-8": "ino = -0.36, req = 84",
+ "RM3's Example 9-8 (with the load)": "irl = -0.06"
+}

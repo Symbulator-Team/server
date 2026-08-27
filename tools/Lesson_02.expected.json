@@ -1,0 +1,8 @@
+{
+ "AS5's Figure 2.29": "ir1 = v/(r1 + r2), vr2 = r2*v/(r1 + r2), pr2 = r2*v**2/(r1 + r2)**2, -pev = v**2/(r1 + r2)",
+ "B11's Example 5.6 (with the Solve equations card)": "ir3 = e/(r1 + 10000) and re = r1 + 10000; solving gives e = 72 and r1 = 2000",
+ "B11's Example 5.6 (using Expert Mode)": "v1 = 72, v2 = 60, v3 = 36, e = 72, rx = 2000",
+ "HK5's Figure 1-24a": "ir6 = 3, and solving ir5 = 12 gives vx = 78",
+ "B11's Example 6.19 (Expert)": "e = 16, ie = -0.02, r2 = 1600, r3 = 8000",
+ "B11's Example 7.12 (Expert)": "r1 = 1333.3, r2 = 1000, r3 = 240, pr1 = 1.2, pr2 = 0.4, pr3 = 0.6"
+}

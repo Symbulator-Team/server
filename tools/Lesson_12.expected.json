@@ -1,0 +1,8 @@
+{
+ "AS7's Example 16.1 (in TR, the one-step way)": "vo = 3*sqrt(2)*exp(-4*t)*sin(sqrt(2)*t)/2",
+ "AS7's Example 16.1 (in FD, everything as an impedance)": "vo = 3/(s**2 + 8*s + 18)",
+ "AS7's Example 16.1 (in FD, farads and henries)": "vo = 3/(s**2 + 8*s + 18)",
+ "AS7's Example 16.1 (in FD, and back to time)": "vo(s) = 3/(s**2 + 8*s + 18), and s2t of it is the time answer from the first entry",
+ "AS7's Practice Problem 16.1": "vo(t), by transforming the s-domain answer back",
+ "NR11's Example 13.7 (transfer function)": "H(s) = vo/vs, a ratio of two s-domain answers"
+}

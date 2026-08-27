@@ -1,0 +1,13 @@
+{
+ "AS7's Examples 12.2 & 12.6 (balanced wye-wye)": "irat = 6.809 at -21.8 deg, irbt at -141.8, irct at 98.2",
+ "AS7's Practice Problem 12.2 & 12.6 (three impedances a line)": "irat = 3.748 at -8.660 deg, irbt at -128.66, irct at 111.34",
+ "AS7's Example 12.10 (unbalanced wye-wye)": "line currents 56.78 at 0 deg, 25.46 at 135, 42.76 at -155.1; vn = 120.0 - 283.9j",
+ "AS7's Example 12.9 (unbalanced, with a neutral)": "line currents 6.667 at 0 deg, 8.944 at 93.43, 10.00 at -66.87; the neutral isn = 10.06 at 178.5",
+ "AS7's Example 12.3 (balanced wye-delta)": "phase currents 19.36 at 13.43 deg and its two rotations; line currents 33.54 at -16.57 and its two",
+ "AS7's Example 12.11 (wye-delta with line impedances)": "iraa = 2.35 at -36.2 deg, vna2-vnb2 = 169.94 at 30.81, irac = 1.357 at -66.2",
+ "AS7's Example 12.4 (balanced delta-delta)": "isat = 22.86 at 6.87 deg, isbt at -113.13, isct at 126.87",
+ "AS7's Practice Problem 12.9 (unbalanced delta-delta)": "isla = 39.71 at -41.07 deg, islb = 64.12 at -139.77, islc = 70.13 at 74.27",
+ "AS7's Practice Problem 12.10 (unbalanced, with power)": "line currents 64.00 at 80.1 deg, 38.11 at -60, 42.50 at -135; the load consumes 4840 W",
+ "AS7's Example 12.12 (unbalanced delta-delta)": "irlb = 9.106 at 168.48 deg, irbc = 5.500 at 172.47",
+ "AS7's Example 12.5 (balanced delta-wye)": "ira = 2.570 at -62.01 deg, irb at 177.99, irc at 57.99"
+}

@@ -1,0 +1,21 @@
+{
+ "B11's Example 5.7": "re = 6 k, ie = -6 m, vr1 = 6, vr2 = 18, vr3 = 12, pr1 = 36 m, pr2 = 108 m, pr3 = 72 m; pr1 + pr2 + pr3 + pe = 0",
+ "HK5's Figure 1-26": "ir1 = 2, vr1 = 60, vr2 = 30, pr1 = 120, pr2 = 60, pe1 = -240, pe2 = 60; the sum is 0",
+ "B11's Example 5.20": "ir1 = 2.5, vr2 = 17.5",
+ "B11's Example 6.13": "re = 9.49, ie = -2.53, ir1 = 2.4, ir2 = 110 m, ir3 = 20 m",
+ "B11's Example 7.2": "v2 = 2.51, ie = -2.86 m, ir4 = 1.46 m",
+ "B11's Example 7.7": "vr1 = 7.5, vr3 = 9, vb-va = -1.5, ie2 = -3",
+ "B11's Figure 7.32": "ir6 = 10, vr6 = 20",
+ "B11's Example 7.10": "ir5 = 3 m, ie = -7.36 m, vr7 = 19.6",
+ "B11's Example 7.4": "ir1 = 1.2, ir2 = 1.8, ie = -3, ir3 = 1, ir6 = 2, vr1 = 10.8, v2 = 6",
+ "B11's Example 6.15": "re = 1.44 k, ir1 = 17.5 m, ir2 = 1.4 m, ir3 = 500 u, pe = -543 m",
+ "B11's Figure 7.40": "vb = 66.21, vc = 24.83",
+ "B11's Example 8.10": "ir1 = 4.77, ir2 = 7.18, ir3 = 2.41",
+ "B11's Example 7.6": "ie = -4, ir2 = 800 m, ir4 = 2.4, vr1 = 4.8, vr5 = 19.2",
+ "B11's Example 7.11": "va = 20, vb = 15, vc = 8, va-vc = 12, ir2 = 1.75, ie3 = 2.95",
+ "B11's Example 8.24": "vr3 = 1.1",
+ "B11's Example 8.18": "ir10 = 1.22",
+ "B11's Example 8.26": "vr4 = 10.67",
+ "RM3's Example 7-5 (Hidden source)": "ir1 = 600 m, ir2 = 200 m, ir4 = 400 m, va-vb = -2",
+ "RM3's Figure 7-16 (Hidden source)": "(v1-v2)/irt = 7.2 k, irt = 1.11 m, ir1 = 133 u, ir2 = 444 u"
+}

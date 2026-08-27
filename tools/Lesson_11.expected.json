@@ -1,0 +1,6 @@
+{
+ "A low-pass RC (the Bode plot)": "the rolloff of a low-pass RC: flat, then -20 dB a decade past the corner, phase heading for -90 degrees",
+ "AS7's Example 14.7 (series resonance)": "w0 = 50000 rad/s",
+ "AS7's Example 14.8 (parallel resonance)": "w0 = 25000 rad/s",
+ "AS7's Example 14.9 (resonance from a node voltage)": "w0 = 2 rad/s"
+}

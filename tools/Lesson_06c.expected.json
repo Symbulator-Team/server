@@ -1,0 +1,19 @@
+{
+ "Bo2's Figure 5.38 (Impulse)": "vc = i*exp(-t/(c*r))/c, ic = i*DiracDelta(t) - i*exp(-t/(c*r))/(c*r)",
+ "Bo2's Drill Exercise 5.13 (Impulse)": "vc = -8*exp(-4*t), ic = 4*exp(-4*t), vo = 8*exp(-4*t)",
+ "Bo2's Figure 5.39 (Ramp)": "il = i*l*(exp(-r*t/l) - 1)/r + i*t, vl = i*l*(1 - exp(-r*t/l))",
+ "Bo2's Drill Exercise 5.14 (Ramp)": "vc = (1 - exp(-4*t))/2 - 2*t, ic = (exp(-4*t) - 1)/4",
+ "Bo2's Example 5.12 (Exponential)": "il = 6*exp(-3*t) - 6*exp(-4*t), vl = 48*exp(-4*t) - 36*exp(-3*t)",
+ "Bo2's p265 (Exponential, the repeated pole)": "il = 6*t*exp(-3*t), vl = (12 - 36*t)*exp(-3*t)",
+ "Bo2's Example 5.13 (Exponential)": "vc = 9*exp(-t/6) - 9*exp(-t/2), ir3 = 3*exp(-t/2)/2 - exp(-t/6)/2",
+ "Bo2's Drill Exercise 5.16 (Exponential)": "vc = -16*t*exp(-4*t), ic = (8*t - 2)*exp(-4*t)",
+ "Bo2's Example 6.1 (DC, second order)": "vc = 2, il = 1",
+ "Bo2's Example 6.1 (TR, second order)": "vc = 4*exp(-2*t) - 2*exp(-8*t), il = 2*exp(-8*t) - exp(-2*t)",
+ "Bo2's Drill Exercise 6.1 (DC)": "vc = 2, il = 0",
+ "Bo2's Drill Exercise 6.1 (TR)": "vc = 2 - 3*exp(-2*t) + exp(-6*t), il = 2*exp(-2*t) - 2*exp(-6*t)",
+ "Bo2's Example 6.2 (DC, the left half)": "vc = -7/50",
+ "Bo2's Example 6.2 (DC, the right half)": "il = 1",
+ "Bo2's Example 6.2 (TR, both halves joined)": "vc = -(sin(4*t) + 7*cos(4*t))*exp(-3*t)/50, il = (cos(4*t) - sin(4*t))*exp(-3*t)",
+ "Bo2's Example 6.3 (DC)": "vc = 2, il = 1",
+ "Bo2's Example 6.3 (TR)": "vc = (3*t + 2)*exp(-2*t), il = (1 - 3*t)*exp(-2*t)"
+}

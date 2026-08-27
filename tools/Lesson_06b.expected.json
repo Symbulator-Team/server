@@ -1,0 +1,22 @@
+{
+ "Bo2's Example 5.6 (DC, before the switch)": "vc = 8, ic = 0",
+ "Bo2's Example 5.6 (TR, 0 < t <= 1 s)": "vc = 8*exp(-t), ic = -2*exp(-t)",
+ "Bo2's Example 5.6 (TR, t > 1 s)": "vc = 2.943*exp(-5*t/3), ic = -1.226*exp(-5*t/3)",
+ "Bo2's Drill Exercise 5.6 (DC)": "il = 3, vl = 0",
+ "Bo2's Drill Exercise 5.6 (TR, 0 < t <= 2 s)": "il = 3*exp(-2*t), vl = -36*exp(-2*t)",
+ "Bo2's Drill Exercise 5.6 (TR, t > 2 s)": "il = 0.055*exp(-t/2), vl = -0.165*exp(-t/2)",
+ "Bo2's Figure 5.19 (step source, RC)": "vc = v - v*exp(-t/(c*r)), vr = v*exp(-t/(c*r)), ic = v*exp(-t/(c*r))/r",
+ "Bo2's Figure 5.24 (step source, RL)": "vl = v*exp(-r*t/l), vr = v*(1 - exp(-r*t/l)), il = v*(1 - exp(-r*t/l))/r",
+ "Bo2's Drill Exercise 5.7 (numerical step)": "il = 2 - 2*exp(-3*t), vl = 12*exp(-3*t), v2 = 8*exp(-3*t) + 4",
+ "Bo2's Figure 5.26 (step current source)": "v1 = (i - i*exp(-t/(c*r)))*r, ir = i - i*exp(-t/(c*r)), ic = i*exp(-t/(c*r))",
+ "Bo2's Example 5.7 (Op Amp, step)": "vc = 2*exp(-4*t) - 2, ic = -exp(-4*t), vo = 3 - 2*exp(-4*t)",
+ "Bo2's Drill Exercise 5.8 (Op Amp, step)": "vc = 2 - 2*exp(-4*t), ic = exp(-4*t), vo = 2*exp(-4*t) - 2",
+ "Bo2's p249 F5.28 (TR, first interval)": "vc = v - v*exp(-t/(c*r))",
+ "Bo2's p249 F5.28 (TR, second interval)": "vc = (v - v*exp(-to/(c*r)))*exp(-t/(c*r))",
+ "Bo2's Drill Exercise 5.9 (TR, first interval)": "il = v*(1 - exp(-r*t/l))/r",
+ "Bo2's Drill Exercise 5.9 (TR, second interval)": "il = (v/r)*(1 - exp(-to*r/l))*exp(-r*t/l)",
+ "Bo2's Figure 5.36 (DC, first interval)": "vc = 2",
+ "Bo2's Figure 5.36 (TR, second interval)": "vc = 6*exp(-t/6) - 4",
+ "Bo2's Drill Exercise 5.11 (DC)": "vc = -2",
+ "Bo2's Drill Exercise 5.11 (TR)": "vc = 4*exp(-2*t) - 6"
+}

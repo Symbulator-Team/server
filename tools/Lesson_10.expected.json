@@ -1,0 +1,7 @@
+{
+ "AS7's Example 13.1 (mutual inductance in jOhm)": "ir2 = 13.02 at -49.4 deg, ir4 = 2.910 at 14.04 deg",
+ "AS7's Practice Problem 13.1": "vo = 20.00 at -134.43 deg",
+ "AS7's Example 13.2 (mesh currents)": "ir1 = 20.30 at 3.5 deg, ir4 = 8.693 at 19.03 deg",
+ "AS7's Figure 13.33 (ideal transformer, symbolic)": "vth = vs2/n, req = z2/n**2",
+ "AS7's Example 13.8 (ideal transformer, opposite dots)": "ir1 = 11.09 at 33.69 deg, vro = 110.9 at -146.31 deg, -se = 1331 at -33.69 deg"
+}
