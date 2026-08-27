@@ -548,6 +548,12 @@ def api_solve():
                     tok = e.fields[idx].strip()
                     sep = "'" if choices[tok] == "si" else "*"
                     e.fields[idx] = f"{m[0]}{sep}{m[1]}"
+                    # Keep the typed copy in step: `desc` is rebuilt from
+                    # raw_fields below, so the resolved spelling has to
+                    # land there too or the choice would be lost.
+                    _raw = getattr(e, "raw_fields", None)
+                    if _raw and idx < len(_raw):
+                        _raw[idx] = e.fields[idx]
 
     # Always echo the circuit back one element per line, regardless of
     # whether anything above needed fixing up -- easier to read/edit
@@ -559,7 +565,22 @@ def api_solve():
     # `desc_used` (what the user sees) with that notation intact; `desc`
     # (what actually gets solved, below) gets it expanded to a real
     # number the normal way when solve_ui parses it again.
-    desc = ":".join(e.name + "," + ",".join(e.fields) for e in elements)
+    #
+    # Each element re-emits from raw_fields -- the fields as typed --
+    # not from fields, where the `[...]` shortcut has already been
+    # rewritten to pr(...). Re-emitting the rewrite was #116: solve_ui's
+    # own parse then recorded pr(...) as "what the reader typed", so an
+    # error about the value quoted `rxpr(1'k)` for a reader who wrote
+    # `rx[1'k]`. raw_fields is empty when nothing was rewritten (fields
+    # is identical) and when the shortcut's inner commas made the typed
+    # text split differently (unrecoverable -- see parse_circuit), so
+    # falling back to fields loses nothing. An unbalanced bracket cannot
+    # reach here: it raised in the parse above. getattr because the
+    # server takes symbulator from PyPI and may briefly be a release
+    # behind this file.
+    desc = ":".join(
+        e.name + "," + ",".join(getattr(e, "raw_fields", None) or e.fields)
+        for e in elements)
     desc_used = desc.replace(":", "\n")
 
     t0 = time.time()
