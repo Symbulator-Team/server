@@ -295,8 +295,8 @@ def api_export():
         circuit = {"name": str(raw.get("name") or "Circuit")[:MAX_NAME_LEN],
                    "desc": str(raw.get("desc") or "")[:MAX_DESC_LEN]}
         for field in ("domain", "omega", "vars", "tool", "n1", "n2", "kind",
-                      "unknowns", "note", "plottool", "plotkey", "plotmin",
-                      "plotmax", "plotpoints", "rounding", "evaluate",
+                      "unknowns", "note", "plottool", "plotkey", "plotx",
+                      "plotmin", "plotmax", "plotpoints", "rounding", "evaluate",
                       "solve_unknowns"):
             val = raw.get(field)
             if val:
@@ -629,7 +629,7 @@ def api_solve():
                     "notes": payload["notes"]})
 
 
-_VALID_PLOT_TOOLS = {"time", "bode"}
+_VALID_PLOT_TOOLS = {"time", "bode", "bode_tf", "sweep"}
 _MAX_RANGE = 1e15  # generous ceiling; keeps a typo from hanging np.logspace/linspace
 
 
@@ -673,9 +673,11 @@ def api_schematic():
 
 @app.post("/api/plot")
 def api_plot():
-    """Plot endpoint for the two sampling-based tools: "Plot vs time"
-    (tr()'s response over a time range) and "Bode plot" (fd()'s
-    magnitude/phase over a frequency sweep). Separate from /api/solve
+    """Plot endpoint for the sampling-based tools: "Plot vs time" (tr()'s
+    response over a time range), "Bode plot" (fd()'s magnitude/phase over
+    a frequency sweep), "Bode plot of a transfer function" (a typed H(s),
+    no circuit at all) and "Plot against a variable" (a DC answer sampled
+    against one symbolic value). Separate from /api/solve
     because the shape of both the request (a range + point count instead
     of a domain) and the response (number arrays for a chart instead of
     formatted equations) are different enough that folding them into the
@@ -712,20 +714,30 @@ def api_plot():
         extra_conditions = [expand_defines(c, defines) for c in extra_conditions]
         extra_unknowns = [expand_defines(u, defines) for u in extra_unknowns]
 
+    xname = str(data.get("xname", "")).strip()
     err = None
-    if not desc:
+    if tool not in _VALID_PLOT_TOOLS:
+        err = "Unknown plot tool."
+    elif tool == "bode_tf":
+        # No circuit involved: `key` carries the transfer function itself,
+        # validated the way Evaluate validates an expression.
+        if not key:
+            err = "Give a transfer function of s, e.g. 100/(s^2 + 10*s + 100)."
+        elif len(key) > _EXPR_MAX or not _ALLOWED.match(key) or "__" in key:
+            err = "Transfer function contains invalid characters."
+    elif not desc:
         err = "Please enter a circuit description."
     elif len(desc) > MAX_DESC_LEN:
         err = f"Circuit description too long (max {MAX_DESC_LEN} characters)."
     elif not _ALLOWED.match(desc) or "__" in desc:
         err = "Circuit description contains characters that aren't used in Symbulator syntax."
-    elif tool not in _VALID_PLOT_TOOLS:
-        err = "Unknown plot tool."
     elif not key or not _VARNAME.match(key):
         err = "Give a variable to plot, e.g. v_2 or i_r1."
-    elif not (2 <= n <= MAX_PLOT_POINTS):
+    elif tool == "sweep" and (not xname or not _VARNAME.match(xname)):
+        err = "Give a variable to sweep along the x-axis, e.g. rx."
+    if not err and not (2 <= n <= MAX_PLOT_POINTS):
         err = f"Number of points must be between 2 and {MAX_PLOT_POINTS}."
-    if not err:
+    if not err and tool != "bode_tf":
         err = _validate_extras(extra_equations, extra_unknowns, extra_conditions)
     if err:
         return jsonify({"ok": False, "error": err}), 400
@@ -736,14 +748,23 @@ def api_plot():
             return jsonify({"ok": False, "error": rng_err}), 400
         fn_name, args = "plot_time_ui", (desc, key, t_min, t_max, n,
                                          extra_equations, extra_unknowns, extra_conditions)
+    elif tool == "sweep":
+        x_min, x_max, rng_err = _clean_range(data, 0.0, 1.0)
+        if rng_err:
+            return jsonify({"ok": False, "error": rng_err}), 400
+        fn_name, args = "sweep_ui", (desc, key, xname, x_min, x_max, n,
+                                     extra_equations, extra_unknowns, extra_conditions)
     else:
         f_min, f_max, rng_err = _clean_range(data, 1.0, 1000.0)
         if rng_err:
             return jsonify({"ok": False, "error": rng_err}), 400
         if f_min <= 0 or f_max <= 0:
             return jsonify({"ok": False, "error": "Bode frequencies must be positive (Hz)."}), 400
-        fn_name, args = "bode_ui", (desc, key, f_min, f_max, n,
-                                    extra_equations, extra_unknowns, extra_conditions)
+        if tool == "bode_tf":
+            fn_name, args = "bode_tf_ui", (key, f_min, f_max, n)
+        else:
+            fn_name, args = "bode_ui", (desc, key, f_min, f_max, n,
+                                        extra_equations, extra_unknowns, extra_conditions)
 
     t0 = time.time()
     ok, payload = _run_in_process(fn_name, args)

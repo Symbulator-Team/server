@@ -1579,13 +1579,19 @@ units: yes</pre>
           <select id="plotTool">
             <option value="plot_time">Plot a function of time</option>
             <option value="bode">Bode plot (magnitude &amp; phase vs. frequency)</option>
+            <option value="bode_tf">Bode plot of a transfer function H(s)</option>
+            <option value="sweep">Plot a variable against another variable (DC)</option>
           </select>
         </div>
       </div>
       <div class="row">
         <div>
-          <label for="plotKey">Variable to plot <span class="hint">e.g. v_2 or i_r1</span></label>
+          <label for="plotKey"><span id="plotKeyLabel">Variable to plot</span></label>
           <input type="text" id="plotKey" placeholder="v_2">
+        </div>
+        <div id="plotXField" hidden>
+          <label for="plotX">Variable on the x-axis</label>
+          <input type="text" id="plotX" placeholder="rx">
         </div>
         <div id="plotMinField">
           <label for="plotMin"><span id="plotMinLabel">Start time (s)</span></label>
@@ -1831,7 +1837,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-27 07:29 UTC
+  Symbulator 9 version 2026-08-27 09:47 UTC
 </footer>
 
 <script>
@@ -1844,7 +1850,7 @@ const plotToolSel = $('plotTool');
 // tool + domain combination (omega only for AC, the two port-node fields
 // only for th/er/port, "kind" only for port, etc.), and lock th/er/port
 // to DC/AC since those tools don't support fd/tr.
-const PLOT_TOOLS = new Set(['plot_time', 'bode']);
+const PLOT_TOOLS = new Set(['plot_time', 'bode', 'bode_tf', 'sweep']);
 
 // The Analysis menu offers "Solve circuit" or "Find equivalent"; which
 // equivalent lives in a second menu. The solver, the saved file format
@@ -1890,10 +1896,16 @@ $('equivType').addEventListener('change', syncFields);
 // it only needs to relabel its own start/end fields.
 function syncPlotFields() {
   const tool = plotToolSel.value;
-  $('plotMinLabel').textContent = tool === 'bode' ? 'Start frequency (Hz)' : 'Start time (s)';
-  $('plotMaxLabel').textContent = tool === 'bode' ? 'End frequency (Hz)' : 'End time (s)';
-  $('plotMin').placeholder = tool === 'bode' ? '10' : '0';
-  $('plotMax').placeholder = tool === 'bode' ? '100000' : '0.01';
+  const bodeish = tool === 'bode' || tool === 'bode_tf';
+  $('plotKeyLabel').textContent = tool === 'bode_tf' ? 'Transfer function H(s)' : 'Variable to plot';
+  $('plotKey').placeholder = tool === 'bode_tf' ? '100/(s^2 + 10*s + 100)' : 'v_2';
+  $('plotXField').hidden = tool !== 'sweep';
+  $('plotMinLabel').textContent = bodeish ? 'Start frequency (Hz)'
+    : tool === 'sweep' ? 'Start value' : 'Start time (s)';
+  $('plotMaxLabel').textContent = bodeish ? 'End frequency (Hz)'
+    : tool === 'sweep' ? 'End value' : 'End time (s)';
+  $('plotMin').placeholder = bodeish ? '10' : tool === 'sweep' ? '1' : '0';
+  $('plotMax').placeholder = bodeish ? '100000' : tool === 'sweep' ? '10000' : '0.01';
 }
 plotToolSel.addEventListener('change', syncPlotFields);
 syncPlotFields();
@@ -2033,7 +2045,7 @@ const STALE_ON_CHANGE = [
   [['digits', 'nDigits', 'siUnits', 'showUnits', 'useRms', 'polarPhasors'], ['solve', 'evaluate', 'solveq']],
   [['evalExpr', 'evalConds'], ['evaluate']],
   [['solveqEqs', 'solveqUnks', 'solveqConds', 'solveqReal'], ['solveq']],
-  [['plotTool', 'plotKey', 'plotMin', 'plotMax', 'plotN'], ['plot']],
+  [['plotTool', 'plotKey', 'plotX', 'plotMin', 'plotMax', 'plotN'], ['plot']],
 ];
 for (const [ids, tools] of STALE_ON_CHANGE) {
   for (const id of ids) {
@@ -2267,6 +2279,7 @@ function applyCircuit(c) {
   $('unks').value = c.unknowns || '';
   if (plotTool) plotToolSel.value = plotTool;
   $('plotKey').value = c.plotkey || '';
+  $('plotX').value = c.plotx || '';
   $('plotMin').value = c.plotmin || '';
   $('plotMax').value = c.plotmax || '';
   $('plotN').value = c.plotpoints || 300;
@@ -2741,6 +2754,7 @@ function inputsSnapshot() {
     solve_conditions: linesOf($('solveqConds').value),
     solve_real_only: $('solveqReal').checked,
     plotkey: hasPlot ? $('plotKey').value : '',
+    plotx: hasPlot ? $('plotX').value : '',
     plotmin: hasPlot ? $('plotMin').value : '',
     plotmax: hasPlot ? $('plotMax').value : '',
     plotpoints: hasPlot ? $('plotN').value : ''
@@ -3035,7 +3049,8 @@ function clearAllInputs() {
   $('evalExpr').value = ''; $('evalConds').value = '';
   $('solveqEqs').value = ''; $('solveqConds').value = ''; $('solveqUnks').value = '';
   $('solveqReal').checked = false;
-  $('plotKey').value = ''; $('plotMin').value = ''; $('plotMax').value = '';
+  $('plotKey').value = ''; $('plotX').value = '';
+  $('plotMin').value = ''; $('plotMax').value = '';
   $('plotN').value = 300;
   $('plotTool').value = 'plot_time';
   syncPlotFields();
@@ -3591,9 +3606,10 @@ async function plot() {
   out.innerHTML = '<div class="lcd"><div class="placeholder">computing symbolically…</div></div>';
   try {
     const body = {
-      desc: $('desc').value, tool: tool === 'bode' ? 'bode' : 'time',
+      desc: $('desc').value, tool: tool === 'plot_time' ? 'time' : tool,
       defines: linesOf($('defines').value),
-      key: $('plotKey').value, min: $('plotMin').value, max: $('plotMax').value,
+      key: $('plotKey').value, xname: $('plotX').value,
+      min: $('plotMin').value, max: $('plotMax').value,
       n: $('plotN').value,
       ...expertFields()
     };
@@ -3628,7 +3644,7 @@ async function plot() {
     const chartWrap = document.createElement('div');
     chartWrap.className = 'lcd';
     chartWrap.style.padding = '1rem';
-    if (tool === 'bode') {
+    if (tool === 'bode' || tool === 'bode_tf') {
       chartWrap.innerHTML =
         svgLineChart(data.freq, data.mag_db, {
           title: `${data.key} — magnitude`, xLabel: 'frequency (Hz, log scale)',
@@ -3636,6 +3652,9 @@ async function plot() {
         svgLineChart(data.freq, data.phase_deg, {
           title: `${data.key} — phase`, xLabel: 'frequency (Hz, log scale)',
           yLabel: 'degrees', logX: true});
+    } else if (tool === 'sweep') {
+      chartWrap.innerHTML = svgLineChart(data.x, data.y, {
+        title: `${data.key} vs. ${data.xname}`, xLabel: data.xname, yLabel: data.key});
     } else {
       chartWrap.innerHTML = svgLineChart(data.t, data.y, {
         title: data.key, xLabel: 'time (s)', yLabel: data.key});
@@ -3643,8 +3662,10 @@ async function plot() {
     out.appendChild(chartWrap);
     const meta = document.createElement('div');
     meta.className = 'lcd-meta';
-    const nPts = tool === 'bode' ? data.freq.length : data.t.length;
-    meta.textContent = `${tool === 'bode' ? 'Bode plot' : 'Time plot'} · ${nPts} point(s) · ${data.elapsed}s`;
+    const nPts = (data.freq || data.x || data.t).length;
+    const toolLabel = tool === 'bode' ? 'Bode plot' : tool === 'bode_tf' ? 'Bode plot of H(s)'
+      : tool === 'sweep' ? 'Variable sweep' : 'Time plot';
+    meta.textContent = `${toolLabel} · ${nPts} point(s) · ${data.elapsed}s`;
     out.appendChild(meta);
     status.textContent = 'Plotted!';
     markFresh('plot');

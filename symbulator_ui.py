@@ -2125,6 +2125,137 @@ def bode_ui(desc: str, key: str, f_min: float, f_max: float, n: int,
         return _err(_exc_text(exc))
 
 
+def _chart_safe(values) -> list:
+    """Floats for a chart payload, with anything non-finite as None.
+
+    A sweep can cross a pole and a magnitude can hit true zero, and both
+    produce values (inf, nan) that are not JSON -- Flask would emit
+    `Infinity` and the page's JSON.parse would throw, reading as "could
+    not reach the solver". The chart renderer skips a null point, which
+    is the honest picture: there is no value there to draw."""
+    import math
+    return [v if math.isfinite(v) else None for v in values]
+
+
+def bode_tf_ui(expr_str: str, f_min: float, f_max: float, n: int):
+    """Sample a transfer function typed directly -- H(s), no circuit --
+    across a frequency sweep from `f_min` to `f_max` Hz (s = j*2*pi*f),
+    for the Bode tool's transfer-function mode (#123). Lesson 11's
+    practice problems hand the reader H(s) with no circuit behind it,
+    which is exactly the case the circuit-variable Bode cannot serve.
+
+    The expression goes through the same shorthand a circuit value gets
+    (`^`, implied multiplication, `2'k`), must be numeric apart from
+    `s`, and returns the same payload shape as bode_ui, with "H(s)" as
+    the chart key."""
+    try:
+        import numpy as np
+        import sympy as sp
+
+        parsed = _parse_with_rearrangers(expand_value_for_ui(expr_str))
+        strays = sorted(str(x) for x in parsed.free_symbols if str(x) != "s")
+        if strays:
+            return _err(
+                f"The transfer function must be numeric apart from s -- it "
+                f"still contains {', '.join(strays)}. Write H(s) with numbers "
+                f"everywhere else, e.g. 100/(s^2 + 10*s + 100).")
+        s_syms = [x for x in parsed.free_symbols if str(x) == "s"]
+        s_sym = s_syms[0] if s_syms else sp.Symbol("s")
+        fn = sp.lambdify(s_sym, parsed, modules=["numpy"])
+        freq_arr = np.logspace(np.log10(f_min), np.log10(f_max), n)
+        h_raw = fn(1j * 2 * np.pi * freq_arr)
+        h = np.broadcast_to(np.asarray(h_raw, dtype=complex), freq_arr.shape)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            mag_db = _chart_safe((20 * np.log10(np.abs(h))).tolist())
+        phase_deg = _chart_safe(np.angle(h, deg=True).tolist())
+        return _ok({"freq": freq_arr.tolist(), "mag_db": mag_db,
+                    "phase_deg": phase_deg, "key": "H(s)", "notes": []})
+    except Exception as exc:  # noqa: BLE001
+        return _err(_exc_text(exc))
+
+
+def sweep_ui(desc: str, key: str, xname: str, x_min: float, x_max: float,
+             n: int, extra_equations, extra_unknowns, extra_conditions):
+    """Sample one solved answer against one symbolic value -- `v1` as
+    `rx` runs from 1 to 10k -- for the "Plot against a variable" tool
+    (#123). The circuit is solved **once, in DC**, with `xname` left
+    symbolic; the answer is lambdified over it and sampled linearly.
+    Returns {"ok": True, "x": [...], "y": [...], "key": ..., "xname":
+    ...} -- same cross-boundary contract as the other plot tools."""
+    try:
+        import numpy as np
+        import sympy as sp
+        from symbulator import dc as _dc
+        from symbulator.elements import parse_circuit
+        from symbulator.plotting import PlotError
+
+        if x_max <= x_min:
+            return _err("The sweep range's end must be after its start.")
+        elements = parse_circuit(desc)
+        # DC under the hood, so i/j are ordinary names here, as in tr().
+        _notes = _hijack_notes(elements, reserve_imaginary=False)
+
+        if extra_equations or extra_conditions:
+            _canon = _circuit_canonical_names(elements)
+            if extra_equations:
+                extra_equations = [_normalize_underscore_names(e, _canon)
+                                    for e in extra_equations]
+            if extra_conditions:
+                extra_conditions = [_normalize_underscore_names(c, _canon)
+                                     for c in extra_conditions]
+        resolved = _resolve_name(key, elements)
+
+        got = _dc(desc, equations=extra_equations or None,
+                  unknowns=extra_unknowns or None,
+                  conditions=extra_conditions or None)
+        pair = _voltage_drop_nodes(resolved, elements)
+        if pair is None:
+            if resolved not in got.values:
+                return _err(f"'{resolved}' was not found in the DC solution.")
+            expr = got.values[resolved]
+        else:
+            # An element's voltage drop: subtract the node voltages it
+            # spans, same expansion as the other plot tools -- but the
+            # leftover-symbol check is ours, against the sweep variable.
+            parts = []
+            for k in pair:
+                if k is None:
+                    parts.append(sp.Integer(0))
+                elif k not in got.values:
+                    return _err(f"'{resolved}' needs {k}, which was not "
+                                f"found in the DC solution.")
+                else:
+                    parts.append(got.values[k])
+            expr = sp.simplify(parts[0] - parts[1])
+
+        xsyms = [x for x in expr.free_symbols if str(x) == xname]
+        strays = sorted(str(x) for x in expr.free_symbols if str(x) != xname)
+        if strays:
+            return _err(
+                f"'{resolved}' still depends on {', '.join(strays)}, which "
+                f"has no numeric value -- pin it with a condition (e.g. "
+                f"\"{strays[0]} = 1'k\") before plotting, or sweep it "
+                f"instead.")
+        if not xsyms:
+            _notes = list(_notes) + [
+                f"'{resolved}' does not depend on '{xname}', so the line is "
+                f"flat. If {xname} names an element, give that element a "
+                f"symbolic value and sweep that value instead."]
+        x_sym = xsyms[0] if xsyms else sp.Symbol(xname)
+        fn = sp.lambdify(x_sym, expr, modules=["numpy"])
+        x_arr = np.linspace(x_min, x_max, n)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            y_raw = fn(x_arr)
+            y_arr = np.real(np.broadcast_to(
+                np.asarray(y_raw, dtype=complex), x_arr.shape))
+        return _ok({"x": x_arr.tolist(), "y": _chart_safe(y_arr.tolist()),
+                    "key": resolved, "xname": xname, "notes": _notes})
+    except PlotError as exc:
+        return _err(str(exc))
+    except Exception as exc:  # noqa: BLE001
+        return _err(_exc_text(exc))
+
+
 def _aliases_from_values(values: dict) -> dict:
     """{sans-underscore spelling: the name the answers actually use}.
 

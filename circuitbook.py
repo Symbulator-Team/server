@@ -79,6 +79,7 @@ _KEYS = {
     # applyCircuit() in the front end, which still reads that form.
     "plottool": "plottool",
     "plotkey": "plotkey",
+    "plotx": "plotx",
     "plotmin": "plotmin",
     "plotmax": "plotmax",
     "plotpoints": "plotpoints",
@@ -310,6 +311,7 @@ def format_book(circuits: List[dict], title: str = "") -> str:
         if c.get("solve_real_only"):
             extra.append("solve_real_only: yes")
         for key, field in (("plottool", "plottool"), ("plotkey", "plotkey"),
+                           ("plotx", "plotx"),
                            ("plotmin", "plotmin"), ("plotmax", "plotmax"),
                            ("plotpoints", "plotpoints")):
             val = c.get(field)
