@@ -2116,28 +2116,48 @@ def _parse_with_rearrangers(text: str, reserve_imaginary: bool = True):
 
 
 def _apply_rearrangers(expr):
-    """(expression, whether any ran). Runs the deferred rearrangers.
+    """(expression, whether one of them actually rearranged anything).
 
     A name that is not a real SymPy function is left as it is rather than
     raising: it will surface as an unresolved symbol in the answer, which
     is a clearer thing for a reader to see than a traceback.
+
+    The flag is about the *arrangement*, not about whether the call was
+    resolved. Getting that wrong made a rearranger that does nothing --
+    `powsimp` on an answer with no powers to gather -- look actively
+    harmful: it counted as "ran", the display's simplify was skipped on
+    its account, and the reader saw the raw stored form. `vo` showed
+    -r2/r1 while `powsimp(vo)` showed (-r2*r3 - r2*r4)/(r1*(r3 + r4)),
+    which is the same number and a worse answer.
     """
     import sympy as sp
     if not getattr(expr, "replace", None):
         return expr, False
-    used = False
+    changed = False
+
+    def bind(name, fn):
+        def run(*args):
+            nonlocal changed
+            try:
+                out = fn(*args)
+            except Exception as exc:
+                # Say which function declined and why, rather than leaving
+                # the call unevaluated -- `apart` on an expression with
+                # several symbols echoed back "apart(-r2/r1)", which reads
+                # like the card ignored what was typed.
+                raise ValueError(
+                    f"{name}() could not be applied to this answer: {exc}"
+                ) from exc
+            if args and out != args[0]:
+                changed = True
+            return out
+        return run
+
     for name in _REARRANGERS:
         fn = getattr(sp, name, None)
-        if fn is None:
-            continue
-        try:
-            after = expr.replace(sp.Function(name), fn)
-        except Exception:
-            continue
-        if after != expr:
-            used = True
-        expr = after
-    return expr, used
+        if fn is not None:
+            expr = expr.replace(sp.Function(name), bind(name, fn))
+    return expr, changed
 
 
 def _parse_answer(vstr: str):

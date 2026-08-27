@@ -1390,6 +1390,63 @@ units: yes</pre>
         <div><input type="text" id="evalExpr" placeholder="solve a circuit first…" disabled></div>
         <div><button id="evalBtn" disabled>Evaluate</button></div>
       </div>
+      <details class="exhelp" style="margin-top:.9rem">
+        <summary>Useful SymPy functions</summary>
+        <p class="hint" style="margin:.5rem 0 0">
+          An answer arrives arranged the way the solver happened to leave it,
+          which is not always the way you want to read it. These rearrange it
+          without changing what it is. Wrap the answer's name in one:
+          <code>expand(vo)</code> rather than plain <code>vo</code>.
+        </p>
+        <table>
+          <tr><th>Function</th><th>What it does</th></tr>
+          <tr>
+            <td><code>simplify(vo)</code></td>
+            <td>A general tidy-up. Tries several routes and keeps whichever
+                comes out shortest, so it is the one to reach for first and
+                the least predictable.</td>
+          </tr>
+          <tr>
+            <td><code>expand(vo)</code></td>
+            <td>Multiplies out.
+                <code>r1*(r2 + r3)</code> &rarr; <code>r1*r2 + r1*r3</code></td>
+          </tr>
+          <tr>
+            <td><code>factor(vo)</code></td>
+            <td>The reverse.
+                <code>r1*r2 + r1*r3</code> &rarr; <code>r1*(r2 + r3)</code></td>
+          </tr>
+          <tr>
+            <td><code>collect(vo, v1)</code></td>
+            <td>Gathers the terms in one symbol &mdash; the second argument
+                says which, and it is not optional.
+                <code>r1*v1 + r2*v1 + r3*v2</code> &rarr;
+                <code>r3*v2 + v1*(r1 + r2)</code></td>
+          </tr>
+          <tr>
+            <td><code>together(vo)</code></td>
+            <td>Pulls a sum of fractions over one denominator.
+                <code>v1/r1 + v2/r2</code> &rarr;
+                <code>(r1*v2 + r2*v1)/(r1*r2)</code></td>
+          </tr>
+          <tr>
+            <td><code>apart(v3)</code></td>
+            <td>Partial fractions &mdash; the step before an inverse Laplace
+                transform. It wants a single variable, so it suits an FD or TR
+                answer in <code>s</code> rather than a DC one written in
+                several resistors.
+                <code>2/(s**2 + 3*s + 2)</code> &rarr;
+                <code>2/(s + 1) - 2/(s + 2)</code></td>
+          </tr>
+        </table>
+        <p class="hint" style="margin:.6rem 0 0">
+          <code>powsimp</code>, <code>radsimp</code>, <code>trigsimp</code>,
+          <code>logcombine</code>, <code>cancel</code> and <code>diff</code>
+          are accepted too. They are narrower: <code>diff(vo, v1)</code>
+          differentiates, and the rest gather powers, radicals, trig terms or
+          logs, which a circuit answer rarely has enough of to notice.
+        </p>
+      </details>
       <div class="row" style="margin-top:.7rem">
         <div>
           <label for="evalConds">Conditions
@@ -1743,7 +1800,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-26 23:35 UTC
+  Symbulator 9 version 2026-08-27 00:25 UTC
 </footer>
 
 <script>
