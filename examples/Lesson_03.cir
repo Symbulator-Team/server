@@ -674,7 +674,7 @@ units: yes
 
 ji,0,a,is1
 re1,a,0,re1
-jd,b,a,beta*is1
+jd,b,a,β*is1
 rl,b,0,rl
 
 analysis: dc
@@ -702,10 +702,10 @@ units: yes
 
 e1,1,0,vcc
 rb,1,b,rb
-e2,e,b,vgamma
+e2,e,b,vγ
 re1,e,0,re1
 rc,1,c,rc
-j,c,e,beta*irb
+j,c,e,β*irb
 
 analysis: dc
 rounding: exact

@@ -64,11 +64,14 @@ MAX_VARIABLES = 40
 # alongside the real degree sign because the two look identical and the
 # 2023 documentation uses both. The minus and en dash are there so a
 # negative angle copied from that documentation is read, not refused.
+# Beta and gamma joined mu and delta on 27 Aug 2026, for the same
+# reason those were let in: the 2023 documentation's symbolic circuits
+# use them as values (\u03b2*irb, v\u03b3), and the engine reads them fine.
 _ALLOWED = re.compile("^[A-Za-z0-9_,.:+\\-*/()\\[\\]{}'^ \u00b5\u03bc\u03b4"
-                      "\u2220\u00b0\u00ba\u2212\u2013]*$")
+                      "\u03b2\u03b3\u2220\u00b0\u00ba\u2212\u2013]*$")
 # Expert-mode equations/conditions additionally need "=".
 _ALLOWED_EQ = re.compile("^[A-Za-z0-9_,.=+\\-*/()\\[\\]{}'^ \u00b5\u03bc\u03b4"
-                         "\u2220\u00b0\u00ba\u2212\u2013]*$")
+                         "\u03b2\u03b3\u2220\u00b0\u00ba\u2212\u2013]*$")
 # The Solve panel's "Conditions / constraints" (solveq_ui) also allow
 # < and > (and, via >=/<=, both together) -- a post-solve filter, not a
 # substitution, so an actual inequality is meaningful there.

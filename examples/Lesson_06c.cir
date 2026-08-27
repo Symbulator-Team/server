@@ -4,7 +4,7 @@ title: Circuits for Lesson 6 of the Tutorial (Part 3)
 
 [Bo2's Figure 5.38 (Impulse)]
 
-j,0,1,i*DiracDelta(t)
+j,0,1,i*δ(t)
 c,1,0,c,0
 r,1,0,r
 
@@ -17,7 +17,7 @@ units: yes
 
 [Bo2's Drill Exercise 5.13 (Impulse)]
 
-e,1,0,DiracDelta(t)
+e,1,0,δ(t)
 o,1,2,o
 c,2,o,1/8,0
 r2,2,o,2
@@ -57,7 +57,7 @@ units: yes
 
 [Bo2's Example 5.12 (Exponential)]
 
-j,0,1,2*exp(-4*t)
+j,0,1,2e^(-4t)
 r,0,1,6
 l,1,0,2,0
 
@@ -69,7 +69,7 @@ units: yes
 
 [Bo2's p265 (Exponential, the repeated pole)]
 
-j,0,1,2*exp(-3*t)
+j,0,1,2e^(-3t)
 r,0,1,6
 l,1,0,2,0
 
@@ -82,7 +82,7 @@ units: yes
 
 [Bo2's Example 5.13 (Exponential)]
 
-e,1,0,18*exp(-t/2)
+e,1,0,18e^(-t/2)
 r3,1,2,3
 r5,2,3,5
 c,3,0,1,0
@@ -96,7 +96,7 @@ units: yes
 
 [Bo2's Drill Exercise 5.16 (Exponential)]
 
-e,1,0,2*exp(-4*t)
+e,1,0,2e^(-4t)
 o,1,2,o
 c,2,o,1/8,0
 r2,2,o,2

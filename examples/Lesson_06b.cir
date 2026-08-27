@@ -75,7 +75,7 @@ units: yes
 
 [Bo2's Figure 5.19 (step source, RC)]
 
-e,1,0,V*Heaviside(t)
+e,1,0,V*u(t)
 r,1,2,r
 c,2,0,c,0
 
@@ -87,7 +87,7 @@ units: yes
 
 [Bo2's Figure 5.24 (step source, RL)]
 
-e,1,0,V*Heaviside(t)
+e,1,0,V*u(t)
 l,1,2,l,0
 r,2,0,r
 
@@ -112,7 +112,7 @@ units: yes
 
 [Bo2's Figure 5.26 (step current source)]
 
-j,0,1,i*Heaviside(t)
+j,0,1,i*u(t)
 c,1,0,c,0
 r,1,0,r
 
@@ -152,7 +152,7 @@ units: yes
 
 [Bo2's p249 F5.28 (TR, first interval)]
 
-e,1,0,V*Heaviside(t)
+e,1,0,V*u(t)
 r,1,2,r
 c,2,0,c,0
 
@@ -175,7 +175,7 @@ units: yes
 
 [Bo2's Drill Exercise 5.9 (TR, first interval)]
 
-e,1,0,V*Heaviside(t)
+e,1,0,V*u(t)
 l,1,2,l,0
 r,2,0,r
 

@@ -28,8 +28,8 @@ note: Solve the circuit first, then use the Solve equations card.
 rounding: exact
 si: no
 units: yes
-solve_equations: re = 12000
-solve_equations: ir3 = 0.006
+solve_equations: re = 12'k
+solve_equations: ir3 = 6'm
 solve_unknowns: e, r1
 
 
@@ -43,8 +43,8 @@ r3,3,0,6'k
 analysis: dc
 note: The same problem with the two facts handed over before solving, so the whole circuit comes back numerical.
 unknowns: e, rx
-equations: re = 12000
-equations: ir3 = 0.006
+equations: re = 12'k
+equations: ir3 = 6'm
 rounding: exact
 si: no
 units: yes
@@ -76,9 +76,9 @@ r3,1,0,r3
 
 analysis: dc
 unknowns: e, r2, r3
-equations: ir1 = 0.008
-equations: ir2 = 0.010
-equations: ir3 = 0.002
+equations: ir1 = 8'm
+equations: ir2 = 10'm
+equations: ir3 = 2'm
 rounding: exact
 si: no
 units: yes
@@ -96,11 +96,11 @@ rl2,b,0,rl2
 analysis: dc
 note: Five significant digits, so r1 reads 1333.3 as the chapter prints it rather than the exact 4000/3.
 unknowns: r1, r2, r3, rl1, rl2
-equations: irl1 = 0.020
+equations: irl1 = 20'm
 equations: vrl1 = 60
-equations: irl2 = 0.010
+equations: irl2 = 10'm
 equations: vrl2 = 20
-equations: -ie = 0.050
+equations: -ie = 50'm
 rounding: 5
 si: no
 units: yes
