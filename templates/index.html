@@ -1524,9 +1524,15 @@ units: yes</pre>
         every answer arrives as a SymPy expression you can expand, factor,
         substitute into or plot. Paste it into a Python prompt, a Jupyter
         notebook, or any online SymPy console.
+        <b>What if…</b> opens this solve's equation system in EqSheet, a
+        numerical what-if solver: every answer arrives as a Known — untick
+        a rule, flip a Known to Unknown, and solve the circuit backwards.
+        DC and AC solves only (AC with a numeric ω).
       </p>
       <div class="dl-row" style="margin-top:.6rem">
         <button id="sympyBtn" disabled>Export to SymPy</button>
+        <button id="whatifBtn" disabled
+          title="opens the equation system in EqSheet">What if…</button>
       </div>
     </details>
   </div>
@@ -1800,7 +1806,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-27 03:17 UTC
+  Symbulator 9 version 2026-08-27 03:49 UTC
 </footer>
 
 <script>
@@ -2062,6 +2068,10 @@ function activatePostSolve() {
   $('solveqCard').classList.remove('inactive');
   for (const id of ['dlDesc', 'dlEqs', 'dlAns']) $(id).disabled = false;
   $('sympyBtn').disabled = false;
+  // Enabled only when the solve carried an EqSheet payload: dc always,
+  // ac only with a numeric omega. fd/tr answers are expressions in s or
+  // t, and EqSheet is a numerical tool -- see symbulator_ui.
+  $('whatifBtn').disabled = !(last && last.eqsheet);
   $('dlBtn').disabled = false;
   $('dlCard').classList.remove('inactive');
   $('miniBtn').disabled = false;
@@ -2101,6 +2111,7 @@ function clearResults() {
   $('plotStatus').textContent = '';
   for (const id of ['dlDesc', 'dlEqs', 'dlAns']) $(id).disabled = true;
   $('sympyBtn').disabled = true;
+  $('whatifBtn').disabled = true;
   $('dlBtn').disabled = true;
   $('dlCard').classList.add('inactive');
   markAllStale();
@@ -3302,7 +3313,8 @@ async function renderSolveResult(data, idx) {
     si: !!data.si,
     rms: !!data.use_rms,
     approx: !!data.approx,
-    equations: data.equations || []
+    equations: data.equations || [],
+    eqsheet: data.eqsheet || null
   };
   // A fresh main solve invalidates any earlier Evaluate/Solve results,
   // since they were computed against the previous answers.
@@ -4194,6 +4206,27 @@ $('sympyBtn').addEventListener('click', () => {
   a.download = 'symbulator_results.py';
   a.click();
   URL.revokeObjectURL(a.href);
+});
+
+// "What if…" — open EqSheet with this solve's equation system and
+// answers preloaded. The payload travels in the URL (base64url of its
+// JSON, the ?import= contract in eqsheet.py), so the new tab needs
+// nothing further from this page. The URL is absolute on purpose: the
+// offline builds carry this same script, and EqSheet needs SciPy, so
+// there is exactly one EqSheet and it lives on the server -- like the
+// Documentation link, this is an outward link that works offline only
+// when the network does.
+const EQSHEET_URL = 'https://symbulator.pythonanywhere.com/eqsheet/';
+$('whatifBtn').addEventListener('click', () => {
+  if (!last || !last.eqsheet) return;
+  const json = JSON.stringify(last.eqsheet);
+  const blob = btoa(unescape(encodeURIComponent(json)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const a = document.createElement('a');
+  a.href = EQSHEET_URL + '?import=' + blob;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  a.click();
 });
 
 // Dark Mode toggle. The early inline script in <head> already applied a

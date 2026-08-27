@@ -1,3 +1,7 @@
 flask>=3.0
 symbulator>=0.5.14
 sympy>=1.13
+# EqSheet (/eqsheet/), the numerical what-if solver, needs these two.
+# The offline builds do not: EqSheet is server-hosted only.
+numpy>=1.26
+scipy>=1.11

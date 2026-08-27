@@ -1763,6 +1763,47 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         except Exception:
             pass  # equations are a bonus; never fail the solve over them
 
+        # ---- The EqSheet import payload (the "What if..." button).
+        # Same contract as tools/eqsheet_export.py, the reference
+        # implementation: mode + the stamped equations rendered with
+        # sp.sstr + every numeric result (dc as a number, ac as
+        # [re, im]); symbolic results are skipped. Only dc and ac, and
+        # ac only with a numeric omega -- fd/tr results are expressions
+        # in s or t, and a symbolic omega would import equations with no
+        # values (handover caveats 2 and 3). Absent, the interface hides
+        # the button.
+        #
+        # The Circuit stamped above has no expert-mode extras in it (they
+        # are joined inside the solve), so extras and conditions are
+        # appended by hand -- through the solver's own shorthand
+        # expansion, since the reader may have typed 2'k or ^ in them and
+        # EqSheet's parser reads plain SymPy.
+        eqsheet = None
+        try:
+            if domain in ("dc", "ac") and tool == "solve" and (
+                    domain != "ac" or sp.sympify(omega).is_number):
+                from symbulator.si_prefix import expand_shorthand
+                eq_strings = [f"{sp.sstr(eq.lhs)} = {sp.sstr(eq.rhs)}"
+                              for eq in circ.equations]
+                for extra in list(extra_equations or []) + list(
+                        extra_conditions or []):
+                    try:
+                        eq_strings.append(expand_shorthand(extra, si=True))
+                    except Exception:
+                        eq_strings.append(extra)
+                results = {}
+                for _name, _value in values.items():
+                    try:
+                        z = complex(_value)
+                    except (TypeError, ValueError):
+                        continue          # symbolic -- not a what-if Known
+                    results[_name] = [z.real, z.imag] if domain == "ac" \
+                        else z.real
+                eqsheet = {"mode": domain, "equations": eq_strings,
+                           "results": results}
+        except Exception:
+            pass  # the payload is a bonus too; never fail the solve
+
         # Every solution is rendered, ranked as the solver ranked them --
         # the first is the one to show by default. The top-level nodes /
         # elements / extras / values stay as that first solution so callers
@@ -1773,7 +1814,8 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         return _ok({"nodes": first["nodes"], "elements": first["elements"],
                     "extras": first["extras"], "values": first["values"],
                     "solutions": rendered,
-                    "equations": equations, "notes": _notes,
+                    "equations": equations, "eqsheet": eqsheet,
+                    "notes": _notes,
                     "approx": approx, "approx_forced": approx_forced})
     except Exception as exc:  # noqa: BLE001 -- anything goes back as text
         return _err(_exc_text(exc))

@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EqSheet — what-if equation solver · Symbulator</title>
+<link rel="icon" href="/static/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Palette: the token values from the shared design system
+     (Sym Docum/Documentation/design/tokens.css), inlined by value the
+     way the app's own page does -- an app-side page cannot link a
+     stylesheet in another repository. If a colour here looks wrong,
+     compare it against that file before changing it. */
+  :root{
+    --navy:#203864; --navy-2:#2a4576; --sky:#8ec7f5;
+    --paper:#f4f6fa; --card:#ffffff; --ink:#1c2330; --ink-2:#545d6d;
+    --line:#e2e5ea; --ok:#2f7d4f; --bad:#a13030; --accent:#2f5fa8;
+    --lcd:#f2f6fc; --lcd-edge:#dbe4f2;
+    --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+    --sans:"IBM Plex Sans",system-ui,sans-serif;
+  }
+  /* ==== BEGIN banner.css ====
+     Copied verbatim from Sym Docum/Documentation/design/banner.css --
+     the single source for the lockup shared by every Symbulator
+     property (#74/#75). Do not edit it here: build_local.py compares
+     this copy against the source, exactly as it does the one in
+     index.html, and refuses to build if either has drifted.
+     ======================================================== */
+  /* Symbulator — the shared banner
+     ==========================================================================
+     ONE source for the lockup that appears on all three properties:
+
+         symbulator.com          Documentation/landing/
+         learn.symbulator.com    Documentation/web/  (via build.py)
+         the app                 repos/local, repos/server
+
+     This file exists because the same rules were previously written out three
+     times in three repositories, and drifted twice in a single day, in both
+     directions, each fix a person copying values by hand. Import it; do not
+     copy it.
+
+     Two bands: .topbar carries the lockup alone, .subbar carries each
+     property's own controls in a slightly lighter shade. The sky keyline
+     closes the pair, under the subbar.
+
+     It is self-contained on purpose. Every colour is var(--name, #literal), so
+     it works whether or not the host defines the tokens, and whatever the host
+     calls them.
+
+     Scope widened 23 Aug 2026. It used to style the bands and nothing inside
+     them, leaving every property to dress its own ribbon -- which produced
+     three ribbons that looked like three different websites. It now also
+     owns the ribbon's shared vocabulary: the row, and what a link in it looks
+     like. What goes *in* the row is still each property's own business, and
+     genuinely local controls (learn's version picker, the app's Clear all
+     inputs) still layer on top in their own stylesheets.
+
+     Both .vnum and .tm are matched for the version numeral, because the three
+     properties named that span differently before this file existed.
+
+     Verified computed values at 1280px wide: lockup band 148px, controls
+     ribbon 62px, container 1152 and left edge 64 on both,
+     logo 80/r12, gap 19.2px, name 32/700/.5px/lh49.6, numeral italic 29.44px
+     #8ec7f5, second line 16px #b7c3d6, keyline 3px. If you change anything
+     here, re-measure — do not judge by eye.
+     ========================================================================== */
+
+  :root {
+    --banner-w:   72rem;
+    --banner-pad: clamp(1.25rem, 4vw, 2.75rem);
+  }
+
+  .topbar {
+    position: relative; z-index: 50;
+    padding-block: 2.2rem 2rem;
+    background: var(--navy, #203864);
+    color: #fff;
+  }
+
+  /* The controls ribbon: a second, slightly lighter band under the lockup.
+     The lockup band carries the identity and nothing else; every control --
+     nav links on symbulator.com, Start reading / Download the PDF and the
+     version picker on learn, whatever the app puts there -- sits down here.
+
+     The two bands are one assembly: the shade change is the only divider
+     between them, and the 3px sky keyline finishes the pair rather than
+     splitting them, so it moved off .topbar and onto .subbar. A page with no
+     subbar keeps the keyline via .topbar:last-child below.
+
+     #2a4576 is --navy lightened about 8% -- far enough to read as a distinct
+     band on both themes, close enough that the two still read as one header.
+     Deliberately not a token: it exists only in relation to --navy. */
+  .subbar {
+    /* Above .topbar so the version picker's dropdown, which lives inside this
+       band, is never trapped under the lockup's stacking context. */
+    position: relative; z-index: 51;
+    background: var(--navy-2, #2a4576);
+    border-bottom: 3px solid var(--sky, #8ec7f5);
+    color: #fff;
+  }
+  .subbar-inner {
+    width: min(var(--banner-w), 100%); margin-inline: auto;
+    padding-inline: var(--banner-pad);
+    min-height: 3.25rem;
+    display: flex; align-items: center; gap: 0.6rem;
+    flex-wrap: wrap;
+    padding-block: 0.6rem;
+  }
+  /* Controls sit left, under the wordmark; anything after .subbar-spacer is
+     pushed to the right edge. */
+  .subbar-spacer { flex: 1 1 auto; }
+
+  /* The ribbon's links, shared by all three properties.
+     ---------------------------------------------------------------------
+     These moved here on 23 Aug 2026. Until then this file styled the bands
+     and nothing inside them, on the principle that each property owns its
+     own controls -- and the result was three ribbons that read as three
+     different websites: symbulator.com had plain links, learn had two solid
+     chips, the app had no ribbon at all.
+
+     The lesson is the same one the lockup taught. A shared band with
+     unshared contents is not a shared banner. So the *vocabulary* lives
+     here -- a row of links, and what a link in a navy ribbon looks like --
+     while what each property puts in the row stays its own business.
+
+     Anything genuinely local still layers on top: learn's version picker,
+     the app's Clear all inputs. They sit in the same row, at the same
+     size. */
+  .subbar nav {
+    display: flex; align-items: center; gap: 1.15rem;
+    flex-wrap: wrap; min-width: 0;
+  }
+  .subbar nav a {
+    /* font-family is pinned, not inherited. learn.symbulator.com sets its
+       body in IBM Plex Serif for long-form reading, so an inheriting ribbon
+       rendered its links in a serif there and in a sans on the other two --
+       the same words, three sizes of the same idea, in two different faces.
+       Reported 24 Aug 2026. --sans is whatever the host calls its sans stack;
+       the literal is here for a host that defines nothing. */
+    font-family: var(--sans, -apple-system, "Segoe UI", Roboto, Helvetica,
+                  Arial, sans-serif);
+    color: #dbe6f5; text-decoration: none;
+    font-size: 0.875rem; line-height: 1.4;
+    border-radius: 4px;
+  }
+  .subbar nav a:hover { color: #fff; text-decoration: underline; }
+  .subbar nav a:focus-visible {
+    outline: 2px solid var(--sky, #8ec7f5); outline-offset: 3px;
+  }
+  /* A link that happens to act on the page rather than lead somewhere -- the
+     app's Clear all inputs. Same size and colour as its neighbours; it is a
+     <button> only because it does something, and should not look like one.
+
+     The class is .subbar-action, not the more natural .linkish, because the
+     app already has a small underlined link-button of its own under that very
+     name -- and the two collided: this rule won on specificity for what it
+     declared, and the app's underline came through for what it did not, so
+     Clear all inputs rendered underlined at rest while its neighbours did not.
+     A shared file must not claim a class name a host might already use. Check
+     for collisions before naming anything here.
+
+     The selector is .subbar, not .subbar nav: an action may sit after
+     .subbar-spacer, at the right-hand end beside the theme toggle, which
+     puts it outside <nav>. The app's "Clear all inputs" does exactly that.
+     Adding nav back would silently strip the styling off any such button. */
+  .subbar button.subbar-action {
+    appearance: none; background: none; border: 0; padding: 0;
+    font-family: var(--sans, -apple-system, "Segoe UI", Roboto, Helvetica,
+                  Arial, sans-serif);
+    font-weight: 400; color: #dbe6f5; font-size: 0.875rem; line-height: 1.4;
+    cursor: pointer; border-radius: 4px;
+  }
+  .subbar button.subbar-action:hover { color: #fff; text-decoration: underline; }
+  .subbar button.subbar-action:focus-visible {
+    outline: 2px solid var(--sky, #8ec7f5); outline-offset: 3px;
+  }
+  .subbar button.subbar-action:disabled {
+    color: #8ea3c4; cursor: default; text-decoration: none;
+  }
+
+  /* A header with no controls ribbon still needs its bottom edge. */
+  .topbar:last-child { border-bottom: 3px solid var(--sky, #8ec7f5); }
+
+  .topbar-inner {
+    width: min(var(--banner-w), 100%); margin-inline: auto;
+    padding-inline: var(--banner-pad);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1.5rem;
+  }
+
+  .header-brand {
+    /* The app loads no webfont. The websites load IBM Plex. Naming Plex here
+       would render the banner in Plex on the sites and the system face in the
+       app -- identical layout, different letterforms, and invisible unless you
+       look closely. All three therefore pin the system stack on the banner
+       alone; the page body keeps whatever the host uses. Do not "tidy" this
+       back to --sans. */
+    --banner-sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex; align-items: center; gap: 1.2rem;
+    color: #fff; text-decoration: none; min-width: 0;
+  }
+  .header-logo { width: 80px; height: 80px; border-radius: 12px; flex: none; display: block; }
+
+  /* The scorpion is a link home, on every property and from every page.
+     ---------------------------------------------------------------------
+     It has to be its own anchor rather than part of .header-brand, because
+     two of the three properties wrapped the whole lockup in a link already
+     and an anchor inside an anchor is not valid markup. So .header-brand is
+     a plain container now, and its children carry the links.
+
+     Requested 24 Aug 2026: wherever you are -- reading a lesson, running the
+     app offline -- the scorpion goes to symbulator.com. */
+  .header-logo-link {
+    flex: none; display: block; border-radius: 12px;
+    color: inherit; text-decoration: none;
+  }
+  .header-logo-link:focus-visible {
+    outline: 2px solid var(--sky, #8ec7f5); outline-offset: 3px;
+  }
+  /* .header-brand may be a div wrapping links, or a link itself. Either way
+     nothing inside it should look like an underlined blue anchor. */
+  .header-brand a { color: inherit; text-decoration: none; }
+  .header-title { min-width: 0; }
+
+  .brand-name {
+    margin: 0; font-family: var(--banner-sans);
+    font-size: 2rem; font-weight: 700; letter-spacing: 0.5px; line-height: 1.55;
+  }
+  .brand-name .vnum,
+  .brand-name .tm {
+    color: var(--sky, #8ec7f5);
+    font-family: Georgia, "Times New Roman", "Nimbus Roman", serif;
+    font-style: italic; font-size: 0.92em; letter-spacing: 0;
+  }
+  .brand-sub {
+    margin: 0.4rem 0 0; font-family: var(--banner-sans);
+    font-size: 1rem; line-height: 1.55; color: #b7c3d6;
+  }
+
+  .theme-toggle {
+    /* padding:0 is load-bearing, not tidiness. A host with a generic
+       `button { padding: .6rem 1.6rem }` rule -- the app has exactly that --
+       wins over the width below, because a flex item cannot shrink under its
+       own padding. The toggle then measures 53x40 there and 40x40 on the
+       websites: the same circle on two sites and an oval on the third.
+       Measured 23 Aug 2026. */
+    padding: 0;
+    flex: none; width: 2.5rem; height: 2.5rem;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.12); color: #fff;
+    border: 1px solid rgba(255,255,255,.35); border-radius: 999px;
+    font-size: 1.2rem; line-height: 1; cursor: pointer;
+    transition: background-color .15s ease, transform .06s ease;
+  }
+  .theme-toggle svg { width: 1.15em; height: 1.15em; flex: none; }
+  .theme-toggle:hover  { background: rgba(255,255,255,.22); }
+  .theme-toggle:active { transform: translateY(1px); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--sky, #8ec7f5); outline-offset: 2px; }
+
+  @media (max-width: 520px) {
+    .topbar { padding-block: 1.6rem 1.4rem; }
+    .subbar-inner { min-height: 0; padding-block: 0.5rem; gap: 0.45rem; }
+    .topbar-inner { gap: 0.9rem; }
+    .header-brand { gap: 0.9rem; }
+    .header-logo { width: 56px; height: 56px; border-radius: 9px; }
+    .brand-name { font-size: 1.4rem; letter-spacing: 0.3px; }
+    .brand-sub { font-size: 0.9rem; margin-top: 0.25rem; }
+    .theme-toggle { width: 2.15rem; height: 2.15rem; font-size: 1.05rem; }
+  }
+  /* ==== END banner.css ====================================== */
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 var(--sans)}
+  /* EqSheet's own ribbon occupants: its name, and the DC/AC mode toggle.
+     The shared file styles the bands and the link vocabulary; these are
+     the "genuinely local controls" it leaves to each property. */
+  .sheet-id{font:600 .95rem var(--sans);color:#fff;white-space:nowrap}
+  .sheet-id .fx{font-family:Georgia,"Times New Roman",serif;font-style:italic;
+    color:var(--sky);font-weight:400}
+  /* height 2.5rem: the ribbon's standard control height (the app's theme
+     toggle, learn's version picker), so the band measures the same here
+     as on the other properties. Shorter buttons shrank the whole band to
+     54px against the app's 62 -- measured 27 Aug 2026, not eyeballed.
+     The group carries the height (border-box, border included) and the
+     buttons fill it, so the sum cannot drift by a border width. */
+  .mode{display:flex;gap:0;border:1px solid #4a5f8a;border-radius:6px;
+    overflow:hidden;flex:none;height:2.5rem}
+  .mode button{border:0;border-radius:0;background:transparent;color:#b7c3d6;
+    font:600 .85rem var(--sans);padding:0 .9rem;cursor:pointer;height:100%}
+  .mode button.on{background:var(--sky);color:var(--navy)}
+  main{display:grid;grid-template-columns:1fr 1.15fr;gap:1.25rem;padding:1.5rem;max-width:76rem;margin:0 auto}
+  @media(max-width:60rem){main{grid-template-columns:1fr}}
+  .tagline{max-width:76rem;margin:1.1rem auto -0.4rem;padding:0 1.5rem;
+    font-size:.92rem;color:var(--ink-2)}
+  section{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  section>h2{margin:0;padding:.6rem 1rem;font-size:.8rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-2);border-bottom:1px solid var(--line);
+    background:linear-gradient(#fff,#f7f9fc)}
+  .pad{padding:1rem}
+  textarea{width:100%;min-height:11rem;border:1px solid var(--line);border-radius:6px;
+    padding:.7rem;font:14px/1.7 var(--mono);color:var(--ink);resize:vertical;background:var(--lcd)}
+  textarea:focus{outline:2px solid var(--sky)}
+  button{font:600 .95rem var(--sans);border:0;border-radius:6px;padding:.55rem 1.1rem;cursor:pointer}
+  .primary{background:var(--navy);color:#fff}
+  .primary:hover{background:var(--navy-2)}
+  .ghost{background:transparent;color:var(--navy);border:1px solid var(--line)}
+  table{width:100%;border-collapse:collapse;font-size:.95rem}
+  th{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);
+    text-align:left;padding:.45rem .6rem;border-bottom:1px solid var(--line)}
+  td{padding:.4rem .6rem;border-bottom:1px solid var(--line);vertical-align:middle}
+  td.eq{font-family:var(--mono);font-size:.9rem}
+  tr.off td{color:#9aa3b2}
+  input.val{width:6.2rem;font:14px var(--mono);padding:.35rem .5rem;
+    border:1px solid var(--line);border-radius:5px;background:var(--lcd)}
+  input.val:disabled{background:#eef1f6;color:#b8bfca}
+  select.pre{font:13px var(--mono);width:3.4rem}
+  select{font:14px var(--sans);padding:.32rem .4rem;border:1px solid var(--line);border-radius:5px;background:#fff}
+  .status{padding:.6rem 1rem;font-size:.9rem;border-top:1px solid var(--line);
+    display:flex;gap:1rem;align-items:center;flex-wrap:wrap;background:#f7f9fc}
+  .badge{font:600 .78rem var(--mono);padding:.15rem .55rem;border-radius:99px;background:#e6eaf1}
+  .badge.ok{background:#ecf5ef;color:var(--ok)} .badge.bad{background:#fdf1f1;color:var(--bad)}
+  .msg{font-size:.92rem}
+  .msg.ok{color:var(--ok)} .msg.bad{color:var(--bad)}
+  .out{font:600 13px var(--mono);color:var(--navy);white-space:nowrap}
+  .out small{font-weight:400;color:var(--ink-2);display:block}
+  .resid{font:12px var(--mono);color:var(--ink-2)}
+  .hint{font-size:.85rem;color:var(--ink-2);margin:.5rem 0 0}
+  .toolbar{display:flex;gap:.6rem;margin-top:.7rem;align-items:center;flex-wrap:wrap}
+  .jlab{font:12px var(--mono);color:var(--ink-2)}
+</style>
+</head>
+<body>
+<!-- The shared two-band banner: .topbar carries the Symbulator lockup and
+     nothing else, identical on every property; .subbar carries this
+     property's own controls -- here, EqSheet's name and the DC/AC mode
+     toggle. See the note above the banner block in the CSS. -->
+<div class="banner">
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="header-brand">
+      <a class="header-logo-link" href="https://symbulator.com"
+         aria-label="Symbulator home">
+        <img src="/static/logo.png" alt="Symbulator logo" class="header-logo">
+      </a>
+      <div class="header-title">
+        <h1 class="brand-name">Symbulator <span class="tm">9</span></h1>
+        <p class="brand-sub">the best portable symbolic simulator of linear circuits</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="subbar">
+  <div class="subbar-inner">
+    <span class="sheet-id">EqSheet <span class="fx">ƒ(x)=0</span></span>
+    <nav>
+      <a href="/">Symbulator App</a>
+      <a href="https://learn.symbulator.com">Documentation</a>
+    </nav>
+    <span class="subbar-spacer"></span>
+    <div class="mode" role="group" aria-label="mode">
+      <button id="mdc" class="on">DC · real</button><button id="mac">AC · phasor</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<p class="tagline">An interactive what-if equation solver, after TK!Solver and
+SolveSys. Opened from the app's <b>What if…</b> button it arrives preloaded
+with the solved circuit's equation system — untick a rule, flip a Known to
+Unknown, and solve the circuit backwards.</p>
+
+<main>
+  <section>
+    <h2>Rule sheet</h2>
+    <div class="pad">
+      <textarea id="rules" spellcheck="false"># Voltage divider with load
+Vout = Vin * R2 / (R1 + R2)
+P2   = Vout^2 / R2
+Iin  = Vin / (R1 + R2)
+
+# Thermal
+T = T0 + P2 * Rth</textarea>
+      <div class="toolbar">
+        <button class="primary" id="parse">Update rules</button>
+        <span class="hint" id="synhint"></span>
+      </div>
+      <div id="perr" class="msg bad"></div>
+      <details style="margin-top:.8rem">
+        <summary style="cursor:pointer;font-size:.9rem;color:var(--ink-2)">Import a system (Symbulator)</summary>
+        <textarea id="impbox" spellcheck="false" style="min-height:6rem;margin-top:.5rem"
+          placeholder='{"mode": "ac", "equations": ["v_1 = 10", "v_2 = 100.0*I*i_l1", ...], "results": {"v_2": [5, 5], ...}}'></textarea>
+        <div class="toolbar">
+          <button class="ghost" id="impbtn">Import</button>
+          <span class="hint">The app's <b>What if…</b> button fills this in for you. Values arrive as Knowns — flip what you want to Unknown.</span>
+        </div>
+      </details>
+    </div>
+    <table id="rtab" hidden>
+      <thead><tr><th></th><th>Rule</th><th>Variables</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Variable sheet</h2>
+    <table id="vtab">
+      <thead><tr id="vhead"></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="status">
+      <span class="badge" id="cnt"></span>
+      <button class="primary" id="solve">Solve</button>
+      <span class="msg" id="smsg"></span>
+    </div>
+    <div class="pad" id="residbox" hidden>
+      <div class="resid" id="resid"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+let rules = [];
+let mode = 'dc';
+const PREFIXES = [['p',1e-12],['n',1e-9],['µ',1e-6],['m',1e-3],['—',1],['k',1e3],['M',1e6],['G',1e9],['T',1e12]];
+const PFACT = Object.fromEntries(PREFIXES);
+const preOpts = sel => PREFIXES.map(([s])=>`<option ${s===sel?'selected':''}>${s}</option>`).join('');
+function autoPre(x){
+  const a = Math.abs(x);
+  if(!isFinite(a) || a===0) return '—';
+  for(let k=PREFIXES.length-1; k>=0; k--) if(a >= PREFIXES[k][1]) return PREFIXES[k][0];
+  return 'p';
+}
+// vs[name] = {mode:'known'|'unknown', domain:'complex'|'real'|'imag', value:'', re:'', im:'', pre:'—'}
+const state = {sel:new Set(), vs:{}};
+const $ = id => document.getElementById(id);
+
+// Relative on purpose: the page lives at /eqsheet/, and its API lives
+// under it. An absolute '/api/solve' would hit the circuit solver's own
+// route on the main app instead.
+async function post(url, body){
+  const r = await fetch(url,{method:'POST',
+    headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  return r.json();
+}
+
+function activeVars(){
+  const s = new Set();
+  rules.forEach(r => { if(state.sel.has(r.line)) r.vars.forEach(v=>s.add(v)); });
+  return [...s].sort();
+}
+function ensure(name){
+  if(!state.vs[name])
+    state.vs[name] = {mode:'known', domain:'complex', value:'', re:'', im:'', pre:'—'};
+  return state.vs[name];
+}
+
+function setMode(m){
+  mode = m;
+  $('mdc').className = m==='dc' ? 'on' : '';
+  $('mac').className = m==='ac' ? 'on' : '';
+  $('synhint').innerHTML = m==='dc'
+    ? 'One equation per line · <code>^</code> allowed · <code>#</code> comments · sin cos exp log sqrt pi …'
+    : 'One equation per line · <code>j</code> or <code>I</code> = imaginary unit · <code>^</code> · <code>#</code> comments · conj re im …';
+  doParse();
+}
+$('mdc').onclick = ()=>setMode('dc');
+$('mac').onclick = ()=>setMode('ac');
+
+function renderRules(){
+  const tb = $('rtab').querySelector('tbody'); tb.innerHTML='';
+  rules.forEach(r=>{
+    const tr = document.createElement('tr');
+    if(!state.sel.has(r.line)) tr.className='off';
+    tr.innerHTML = `<td><input type="checkbox" ${state.sel.has(r.line)?'checked':''}></td>
+      <td class="eq">${r.text}</td><td class="resid">${r.vars.join(', ')}</td>`;
+    tr.querySelector('input').onchange = e=>{
+      e.target.checked ? state.sel.add(r.line) : state.sel.delete(r.line);
+      tr.className = e.target.checked ? '' : 'off';
+      renderVars();
+    };
+    tb.appendChild(tr);
+  });
+  $('rtab').hidden = rules.length===0;
+}
+
+function renderVars(){
+  $('vhead').innerHTML = mode==='dc'
+    ? '<th>Variable</th><th>Status</th><th>Value / guess</th><th>×</th><th>Result</th>'
+    : '<th>Variable</th><th>Status</th><th>Domain</th><th>Re</th><th>Im</th><th>×</th><th>Result</th>';
+  const tb = $('vtab').querySelector('tbody'); tb.innerHTML='';
+  activeVars().forEach(name=>{
+    const v = ensure(name);
+    const tr = document.createElement('tr');
+    if(mode==='dc'){
+      tr.innerHTML = `<td class="eq">${name}</td>
+        <td><select data-st><option value="known">Known</option><option value="unknown">Unknown</option></select></td>
+        <td><input class="val" data-v placeholder="${v.mode==='known'?'value':'guess'}"></td>
+        <td><select data-pre class="pre">${preOpts(v.pre)}</select></td>
+        <td class="out" data-out></td>`;
+      const st = tr.querySelector('[data-st]'), inp = tr.querySelector('[data-v]');
+      const pr = tr.querySelector('[data-pre]');
+      st.value = v.mode; inp.value = v.value;
+      st.onchange = ()=>{ v.mode = st.value; inp.placeholder = v.mode==='known'?'value':'guess'; count(); };
+      inp.oninput = ()=>{ v.value = inp.value; };
+      pr.onchange = ()=>{ v.pre = pr.value; };
+    }else{
+      tr.innerHTML = `<td class="eq">${name}</td>
+        <td><select data-st><option value="known">Known</option><option value="unknown">Unknown</option></select></td>
+        <td><select data-dom><option value="complex">Complex</option><option value="real">Real only</option><option value="imag">Imag only</option></select></td>
+        <td><input class="val" data-re></td>
+        <td><span class="jlab">j</span> <input class="val" data-im></td>
+        <td><select data-pre class="pre">${preOpts(v.pre)}</select></td>
+        <td class="out" data-out></td>`;
+      const st = tr.querySelector('[data-st]'), dm = tr.querySelector('[data-dom]');
+      const re = tr.querySelector('[data-re]'), im = tr.querySelector('[data-im]');
+      const pr = tr.querySelector('[data-pre]');
+      st.value = v.mode; dm.value = v.domain; re.value = v.re; im.value = v.im;
+      const sync = ()=>{
+        re.disabled = v.domain==='imag';
+        im.disabled = v.domain==='real';
+        const ph = v.mode==='known' ? 'value' : 'guess';
+        re.placeholder = re.disabled ? '0' : ph;
+        im.placeholder = im.disabled ? '0' : ph;
+      };
+      sync();
+      st.onchange = ()=>{ v.mode = st.value; sync(); count(); };
+      dm.onchange = ()=>{ v.domain = dm.value; sync(); count(); };
+      re.oninput = ()=>{ v.re = re.value; };
+      im.oninput = ()=>{ v.im = im.value; };
+      pr.onchange = ()=>{ v.pre = pr.value; };
+    }
+    tb.appendChild(tr);
+  });
+  count();
+}
+
+function scalars(v){          // scalar unknowns a variable contributes (AC)
+  return v.domain==='complex' ? 2 : 1;
+}
+function count(){
+  const vars = activeVars();
+  const ne = state.sel.size;
+  const b = $('cnt');
+  if(mode==='dc'){
+    const un = vars.filter(n=>state.vs[n].mode==='unknown').length;
+    b.textContent = `${ne} rule${ne!==1?'s':''} · ${un} unknown${un!==1?'s':''}`;
+    b.className = 'badge ' + (ne && ne===un ? 'ok' : (un ? 'bad' : ''));
+  }else{
+    const un = vars.filter(n=>state.vs[n].mode==='unknown')
+                   .reduce((s,n)=>s+scalars(state.vs[n]),0);
+    b.textContent = `${ne} rule${ne!==1?'s':''} → ${2*ne} real · ${un} scalar unknown${un!==1?'s':''}`;
+    b.className = 'badge ' + (ne && 2*ne===un ? 'ok' : (un ? 'bad' : ''));
+  }
+}
+
+async function doParse(){
+  const d = await post('api/parse', {text: $('rules').value, mode});
+  $('perr').textContent = d.errors.map(e=>`line ${e.line}: ${e.error}`).join('  ·  ');
+  const old = new Set(rules.map(r=>r.line));
+  rules = d.rules;
+  rules.forEach(r=>{ if(!old.has(r.line)) state.sel.add(r.line); });
+  const lines = new Set(rules.map(r=>r.line));
+  [...state.sel].forEach(l=>{ if(!lines.has(l)) state.sel.delete(l); });
+  renderRules(); renderVars();
+}
+$('parse').onclick = doParse;
+
+$('solve').onclick = async ()=>{
+  const m = $('smsg');
+  const body = {text:$('rules').value, mode, selected:[...state.sel]};
+  if(mode==='dc'){
+    const knowns={}, guesses={};
+    for(const n of activeVars()){
+      const v = state.vs[n], num = parseFloat(v.value) * PFACT[v.pre];
+      if(isNaN(num)){ m.textContent=`give a ${v.mode==='known'?'value':'guess'} for ${n}`; m.className='msg bad'; return; }
+      (v.mode==='known'?knowns:guesses)[n]=num;
+    }
+    body.knowns=knowns; body.guesses=guesses;
+  }else{
+    const knowns={}, unknowns={};
+    for(const n of activeVars()){
+      const v = state.vs[n], f = PFACT[v.pre];
+      const re = (v.domain==='imag' ? 0 : parseFloat(v.re||'0')) * f;
+      const im = (v.domain==='real' ? 0 : parseFloat(v.im||'0')) * f;
+      if(isNaN(re)||isNaN(im)){ m.textContent=`bad number for ${n}`; m.className='msg bad'; return; }
+      if(v.mode==='known') knowns[n]={re,im};
+      else unknowns[n]={domain:v.domain, re, im};
+    }
+    body.knowns=knowns; body.unknowns=unknowns;
+  }
+  m.textContent='solving…'; m.className='msg';
+  const d = await post('api/solve', body);
+  if(!d.solution){ m.textContent=d.message; m.className='msg bad'; return; }
+  m.textContent = d.message
+    + (d.mode==='least-squares' ? ` (least-squares: ${d.n_eq} equations, ${d.n_un} unknowns)` : '')
+    + ` — ${d.nfev} evaluations`;
+  m.className = 'msg ' + (d.ok?'ok':'bad');
+  document.querySelectorAll('#vtab tbody tr').forEach(tr=>{
+    const name = tr.querySelector('td').textContent;
+    const out = tr.querySelector('[data-out]');
+    const s = d.solution[name];
+    if(s===undefined){ out.textContent=''; return; }
+    const v = state.vs[name], f = PFACT[v.pre];
+    const sym = v.pre==='—' ? '' : ' '+v.pre;
+    if(mode==='dc'){ out.textContent = fmt(s/f) + sym; }
+    else{
+      out.innerHTML = `${fmt(s.re/f)} ${s.im<0?'−':'+'} j ${fmt(Math.abs(s.im)/f)}${sym}`
+        + `<small>${fmt(s.mag/f)}${sym} ∠ ${s.deg.toFixed(2)}°</small>`;
+    }
+  });
+  $('residbox').hidden=false;
+  $('resid').innerHTML = (mode==='ac'?'residual magnitudes: ':'residuals: ') +
+    d.residuals.map(r=>`${r.rule.split('=')[0].trim()}: ${r.value.toExponential(2)}`).join(' · ');
+};
+
+function fmt(x){
+  if(x===0) return '0';
+  const a=Math.abs(x);
+  return (a>=1e5||a<1e-3) ? x.toExponential(4) : +x.toPrecision(6)+'';
+}
+
+async function importData(d){
+  if(!d || !Array.isArray(d.equations)) throw new Error('missing "equations" list');
+  if(d.mode==='ac' || d.mode==='dc') setModeSilently(d.mode);
+  $('rules').value = d.equations.join('\n');
+  await doParse();
+  const vals = d.results || {};
+  for(const [name, v] of Object.entries(vals)){
+    const s = ensure(name);
+    s.mode = 'known';
+    if(Array.isArray(v)){
+      s.pre = autoPre(Math.max(Math.abs(v[0]), Math.abs(v[1])));
+      const f = PFACT[s.pre];
+      s.re = String(+(v[0]/f).toPrecision(10)); s.im = String(+(v[1]/f).toPrecision(10));
+      s.domain='complex';
+    }else{
+      s.pre = autoPre(v);
+      const f = PFACT[s.pre];
+      s.value = String(+(v/f).toPrecision(10));
+      s.re = s.value; s.im = '0';
+    }
+  }
+  renderVars();
+}
+function setModeSilently(m){
+  mode = m;
+  $('mdc').className = m==='dc' ? 'on' : '';
+  $('mac').className = m==='ac' ? 'on' : '';
+}
+
+$('impbtn').onclick = async ()=>{
+  try{ await importData(JSON.parse($('impbox').value)); $('perr').textContent=''; }
+  catch(e){ $('perr').textContent = 'import: ' + e.message; }
+};
+
+const urlImp = new URLSearchParams(location.search).get('import');
+if(urlImp){
+  try{
+    const json = atob(urlImp.replace(/-/g,'+').replace(/_/g,'/'));
+    importData(JSON.parse(json)).catch(e=>{ $('perr').textContent='import: '+e.message; });
+  }catch(e){ $('perr').textContent = 'import link: ' + e.message; }
+}else{
+  setMode('dc');
+}
+</script>
+</body>
+</html>

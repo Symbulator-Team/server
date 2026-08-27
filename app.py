@@ -34,6 +34,12 @@ from circuitbook import parse_book
 
 app = Flask(__name__)
 
+# EqSheet, the what-if numerical solver, mounted at /eqsheet/. It is its
+# own Blueprint (its /api/solve must not collide with this file's), and
+# the "What if..." button after a solve opens it preloaded via ?import=.
+from eqsheet import bp as eqsheet_bp                          # noqa: E402
+app.register_blueprint(eqsheet_bp)
+
 # Uploaded circuit books are plain text; half a megabyte is far more
 # than any realistic file and keeps a hostile upload from filling RAM.
 MAX_UPLOAD_BYTES = 512 * 1024
@@ -615,6 +621,11 @@ def api_solve():
                     # The page offers a picker when there is more than one.
                     "solutions": payload.get("solutions") or [],
                     "equations": payload["equations"],
+                    # The EqSheet import payload (present for dc, and for
+                    # ac with a numeric omega). The fields here are listed
+                    # by hand, so a key added in symbulator_ui must be
+                    # named or the server variant silently drops it.
+                    "eqsheet": payload.get("eqsheet"),
                     "notes": payload["notes"]})
 
 
