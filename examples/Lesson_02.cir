@@ -36,13 +36,13 @@ solve_unknowns: e, r1
 [B11's Example 5.6 (using Expert Mode)]
 
 e,1,0,e
-r1,1,2,rx
+r1,1,2,r1
 r2,2,3,4'k
 r3,3,0,6'k
 
 analysis: dc
 note: The same problem with the two facts handed over before solving, so the whole circuit comes back numerical.
-unknowns: e, rx
+unknowns: e, r1
 equations: re = 12'k
 equations: ir3 = 6'm
 rounding: exact

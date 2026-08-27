@@ -4,14 +4,14 @@ title: Circuits for Lesson 12 of the Tutorial
 
 [AS7's Example 16.1 (in TR, the one-step way)]
 
-e,1,0,t2s(u(t))
+e,1,0,u(t)
 r1,1,2,1
 r2,2,o,5
 c,2,0,1/3,0
 l,o,0,1,0
 
 analysis: tr
-note: This problem does not need the s-domain at all: the source is a function of time and so is the wanted answer. The t2s around the value is because version 9 reads TR sources in the s-domain.
+note: This problem does not need the s-domain at all: the source is a function of time and so is the wanted answer, so TR does it in one step, with the source written in time.
 rounding: exact
 si: no
 units: yes
