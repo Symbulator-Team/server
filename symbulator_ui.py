@@ -1768,13 +1768,26 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
 
         # ---- The EqSheet import payload (the "What if..." button).
         # Same contract as tools/eqsheet_export.py, the reference
-        # implementation: mode + the stamped equations rendered with
-        # sp.sstr + every numeric result (dc as a number, ac as
-        # [re, im]); symbolic results are skipped. Only dc and ac, and
-        # ac only with a numeric omega -- fd/tr results are expressions
-        # in s or t, and a symbolic omega would import equations with no
-        # values (handover caveats 2 and 3). Absent, the interface hides
-        # the button.
+        # implementation: mode + equations rendered with sp.sstr + every
+        # numeric result (real mode as a number, complex as [re, im]);
+        # symbolic results are skipped. All four domains cross now
+        # (#124), each in the shape that survives the trip:
+        #
+        # - dc, and ac with a numeric omega: the stamped system, as
+        #   before. (A symbolic omega would import equations with no
+        #   values -- handover caveat 3 -- so that one still stays home.)
+        # - fd: the stamped system too -- it is algebraic in s -- in
+        #   complex mode, with `s` crossing as a Known complex variable
+        #   (j by default) the reader moves around the plane.
+        # - tr: the system is differential and cannot cross, so the
+        #   *answers* do instead, one equation per solved expression,
+        #   with `t` as a Known real variable starting at 0. Flip an
+        #   answer Known and t Unknown and the sheet finds *when* the
+        #   waveform gets there. An answer containing delta(t) has no
+        #   numeric value at all and is left out by name, in a comment
+        #   the sheet displays but does not parse.
+        #
+        # Absent, the interface hides the button.
         #
         # The Circuit stamped above has no expert-mode extras in it (they
         # are joined inside the solve), so extras and conditions are
@@ -1783,7 +1796,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         # EqSheet's parser reads plain SymPy.
         eqsheet = None
         try:
-            if domain in ("dc", "ac") and tool == "solve" and (
+            if tool == "solve" and (
                     domain != "ac" or sp.sympify(omega).is_number):
                 from symbulator.si_prefix import expand_shorthand
                 # The Numerical Solver shows its variables sans
@@ -1791,42 +1804,73 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                 # payload strips them from every Symbulator-defined name:
                 # v_1 becomes v1, i_r1 becomes ir1, in the equations and
                 # in the result keys alike. The rename map is collected
-                # from the stamped system's own symbols, then applied to
-                # the expert extras as plain text with the longest names
-                # first, so i_r12 cannot be half-eaten by i_r1.
-                _rename = {}
-                for _eq in circ.equations:
-                    for _sym in (_eq.lhs.free_symbols
-                                 | _eq.rhs.free_symbols):
-                        _n = str(_sym)
-                        if "_" in _n:
-                            _rename[_sym] = sp.Symbol(_n.replace("_", ""))
-                eq_strings = [
-                    f"{sp.sstr(_eq.lhs.subs(_rename))} = "
-                    f"{sp.sstr(_eq.rhs.subs(_rename))}"
-                    for _eq in circ.equations]
-                _text_renames = sorted(
-                    ((str(k), str(v)) for k, v in _rename.items()),
-                    key=lambda kv: -len(kv[0]))
-                for extra in list(extra_equations or []) + list(
-                        extra_conditions or []):
-                    try:
-                        _txt = expand_shorthand(extra, si=True)
-                    except Exception:
-                        _txt = extra
-                    for _old, _new in _text_renames:
-                        _txt = re.sub(rf"\b{re.escape(_old)}\b", _new, _txt)
-                    eq_strings.append(_txt)
-                results = {}
-                for _name, _value in values.items():
-                    try:
-                        z = complex(_value)
-                    except (TypeError, ValueError):
-                        continue          # symbolic -- not a what-if Known
-                    results[_name.replace("_", "")] = \
-                        [z.real, z.imag] if domain == "ac" else z.real
-                eqsheet = {"mode": domain, "equations": eq_strings,
-                           "results": results}
+                # from the exported expressions' own symbols, then applied
+                # to the expert extras as plain text with the longest
+                # names first, so i_r12 cannot be half-eaten by i_r1.
+                if domain in ("dc", "ac", "fd"):
+                    _rename = {}
+                    for _eq in circ.equations:
+                        for _sym in (_eq.lhs.free_symbols
+                                     | _eq.rhs.free_symbols):
+                            _n = str(_sym)
+                            if "_" in _n:
+                                _rename[_sym] = sp.Symbol(_n.replace("_", ""))
+                    eq_strings = [
+                        f"{sp.sstr(_eq.lhs.subs(_rename))} = "
+                        f"{sp.sstr(_eq.rhs.subs(_rename))}"
+                        for _eq in circ.equations]
+                    _text_renames = sorted(
+                        ((str(k), str(v)) for k, v in _rename.items()),
+                        key=lambda kv: -len(kv[0]))
+                    for extra in list(extra_equations or []) + list(
+                            extra_conditions or []):
+                        try:
+                            _txt = expand_shorthand(extra, si=True)
+                        except Exception:
+                            _txt = extra
+                        for _old, _new in _text_renames:
+                            _txt = re.sub(rf"\b{re.escape(_old)}\b", _new, _txt)
+                        eq_strings.append(_txt)
+                    _complex_mode = domain in ("ac", "fd")
+                    results = {}
+                    for _name, _value in values.items():
+                        try:
+                            z = complex(_value)
+                        except (TypeError, ValueError):
+                            continue      # symbolic -- not a what-if Known
+                        results[_name.replace("_", "")] = \
+                            [z.real, z.imag] if _complex_mode else z.real
+                    eqsheet = {"mode": "ac" if _complex_mode else "dc",
+                               "equations": eq_strings, "results": results}
+                    if domain == "fd":
+                        eqsheet["known"] = {"s": [0.0, 1.0]}
+                else:                     # tr -- the answers cross instead
+                    _u = sp.Function("u")
+                    _rename = {}
+                    for _name, _expr in values.items():
+                        for _sym in getattr(_expr, "free_symbols", ()):
+                            _n = str(_sym)
+                            if "_" in _n:
+                                _rename[_sym] = sp.Symbol(_n.replace("_", ""))
+                    eq_strings, _skipped = [], []
+                    for _name, _expr in sorted(values.items()):
+                        _e = sp.sympify(_expr)
+                        if _e.has(sp.DiracDelta):
+                            _skipped.append(_name.replace("_", ""))
+                            continue
+                        _e = _e.subs(_rename).replace(
+                            sp.Heaviside, lambda *a: _u(a[0]))
+                        eq_strings.append(
+                            f"{_name.replace('_', '')} = {sp.sstr(_e)}")
+                    if _skipped:
+                        eq_strings.append(
+                            "# left out (their answers contain delta(t), "
+                            "which has no numeric value): "
+                            + ", ".join(_skipped))
+                    _exported = len(eq_strings) - (1 if _skipped else 0)
+                    if _exported > 0:
+                        eqsheet = {"mode": "dc", "equations": eq_strings,
+                                   "results": {}, "known": {"t": 0.0}}
         except Exception:
             pass  # the payload is a bonus too; never fail the solve
 

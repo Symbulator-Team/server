@@ -53,7 +53,10 @@ own SI-prefix output style).
 ## Equation syntax
 One equation per line, exactly one `=`. `^` means power. `#` starts a
 comment. Available: sin cos tan asin acos atan atan2 sinh cosh tanh exp
-log ln log10 sqrt abs min max pi e — plus, in AC: j I conj re im.
+log ln log10 sqrt abs min max pi e — plus, in AC: j I conj re im — plus,
+in DC only, `u(...)`: the unit step (u(0) = 1), for systems handed over
+from a transient solve. `u` only acts as the step when it is *called*;
+a plain variable named `u` still works.
 
 ## Importing a Symbulator system
 The app's **Numerical Solver** button does this with one click — the
@@ -62,8 +65,32 @@ in the `?import=` URL. When a very large circuit would push the URL past
 what the host accepts (~8 KB request line), the button saves the same
 JSON as `numerical_system.json` instead and the page's **Open a system
 file…** button reads it back — which also makes a system keepable and
-re-openable later. `tools/eqsheet_export.py` is the reference
-implementation of the contract, for doing it from a shell:
+re-openable later.
+
+All four domains cross now (#124), each in the shape that survives:
+
+- **DC**, and **AC with a numeric ω** — the stamped equation system,
+  as always.
+- **FD** — the same stamped system (it is algebraic in s), in complex
+  mode, with `s` arriving as a **Known** complex variable (j by
+  default). Move `s` around the plane and re-solve.
+- **TR** — the system is differential and cannot cross, so the
+  *answers* cross instead: one equation per solved expression
+  (`v2 = 1 - exp(-t)`), with `t` arriving **Known** at 0. Set `t` and
+  read every waveform at that instant — or flip an answer to Known and
+  `t` to Unknown and the sheet finds *when* the waveform gets there.
+  An answer containing `delta(t)` has no numeric value and is left out
+  by name in a `#` comment. (With solver 0.5.14 this cannot yet occur:
+  impulse-valued TR answers come back from the solver as their
+  s-domain constant, not as `DiracDelta` — the Results card shows the
+  same.) Only an AC solve with symbolic ω, or a TR solve whose every
+  answer carried a delta, produces no payload.
+
+The optional payload field carrying this is `known`:
+`{"t": 0.0}` (real) or `{"s": [0.0, 1.0]}` (complex, [re, im]) — those
+variables arrive **Known** at that value; everything else keeps the
+arrive-Unknown behaviour below. `tools/eqsheet_export.py` is the
+reference implementation of the contract, for doing it from a shell:
 
     python tools/eqsheet_export.py "e1,1,0,12:r1,1,2,2'k:r2,2,0,1'k"              # DC JSON
     python tools/eqsheet_export.py "e1,1,0,10:r1,1,2,100:l1,2,0,0.1" --domain ac --omega 1000

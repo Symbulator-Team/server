@@ -11,6 +11,14 @@ runs the solve, and emits EqSheet import JSON — or a ready ?import= URL.
 DC → {"mode":"dc", results: {name: value}}
 AC → {"mode":"ac", results: {name: [re, im]}}; EqSheet switches itself to
 phasor mode and splits every equation into real and imaginary parts.
+
+The app's own export (symbulator_ui.solve_ui) also builds payloads for
+fd and tr solves (#124), using one more optional field this tool does
+not emit: "known" — {"t": 0.0} (real) or {"s": [0.0, 1.0]} ([re, im]) —
+variables that arrive on the sheet already marked Known at that value.
+fd crosses as the stamped system in complex mode with s Known; tr
+crosses as its *answers* (v2 = 1 - exp(-t), the unit step spelled
+u(...)) with t Known at 0.
 """
 
 import argparse, base64, json, sys

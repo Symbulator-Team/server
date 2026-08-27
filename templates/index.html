@@ -1621,10 +1621,13 @@ units: yes</pre>
 
   <!-- Explore numerically: the bridge to the Numerical Solver at
        /eqsheet/ (EqSheet is its internal name). The card comes on only
-       when the last solve carried a payload for it -- DC, or AC with a
-       numeric omega. fd and tr answers are expressions in s or t, and
-       the Numerical Solver is a numerical tool, so for those the card
-       stays inactive rather than offering a dead button. -->
+       when the last solve carried a payload for it. All four domains do
+       now (#124): dc and ac cross as the stamped system; fd crosses as
+       the same system in complex mode with s as a Known the reader can
+       move; tr crosses as its *answers* (the system is differential),
+       with t as a Known starting at 0. Only an ac solve with a symbolic
+       omega, or a tr solve whose every answer contains delta(t), leaves
+       the card inactive. -->
   <div class="card inactive" id="exploreCard">
     <details id="exploreBox">
       <summary class="results-h section-toggle">Explore numerically</summary>
@@ -1634,7 +1637,11 @@ units: yes</pre>
         a handy numerical solver you can use. It opens in a new tab,
         preloaded with this solve&#8217;s equations and results — untick
         an equation, flip a Known to Unknown, and see how the results
-        change. Available for DC and AC answers.
+        change. A transient (TR) solve hands over its answers as functions
+        of time, with <code>t</code> as a Known you can set — or make
+        <code>t</code> the Unknown and find when a waveform reaches a
+        value. An FD solve hands over its s-domain system with
+        <code>s</code> as a Known complex number to play with.
       </p>
       <div class="dl-row">
         <button id="whatifBtn" disabled
@@ -2006,6 +2013,13 @@ const freshness = { solve: false, evaluate: false, solveq: false, plot: false };
 function paintFreshness(tool) {
   const btn = $(TOOL_BUTTON[tool]);
   if (btn) btn.classList.toggle('is-current', freshness[tool]);
+  // The Run button reads "Solved!" while its answers still describe the
+  // inputs, and reverts the moment anything invalidates them (#125).
+  // Not while disabled -- mid-solve it says "Solving…" and the finally
+  // block settles the label when the solve returns.
+  if (tool === 'solve' && btn && !btn.disabled) {
+    btn.textContent = freshness.solve ? 'Solved!' : 'Run Symbulator';
+  }
   const statusId = TOOL_STATUS[tool];
   if (statusId && !freshness[tool]) $(statusId).textContent = '';
 }
@@ -2097,9 +2111,8 @@ function activatePostSolve() {
   $('dlBtn').disabled = false;
   $('dlCard').classList.remove('inactive');
   // Explore numerically comes on only when the solve carried a payload
-  // for the Numerical Solver: dc always, ac only with a numeric omega.
-  // fd/tr answers are expressions in s or t, and the Numerical Solver is
-  // a numerical tool -- see symbulator_ui.
+  // for the Numerical Solver -- all four domains build one now (#124);
+  // the exceptions that leave it off are in symbulator_ui.
   const canExplore = !!(last && last.eqsheet);
   $('whatifBtn').disabled = !canExplore;
   $('exploreCard').classList.toggle('inactive', !canExplore);
@@ -3333,7 +3346,7 @@ async function renderSolveResult(data, idx) {
 
   if (!count) {
     out.innerHTML = '<div class="lcd"><div class="placeholder">— solved, but no variables to report —</div></div>';
-    status.textContent = 'Solved!';
+    status.textContent = '';
     markFresh('solve');
     return;
   }
@@ -3341,7 +3354,7 @@ async function renderSolveResult(data, idx) {
   meta.className = 'lcd-meta';
   meta.textContent = `${data.domain.toUpperCase()} analysis · ${count} result(s) · ${data.elapsed}s`;
   out.appendChild(meta);
-  status.textContent = 'Solved!';
+  status.textContent = '';
   markFresh('solve');
 
   // Remember this solve for the evaluator + download area.
@@ -3369,8 +3382,13 @@ async function renderSolveResult(data, idx) {
 
 async function solve(suffixChoices) {
   const btn = $('solveBtn'), out = $('out'), status = $('status');
+  // The button carries its own status (#125): "Run Symbulator" at rest,
+  // "Solving…" while busy, "Solved!" until an input changes and
+  // paintFreshness reverts it. Errors still go in the line beside it --
+  // a button cannot hold "No solution found" and stay a button.
   btn.disabled = true;
-  status.textContent = 'Solving…';
+  btn.textContent = 'Solving…';
+  status.textContent = '';
   out.innerHTML = '<div class="lcd"><div class="placeholder">computing symbolically…</div></div>';
   $('evalOut').style.display = 'none';
   $('evalOut').innerHTML = '';
@@ -3465,6 +3483,9 @@ async function solve(suffixChoices) {
     showHostNotice();
   } finally {
     btn.disabled = false;
+    // markFresh ran inside renderSolveResult on success; on any failure
+    // freshness.solve is still false and the label falls back.
+    btn.textContent = freshness.solve ? 'Solved!' : 'Run Symbulator';
   }
 }
 // "Nice numbers for graph labels" (Heckbert): round a raw span to the

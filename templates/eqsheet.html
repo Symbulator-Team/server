@@ -494,6 +494,9 @@ function prefixGroup(name){
 const UNITS = {v:'V', e:'V', i:'A', j:'A', p:'W', r:'Ω', z:'Ω',
                s:'VA', c:'F', l:'H', g:'S'};
 function unitOf(name){
+  // A bare `s` is the Laplace variable of an FD handover, never an
+  // apparent power -- those always carry an element name (se, sr1).
+  if(String(name) === 's') return '';
   const m = String(name).match(/^[a-zA-Z]/);
   return m ? (UNITS[m[0].toLowerCase()] || '') : '';
 }
@@ -584,7 +587,7 @@ function setMode(m){
   $('mdc').className = m==='dc' ? 'on' : '';
   $('mac').className = m==='ac' ? 'on' : '';
   $('synhint').innerHTML = m==='dc'
-    ? 'One equation per line · <code>^</code> allowed · <code>#</code> comments · sin cos exp log sqrt pi …'
+    ? 'One equation per line · <code>^</code> allowed · <code>#</code> comments · sin cos exp log sqrt pi u(t) …'
     : 'One equation per line · <code>j</code> or <code>I</code> = imaginary unit · <code>^</code> · <code>#</code> comments · conj re im …';
   doParse();
 }
@@ -833,13 +836,7 @@ async function importData(d){
   if(d.mode==='ac' || d.mode==='dc') setModeSilently(d.mode);
   $('rules').value = d.equations.join('\n');
   await doParse();
-  const vals = d.results || {};
-  for(const [name, v] of Object.entries(vals)){
-    // Everything arrives Unknown, with the solved value as its guess --
-    // the sheet lands square and re-solves as it stands; the user flips
-    // variables to Known as they pin them down.
-    const s = ensure(name);
-    s.mode = 'unknown';
+  const setValue = (s, v) => {
     if(Array.isArray(v)){
       s.pre = autoPre(Math.max(Math.abs(v[0]), Math.abs(v[1])));
       const f = PFACT[s.pre];
@@ -851,6 +848,22 @@ async function importData(d){
       s.value = String(+(v/f).toPrecision(10));
       s.re = s.value; s.im = '0';
     }
+  };
+  for(const [name, v] of Object.entries(d.results || {})){
+    // Everything arrives Unknown, with the solved value as its guess --
+    // the sheet lands square and re-solves as it stands; the user flips
+    // variables to Known as they pin them down.
+    const s = ensure(name);
+    s.mode = 'unknown';
+    setValue(s, v);
+  }
+  // Variables the payload wants Known on arrival (#124): the domain
+  // variable of a TR or FD handover -- t at 0, s at j. Applied after
+  // results so the Known status wins if a name appears in both.
+  for(const [name, v] of Object.entries(d.known || {})){
+    const s = ensure(name);
+    s.mode = 'known';
+    setValue(s, v);
   }
   renderVars();
   queueSolve();

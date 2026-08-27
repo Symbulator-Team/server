@@ -27,6 +27,8 @@ app.py's solve worker re-imports this module in every spawned child
 circuit solve should not pay EqSheet's import bill.
 """
 
+import re
+
 from flask import Blueprint, request, jsonify, render_template
 import sympy as sp
 from sympy.parsing.sympy_parser import (
@@ -61,9 +63,21 @@ ALLOWED = {
 # In AC mode, j and I are the imaginary unit (matches Symbulator's output).
 ALLOWED_AC = dict(ALLOWED, j=sp.I, I=sp.I, conj=sp.conjugate, re=sp.re, im=sp.im)
 
+# The unit step, for systems handed over from a transient (TR) solve
+# (#124): u(0) is 1, the practical convention for t >= 0 waveforms.
+# Only joined to the namespace when the text actually *calls* u(...),
+# so a plain variable named u keeps working everywhere else.
+_CALLS_U = re.compile(r"\bu\s*\(")
+
+
+def _step(x):
+    return sp.Heaviside(x, 1)
+
 
 def parse_side(text, mode):
     gd = ALLOWED_AC if mode == "ac" else ALLOWED
+    if mode != "ac" and _CALLS_U.search(text):
+        gd = dict(gd, u=_step)
     return parse_expr(text, transformations=TRANSFORMS,
                       global_dict=gd, evaluate=True)
 
@@ -274,11 +288,26 @@ def solve_ac(data, active):
 
 def _run_solver(F, x0, n_eq, n_un):
     """Square -> hybrid Powell root; rectangular -> least squares."""
+    import numpy as np
     from scipy.optimize import root, least_squares
     try:
         if n_eq == n_un:
             sol = root(F, x0, method="hybr")
-            return sol.x, sol.success, sol.nfev, "exact"
+            success = bool(sol.success)
+            if not success:
+                # MINPACK reports "not making good progress" on systems
+                # it has in fact solved exactly: a linear or explicit
+                # system lands in one Newton step, and the trust-region
+                # bookkeeping then sees ten iterations of no improvement
+                # on a residual that is already zero. The residual is
+                # the honest measure, so judge by it -- #124's TR
+                # handovers are all explicit assignments and hit this
+                # every time.
+                r = np.abs(np.asarray(F(sol.x), dtype=float))
+                scale = max(1.0, float(np.max(np.abs(sol.x)))) if sol.x.size else 1.0
+                if r.size and float(np.max(r)) < 1e-9 * scale:
+                    success = True
+            return sol.x, success, sol.nfev, "exact"
         sol = least_squares(F, x0)
         return sol.x, sol.success, sol.nfev, "least-squares"
     except Exception as exc:
