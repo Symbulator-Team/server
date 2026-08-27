@@ -350,6 +350,9 @@
   .badge.ok{background:var(--ok-bg);color:var(--ok)} .badge.bad{background:var(--bad-bg);color:var(--bad)}
   .msg{font-size:.92rem}
   .msg.ok{color:var(--ok)} .msg.bad{color:var(--bad)}
+  .inter{display:flex;align-items:center;gap:.4rem;font-size:.9rem;
+    color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .inter input{accent-color:var(--accent)}
   /* Result text is at least as large as the Value / guess inputs (14px);
      the AC polar subline stays smaller as a secondary annotation. */
   .out{font:600 14px var(--mono);color:var(--result-ink);white-space:nowrap}
@@ -438,6 +441,8 @@ T = T0 + P2 * Rth</textarea>
     <div class="status">
       <span class="badge" id="cnt"></span>
       <button class="primary" id="solve">Solve</button>
+      <label class="inter"><input type="checkbox" id="interactive">
+        Interactive Mode</label>
       <span class="msg" id="smsg"></span>
     </div>
     <div class="pad" id="residbox" hidden>
@@ -478,6 +483,27 @@ const CHOP_REL = 1e-8, CHOP_ABS = 1e-18;
 function prefixGroup(name){
   const m = String(name).match(/^[a-zA-Z]/);
   return m ? m[0].toLowerCase() : String(name).toLowerCase();
+}
+
+// ---- Unit guessing -------------------------------------------------
+// The first letter of a variable's name says what kind of quantity it
+// is, the same convention the circuit answers follow: v and e are
+// volts, i and j amperes, and so on. Only the electrically confident
+// letters guess; an ambiguous one (t could be time or temperature)
+// stays unitless rather than guessing wrong.
+const UNITS = {v:'V', e:'V', i:'A', j:'A', p:'W', r:'Ω', z:'Ω',
+               s:'VA', c:'F', l:'H', g:'S'};
+function unitOf(name){
+  const m = String(name).match(/^[a-zA-Z]/);
+  return m ? (UNITS[m[0].toLowerCase()] || '') : '';
+}
+// The display suffix for one row: SI prefix and guessed unit run
+// together the way they are read -- " mA", " kΩ", " V" -- or nothing
+// when there is neither.
+function suffixOf(name){
+  const v = state.vs[name];
+  const u = unitOf(name);
+  return (v.pre === '' && u === '') ? '' : ' ' + v.pre + u;
 }
 function chop(x, yardstick){
   const a = Math.abs(x);
@@ -544,7 +570,7 @@ function renderResult(name, tr){
     return;
   }
   const f = PFACT[v.pre];
-  const sym = v.pre==='' ? '' : ' '+v.pre;
+  const sym = suffixOf(name);
   if(mode==='dc'){
     out.textContent = fmt(s/f) + sym;
   }else{
@@ -576,6 +602,7 @@ function renderRules(){
       e.target.checked ? state.sel.add(r.line) : state.sel.delete(r.line);
       tr.className = e.target.checked ? '' : 'off';
       renderVars();
+      queueSolve();
     };
     tb.appendChild(tr);
   });
@@ -589,7 +616,7 @@ function echoKnown(name, tr){
   const v = state.vs[name];
   const out = tr.querySelector('[data-out]');
   if(v.mode !== 'known'){ return; }
-  const sym = v.pre==='' ? '' : ' '+v.pre;
+  const sym = suffixOf(name);
   if(mode==='dc'){
     const num = parseFloat(v.value);
     out.textContent = isNaN(num) ? '' : fmt(num) + sym;
@@ -621,9 +648,9 @@ function renderVars(){
       const st = tr.querySelector('[data-st]'), inp = tr.querySelector('[data-v]');
       const pr = tr.querySelector('[data-pre]');
       st.value = v.mode; inp.value = v.value;
-      st.onchange = ()=>{ v.mode = st.value; inp.placeholder = v.mode==='known'?'value':'guess'; renderResult(name, tr); count(); };
-      inp.oninput = ()=>{ v.value = inp.value; renderResult(name, tr); };
-      pr.onchange = ()=>{ v.pre = pr.value; renderResult(name, tr); };
+      st.onchange = ()=>{ v.mode = st.value; inp.placeholder = v.mode==='known'?'value':'guess'; renderResult(name, tr); count(); queueSolve(); };
+      inp.oninput = ()=>{ v.value = inp.value; renderResult(name, tr); queueSolve(); };
+      pr.onchange = ()=>{ v.pre = pr.value; renderResult(name, tr); queueSolve(); };
       renderResult(name, tr);
     }else{
       tr.innerHTML = `<td class="eq">${name}</td>
@@ -645,11 +672,11 @@ function renderVars(){
         im.placeholder = im.disabled ? '0' : ph;
       };
       sync();
-      st.onchange = ()=>{ v.mode = st.value; sync(); renderResult(name, tr); count(); };
-      dm.onchange = ()=>{ v.domain = dm.value; sync(); renderResult(name, tr); count(); };
-      re.oninput = ()=>{ v.re = re.value; renderResult(name, tr); };
-      im.oninput = ()=>{ v.im = im.value; renderResult(name, tr); };
-      pr.onchange = ()=>{ v.pre = pr.value; renderResult(name, tr); };
+      st.onchange = ()=>{ v.mode = st.value; sync(); renderResult(name, tr); count(); queueSolve(); };
+      dm.onchange = ()=>{ v.domain = dm.value; sync(); renderResult(name, tr); count(); queueSolve(); };
+      re.oninput = ()=>{ v.re = re.value; renderResult(name, tr); queueSolve(); };
+      im.oninput = ()=>{ v.im = im.value; renderResult(name, tr); queueSolve(); };
+      pr.onchange = ()=>{ v.pre = pr.value; renderResult(name, tr); queueSolve(); };
       renderResult(name, tr);
     }
     tb.appendChild(tr);
@@ -687,9 +714,38 @@ async function doParse(){
   [...state.sel].forEach(l=>{ if(!lines.has(l)) state.sel.delete(l); });
   renderRules(); renderVars();
 }
-$('parse').onclick = doParse;
+$('parse').onclick = async ()=>{ await doParse(); queueSolve(); };
 
-$('solve').onclick = async ()=>{
+// In Interactive Mode an edit to the equations re-parses on its own --
+// a little later than the solve debounce, so half-typed lines settle --
+// and the solve follows the parse.
+let parseTimer = null;
+$('rules').addEventListener('input', ()=>{
+  if(!$('interactive').checked) return;
+  clearTimeout(parseTimer);
+  parseTimer = setTimeout(async ()=>{ await doParse(); queueSolve(); }, 700);
+});
+
+// ---- Interactive Mode ----------------------------------------------
+// Unchecked, the sheet solves only when the Solve button is pressed,
+// as it always has. Checked, it *tries* to solve half a second after
+// any change settles -- a value typed, a status flipped, an equation
+// edited or ticked -- so the results track the inputs. Failures show
+// in the status line the same as a manual solve; nothing pops up.
+let solveBusy = false, solveAgain = false, solveTimer = null;
+function queueSolve(){
+  if(!$('interactive').checked) return;
+  clearTimeout(solveTimer);
+  solveTimer = setTimeout(async ()=>{
+    if(solveBusy){ solveAgain = true; return; }
+    solveBusy = true;
+    try{ await doSolve(); } finally{ solveBusy = false; }
+    if(solveAgain){ solveAgain = false; queueSolve(); }
+  }, 500);
+}
+$('interactive').onchange = ()=>{ if($('interactive').checked) queueSolve(); };
+
+async function doSolve(){
   const m = $('smsg');
   const body = {text:$('rules').value, mode, selected:[...state.sel]};
   if(mode==='dc'){
@@ -763,7 +819,8 @@ $('solve').onclick = async ()=>{
   $('residbox').hidden=false;
   $('resid').innerHTML = (mode==='ac'?'residual magnitudes: ':'residuals: ') +
     d.residuals.map(r=>`${r.rule.split('=')[0].trim()}: ${r.value.toExponential(2)}`).join(' · ');
-};
+}
+$('solve').onclick = ()=>doSolve();
 
 function fmt(x){
   if(x===0) return '0';
@@ -796,6 +853,7 @@ async function importData(d){
     }
   }
   renderVars();
+  queueSolve();
 }
 function setModeSilently(m){
   mode = m;

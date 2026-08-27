@@ -87,6 +87,14 @@ first letter accordingly.
 - A solved variable with no prefix chosen gets the most suitable one
   picked in its own menu (0.004 shows as 4 m); changing a row's prefix
   re-displays its result in the new prefix rather than clearing it.
+- Results carry a guessed unit from the variable's first letter — v and
+  e are volts, i and j amperes, p watts, r and z ohms, s VA, c farads,
+  l henries, g siemens — shown after the prefix, as in `4 mA`.
+  Ambiguous letters (t could be time or temperature) guess nothing.
+- **Interactive Mode**, a checkbox beside Solve: unchecked, the sheet
+  solves only on the button, as always; checked, it tries to solve half
+  a second after any change settles — a value typed, a status flipped,
+  an equation edited or ticked — so the results track the inputs.
 - Guesses matter: nonlinear systems converge to the root nearest the start.
 - Non-square systems are solved least-squares and flagged in the result.
 - Residuals (AC: their magnitudes) are shown after each solve, raw.
