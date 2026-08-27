@@ -3,23 +3,49 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EqSheet — what-if equation solver · Symbulator</title>
+<title>Numerical Solver · Symbulator</title>
 <link rel="icon" href="/static/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script>
+  // Apply a saved Dark Mode preference before first paint. Same key the
+  // app uses ('symbulator-theme') on purpose: this page is same-origin
+  // with the app, so the choice made on either page carries to the other.
+  (function () {
+    var saved = null;
+    try { saved = localStorage.getItem('symbulator-theme'); } catch (e) {}
+    if (saved === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+  })();
+</script>
 <style>
   /* Palette: the token values from the shared design system
      (Sym Docum/Documentation/design/tokens.css), inlined by value the
      way the app's own page does -- an app-side page cannot link a
      stylesheet in another repository. If a colour here looks wrong,
-     compare it against that file before changing it. */
+     compare it against that file before changing it. The dark block
+     mirrors the tokens' own dark values; --navy and --sky are absent
+     from it deliberately -- the banner bands stay navy in both themes,
+     exactly as tokens.css documents. */
   :root{
     --navy:#203864; --navy-2:#2a4576; --sky:#8ec7f5;
-    --paper:#f4f6fa; --card:#ffffff; --ink:#1c2330; --ink-2:#545d6d;
-    --line:#e2e5ea; --ok:#2f7d4f; --bad:#a13030; --accent:#2f5fa8;
+    --paper:#f4f6fa; --card:#ffffff; --card-2:#f7f9fc;
+    --ink:#1c2330; --ink-2:#545d6d; --ink-3:#858d9c;
+    --line:#e2e5ea; --rule-2:#eef1f6;
+    --ok:#2f7d4f; --ok-bg:#ecf5ef; --bad:#a13030; --bad-bg:#fdf1f1;
+    --accent:#2f5fa8; --result-ink:#203864;
+    --badge-bg:#e6eaf1;
     --lcd:#f2f6fc; --lcd-edge:#dbe4f2;
     --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
     --sans:"IBM Plex Sans",system-ui,sans-serif;
+  }
+  html[data-theme="dark"]{
+    --paper:#12161d; --card:#1b212c; --card-2:#161c26;
+    --ink:#e4e8ee; --ink-2:#97a3b6; --ink-3:#6b7690;
+    --line:#2b3341; --rule-2:#232a36;
+    --ok:#7fd9a4; --ok-bg:#16301f; --bad:#ff9c9c; --bad-bg:#3a1f21;
+    --accent:#5b96e0; --result-ink:#7fb0e8;
+    --badge-bg:#2b3341;
+    --lcd:#182534; --lcd-edge:#2f5170;
   }
   /* ==== BEGIN banner.css ====
      Copied verbatim from Sym Docum/Documentation/design/banner.css --
@@ -272,9 +298,10 @@
   /* ==== END banner.css ====================================== */
   *{box-sizing:border-box}
   body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 var(--sans)}
-  /* EqSheet's own ribbon occupants: its name, and the DC/AC mode toggle.
-     The shared file styles the bands and the link vocabulary; these are
-     the "genuinely local controls" it leaves to each property. */
+  /* The Numerical Solver's own ribbon occupants: its name, the DC/AC
+     mode toggle and the theme toggle. The shared file styles the bands
+     and the link vocabulary; these are the "genuinely local controls"
+     it leaves to each property. */
   .sheet-id{font:600 .95rem var(--sans);color:#fff;white-space:nowrap}
   .sheet-id .fx{font-family:Georgia,"Times New Roman",serif;font-style:italic;
     color:var(--sky);font-weight:400}
@@ -296,7 +323,7 @@
   section{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   section>h2{margin:0;padding:.6rem 1rem;font-size:.8rem;letter-spacing:.12em;
     text-transform:uppercase;color:var(--ink-2);border-bottom:1px solid var(--line);
-    background:linear-gradient(#fff,#f7f9fc)}
+    background:linear-gradient(var(--card),var(--card-2))}
   .pad{padding:1rem}
   textarea{width:100%;min-height:11rem;border:1px solid var(--line);border-radius:6px;
     padding:.7rem;font:14px/1.7 var(--mono);color:var(--ink);resize:vertical;background:var(--lcd)}
@@ -304,26 +331,29 @@
   button{font:600 .95rem var(--sans);border:0;border-radius:6px;padding:.55rem 1.1rem;cursor:pointer}
   .primary{background:var(--navy);color:#fff}
   .primary:hover{background:var(--navy-2)}
-  .ghost{background:transparent;color:var(--navy);border:1px solid var(--line)}
+  .ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
   table{width:100%;border-collapse:collapse;font-size:.95rem}
   th{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);
     text-align:left;padding:.45rem .6rem;border-bottom:1px solid var(--line)}
   td{padding:.4rem .6rem;border-bottom:1px solid var(--line);vertical-align:middle}
   td.eq{font-family:var(--mono);font-size:.9rem}
-  tr.off td{color:#9aa3b2}
-  input.val{width:6.2rem;font:14px var(--mono);padding:.35rem .5rem;
+  tr.off td{color:var(--ink-3)}
+  input.val{width:6.2rem;font:14px var(--mono);padding:.35rem .5rem;color:var(--ink);
     border:1px solid var(--line);border-radius:5px;background:var(--lcd)}
-  input.val:disabled{background:#eef1f6;color:#b8bfca}
+  input.val:disabled{background:var(--rule-2);color:var(--ink-3)}
   select.pre{font:13px var(--mono);width:3.4rem}
-  select{font:14px var(--sans);padding:.32rem .4rem;border:1px solid var(--line);border-radius:5px;background:#fff}
+  select{font:14px var(--sans);padding:.32rem .4rem;border:1px solid var(--line);
+    border-radius:5px;background:var(--card);color:var(--ink)}
   .status{padding:.6rem 1rem;font-size:.9rem;border-top:1px solid var(--line);
-    display:flex;gap:1rem;align-items:center;flex-wrap:wrap;background:#f7f9fc}
-  .badge{font:600 .78rem var(--mono);padding:.15rem .55rem;border-radius:99px;background:#e6eaf1}
-  .badge.ok{background:#ecf5ef;color:var(--ok)} .badge.bad{background:#fdf1f1;color:var(--bad)}
+    display:flex;gap:1rem;align-items:center;flex-wrap:wrap;background:var(--card-2)}
+  .badge{font:600 .78rem var(--mono);padding:.15rem .55rem;border-radius:99px;background:var(--badge-bg)}
+  .badge.ok{background:var(--ok-bg);color:var(--ok)} .badge.bad{background:var(--bad-bg);color:var(--bad)}
   .msg{font-size:.92rem}
   .msg.ok{color:var(--ok)} .msg.bad{color:var(--bad)}
-  .out{font:600 13px var(--mono);color:var(--navy);white-space:nowrap}
-  .out small{font-weight:400;color:var(--ink-2);display:block}
+  /* Result text is at least as large as the Value / guess inputs (14px);
+     the AC polar subline stays smaller as a secondary annotation. */
+  .out{font:600 14px var(--mono);color:var(--result-ink);white-space:nowrap}
+  .out small{font-weight:400;font-size:12px;color:var(--ink-2);display:block}
   .resid{font:12px var(--mono);color:var(--ink-2)}
   .hint{font-size:.85rem;color:var(--ink-2);margin:.5rem 0 0}
   .toolbar{display:flex;gap:.6rem;margin-top:.7rem;align-items:center;flex-wrap:wrap}
@@ -333,8 +363,9 @@
 <body>
 <!-- The shared two-band banner: .topbar carries the Symbulator lockup and
      nothing else, identical on every property; .subbar carries this
-     property's own controls -- here, EqSheet's name and the DC/AC mode
-     toggle. See the note above the banner block in the CSS. -->
+     property's own controls -- here, the Numerical Solver's name, the
+     DC/AC mode toggle and the theme toggle. See the note above the
+     banner block in the CSS. -->
 <div class="banner">
 <header class="topbar">
   <div class="topbar-inner">
@@ -353,7 +384,7 @@
 
 <div class="subbar">
   <div class="subbar-inner">
-    <span class="sheet-id">EqSheet <span class="fx">ƒ(x)=0</span></span>
+    <span class="sheet-id">Numerical <span class="fx">Solver</span></span>
     <nav>
       <a href="/">Symbulator App</a>
       <a href="https://learn.symbulator.com">Documentation</a>
@@ -362,18 +393,20 @@
     <div class="mode" role="group" aria-label="mode">
       <button id="mdc" class="on">DC · real</button><button id="mac">AC · phasor</button>
     </div>
+    <button type="button" id="themeToggle" class="theme-toggle"
+            aria-label="Switch to dark mode" title="Switch to dark mode"></button>
   </div>
 </div>
 </div>
 
-<p class="tagline">An interactive what-if equation solver, after TK!Solver and
-SolveSys. Opened from the app's <b>What if…</b> button it arrives preloaded
-with the solved circuit's equation system — untick a rule, flip a Known to
-Unknown, and solve the circuit backwards.</p>
+<p class="tagline">An interactive numerical solver to explore your circuit's
+equations and variables. Arrives preloaded with the solved circuit's equation
+system and results — untick an equation, flip a Known to Unknown, and see how
+the results change.</p>
 
 <main>
   <section>
-    <h2>Rule sheet</h2>
+    <h2>List of Equations</h2>
     <div class="pad">
       <textarea id="rules" spellcheck="false"># Voltage divider with load
 Vout = Vin * R2 / (R1 + R2)
@@ -383,22 +416,15 @@ Iin  = Vin / (R1 + R2)
 # Thermal
 T = T0 + P2 * Rth</textarea>
       <div class="toolbar">
-        <button class="primary" id="parse">Update rules</button>
+        <button class="primary" id="parse">Update equations</button>
+        <button class="ghost" id="openfile" title="load a system saved by the app's Numerical Solver button">Open a system file…</button>
+        <input type="file" id="filein" accept=".json,application/json" hidden>
         <span class="hint" id="synhint"></span>
       </div>
       <div id="perr" class="msg bad"></div>
-      <details style="margin-top:.8rem">
-        <summary style="cursor:pointer;font-size:.9rem;color:var(--ink-2)">Import a system (Symbulator)</summary>
-        <textarea id="impbox" spellcheck="false" style="min-height:6rem;margin-top:.5rem"
-          placeholder='{"mode": "ac", "equations": ["v_1 = 10", "v_2 = 100.0*I*i_l1", ...], "results": {"v_2": [5, 5], ...}}'></textarea>
-        <div class="toolbar">
-          <button class="ghost" id="impbtn">Import</button>
-          <span class="hint">The app's <b>What if…</b> button fills this in for you. Values arrive as Knowns — flip what you want to Unknown.</span>
-        </div>
-      </details>
     </div>
     <table id="rtab" hidden>
-      <thead><tr><th></th><th>Rule</th><th>Variables</th></tr></thead>
+      <thead><tr><th></th><th>Equation</th><th>Variables</th></tr></thead>
       <tbody></tbody>
     </table>
   </section>
@@ -423,18 +449,42 @@ T = T0 + P2 * Rth</textarea>
 <script>
 let rules = [];
 let mode = 'dc';
-const PREFIXES = [['p',1e-12],['n',1e-9],['µ',1e-6],['m',1e-3],['—',1],['k',1e3],['M',1e6],['G',1e9],['T',1e12]];
+// '' is the no-prefix option: it renders as a blank entry in the
+// dropdown and adds no suffix to a displayed result.
+const PREFIXES = [['p',1e-12],['n',1e-9],['µ',1e-6],['m',1e-3],['',1],['k',1e3],['M',1e6],['G',1e9],['T',1e12]];
 const PFACT = Object.fromEntries(PREFIXES);
-const preOpts = sel => PREFIXES.map(([s])=>`<option ${s===sel?'selected':''}>${s}</option>`).join('');
+const preOpts = sel => PREFIXES.map(([s])=>`<option value="${s}" ${s===sel?'selected':''}>${s||'&nbsp;'}</option>`).join('');
 function autoPre(x){
   const a = Math.abs(x);
-  if(!isFinite(a) || a===0) return '—';
+  if(!isFinite(a) || a===0) return '';
   for(let k=PREFIXES.length-1; k>=0; k--) if(a >= PREFIXES[k][1]) return PREFIXES[k][0];
   return 'p';
 }
-// vs[name] = {mode:'known'|'unknown', domain:'complex'|'real'|'imag', value:'', re:'', im:'', pre:'—'}
+// vs[name] = {mode:'known'|'unknown', domain:'complex'|'real'|'imag', value:'', re:'', im:'', pre:''}
 const state = {sel:new Set(), vs:{}};
 const $ = id => document.getElementById(id);
+
+// ---- Numerical-noise chop (display only) ---------------------------
+// A root-finder leaves values like -8.5e-25 where the true answer is 0.
+// Zero them out for display, judged within each variable's own type --
+// the leading letters of the name (v_1 and v_r1 are volts, i_r1 is
+// amps) -- so a legitimately small current is never measured against a
+// large voltage. Anything 1e8 times smaller than the largest magnitude
+// in its group shows as 0; so does anything below 1e-18 outright, which
+// covers a group whose every member is noise (a current through an
+// open branch has no healthy sibling to compare against). The
+// residuals line keeps the raw numbers, so convergence stays honest.
+const CHOP_REL = 1e-8, CHOP_ABS = 1e-18;
+function prefixGroup(name){
+  const m = String(name).match(/^[a-zA-Z]+/);
+  return m ? m[0].toLowerCase() : String(name).toLowerCase();
+}
+function chop(x, yardstick){
+  const a = Math.abs(x);
+  if(a < CHOP_ABS) return 0;
+  if(yardstick && a < yardstick * CHOP_REL) return 0;
+  return x;
+}
 
 // Relative on purpose: the page lives at /eqsheet/, and its API lives
 // under it. An absolute '/api/solve' would hit the circuit solver's own
@@ -451,8 +501,10 @@ function activeVars(){
   return [...s].sort();
 }
 function ensure(name){
+  // Every new variable -- imported or typed by hand -- starts Unknown;
+  // the user flips things to Known as they pin them down.
   if(!state.vs[name])
-    state.vs[name] = {mode:'known', domain:'complex', value:'', re:'', im:'', pre:'—'};
+    state.vs[name] = {mode:'unknown', domain:'complex', value:'', re:'', im:'', pre:''};
   return state.vs[name];
 }
 
@@ -485,34 +537,58 @@ function renderRules(){
   $('rtab').hidden = rules.length===0;
 }
 
+// A Known variable's Result shows the value it was given, immediately,
+// so the reader understands that this IS its value. Unknown rows show
+// nothing until a solve fills them in.
+function echoKnown(name, tr){
+  const v = state.vs[name];
+  const out = tr.querySelector('[data-out]');
+  if(v.mode !== 'known'){ return; }
+  const sym = v.pre==='' ? '' : ' '+v.pre;
+  if(mode==='dc'){
+    const num = parseFloat(v.value);
+    out.textContent = isNaN(num) ? '' : fmt(num) + sym;
+  }else{
+    const re = v.domain==='imag' ? 0 : parseFloat(v.re||'0');
+    const im = v.domain==='real' ? 0 : parseFloat(v.im||'0');
+    if(isNaN(re)||isNaN(im)){ out.textContent=''; return; }
+    const mag = Math.hypot(re, im);
+    const deg = (re||im) ? Math.atan2(im, re)*180/Math.PI : 0;
+    out.innerHTML = `${fmt(re)} ${im<0?'−':'+'} j ${fmt(Math.abs(im))}${sym}`
+      + `<small>${fmt(mag)}${sym} ∠ ${deg.toFixed(2)}°</small>`;
+  }
+}
+
 function renderVars(){
   $('vhead').innerHTML = mode==='dc'
-    ? '<th>Variable</th><th>Status</th><th>Value / guess</th><th>×</th><th>Result</th>'
-    : '<th>Variable</th><th>Status</th><th>Domain</th><th>Re</th><th>Im</th><th>×</th><th>Result</th>';
+    ? '<th>Variable</th><th>Result</th><th>Status</th><th>Value / guess</th><th>SI Prefix</th>'
+    : '<th>Variable</th><th>Result</th><th>Status</th><th>Domain</th><th>Re</th><th>Im</th><th>SI Prefix</th>';
   const tb = $('vtab').querySelector('tbody'); tb.innerHTML='';
   activeVars().forEach(name=>{
     const v = ensure(name);
     const tr = document.createElement('tr');
     if(mode==='dc'){
       tr.innerHTML = `<td class="eq">${name}</td>
+        <td class="out" data-out></td>
         <td><select data-st><option value="known">Known</option><option value="unknown">Unknown</option></select></td>
         <td><input class="val" data-v placeholder="${v.mode==='known'?'value':'guess'}"></td>
-        <td><select data-pre class="pre">${preOpts(v.pre)}</select></td>
-        <td class="out" data-out></td>`;
+        <td><select data-pre class="pre">${preOpts(v.pre)}</select></td>`;
       const st = tr.querySelector('[data-st]'), inp = tr.querySelector('[data-v]');
       const pr = tr.querySelector('[data-pre]');
       st.value = v.mode; inp.value = v.value;
-      st.onchange = ()=>{ v.mode = st.value; inp.placeholder = v.mode==='known'?'value':'guess'; count(); };
-      inp.oninput = ()=>{ v.value = inp.value; };
-      pr.onchange = ()=>{ v.pre = pr.value; };
+      const refresh = ()=>{ tr.querySelector('[data-out]').textContent=''; echoKnown(name, tr); };
+      st.onchange = ()=>{ v.mode = st.value; inp.placeholder = v.mode==='known'?'value':'guess'; refresh(); count(); };
+      inp.oninput = ()=>{ v.value = inp.value; refresh(); };
+      pr.onchange = ()=>{ v.pre = pr.value; refresh(); };
+      echoKnown(name, tr);
     }else{
       tr.innerHTML = `<td class="eq">${name}</td>
+        <td class="out" data-out></td>
         <td><select data-st><option value="known">Known</option><option value="unknown">Unknown</option></select></td>
         <td><select data-dom><option value="complex">Complex</option><option value="real">Real only</option><option value="imag">Imag only</option></select></td>
         <td><input class="val" data-re></td>
         <td><span class="jlab">j</span> <input class="val" data-im></td>
-        <td><select data-pre class="pre">${preOpts(v.pre)}</select></td>
-        <td class="out" data-out></td>`;
+        <td><select data-pre class="pre">${preOpts(v.pre)}</select></td>`;
       const st = tr.querySelector('[data-st]'), dm = tr.querySelector('[data-dom]');
       const re = tr.querySelector('[data-re]'), im = tr.querySelector('[data-im]');
       const pr = tr.querySelector('[data-pre]');
@@ -525,11 +601,13 @@ function renderVars(){
         im.placeholder = im.disabled ? '0' : ph;
       };
       sync();
-      st.onchange = ()=>{ v.mode = st.value; sync(); count(); };
-      dm.onchange = ()=>{ v.domain = dm.value; sync(); count(); };
-      re.oninput = ()=>{ v.re = re.value; };
-      im.oninput = ()=>{ v.im = im.value; };
-      pr.onchange = ()=>{ v.pre = pr.value; };
+      const refresh = ()=>{ tr.querySelector('[data-out]').textContent=''; echoKnown(name, tr); };
+      st.onchange = ()=>{ v.mode = st.value; sync(); refresh(); count(); };
+      dm.onchange = ()=>{ v.domain = dm.value; sync(); refresh(); count(); };
+      re.oninput = ()=>{ v.re = re.value; refresh(); };
+      im.oninput = ()=>{ v.im = im.value; refresh(); };
+      pr.onchange = ()=>{ v.pre = pr.value; refresh(); };
+      echoKnown(name, tr);
     }
     tb.appendChild(tr);
   });
@@ -545,12 +623,12 @@ function count(){
   const b = $('cnt');
   if(mode==='dc'){
     const un = vars.filter(n=>state.vs[n].mode==='unknown').length;
-    b.textContent = `${ne} rule${ne!==1?'s':''} · ${un} unknown${un!==1?'s':''}`;
+    b.textContent = `${ne} equation${ne!==1?'s':''} · ${un} unknown${un!==1?'s':''}`;
     b.className = 'badge ' + (ne && ne===un ? 'ok' : (un ? 'bad' : ''));
   }else{
     const un = vars.filter(n=>state.vs[n].mode==='unknown')
                    .reduce((s,n)=>s+scalars(state.vs[n]),0);
-    b.textContent = `${ne} rule${ne!==1?'s':''} → ${2*ne} real · ${un} scalar unknown${un!==1?'s':''}`;
+    b.textContent = `${ne} equation${ne!==1?'s':''} → ${2*ne} real · ${un} scalar unknown${un!==1?'s':''}`;
     b.className = 'badge ' + (ne && 2*ne===un ? 'ok' : (un ? 'bad' : ''));
   }
 }
@@ -597,17 +675,40 @@ $('solve').onclick = async ()=>{
     + (d.mode==='least-squares' ? ` (least-squares: ${d.n_eq} equations, ${d.n_un} unknowns)` : '')
     + ` — ${d.nfev} evaluations`;
   m.className = 'msg ' + (d.ok?'ok':'bad');
+
+  // The yardstick for the noise chop: the largest magnitude in each
+  // variable-type group, taken over the knowns and the solution alike,
+  // in base units.
+  const yard = {};
+  const addYard = (name, mag)=>{ const g = prefixGroup(name);
+    yard[g] = Math.max(yard[g]||0, mag); };
+  if(mode==='dc'){
+    for(const [n, x] of Object.entries(body.knowns)) addYard(n, Math.abs(x));
+    for(const [n, x] of Object.entries(d.solution)) addYard(n, Math.abs(x));
+  }else{
+    for(const [n, z] of Object.entries(body.knowns)) addYard(n, Math.hypot(z.re, z.im));
+    for(const [n, s] of Object.entries(d.solution)) addYard(n, s.mag);
+  }
+
   document.querySelectorAll('#vtab tbody tr').forEach(tr=>{
     const name = tr.querySelector('td').textContent;
     const out = tr.querySelector('[data-out]');
     const s = d.solution[name];
-    if(s===undefined){ out.textContent=''; return; }
+    if(s===undefined){
+      // Not solved for -- a Known keeps showing its given value.
+      out.textContent=''; echoKnown(name, tr); return;
+    }
     const v = state.vs[name], f = PFACT[v.pre];
-    const sym = v.pre==='—' ? '' : ' '+v.pre;
-    if(mode==='dc'){ out.textContent = fmt(s/f) + sym; }
-    else{
-      out.innerHTML = `${fmt(s.re/f)} ${s.im<0?'−':'+'} j ${fmt(Math.abs(s.im)/f)}${sym}`
-        + `<small>${fmt(s.mag/f)}${sym} ∠ ${s.deg.toFixed(2)}°</small>`;
+    const sym = v.pre==='' ? '' : ' '+v.pre;
+    const y = yard[prefixGroup(name)];
+    if(mode==='dc'){
+      out.textContent = fmt(chop(s, y)/f) + sym;
+    }else{
+      const cre = chop(s.re, y), cim = chop(s.im, y);
+      const mag = Math.hypot(cre, cim);
+      const deg = (cre||cim) ? Math.atan2(cim, cre)*180/Math.PI : 0;
+      out.innerHTML = `${fmt(cre/f)} ${cim<0?'−':'+'} j ${fmt(Math.abs(cim)/f)}${sym}`
+        + `<small>${fmt(mag/f)}${sym} ∠ ${deg.toFixed(2)}°</small>`;
     }
   });
   $('residbox').hidden=false;
@@ -628,8 +729,11 @@ async function importData(d){
   await doParse();
   const vals = d.results || {};
   for(const [name, v] of Object.entries(vals)){
+    // Everything arrives Unknown, with the solved value as its guess --
+    // the sheet lands square and re-solves as it stands; the user flips
+    // variables to Known as they pin them down.
     const s = ensure(name);
-    s.mode = 'known';
+    s.mode = 'unknown';
     if(Array.isArray(v)){
       s.pre = autoPre(Math.max(Math.abs(v[0]), Math.abs(v[1])));
       const f = PFACT[s.pre];
@@ -650,10 +754,47 @@ function setModeSilently(m){
   $('mac').className = m==='ac' ? 'on' : '';
 }
 
-$('impbtn').onclick = async ()=>{
-  try{ await importData(JSON.parse($('impbox').value)); $('perr').textContent=''; }
-  catch(e){ $('perr').textContent = 'import: ' + e.message; }
+// ---- Open a system file --------------------------------------------
+// The same {mode, equations, results} JSON the ?import= link carries,
+// saved to a file by the app's Numerical Solver button when the payload
+// is too large for a URL -- and re-openable any time, which a URL never
+// was.
+$('openfile').onclick = ()=> $('filein').click();
+$('filein').onchange = async ()=>{
+  const file = $('filein').files[0];
+  if(!file) return;
+  try{
+    const d = JSON.parse(await file.text());
+    await importData(d);
+    $('perr').textContent='';
+  }catch(e){
+    $('perr').textContent = 'system file: ' + e.message;
+  }
+  $('filein').value = '';
 };
+
+// ---- Dark Mode ------------------------------------------------------
+// The same toggle, icons, attribute and storage key as the app, so the
+// preference carries between the two pages (they share an origin).
+const themeToggleBtn = $('themeToggle');
+const ICON_MOON = '<svg viewBox="0 0 24 24" style="width:1.2em;height:1.2em;flex:none" fill="#8ec7f5" aria-hidden="true"><path d="M20.4 14.7A8.5 8.5 0 1 1 9.3 3.6a7 7 0 1 0 11.1 11.1Z"/></svg>';
+const ICON_SUN = '<svg viewBox="0 0 24 24" style="width:1.2em;height:1.2em;flex:none" fill="none" stroke="#8ec7f5" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>';
+function isDarkTheme(){ return document.documentElement.getAttribute('data-theme') === 'dark'; }
+function syncThemeToggle(){
+  const dark = isDarkTheme();
+  themeToggleBtn.innerHTML = dark ? ICON_SUN : ICON_MOON;
+  const label = dark ? 'Switch to light mode' : 'Switch to dark mode';
+  themeToggleBtn.setAttribute('aria-label', label);
+  themeToggleBtn.title = label;
+}
+themeToggleBtn.addEventListener('click', ()=>{
+  const nextDark = !isDarkTheme();
+  if(nextDark){ document.documentElement.setAttribute('data-theme', 'dark'); }
+  else{ document.documentElement.removeAttribute('data-theme'); }
+  try{ localStorage.setItem('symbulator-theme', nextDark ? 'dark' : 'light'); }catch(e){}
+  syncThemeToggle();
+});
+syncThemeToggle();
 
 const urlImp = new URLSearchParams(location.search).get('import');
 if(urlImp){

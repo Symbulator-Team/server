@@ -567,6 +567,11 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   footer { color: var(--muted); font-size: .84rem; text-align: center;
            padding: 0 1rem 2.4rem; line-height: 1.8; }
   .section-divider { border: 0; border-top: 1px solid var(--line); margin: 2.4rem 0; }
+  /* A subheading inside a card, splitting it into named parts -- the
+     Export Output card's ".txt file" and "SymPy" halves. Smaller than
+     the card's own .results-h summary, larger than a label. */
+  .card-subhead { margin: .8rem 0 .5rem; font-size: .98rem; font-weight: 700;
+                  color: var(--ink); }
   #omegaField, #varsField, #n1Field, #n2Field, #kindField { display: none; }
   .chart-svg { width: 100%; height: auto; background: var(--card); border-radius: 8px; }
   .chart-svg text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
@@ -583,13 +588,15 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .examples-menu { position: relative; display: inline-block; }
   .examples-menu > summary { list-style: none; cursor: pointer; }
   .examples-menu > summary::-webkit-details-marker { display: none; }
-  /* Hangs below the summary by default; sizeExamplesMenu() flips it above
-     when the window is short enough that there is more room up there. */
-  .examples-panel.flip-up {
-    top: auto; bottom: 100%; margin-top: 0; margin-bottom: .35rem;
-  }
+  /* The panel always hangs below the summary. It used to flip above on a
+     short window ("flip-up"), which put it behind the banner bands; now
+     it stays down and scrolls instead (see sizeExamplesMenu). */
   .examples-panel {
-    position: absolute; z-index: 20; top: 100%; left: 0; margin-top: .35rem;
+    /* z-index above the banner's own 50/51: this menu used to flip
+       upwards on a short window and disappear behind the subbar. It now
+       always hangs downward (see sizeExamplesMenu) and outranks the
+       bands, so it can never be trapped under them. */
+    position: absolute; z-index: 60; top: 100%; left: 0; margin-top: .35rem;
     min-width: 15rem; max-width: 28rem;
     background: var(--card); border: 1px solid var(--line);
     border-radius: 8px; padding: .5rem;
@@ -628,17 +635,18 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
      .uploadlbl and leave the Upload control a different size and
      weight from the two <button>s next to it. */
   .btn-row { display: flex; gap: .8rem; flex-wrap: wrap; align-items: center; }
-  /* Upload and Download read as a pair, so they are sized as one: wide
-     enough for the longer label rather than each shrinking to its own
-     text. Centred, since the labels differ in length. */
+  /* Upload, Download and Create new read as a set, so they are sized as
+     one: wide enough for the longest label rather than each shrinking to
+     its own text. Centred, since the labels differ in length. */
   /* margin: 0 because the page gives every <label> a bottom margin for
      sitting above a field -- here it makes the label's box taller than
      the button's and knocks the row out of alignment by 3px. */
-  /* Sized to just fit the longer label, so the pair stays equal without
-     either being padded out. 8rem is Download's natural width (~7.85rem)
-     plus a little slack, so a font that loads slightly wide cannot make
-     it wrap. */
-  .btn-row .uploadlbl { min-width: 8rem; text-align: center; margin: 0; }
+  /* Sized to just fit the longest label, so the trio stays equal without
+     any being padded out. 8.6rem is Create new's natural width
+     (~8.5rem) plus a little slack, so a font that loads slightly wide
+     cannot make it wrap -- measured 27 Aug 2026 when 8rem left Create
+     new 7px wider than its two neighbours. */
+  .btn-row .uploadlbl { min-width: 8.6rem; text-align: center; margin: 0; }
 
   .dl-row label { font-weight: 400; font-size: .92rem; display: flex;
                   align-items: center; gap: .45rem; margin: 0; cursor: pointer; }
@@ -873,18 +881,14 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
       <summary>Input File <span class="hint">(optional)</span></summary>
 
 
+    <!-- One row, three equal buttons. Upload replaces the open file,
+         Download writes it back out, Create new starts an empty one. -->
     <div class="btn-row" id="uploadRow" style="margin-top:.9rem">
       <button type="button" id="uploadBtn" class="uploadlbl"
         title="Upload an input file of circuit entries">Upload</button>
       <input type="file" id="fileInput" accept=".cir" hidden>
       <button type="button" id="downloadFileBtn" class="uploadlbl" disabled
         title="Download the input file as it now stands">Download</button>
-    </div>
-
-    <!-- Which file is open. Upload replaces it, "New file" starts an empty
-         one, and "Built-in examples" opens the menu of supplied files. That
-         link is always shown: it is the way back to the set. -->
-    <div class="actions" id="fileActions" style="margin-top:.7rem">
       <button type="button" id="newFileBtn" class="uploadlbl">Create new</button>
     </div>
 
@@ -907,7 +911,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
       </details>
     </div>
 
-    <span class="examples" style="display:block;margin-top:.9rem">
+    <span class="examples" id="entriesRow" style="display:block;margin-top:.9rem">
       <span id="pickerLabel" style="margin-right:.8rem">Some examples you can try: </span>
       <select id="examples">
         <option value="">— loading… —</option>
@@ -1010,7 +1014,8 @@ units: yes</pre>
   </div>
 
   <div class="card" id="inputsCard">
-    <div class="results-h" style="margin-top:0">Circuit Description</div>
+    <details id="inputsBox" open>
+    <summary class="results-h section-toggle" style="margin-top:0">Circuit Description</summary>
 
     <details id="syntaxBox">
       <summary>Circuit syntax reference</summary>
@@ -1057,7 +1062,9 @@ units: yes</pre>
       <p class="hint">
         <strong>TR</strong> reads a source value as a function of time:
         <code>12</code> is a 12 V step, <code>u(t)</code> the unit step,
-        <code>t</code> a ramp, <code>δ(t)</code> an impulse.
+        <code>t</code> a ramp, <code>δ(t)</code> an impulse. The Greek
+        letter is hard to type, so <code>delta(t)</code> is read exactly
+        the same as <code>δ(t)</code>.
         <strong>FD</strong> reads it in the s-domain instead:
         <code>5/s</code> is a 5 V step and <code>5</code> an impulse. To
         write an FD source in time, wrap it —
@@ -1160,17 +1167,6 @@ units: yes</pre>
     </label>
     <textarea id="defines" spellcheck="false" rows="2"
       placeholder="vx = va-vb"></textarea>
-
-    <!-- The impulse is spelled with a Greek delta, which most keyboards
-         cannot type. Rather than make people hunt for a character map, put
-         it a click away -- but only in the two analyses where an impulse
-         means anything, so it is not clutter in DC and AC. Typing
-         "delta(t)" works just as well for anyone who prefers ASCII. -->
-    <div id="deltaHelp" class="actions" style="margin-top:.5rem" hidden>
-      <button type="button" id="insertDeltaBtn" class="linkish"
-        title="Insert the impulse function at the cursor">Insert &#948;(t)</button>
-      <span class="hint">or type <code>delta(t)</code></span>
-    </div>
 
     <!-- What you can do with these inputs, relative to the open file. Both
          are hidden until they apply; which of them shows is worked out by
@@ -1353,6 +1349,7 @@ units: yes</pre>
         </div>
       </div>
     </details>
+    </details>
   </div>
 
   <div class="run-row">
@@ -1384,7 +1381,8 @@ units: yes</pre>
     <details>
       <summary class="results-h section-toggle">Evaluate</summary>
       <label for="evalExpr">Evaluate an expression in terms of the results
-        <span class="hint">— e.g. <code>pr1 + pr2</code> or <code>p_r1 + p_r2</code></span>
+        <span class="hint">— e.g. <code>pr1 + pr2</code> or <code>p_r1 + p_r2</code>;
+        several SymPy functions allowed (see below)</span>
       </label>
       <div class="eval-row" style="margin-top:.7rem">
         <div><input type="text" id="evalExpr" placeholder="solve a circuit first…" disabled></div>
@@ -1456,7 +1454,13 @@ units: yes</pre>
             Use <code>&gt;=</code> and <code>&lt;=</code>, not <code>=&gt;</code>
             and <code>=&lt;</code></span>
           </label>
-          <textarea id="evalConds" spellcheck="false" style="min-height:2.4rem"
+          <!-- rows="1" so it starts at the height of the Evaluate field
+               above it; still resizable, and it grows as lines are
+               added. Without it a textarea's default two rows make this
+               the tallest thing in the card for a field that usually
+               holds nothing. -->
+          <textarea id="evalConds" spellcheck="false" rows="1"
+            style="min-height:2.4rem;height:2.4rem"
             placeholder="solve a circuit first…" disabled></textarea>
         </div>
       </div>
@@ -1493,7 +1497,7 @@ units: yes</pre>
       <label class="checkline" style="margin-top:.6rem"><input type="checkbox"
         id="solveqReal" disabled><span>real solutions only</span></label>
       <details class="exhelp">
-        <summary>About this checkbox</summary>
+        <summary>About &#8216;real solutions&#8217;</summary>
         <p class="hint" style="margin:.5rem 0 0">
           off searches the complex plane too (the calculator's <code>cSolve</code>);
           on keeps the unknowns real (its <code>solve</code>)
@@ -1505,9 +1509,11 @@ units: yes</pre>
 
   <div class="card inactive" id="dlCard">
     <details>
-      <summary class="results-h section-toggle">Download Output</summary>
+      <summary class="results-h section-toggle">Export Output</summary>
+      <h3 class="card-subhead">Export to .txt file</h3>
       <p class="hint" style="margin:0 0 .9rem">
-        Download an output file with the information you decide to include.
+        Select the information you want to export and download as a text
+        file.
       </p>
       <label>What to include
         <span class="hint">— saved as an Output File</span>
@@ -1516,23 +1522,18 @@ units: yes</pre>
         <label><input type="checkbox" id="dlDesc" checked disabled> circuit description</label>
         <label><input type="checkbox" id="dlEqs" checked disabled> equations generated</label>
         <label><input type="checkbox" id="dlAns" checked disabled> answers found</label>
-        <button id="dlBtn" disabled>Download</button>
+        <button id="dlBtn" disabled>Export to .txt file</button>
       </div>
-      <p class="hint" style="margin:.9rem 0 0">
+      <h3 class="card-subhead" style="margin-top:1.2rem">Export to SymPy</h3>
+      <p class="hint" style="margin:0">
         Or take the answers somewhere they can be worked on further:
         <b>Export to SymPy</b> writes them out as a small Python script, so
         every answer arrives as a SymPy expression you can expand, factor,
         substitute into or plot. Paste it into a Python prompt, a Jupyter
         notebook, or any online SymPy console.
-        <b>What if…</b> opens this solve's equation system in EqSheet, a
-        numerical what-if solver: every answer arrives as a Known — untick
-        a rule, flip a Known to Unknown, and solve the circuit backwards.
-        DC and AC solves only (AC with a numeric ω).
       </p>
       <div class="dl-row" style="margin-top:.6rem">
         <button id="sympyBtn" disabled>Export to SymPy</button>
-        <button id="whatifBtn" disabled
-          title="opens the equation system in EqSheet">What if…</button>
       </div>
     </details>
   </div>
@@ -1608,6 +1609,30 @@ units: yes</pre>
       </div>
       <div class="actions" style="margin-top:.9rem">
         <button type="button" id="plotDownloadBtn" class="linkish" hidden>Download chart</button>
+      </div>
+    </details>
+  </div>
+
+  <!-- Explore numerically: the bridge to the Numerical Solver at
+       /eqsheet/ (EqSheet is its internal name). The card comes on only
+       when the last solve carried a payload for it -- DC, or AC with a
+       numeric omega. fd and tr answers are expressions in s or t, and
+       the Numerical Solver is a numerical tool, so for those the card
+       stays inactive rather than offering a dead button. -->
+  <div class="card inactive" id="exploreCard">
+    <details id="exploreBox">
+      <summary class="results-h section-toggle">Explore numerically</summary>
+      <p class="hint" style="margin:0 0 .9rem">
+        Want to explore some &#8220;what ifs&#8221; numerically, using the
+        system of equations Symbulator generated for your circuit? Here is
+        a handy numerical solver you can use. It opens in a new tab,
+        preloaded with this solve&#8217;s equations and results — untick
+        an equation, flip a Known to Unknown, and see how the results
+        change. Available for DC and AC answers.
+      </p>
+      <div class="dl-row">
+        <button id="whatifBtn" disabled
+          title="opens the equation system in the Numerical Solver">Numerical Solver</button>
       </div>
     </details>
   </div>
@@ -1806,7 +1831,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-27 03:49 UTC
+  Symbulator 9 version 2026-08-27 05:36 UTC
 </footer>
 
 <script>
@@ -1846,7 +1871,6 @@ function syncFields() {
     for (const opt of domainSel.options) opt.disabled = false;
   }
   $('omegaField').style.display = domainSel.value === 'ac' ? 'block' : 'none';
-  $('deltaHelp').hidden = !(domainSel.value === 'tr' || domainSel.value === 'fd');
   $('varsField').style.display  = (domainSel.value === 'tr' && tool === 'solve') ? 'block' : 'none';
   $('n1Field').style.display = tool !== 'solve' ? 'block' : 'none';
   $('n2Field').style.display = tool !== 'solve' ? 'block' : 'none';
@@ -1858,16 +1882,6 @@ function syncFields() {
 }
 domainSel.addEventListener('change', () => { syncFields(); syncSettings(); });
 
-$('insertDeltaBtn').addEventListener('click', () => {
-  const box = $('desc'), at = box.selectionStart, to = box.selectionEnd;
-  const text = 'δ(t)';
-  box.value = box.value.slice(0, at) + text + box.value.slice(to);
-  // Leave the caret after what was inserted, so typing carries on
-  // naturally, and hand focus back to the box rather than the button.
-  box.selectionStart = box.selectionEnd = at + text.length;
-  box.focus();
-  box.dispatchEvent(new Event('input', {bubbles: true}));
-});
 toolSel.addEventListener('change', syncFields);
 $('equivType').addEventListener('change', syncFields);
 
@@ -2068,12 +2082,15 @@ function activatePostSolve() {
   $('solveqCard').classList.remove('inactive');
   for (const id of ['dlDesc', 'dlEqs', 'dlAns']) $(id).disabled = false;
   $('sympyBtn').disabled = false;
-  // Enabled only when the solve carried an EqSheet payload: dc always,
-  // ac only with a numeric omega. fd/tr answers are expressions in s or
-  // t, and EqSheet is a numerical tool -- see symbulator_ui.
-  $('whatifBtn').disabled = !(last && last.eqsheet);
   $('dlBtn').disabled = false;
   $('dlCard').classList.remove('inactive');
+  // Explore numerically comes on only when the solve carried a payload
+  // for the Numerical Solver: dc always, ac only with a numeric omega.
+  // fd/tr answers are expressions in s or t, and the Numerical Solver is
+  // a numerical tool -- see symbulator_ui.
+  const canExplore = !!(last && last.eqsheet);
+  $('whatifBtn').disabled = !canExplore;
+  $('exploreCard').classList.toggle('inactive', !canExplore);
   $('miniBtn').disabled = false;
   $('miniCard').classList.remove('inactive');
 }
@@ -2111,9 +2128,10 @@ function clearResults() {
   $('plotStatus').textContent = '';
   for (const id of ['dlDesc', 'dlEqs', 'dlAns']) $(id).disabled = true;
   $('sympyBtn').disabled = true;
-  $('whatifBtn').disabled = true;
   $('dlBtn').disabled = true;
   $('dlCard').classList.add('inactive');
+  $('whatifBtn').disabled = true;
+  $('exploreCard').classList.add('inactive');
   markAllStale();
 }
 
@@ -2164,6 +2182,9 @@ let exported = true;
 // Rebuild the circuit-picker <select> from a fresh list of circuits
 // (the built-in examples, or a just-uploaded file's contents), with
 // `label` and `placeholder` describing where the list came from.
+// `label` is either a plain string or [before, boldPart, after] -- the
+// file's title is shown bold, and it is user-supplied text, so it is
+// appended as a text node inside <b> rather than through innerHTML.
 function populatePicker(circuits, label, placeholder) {
   picker = circuits;
   const sel = $('examples');
@@ -2178,7 +2199,17 @@ function populatePicker(circuits, label, placeholder) {
     o.textContent = c.name;
     sel.appendChild(o);
   });
-  $('pickerLabel').textContent = label;
+  const lab = $('pickerLabel');
+  lab.textContent = '';
+  if (Array.isArray(label)) {
+    lab.appendChild(document.createTextNode(label[0]));
+    const b = document.createElement('b');
+    b.textContent = label[1];
+    lab.appendChild(b);
+    lab.appendChild(document.createTextNode(label[2]));
+  } else {
+    lab.textContent = label;
+  }
 }
 
 // Show (or, if `text` is falsy, clear) a small note under the circuit
@@ -2196,7 +2227,9 @@ function showNote(text, isWarning) {
   div.setAttribute('role', isWarning ? 'alert' : 'status');
   div.setAttribute('aria-live', isWarning ? 'assertive' : 'polite');
   div.textContent = text;
-  $('uploadRow').insertAdjacentElement('afterend', div);
+  // Under the "Entries in" dropdown, so what it says sits beside the list
+  // it talks about -- a loaded file's note names the entries above it.
+  $('entriesRow').insertAdjacentElement('afterend', div);
   // The Input File panel starts folded, so feedback about saving an entry
   // would otherwise be written inside a closed box and never seen.
   if (text) $('fileBox').open = true;
@@ -2406,23 +2439,18 @@ function sizeExamplesMenu() {
   const list = $('examplesList');
   if (!panel || !list) return;
 
-  // Measure unconstrained first, and from the summary rather than the panel:
-  // the panel's own top moves once we flip it, and measuring a thing to
-  // decide where to put it has to start from something that does not.
+  // The panel always hangs downward now. It used to flip above the
+  // summary when a short window left more room up there -- and promptly
+  // vanished behind the banner bands, which sit at z-index 50/51 and
+  // won. So: hang down, cap the list to the room actually below, and
+  // let it scroll, with a floor so it never collapses to a sliver.
   list.style.maxHeight = '';
-  panel.classList.remove('flip-up');
   const anchor = menu.querySelector('summary').getBoundingClientRect();
   const chrome = panel.getBoundingClientRect().height
                  - list.getBoundingClientRect().height;
   const gap = 6, edge = 12;
   const below = window.innerHeight - anchor.bottom - gap - chrome - edge;
-  const above = anchor.top - gap - chrome - edge;
-
-  // Hang it downwards unless there is meaningfully more room the other way,
-  // which is what happens on a short window with the menu halfway down it.
-  const up = above > below;
-  panel.classList.toggle('flip-up', up);
-  list.style.maxHeight = Math.max(120, up ? above : below) + 'px';
+  list.style.maxHeight = Math.max(120, below) + 'px';
 }
 $('examplesMenu').addEventListener('toggle', sizeExamplesMenu);
 window.addEventListener('resize', sizeExamplesMenu);
@@ -2796,7 +2824,7 @@ function refreshEntryLinks() {
 function showFile(file) {
   openFile = file;
   const entries = file ? file.entries : [];
-  const label = file ? 'Entries in ' + (file.title || file.name) + ': '
+  const label = file ? ['Entries in ', (file.title || file.name), ': ']
                      : 'No input file open: ';
   populatePicker(entries, label,
                  entries.length ? '— choose an entry —'
@@ -4089,7 +4117,7 @@ $('dlBtn').addEventListener('click', () => {
   const blob = new Blob([parts.join('\n')], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `symbulator_${last.tool === 'solve' ? last.domain : last.tool}.sym`;
+  a.download = `symbulator_${last.tool === 'solve' ? last.domain : last.tool}.txt`;
   a.click();
   URL.revokeObjectURL(a.href);
 });
@@ -4208,22 +4236,45 @@ $('sympyBtn').addEventListener('click', () => {
   URL.revokeObjectURL(a.href);
 });
 
-// "What if…" — open EqSheet with this solve's equation system and
-// answers preloaded. The payload travels in the URL (base64url of its
+// "Numerical Solver" — open the solver at /eqsheet/ (EqSheet is its
+// internal name) with this solve's equation system and answers
+// preloaded. The payload normally travels in the URL (base64url of its
 // JSON, the ?import= contract in eqsheet.py), so the new tab needs
 // nothing further from this page. The URL is absolute on purpose: the
-// offline builds carry this same script, and EqSheet needs SciPy, so
-// there is exactly one EqSheet and it lives on the server -- like the
+// offline builds carry this same script, and the solver needs SciPy, so
+// there is exactly one of it and it lives on the server -- like the
 // Documentation link, this is an outward link that works offline only
 // when the network does.
+//
+// A very large circuit can push the URL past what the host's front end
+// accepts on a request line (~8 KB), so past a safe margin the payload
+// is saved as a system file instead and the page opens empty -- its
+// "Open a system file…" button reads the file back in. The margin
+// leaves the host room for headers on top of the URL itself.
 const EQSHEET_URL = 'https://symbulator.pythonanywhere.com/eqsheet/';
+const EQSHEET_URL_MAX = 6000;
 $('whatifBtn').addEventListener('click', () => {
   if (!last || !last.eqsheet) return;
   const json = JSON.stringify(last.eqsheet);
-  const blob = btoa(unescape(encodeURIComponent(json)))
+  const b64 = btoa(unescape(encodeURIComponent(json)))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const url = EQSHEET_URL + '?import=' + b64;
+  if (url.length > EQSHEET_URL_MAX) {
+    const f = new Blob([json], { type: 'application/json' });
+    const save = document.createElement('a');
+    save.href = URL.createObjectURL(f);
+    save.download = 'numerical_system.json';
+    save.click();
+    URL.revokeObjectURL(save.href);
+    const open = document.createElement('a');
+    open.href = EQSHEET_URL;
+    open.target = '_blank';
+    open.rel = 'noopener';
+    open.click();
+    return;
+  }
   const a = document.createElement('a');
-  a.href = EQSHEET_URL + '?import=' + blob;
+  a.href = url;
   a.target = '_blank';
   a.rel = 'noopener';
   a.click();

@@ -1,15 +1,18 @@
 """
-EqSheet -- an interactive numerical equation solver in the spirit of
-TK!Solver and SolveSys (HP48G), mounted on the main app at /eqsheet/.
+The Numerical Solver -- an interactive numerical equation solver in the
+spirit of TK!Solver and SolveSys (HP48G), mounted on the main app at
+/eqsheet/. ("EqSheet" was its working name; the URL and the file names
+keep it as the internal handle, the way a numbered item keeps its
+number, while everything a user sees says Numerical Solver.)
 
-Rule Sheet:     equations, one per line (# starts a comment)
-Select rules:   tick the equations you want active
-Variable Sheet: mark each variable Known (value) or Unknown (guess)
-Modes:          DC  -- all quantities real
-                AC  -- phasors; every equation is split into real and
-                       imaginary parts, and each variable can be declared
-                       Complex, Real only, or Imaginary only
-Solve:          numerical root finding (SciPy) on the residuals
+List of Equations: equations, one per line (# starts a comment); tick
+                   the ones you want active
+Variable Sheet:    mark each variable Known (value) or Unknown (guess)
+Modes:             DC  -- all quantities real
+                   AC  -- phasors; every equation is split into real and
+                          imaginary parts, and each variable can be
+                          declared Complex, Real only, or Imaginary only
+Solve:             numerical root finding (SciPy) on the residuals
 
 Developed standalone (Aug 2026) and handed over as a single-file Flask
 app; here it is a Blueprint so the main app mounts it without a second
@@ -74,7 +77,7 @@ def parse_rules(text, mode):
             continue
         if line.count("=") != 1:
             errors.append({"line": lineno, "text": raw.strip(),
-                           "error": "each rule needs exactly one '='"})
+                           "error": "each equation needs exactly one '='"})
             continue
         lhs_s, rhs_s = line.split("=")
         try:
@@ -95,7 +98,8 @@ def parse_rules(text, mode):
 
 def _too_long(data):
     if len(str(data.get("text", ""))) > MAX_TEXT_LEN:
-        return jsonify({"ok": False, "message": "that rule sheet is too long"})
+        return jsonify({"ok": False,
+                        "message": "that list of equations is too long"})
     return None
 
 
@@ -115,12 +119,13 @@ def api_parse():
 def _active_rules(data):
     rules, errors = parse_rules(data.get("text", ""), data.get("mode", "dc"))
     if errors:
-        return None, jsonify({"ok": False, "message": "fix the rule sheet first",
+        return None, jsonify({"ok": False,
+                              "message": "fix the list of equations first",
                               "errors": errors})
     selected = set(data.get("selected", []))
     active = [r for r in rules if r["line"] in selected]
     if not active:
-        return None, jsonify({"ok": False, "message": "no rules selected"})
+        return None, jsonify({"ok": False, "message": "no equations selected"})
     return active, None
 
 
