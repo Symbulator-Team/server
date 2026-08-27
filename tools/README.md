@@ -1,5 +1,23 @@
 # tools
 
+## `review_schematics.py` — every example, drawn and checked
+
+Renders every entry of every `.cir` book in `../examples/` with
+`symbulator.schematic.to_svg` into a browsable HTML gallery, and checks
+each drawing: exceptions, overlapping labels, wires through element
+bodies or op-amp triangles (measured by instrumenting the canvas, not
+by squinting), unusual hop counts, extreme sizes. `report.txt` in the
+output folder lists findings worst-first.
+
+    py review_schematics.py                # gallery into the temp folder
+    py review_schematics.py C:\some\dir    # or a folder of your choosing
+
+A clean run ends `failed=0 with_issues=0` — the state the Aug 2026
+schematic rework left all 322 tutorial circuits in, and the bar any
+schematic change should keep. It prefers a sibling `repos/solver`
+checkout over the installed package, so it reviews the working tree.
+Run it after anything that touches `schematic.py`.
+
 ## `verify_lesson.py` — the examples, checked against the book
 
 Runs every entry of one `.cir` file in `../examples/` through the real app
