@@ -783,6 +783,17 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     font-weight: 400; font-size: .92rem; cursor: pointer; padding: .35rem 0; }
   label.checkline > input { margin-top: .2rem; flex: none; }
   label.checkline input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
+  @media (max-width: 520px) {
+    /* 16px is the size below which iOS Safari zooms the whole page when a
+       field is focused; matching it stops the viewport jumping on every
+       tap into the Circuit Description or a plot field (#126). */
+    input[type=text], input[type=number], textarea, select,
+    .examples select { font-size: 16px; }
+    /* The Built-in Examples menu hangs from a trigger near the left edge
+       and its inner table ran a few pixels past a phone's screen; clamp
+       the panel to the viewport and let the table scroll inside it. */
+    .examples-panel { max-width: calc(100vw - 3.5rem); overflow-x: auto; }
+  }
 </style>
 </head>
 <body>

@@ -361,6 +361,18 @@
   .hint{font-size:.85rem;color:var(--ink-2);margin:.5rem 0 0}
   .toolbar{display:flex;gap:.6rem;margin-top:.7rem;align-items:center;flex-wrap:wrap}
   .jlab{font:12px var(--mono);color:var(--ink-2)}
+  @media(max-width:520px){
+    /* The section clips at its rounded corners (overflow:hidden), so on a
+       phone the variable table's rightmost columns -- Value/guess and SI
+       Prefix -- were cut off with no way to reach them. The tables scroll
+       sideways themselves instead (#126). */
+    #vtab,#rtab{display:block;overflow-x:auto}
+    /* 16px is the size below which iOS Safari zooms the whole page when a
+       field is focused; matching it stops the viewport jumping on every
+       tap into a Value box. The classed rows (.val, .pre) are named too,
+       or their own font shorthands out-rank the bare selectors. */
+    input,select,textarea,input.val,select.pre{font-size:16px}
+  }
 </style>
 </head>
 <body>
