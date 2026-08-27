@@ -24,7 +24,15 @@ def export(desc: str, domain: str = "dc", omega=None, suffix: str = "si") -> dic
     elements = parse_circuit(desc)
     circ = Circuit(elements, domain, omega=omega, suffix=suffix)
     circ.stamp_all()
-    equations = [f"{sp.sstr(eq.lhs)} = {sp.sstr(eq.rhs)}" for eq in circ.equations]
+    # The Numerical Solver shows sans-underscore names (v1, ir1), so the
+    # payload strips them -- matching symbulator_ui.solve_ui exactly.
+    rename = {}
+    for eq in circ.equations:
+        for s in (eq.lhs.free_symbols | eq.rhs.free_symbols):
+            if "_" in str(s):
+                rename[s] = sp.Symbol(str(s).replace("_", ""))
+    equations = [f"{sp.sstr(eq.lhs.subs(rename))} = {sp.sstr(eq.rhs.subs(rename))}"
+                 for eq in circ.equations]
 
     if domain == "ac":
         if omega is None:
@@ -40,7 +48,8 @@ def export(desc: str, domain: str = "dc", omega=None, suffix: str = "si") -> dic
         except (TypeError, ValueError):
             skipped.append(name)          # symbolic (e.g. fd expressions)
             continue
-        results[name] = [z.real, z.imag] if domain == "ac" else z.real
+        results[name.replace("_", "")] = \
+            [z.real, z.imag] if domain == "ac" else z.real
     if skipped:
         print("skipped symbolic results:", ", ".join(skipped), file=sys.stderr)
 

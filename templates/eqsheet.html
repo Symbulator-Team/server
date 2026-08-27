@@ -467,16 +467,16 @@ const $ = id => document.getElementById(id);
 // ---- Numerical-noise chop (display only) ---------------------------
 // A root-finder leaves values like -8.5e-25 where the true answer is 0.
 // Zero them out for display, judged within each variable's own type --
-// the leading letters of the name (v_1 and v_r1 are volts, i_r1 is
-// amps) -- so a legitimately small current is never measured against a
-// large voltage. Anything 1e8 times smaller than the largest magnitude
-// in its group shows as 0; so does anything below 1e-18 outright, which
+// the first letter of the name (v1 and vr1 are volts, ir1 is amps) --
+// so a legitimately small current is never measured against a large
+// voltage. Anything 1e8 times smaller than the largest magnitude in
+// its group shows as 0; so does anything below 1e-18 outright, which
 // covers a group whose every member is noise (a current through an
 // open branch has no healthy sibling to compare against). The
 // residuals line keeps the raw numbers, so convergence stays honest.
 const CHOP_REL = 1e-8, CHOP_ABS = 1e-18;
 function prefixGroup(name){
-  const m = String(name).match(/^[a-zA-Z]+/);
+  const m = String(name).match(/^[a-zA-Z]/);
   return m ? m[0].toLowerCase() : String(name).toLowerCase();
 }
 function chop(x, yardstick){
@@ -501,11 +501,56 @@ function activeVars(){
   return [...s].sort();
 }
 function ensure(name){
-  // Every new variable -- imported or typed by hand -- starts Unknown;
-  // the user flips things to Known as they pin them down.
+  // Every new variable -- imported or typed by hand -- starts Unknown
+  // with a guess of zero; the user flips things to Known as they pin
+  // them down. Imports overwrite the zero with the solved value.
   if(!state.vs[name])
-    state.vs[name] = {mode:'unknown', domain:'complex', value:'', re:'', im:'', pre:''};
+    state.vs[name] = {mode:'unknown', domain:'complex', value:'0', re:'0', im:'0', pre:''};
   return state.vs[name];
+}
+
+// The most recent solution, per variable, in base units and already
+// chopped for numerical noise -- kept so that changing a row's SI
+// prefix re-displays the result in the new prefix instead of wiping
+// it. Cleared whenever the equations change under it.
+let lastSol = {};
+
+// A solved variable whose prefix menu is still blank gets the most
+// suitable prefix chosen for it -- 0.004 becomes 4 m, 40000 becomes
+// 40 k, the same style as the app's own SI display -- selected in the
+// row's own menu so the display and the dropdown agree. A prefix the
+// user chose is respected, a value in [1, 1000) needs none, and a
+// zero stays plain.
+function autoPrefix(name, tr, mag){
+  const v = state.vs[name];
+  if(v.pre !== '') return;
+  const p = autoPre(mag);
+  if(p === '') return;
+  v.pre = p;
+  const sel = tr.querySelector('[data-pre]');
+  if(sel) sel.value = p;
+}
+
+// One row's Result cell: a Known echoes the value it was given; an
+// Unknown shows its stored solution, re-scaled to the row's current
+// prefix, or nothing if there is no solution yet.
+function renderResult(name, tr){
+  const out = tr.querySelector('[data-out]');
+  const v = state.vs[name];
+  const s = lastSol[name];
+  if(v.mode === 'known' || s === undefined){
+    out.textContent = '';
+    echoKnown(name, tr);
+    return;
+  }
+  const f = PFACT[v.pre];
+  const sym = v.pre==='' ? '' : ' '+v.pre;
+  if(mode==='dc'){
+    out.textContent = fmt(s/f) + sym;
+  }else{
+    out.innerHTML = `${fmt(s.re/f)} ${s.im<0?'−':'+'} j ${fmt(Math.abs(s.im)/f)}${sym}`
+      + `<small>${fmt(s.mag/f)}${sym} ∠ ${s.deg.toFixed(2)}°</small>`;
+  }
 }
 
 function setMode(m){
@@ -576,11 +621,10 @@ function renderVars(){
       const st = tr.querySelector('[data-st]'), inp = tr.querySelector('[data-v]');
       const pr = tr.querySelector('[data-pre]');
       st.value = v.mode; inp.value = v.value;
-      const refresh = ()=>{ tr.querySelector('[data-out]').textContent=''; echoKnown(name, tr); };
-      st.onchange = ()=>{ v.mode = st.value; inp.placeholder = v.mode==='known'?'value':'guess'; refresh(); count(); };
-      inp.oninput = ()=>{ v.value = inp.value; refresh(); };
-      pr.onchange = ()=>{ v.pre = pr.value; refresh(); };
-      echoKnown(name, tr);
+      st.onchange = ()=>{ v.mode = st.value; inp.placeholder = v.mode==='known'?'value':'guess'; renderResult(name, tr); count(); };
+      inp.oninput = ()=>{ v.value = inp.value; renderResult(name, tr); };
+      pr.onchange = ()=>{ v.pre = pr.value; renderResult(name, tr); };
+      renderResult(name, tr);
     }else{
       tr.innerHTML = `<td class="eq">${name}</td>
         <td class="out" data-out></td>
@@ -601,13 +645,12 @@ function renderVars(){
         im.placeholder = im.disabled ? '0' : ph;
       };
       sync();
-      const refresh = ()=>{ tr.querySelector('[data-out]').textContent=''; echoKnown(name, tr); };
-      st.onchange = ()=>{ v.mode = st.value; sync(); refresh(); count(); };
-      dm.onchange = ()=>{ v.domain = dm.value; sync(); refresh(); count(); };
-      re.oninput = ()=>{ v.re = re.value; refresh(); };
-      im.oninput = ()=>{ v.im = im.value; refresh(); };
-      pr.onchange = ()=>{ v.pre = pr.value; refresh(); };
-      echoKnown(name, tr);
+      st.onchange = ()=>{ v.mode = st.value; sync(); renderResult(name, tr); count(); };
+      dm.onchange = ()=>{ v.domain = dm.value; sync(); renderResult(name, tr); count(); };
+      re.oninput = ()=>{ v.re = re.value; renderResult(name, tr); };
+      im.oninput = ()=>{ v.im = im.value; renderResult(name, tr); };
+      pr.onchange = ()=>{ v.pre = pr.value; renderResult(name, tr); };
+      renderResult(name, tr);
     }
     tb.appendChild(tr);
   });
@@ -634,6 +677,7 @@ function count(){
 }
 
 async function doParse(){
+  lastSol = {};   // the equations changed under any stored solution
   const d = await post('api/parse', {text: $('rules').value, mode});
   $('perr').textContent = d.errors.map(e=>`line ${e.line}: ${e.error}`).join('  ·  ');
   const old = new Set(rules.map(r=>r.line));
@@ -651,7 +695,11 @@ $('solve').onclick = async ()=>{
   if(mode==='dc'){
     const knowns={}, guesses={};
     for(const n of activeVars()){
-      const v = state.vs[n], num = parseFloat(v.value) * PFACT[v.pre];
+      const v = state.vs[n];
+      // An empty guess means zero; only a Known insists on a value.
+      const raw = (v.value || '').trim();
+      const num = (raw === '' && v.mode === 'unknown')
+        ? 0 : parseFloat(raw) * PFACT[v.pre];
       if(isNaN(num)){ m.textContent=`give a ${v.mode==='known'?'value':'guess'} for ${n}`; m.className='msg bad'; return; }
       (v.mode==='known'?knowns:guesses)[n]=num;
     }
@@ -690,26 +738,27 @@ $('solve').onclick = async ()=>{
     for(const [n, s] of Object.entries(d.solution)) addYard(n, s.mag);
   }
 
+  lastSol = {};
   document.querySelectorAll('#vtab tbody tr').forEach(tr=>{
     const name = tr.querySelector('td').textContent;
-    const out = tr.querySelector('[data-out]');
     const s = d.solution[name];
     if(s===undefined){
       // Not solved for -- a Known keeps showing its given value.
-      out.textContent=''; echoKnown(name, tr); return;
+      renderResult(name, tr); return;
     }
-    const v = state.vs[name], f = PFACT[v.pre];
-    const sym = v.pre==='' ? '' : ' '+v.pre;
     const y = yard[prefixGroup(name)];
     if(mode==='dc'){
-      out.textContent = fmt(chop(s, y)/f) + sym;
+      const c = chop(s, y);
+      lastSol[name] = c;
+      autoPrefix(name, tr, Math.abs(c));
     }else{
       const cre = chop(s.re, y), cim = chop(s.im, y);
       const mag = Math.hypot(cre, cim);
       const deg = (cre||cim) ? Math.atan2(cim, cre)*180/Math.PI : 0;
-      out.innerHTML = `${fmt(cre/f)} ${cim<0?'−':'+'} j ${fmt(Math.abs(cim)/f)}${sym}`
-        + `<small>${fmt(mag/f)}${sym} ∠ ${deg.toFixed(2)}°</small>`;
+      lastSol[name] = {re: cre, im: cim, mag: mag, deg: deg};
+      autoPrefix(name, tr, mag);
     }
+    renderResult(name, tr);
   });
   $('residbox').hidden=false;
   $('resid').innerHTML = (mode==='ac'?'residual magnitudes: ':'residuals: ') +

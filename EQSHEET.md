@@ -75,16 +75,25 @@ with its solved value as the guess — the sheet lands square and
 re-solves as it stands. Flip variables to Known as you pin them down:
 drop the source equation, fix a current, solve the source backwards.
 
+The payload uses **sans-underscore names**: the app's `v_1` and `i_r1`
+arrive as `v1` and `ir1`, in the equations and the result keys alike
+(Roberto's call, 27 Aug 2026). The noise chop groups variables by their
+first letter accordingly.
+
 ## Notes
-- Every new variable — imported or typed by hand — starts Unknown.
+- Every new variable — imported or typed by hand — starts Unknown with a
+  guess of 0, and an empty guess field is read as 0 when Solve is pressed.
 - A Known variable's Result shows its given value immediately.
+- A solved variable with no prefix chosen gets the most suitable one
+  picked in its own menu (0.004 shows as 4 m); changing a row's prefix
+  re-displays its result in the new prefix rather than clearing it.
 - Guesses matter: nonlinear systems converge to the root nearest the start.
 - Non-square systems are solved least-squares and flagged in the result.
 - Residuals (AC: their magnitudes) are shown after each solve, raw.
 - Displayed results are chopped for numerical noise per variable type:
-  within each name-prefix group (`v…`, `i…`, …), anything 1e8 times
+  within each first-letter group (`v…`, `i…`, …), anything 1e8 times
   smaller than the group's largest magnitude shows as 0, as does
   anything below 1e-18 outright. Display only — the residuals line and
   the solver's numbers are untouched.
-- Derived Symbulator results (`p_*`, `s_*`, `z_*`, …) import too; they
+- Derived Symbulator results (`pr1`, `se`, `ze`, …) import too; they
   only appear in the Variable sheet if a selected equation mentions them.

@@ -1783,22 +1783,45 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             if domain in ("dc", "ac") and tool == "solve" and (
                     domain != "ac" or sp.sympify(omega).is_number):
                 from symbulator.si_prefix import expand_shorthand
-                eq_strings = [f"{sp.sstr(eq.lhs)} = {sp.sstr(eq.rhs)}"
-                              for eq in circ.equations]
+                # The Numerical Solver shows its variables sans
+                # underscore -- Roberto's call, 27 Aug 2026 -- so the
+                # payload strips them from every Symbulator-defined name:
+                # v_1 becomes v1, i_r1 becomes ir1, in the equations and
+                # in the result keys alike. The rename map is collected
+                # from the stamped system's own symbols, then applied to
+                # the expert extras as plain text with the longest names
+                # first, so i_r12 cannot be half-eaten by i_r1.
+                _rename = {}
+                for _eq in circ.equations:
+                    for _sym in (_eq.lhs.free_symbols
+                                 | _eq.rhs.free_symbols):
+                        _n = str(_sym)
+                        if "_" in _n:
+                            _rename[_sym] = sp.Symbol(_n.replace("_", ""))
+                eq_strings = [
+                    f"{sp.sstr(_eq.lhs.subs(_rename))} = "
+                    f"{sp.sstr(_eq.rhs.subs(_rename))}"
+                    for _eq in circ.equations]
+                _text_renames = sorted(
+                    ((str(k), str(v)) for k, v in _rename.items()),
+                    key=lambda kv: -len(kv[0]))
                 for extra in list(extra_equations or []) + list(
                         extra_conditions or []):
                     try:
-                        eq_strings.append(expand_shorthand(extra, si=True))
+                        _txt = expand_shorthand(extra, si=True)
                     except Exception:
-                        eq_strings.append(extra)
+                        _txt = extra
+                    for _old, _new in _text_renames:
+                        _txt = re.sub(rf"\b{re.escape(_old)}\b", _new, _txt)
+                    eq_strings.append(_txt)
                 results = {}
                 for _name, _value in values.items():
                     try:
                         z = complex(_value)
                     except (TypeError, ValueError):
                         continue          # symbolic -- not a what-if Known
-                    results[_name] = [z.real, z.imag] if domain == "ac" \
-                        else z.real
+                    results[_name.replace("_", "")] = \
+                        [z.real, z.imag] if domain == "ac" else z.real
                 eqsheet = {"mode": domain, "equations": eq_strings,
                            "results": results}
         except Exception:
