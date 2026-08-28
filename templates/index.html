@@ -1389,8 +1389,9 @@ units: yes</pre>
 
       <div class="row">
         <div>
-          <label for="unks">Add unknowns — <span class="hint">comma-separated, e.g. <code>vx</code> or <code>v_x</code></span></label>
-          <input type="text" id="unks" disabled>
+          <label for="unks">Add unknowns — <span class="hint">separated by commas
+            or one per line, e.g. <code>vx</code> or <code>v_x</code></span></label>
+          <textarea id="unks" spellcheck="false" style="min-height:2.4rem" disabled></textarea>
         </div>
       </div>
       <div class="row">
@@ -1527,16 +1528,19 @@ units: yes</pre>
     <details>
       <summary class="results-h section-toggle">Solve</summary>
       <label for="solveqEqs">Equation(s) to solve in terms of the results
-        <span class="hint">— e.g. <code>v2 = 6</code> or <code>v_2 = 6</code>, one equation per line</span>
+        <span class="hint">— e.g. <code>v2 = 6</code> or <code>v_2 = 6</code>, one equation
+        per line or separated with <code>and</code></span>
       </label>
       <textarea id="solveqEqs" spellcheck="false" style="min-height:3.4rem;margin-top:.7rem"
         placeholder="solve a circuit first…" disabled></textarea>
       <div class="row" style="margin-top:.7rem">
         <div>
           <label for="solveqUnks">Unknown(s) to solve for
-            <span class="hint">— comma-separated; leave blank to solve for whatever is left</span>
+            <span class="hint">— separated by commas or one per line; leave blank
+            to solve for whatever is left</span>
           </label>
-          <input type="text" id="solveqUnks" placeholder="x" disabled>
+          <textarea id="solveqUnks" spellcheck="false" style="min-height:2.4rem"
+            placeholder="x" disabled></textarea>
         </div>
       </div>
       <div class="row" style="margin-top:.7rem">
@@ -1901,7 +1905,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-28 10:01 UTC
+  Symbulator 9 version 2026-08-28 10:38 UTC
 </footer>
 
 <script>
@@ -2793,6 +2797,16 @@ function restoreState() {
 // form. `name` is added by the caller, since it is the one field that does
 // not come from the inputs -- which is also what lets this double as the
 // snapshot the "has anything changed?" test compares against.
+// Unknowns may be typed comma-separated or one per line; the .cir
+// format stores them as one comma-separated line, so newlines are
+// folded to commas on the way into a snapshot. (The solve requests
+// need no such folding -- the server splits on commas and whitespace
+// alike -- this is purely so a saved entry stays one line per key.)
+function commaList(s) {
+  return String(s || '').split(/[\r\n,]+/).map(t => t.trim())
+    .filter(Boolean).join(', ');
+}
+
 function inputsSnapshot() {
   const desc = $('desc').value.trim();
   // The Plot card and the Analysis tool are independent, and a circuit may
@@ -2808,7 +2822,7 @@ function inputsSnapshot() {
     omega: $('omega').value, vars: $('vars').value,
     n1: $('n1').value, n2: $('n2').value,
     kind: currentTool() === 'port' ? $('kind').value : '',
-    unknowns: expert.unknowns,
+    unknowns: commaList(expert.unknowns),
     equations: linesOf(expert.equations),
     conditions: linesOf(expert.conditions),
     // Settings -- captured as they stand right now, not just "if
@@ -2825,7 +2839,7 @@ function inputsSnapshot() {
     evaluate: $('evalExpr').value.trim(),
     evaluate_conditions: linesOf($('evalConds').value),
     solve_equations: linesOf($('solveqEqs').value),
-    solve_unknowns: $('solveqUnks').value.trim(),
+    solve_unknowns: commaList($('solveqUnks').value),
     solve_conditions: linesOf($('solveqConds').value),
     solve_real_only: $('solveqReal').checked,
     plotkey: hasPlot ? $('plotKey').value : '',
@@ -3985,9 +3999,9 @@ async function solveEquations() {
   }
 }
 $('solveqBtn').addEventListener('click', solveEquations);
-$('solveqUnks').addEventListener('keydown', ev => {
-  if (ev.key === 'Enter') solveEquations();
-});
+// Enter used to run the solve from the unknowns field. It is a
+// textarea now -- unknowns may be entered one per line (Roberto,
+// 28 Aug 2026) -- so Enter makes a new line and the button solves.
 
 // ---- Mini-tools -----------------------------------------------------------
 // Each tool takes a different number of values, so the fields are built from

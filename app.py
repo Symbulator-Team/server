@@ -340,6 +340,8 @@ def api_solveq():
     else:
         equations = [ln.strip() for ln in re.split(r"[\r\n]+", str(raw_eqs))
                      if ln.strip()]
+    # One per line, or joined with ` and ` -- same as Expert Mode's boxes.
+    equations = _expand_and(equations)
     unknowns = [u.strip() for u in
                 re.split(r"[,\s]+", str(data.get("unknowns") or "")) if u.strip()]
     values = data.get("values") or {}
@@ -466,7 +468,12 @@ def api_solve():
             return [str(x).strip() for x in raw if str(x).strip()]
         return [ln.strip() for ln in re.split(r"[\r\n]+", str(raw)) if ln.strip()]
 
-    extra_equations = _lines("equations")
+    # Equations and conditions alike: one per line, or several on one
+    # line joined with ` and ` -- "re = 12'k and ir3 = 6'm" is two
+    # equations, the calculator's own idiom. Equations joined the
+    # conditions on 28 Aug 2026, when the Expert Mode hint started
+    # saying so and Roberto asked whether it was actually true.
+    extra_equations = _expand_and(_lines("equations"))
     extra_conditions = _expand_and(_lines("conditions"))
     extra_unknowns = [u.strip() for u in
                       re.split(r"[,\s]+", str(data.get("unknowns") or ""))
@@ -699,7 +706,12 @@ def api_plot():
             return [str(x).strip() for x in raw if str(x).strip()]
         return [ln.strip() for ln in re.split(r"[\r\n]+", str(raw)) if ln.strip()]
 
-    extra_equations = _lines("equations")
+    # Equations and conditions alike: one per line, or several on one
+    # line joined with ` and ` -- "re = 12'k and ir3 = 6'm" is two
+    # equations, the calculator's own idiom. Equations joined the
+    # conditions on 28 Aug 2026, when the Expert Mode hint started
+    # saying so and Roberto asked whether it was actually true.
+    extra_equations = _expand_and(_lines("equations"))
     extra_conditions = _expand_and(_lines("conditions"))
     extra_unknowns = [u.strip() for u in
                       re.split(r"[,\s]+", str(data.get("unknowns") or ""))

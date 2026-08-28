@@ -363,8 +363,13 @@ def define_shadow_notices(table, desc):
 
 def _validate_extras(equations, unknowns, conditions) -> str | None:
     """Validate the expert-mode extras (lists of strings)."""
+    # Conditions check against _ALLOWED_COND, which admits < and >:
+    # solver 0.5.19 accepts inequality conditions (`is > 0`), and until
+    # 28 Aug 2026 this line used _ALLOWED_EQ, which refused them at the
+    # app door -- the one validator out of three that did. The Solve
+    # and Evaluate cards' condition boxes always used _ALLOWED_COND.
     for label, items, rx in (("equation", equations, _ALLOWED_EQ),
-                             ("condition", conditions, _ALLOWED_EQ)):
+                             ("condition", conditions, _ALLOWED_COND)):
         if not items:
             continue
         if len(items) > MAX_EXTRA:
