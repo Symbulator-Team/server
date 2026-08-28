@@ -1192,6 +1192,17 @@ units: yes</pre>
     <textarea id="desc" spellcheck="false" style="margin-top:.9rem"
       placeholder="e1,1,0,5&#10;r1,1,2,1'k&#10;r2,2,0,1'k"></textarea>
 
+    <!-- What you can do with these inputs, relative to the open file. Both
+         are hidden until they apply; which of them shows is worked out by
+         refreshEntryLinks(). Update sits left because it acts on the entry
+         you are already in, and is the likelier of the two. Directly under
+         the description, above Define (Roberto, 28 Aug 2026) -- saving is
+         about the circuit just typed, and Define is the less-used field. -->
+    <div class="actions" style="margin-top:.35rem">
+      <button type="button" id="updateEntryBtn" class="linkish" hidden>Update inputs in this entry</button>
+      <button type="button" id="addToFileBtn" class="linkish" hidden>Save inputs to new entry</button>
+    </div>
+
     <!-- The Define field. Versions 7 and 8 had `Define vx=va-vb`, which the
          calculator resolved wherever the name was typed. Version 9 parses
          text and has no such variable space, so the equivalent is to expand
@@ -1215,15 +1226,6 @@ units: yes</pre>
       <textarea id="defines" spellcheck="false" rows="2" aria-label="Define"
         placeholder="vx = va-vb"></textarea>
     </details>
-
-    <!-- What you can do with these inputs, relative to the open file. Both
-         are hidden until they apply; which of them shows is worked out by
-         refreshEntryLinks(). Update sits left because it acts on the entry
-         you are already in, and is the likelier of the two. -->
-    <div class="actions" style="margin-top:0">
-      <button type="button" id="updateEntryBtn" class="linkish" hidden>Update inputs in this entry</button>
-      <button type="button" id="addToFileBtn" class="linkish" hidden>Save inputs to new entry</button>
-    </div>
 
     <!-- Drawing sits with the circuit it draws, rather than in a card of
          its own further down: it is a way of looking at what you have just
@@ -1905,7 +1907,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-28 10:38 UTC
+  Symbulator 9 version 2026-08-28 11:08 UTC
 </footer>
 
 <script>

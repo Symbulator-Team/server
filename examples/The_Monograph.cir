@@ -1,0 +1,162 @@
+# Symbulator circuit book
+
+title: The exemplars from the monograph
+
+[The two-stage amplifier of 1999]
+
+e1,5,0,vg
+r1,5,1,150
+r2,1,0,1'k
+cc1,1,0,100'p
+cc2,1,2,3'p
+jd1,2,0,0.05*v_1
+r3,2,0,2'k
+r4,2,3,100
+r5,3,0,1'k
+cc3,3,0,100'p
+cc4,3,4,3'p
+jd2,4,0,0.05*v_3
+r6,4,0,2'k
+
+analysis: fd
+note: The circuit that closed the 1999 paper and the thesis's Problem 87: a two-stage amplifier whose gain Bode diagram Prof. Yee asked for. An FD solve returns every node voltage in s, and the gain is the Evaluate line, v4/v5. For the Bode plot itself, set vg to 1 (so v_4 is the transfer function) and plot v_4 between 1.6e3 and 1.6e12 Hz. Three minutes on the TI-89 in 2001; under a second here.
+rounding: exact
+si: no
+units: yes
+evaluate: v4/v5
+
+
+[One of each: the 2013 showcase]
+
+es,e,0,vs
+js,0,d,is
+r1,e,m,10
+r2,a,e,20
+r3,m,0,30
+r4,b,m,40
+r5,n,m,50
+r6,c,d,60
+r7,n,d,70
+jd1,a,b,0.2*v_r7
+ed2,c,b,0.1*i_r5
+jd3,n,c,2*i_r1
+ed4,0,n,0.7*v_r6
+
+analysis: dc
+note: Composed in 2013 to show off: one dependent source of each species, woven through seven resistors. Find positive values of Vs and Is such that the VCCS delivers 80 W and the CCVS dissipates 0 W. The two power constraints are quadratic, so four solutions exist; the conditions pick the one meant: Vs = 17.614 V and Is = 0.39727 A. And ir5 comes out exactly 0 -- the constraint drove its own controlling current to zero, which is how the CCVS dissipates nothing.
+unknowns: vs, is
+equations: p_jd1 = -80
+equations: p_ed2 = 0
+conditions: is > 0
+conditions: vs > 0
+rounding: 5
+si: no
+units: yes
+
+
+[Prof. Boulet's switching transient (DC, t < 0)]
+
+e,s,0,18
+r8,s,a,8
+c1,a,0,1/6
+r12,a,0,12
+r18,a,b,18
+r6,b,0,6
+c2,b,0,1/3
+
+analysis: dc
+note: Prof. Eliane Boulet's exam problem, the thesis's closing Problem 88, first interval: for t < 0 the 18 V source feeds the ladder and the capacitors sit open. DC gives their voltages -- va = 9 V and vb = 9/4 V -- the initial conditions the next entry carries.
+rounding: exact
+si: no
+units: yes
+
+
+[Prof. Boulet's switching transient (TR, t > 0)]
+
+c1,a,0,1/6,9
+r12,a,0,12
+r18,a,b,18
+r6,b,0,6
+c2,b,0,1/3,9/4
+js,0,b,10*e^(-t)*sin(2*t+30*pi/180)
+
+analysis: tr
+variables: va
+note: The t > 0 half: the DC source gone, the waveform source connected, the capacitors starting from 9 and 9/4. Find the problem's v1 -- node a here, so the limited results ask for just va. The answer's two natural modes and the forced response are legible at a glance, va(0) checks out at exactly 9 V, and the 2001 calculator's printout agrees with this solve on every digit it displayed.
+rounding: exact
+si: no
+units: yes
+
+
+[Three-phase wye-delta with line impedances]
+
+ea1,na1,0,100
+eb1,nb1,0,(100∠-120°)
+ec1,nc1,0,(100∠120°)
+raa,na1,na2,1
+rbb,nb1,nb2,1
+rcc,nc1,nc2,1
+rac,na2,nc2,100+24*pi*j
+rcb,nc2,nb2,100+24*pi*j
+rba,nb2,na2,100+24*pi*j
+
+analysis: ac
+omega: omega
+note: Alexander and Sadiku's Example 12.11, the balanced wye-delta with line impedances (Lesson 9 solves it too), the sources typed the way the book prints them. One AC call: aa(iraa) reads 2.350 at -36.20 degrees, and the Evaluate line's load line voltage 169.94 at 30.81 degrees. The exemplary part is what is absent: no wye-delta transformation, no single-phase equivalent.
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+evaluate: vna2-vnb2
+
+
+[The ideal transformer, symbolically]
+
+t,2,3,1,n
+r2,3,4,z2
+e2,4,0,vs2
+
+analysis: dc
+tool: th
+n1: 2
+n2: 0
+note: From the teaching corpus, after AS7's Figure 13.33 (Lesson 10 has it too): everything in the description is a name. The Thevenin equivalent at the primary derives the referred-source and referred-impedance identities every machines course teaches -- vth = vs2/n and req = z2/n^2. When the answer to a symbolic question is the textbook's own theorem, the simulator has produced knowledge in the form the student is supposed to carry away.
+rounding: exact
+si: no
+units: yes
+
+
+[Coupled coils with initial conditions]
+
+l1,1,0,2,1
+r1,1,0,3
+l2,2,0,2
+r2,2,0,3
+m,l1,l2,1
+
+analysis: tr
+note: Composed for the monograph: two identical coupled coils, each closed on its own resistor, no sources anywhere -- the primary carries 1 A at t = 0 and the secondary is at rest. One TR call: il1 = (e^-t + e^-3t)/2 and il2 = (e^-t - e^-3t)/2, the circuit's common and differential modes in plain sight. Energy handed across the coupling and returned to heat, the whole story in two exponentials.
+rounding: exact
+si: no
+units: yes
+
+
+[Two op-amps, all symbols]
+
+e,1,0,vs
+r12,1,2,1/g1
+r14,1,4,1/g2
+r23,2,3,1/g
+r34,3,4,1/g
+r2o,2,o,1/g4
+r4o,4,o,1/g3
+o1,0,2,3
+o2,0,4,o
+
+analysis: dc
+note: After Bobrow's Example 3.3 (Lesson 5 solves it too): a two-op-amp summing cascade in which every conductance is a symbol. The Evaluate line reads the gain, vo/vs = (g1-g2)/(g3-g4) -- a difference of conductances over a difference of conductances, so the circuit's structure is read directly off the expression. The single most persuasive demonstration of what Symbulator is for.
+rounding: exact
+si: no
+units: yes
+evaluate: vo/vs
