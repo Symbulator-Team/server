@@ -9,7 +9,7 @@ c,1,0,c,0
 r,1,0,r
 
 analysis: tr
-note: The impulse survives in the capacitor's current, which is right: the charge arrives all at once.
+note: In this problem, we use an impulse source, i*δ(t), for the first time. Find the capacitor's voltage drop and current. The impulse survives in the capacitor's current, which is right: the charge arrives all at once.
 rounding: exact
 si: no
 units: yes
@@ -24,6 +24,7 @@ r2,2,o,2
 r1,2,0,1
 
 analysis: tr
+note: Example 5.7's op-amp circuit driven by a 1 V impulse, δ(t): find vc, ic and vo.
 rounding: exact
 si: no
 units: yes
@@ -36,6 +37,7 @@ r,1,0,r
 l,1,0,l,0
 
 analysis: tr
+note: A ramp source, written i*t: find iL and vL.
 rounding: exact
 si: no
 units: yes
@@ -50,6 +52,7 @@ r2,2,o,2
 r1,2,0,1
 
 analysis: tr
+note: Example 5.7's circuit with a ramp input, t: find vc and ic.
 rounding: exact
 si: no
 units: yes
@@ -62,6 +65,7 @@ r,0,1,6
 l,1,0,2,0
 
 analysis: tr
+note: An exponential source, 2e^(-4t): find iL and vL.
 rounding: exact
 si: no
 units: yes
@@ -74,7 +78,7 @@ r,0,1,6
 l,1,0,2,0
 
 analysis: tr
-note: The same circuit as the previous entry with the source's exponent changed from -4 to -3, which is the circuit's own pole -- hence the t in the answer.
+note: Find iL and vL again. The same circuit as the previous entry with the source's exponent changed from -4 to -3, which is the circuit's own pole -- hence the t in the answer.
 rounding: exact
 si: no
 units: yes
@@ -89,6 +93,7 @@ c,3,0,1,0
 j,0,2,2*ir3
 
 analysis: tr
+note: An exponential source, 18e^(-t/2), on the dependent-source circuit of Figure 5.36: find the capacitor's voltage drop and the current in the 3 ohm resistor.
 rounding: exact
 si: no
 units: yes
@@ -103,6 +108,7 @@ r2,2,o,2
 r1,2,0,1
 
 analysis: tr
+note: Example 5.7's circuit driven at its own pole, 2e^(-4t): find vc and ic — both answers carry a t.
 rounding: exact
 si: no
 units: yes
@@ -118,6 +124,7 @@ c,2,0,1/8
 r3,2,0,2
 
 analysis: dc
+note: The first second-order circuit: an inductor and a capacitor in the same network. Find i(t) and v(t) for all t; this DC interval gives vc = 2 V and il = 1 A.
 rounding: exact
 si: no
 units: yes
@@ -130,6 +137,7 @@ l,1,2,1/2,1
 c,2,0,1/8,2
 
 analysis: tr
+note: Second interval in TR: two exponentials now. Find vc and il, built from e^(-2t) and e^(-8t).
 rounding: exact
 si: no
 units: yes
@@ -144,6 +152,7 @@ l,1,2,1/4
 c,2,0,1/3
 
 analysis: dc
+note: First interval in DC: vc = 2 V and il = 0.
 rounding: exact
 si: no
 units: yes
@@ -157,6 +166,7 @@ l,1,2,1/4,0
 c,2,0,1/3,2
 
 analysis: tr
+note: Second interval in TR: find vc and il, each a pair of exponentials.
 rounding: exact
 si: no
 units: yes
@@ -170,6 +180,7 @@ c,2,0,2
 r2,2,0,1/6
 
 analysis: dc
+note: For t < 0 the switches split this circuit in two. The left half's DC solve gives the capacitor's initial condition, -7/50 V — solved in fractions on purpose.
 rounding: exact
 si: no
 units: yes
@@ -183,6 +194,7 @@ r4,3,4,3
 e2,4,0,3
 
 analysis: dc
+note: The right half's DC solve gives the inductor's initial condition, 1 A.
 rounding: exact
 si: no
 units: yes
@@ -195,7 +207,7 @@ r,1,0,[1/6,1/6]
 l,1,0,1/50,1
 
 analysis: tr
-note: The switch on the right is simulated as a short between the two halves, which saves renaming every node.
+note: The TR interval, both halves joined: find vc and il — underdamped now, decaying sinusoids in cos(4t) and sin(4t). The switch on the right is simulated as a short between the two halves, which saves renaming every node.
 rounding: exact
 si: no
 units: yes
@@ -211,6 +223,7 @@ r1,3,0,1
 j,0,3,1
 
 analysis: dc
+note: First interval in DC: vc = 2 V and il = 1 A.
 rounding: exact
 si: no
 units: yes
@@ -224,6 +237,7 @@ c,3,0,1,2
 r1,3,0,1
 
 analysis: tr
+note: Second interval in TR: a repeated pole this time. Find vc and il, each carrying a t·e^(-2t) term.
 rounding: exact
 si: no
 units: yes

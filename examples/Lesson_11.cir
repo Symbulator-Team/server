@@ -9,8 +9,8 @@ r1,1,2,1000
 c1,2,0,1e-6
 
 analysis: ac
+note: In this problem, we draw a Bode plot for the first time: plot v_2 between 10 and 100000 Hz and see the low-pass rolloff — flat, then falling 20 dB per decade with the phase heading for -90°. The Plot card re-solves the circuit at every frequency, which is why it takes the circuit and an answer's name rather than an expression.
 omega: 1
-note: The Plot card re-solves the circuit at every frequency, which is why it takes the circuit and an answer's name rather than an expression.
 rounding: 5
 si: no
 units: yes
@@ -31,8 +31,8 @@ l,2,3,1'm
 c,3,0,.4'u
 
 analysis: ac
+note: Find the resonance frequency of the series RLC — solve im(ze) = 0 with w > 0 and real solutions only: 50000 rad/s. For the bandwidth frequencies, solve abs(ze) = sqrt(2)*2 with w<50000 and then w>50000: 49010 and 51010 rad/s.
 omega: w
-note: For the bandwidth frequencies, solve abs(ze) = sqrt(2)*2 with w<50000 and then w>50000: 49010 and 51010 rad/s.
 rounding: 5
 si: no
 units: yes
@@ -52,8 +52,8 @@ l,1,0,.2'm
 c,1,0,8'u
 
 analysis: ac
+note: Find the resonance frequency of the parallel RLC: 25000 rad/s. The chapter uses im(ie) rather than im(ze) here because the calculator's numerical search could not find so sharp a peak. Version 9 solves symbolically and would manage either, but the equation says something true: at resonance the source's current is in phase with its voltage.
 omega: w
-note: The chapter uses im(ie) rather than im(ze) here because the calculator's numerical search could not find so sharp a peak. Version 9 solves symbolically and would manage either, but the equation says something true: at resonance the source's current is in phase with its voltage.
 rounding: 5
 si: no
 units: yes
@@ -74,6 +74,7 @@ l,1,2,2
 r2,2,0,2
 
 analysis: ac
+note: Determine the resonant frequency of the circuit: solve im(v1) = 0 with w > 0 and real solutions only, which gives 2 rad/s.
 omega: w
 rounding: 5
 si: no

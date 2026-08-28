@@ -228,6 +228,21 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .subbar nav {
     display: flex; align-items: center; gap: 1.15rem;
     flex-wrap: wrap; min-width: 0;
+    /* One row of links, never two (Roberto, 28 Aug 2026: a link that would
+       wrap should hide instead). The row still flex-wraps, but the box is
+       capped at one line-box (0.875rem x 1.4, the size every link in it is
+       pinned to below) and clipped, so anything that wrapped is simply not
+       shown -- at any width, no media query to keep in step with the labels.
+       The padding is not rhythm: focus rings sit 3px off a link and 2px
+       wide, and without the 0.375rem of breathing room the clip would shave
+       them. box-sizing is pinned because the cap must mean the same thing on
+       a host that sets border-box (learn, the landing) and one that does not.
+       overflow is clip, not hidden, so keyboard focus on a hidden link
+       cannot scroll the row into a half-shown state. */
+    box-sizing: content-box;
+    padding-block: 0.375rem;
+    max-height: calc(0.875rem * 1.4);
+    overflow: clip;
   }
   .subbar nav a {
     /* font-family is pinned, not inherited. learn.symbulator.com sets its
@@ -365,6 +380,17 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     .brand-name { font-size: 1.4rem; letter-spacing: 0.3px; }
     .brand-sub { font-size: 0.9rem; margin-top: 0.25rem; }
     .theme-toggle { width: 2.15rem; height: 2.15rem; font-size: 1.05rem; }
+  }
+
+  /* The second line hides before it wraps (Roberto, 28 Aug 2026: one line or
+     none). Measured 28 Aug 2026 on the docs preview, Chrome on Windows: at
+     this block's sizes the line holds to 450px of viewport and wraps by 440.
+     480 leaves ~35px for wider system faces -- the stack above resolves to
+     Roboto on Android and SF on iOS, neither of which was the one measured.
+     If the subtitle's wording or any width in the 520px block above changes,
+     re-measure; do not trust 480 across such a change. */
+  @media (max-width: 480px) {
+    .brand-sub { display: none; }
   }
   /* ==== END banner.css ====================================== */
   .wrap { max-width: 880px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
@@ -1170,15 +1196,25 @@ units: yes</pre>
          calculator resolved wherever the name was typed. Version 9 parses
          text and has no such variable space, so the equivalent is to expand
          the name before anything reads it -- which is what this does, to
-         every input on the page and not only the netlist above. -->
-    <label for="defines" style="margin-top:.9rem">Define
-      <span class="hint">— one per line, <code>name = expression</code>.
-      Each name is replaced wherever it appears, in the circuit and in every
-      other box. E.g. <code>vx = va-vb</code>, then use <code>vx</code> as a
-      dependent source's value.</span>
-    </label>
-    <textarea id="defines" spellcheck="false" rows="2"
-      placeholder="vx = va-vb"></textarea>
+         every input on the page and not only the netlist above.
+
+         Collapsed by default (Roberto, 28 Aug 2026): most circuits never
+         define anything, so the box earns its screen space only when used.
+         applyCircuit() opens it whenever a picked entry carries defines --
+         a closed box hiding text that is silently rewriting every input
+         would be worse than the clutter -- and Clear all inputs closes it
+         again. The textarea keeps working while hidden: a closed <details>
+         still holds its value, so every linesOf() read is unaffected. -->
+    <details id="defineBox" style="margin-top:.9rem">
+      <summary>Define <span class="hint">(optional)</span></summary>
+      <p class="hint" style="margin:.2rem 0 0">One per line,
+        <code>name = expression</code>. Each name is replaced wherever it
+        appears, in the circuit and in every other box. E.g.
+        <code>vx = va-vb</code>, then use <code>vx</code> as a dependent
+        source's value.</p>
+      <textarea id="defines" spellcheck="false" rows="2" aria-label="Define"
+        placeholder="vx = va-vb"></textarea>
+    </details>
 
     <!-- What you can do with these inputs, relative to the open file. Both
          are hidden until they apply; which of them shows is worked out by
@@ -1319,7 +1355,9 @@ units: yes</pre>
         </div>
       </div>
 
-      <div class="row">
+      <!-- The whole row hides outside AC (Roberto, 28 Aug 2026). It used
+           to grey out instead; see syncSettings(). -->
+      <div class="row" id="rmsRow">
         <div>
           <label for="useRms">AC power convention</label>
           <label class="checkline" id="rmsLine"><input type="checkbox" id="useRms"><span>RMS
@@ -1340,7 +1378,8 @@ units: yes</pre>
 
       <div class="row" style="margin-top:.9rem">
         <div>
-          <label for="eqs">Add equations — <span class="hint">one per line, e.g. <code>v_2 = 6</code>;
+          <label for="eqs">Add equations — <span class="hint">one per line, or separate
+            equations with <code>and</code>, e.g. <code>v_2 = 6 and p_e1=10</code>;
             parsed the same as circuit values — SI shorthand like <code>4.7'k</code>
             and, in AC, imaginary units (<code>i</code>/<code>j</code>) both work, but a bare
             suffix like <code>4.7k</code> with no apostrophe doesn't</span></label>
@@ -1357,7 +1396,8 @@ units: yes</pre>
       <div class="row">
         <div>
           <label for="conds">Add conditions
-            <span class="hint">— e.g. <code>pr1 > 0</code> and <code>v1 = 12</code>;
+            <span class="hint">— separate conditions with <code>and</code>,
+            e.g. <code>pr1 > 0 and v1 = 12</code>;
             use <code>>=</code> and <code>&lt;=</code>, not <code>=></code> and <code>=&lt;</code></span>
           </label>
           <textarea id="conds" spellcheck="false" style="min-height:3.2rem" disabled></textarea>
@@ -1815,11 +1855,11 @@ units: yes</pre>
       <p style="font-size:.92rem;margin-top:.2rem">
         Symbulator was made by
         <a href="https://roberto.perez-franco.com" target="_blank" rel="noopener">Roberto Perez-Franco</a>
-        on a Texas Instruments TI-89 calculator, starting in April 1999,
+        on a Texas Instruments TI-89 calculator, starting in 1999,
         as an engineering student at Universidad Tecnológica de Panamá
         (UTP). An early version won 1st place at the 2000 IEEE Student
         Paper Contest for Latin America. Version 5 served as Roberto's
-        graduation thesis in January 2001. He released version 6 in 2013
+        graduation thesis in 2001. He released version 6 in 2013
         and version 7 in 2023, both for the TI-89 Titanium, along with a
         port to the TI-Nspire CAS II as version 8.
       </p>
@@ -1838,14 +1878,14 @@ units: yes</pre>
 
       <div class="section-cap">Symbulator is free</div>
       <p style="font-size:.92rem;margin-top:.2rem">
-        Since June 2013, all versions of Symbulator are offered under a
+        Since 2013, all versions of Symbulator are offered under a
         Creative Commons License (CC) BY-NC-SA. Since 2026, all versions of
         Symbulator are free and open-source software, released under
         the MIT licence: you may use, study, modify and share it,
         including commercially, with attribution. The solver is
         published as the
         <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">symbulator</a>
-        package on PyPI, and the project for the solver and this interface
+        package on PyPI, and the project for it and this interface
         lives on
         <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a>.
         Contributions, bug reports and circuits that break it are welcome.
@@ -1861,7 +1901,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-28 03:10 UTC
+  Symbulator 9 version 2026-08-28 09:58 UTC
 </footer>
 
 <script>
@@ -2346,6 +2386,9 @@ function applyCircuit(c) {
   // disabled until the circuit is solved (see activatePostSolve), but
   // pre-filling them now means they're ready the moment it is.
   $('defines').value = (c.defines || []).join('\n');
+  // The Define box is collapsed by default; an entry that carries defines
+  // opens it, because a hidden definition still rewrites every input.
+  $('defineBox').open = !!(c.defines || []).length;
   $('evalExpr').value = c.evaluate || '';
   $('evalConds').value = (c.evaluate_conditions || []).join('\n');
   $('solveqEqs').value = (c.solve_equations || []).join('\n');
@@ -2620,12 +2663,14 @@ function clearSettingsNotes() {
 function syncSettings() {
   $('nField').style.display = $('digits').value === 'n' ? 'block' : 'none';
   // The RMS convention only affects AC power, so it is inert elsewhere.
-  // Grey it out rather than hiding it: a setting that vanishes feels
-  // unstable, and greyed-out-with-a-reason teaches what it is for.
+  // The whole row hides outside AC -- it used to grey out instead, on the
+  // theory that a vanishing setting feels unstable, and Roberto weighed
+  // that against the clutter on 28 Aug 2026 and chose hiding. The value
+  // survives while hidden (nothing clears it), so an AC entry's RMS
+  // choice comes back when the analysis returns to AC.
   const isAc = domainSel.value === 'ac';
+  $('rmsRow').style.display = isAc ? '' : 'none';
   $('useRms').disabled = !isAc;
-  $('rmsLine').style.opacity = isAc ? '1' : '.5';
-  $('rmsLine').title = isAc ? '' : 'Applies to AC analysis only';
   // Polar display is the same story: in DC every answer is real, and in
   // FD/TR they are functions of s or t, with no angle to take.
   $('polarPhasors').disabled = !isAc;
@@ -3075,6 +3120,7 @@ function clearAllInputs() {
   $('useRms').checked = false;
   $('polarPhasors').checked = false;
   $('defines').value = '';
+  $('defineBox').open = false;
   // The other three tools
   $('evalExpr').value = ''; $('evalConds').value = '';
   $('solveqEqs').value = ''; $('solveqConds').value = ''; $('solveqUnks').value = '';

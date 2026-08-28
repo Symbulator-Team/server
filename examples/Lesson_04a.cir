@@ -15,6 +15,7 @@ s3,0,3
 s4,3,5
 
 analysis: dc
+note: In this problem, we use short circuits (the s element) for the first time — four of them, one for each current the problem asks about. Find i1, i2, i3 and i4, on the current through line of each short's block.
 rounding: exact
 si: no
 units: yes
@@ -31,7 +32,7 @@ r30,2,0,30
 r50,3,0,50
 
 analysis: dc
-note: The equivalent resistance comes free here: a source sits between the two nodes, so re is already an answer.
+note: Find the equivalent resistance as seen by the 100 V source, and the current i. The equivalent resistance comes free here: a source sits between the two nodes, so re is already an answer.
 rounding: exact
 si: no
 units: yes
@@ -46,6 +47,7 @@ rb,a,c,3
 ra,b,c,3
 
 analysis: dc
+note: In this problem, we use the Find equivalent analysis (the calculator's er script) for the first time, on a passive circuit. Find the equivalent resistance between nodes 0 and c — the lesson walks this one through step by step.
 tool: er
 n1: 0
 n2: c
@@ -61,6 +63,7 @@ r1,1,2,66
 r2,2,0,24
 
 analysis: dc
+note: In this problem, we find a Thévenin / Norton equivalent (the calculator's th script) for the first time. Find the equivalent seen from nodes 2 and 0: vth, ino, req and pmax all arrive together.
 tool: th
 n1: 2
 n2: 0
@@ -76,10 +79,10 @@ r1,1,2,3
 r2,2,0,6
 
 analysis: dc
+note: Find the Thévenin equivalent of the shaded network, then the current through RL for values of 2, 10 and 100 ohm. The Evaluate line answers the 2 ohm load; for the other two loads, evaluate vth/(req+10) and vth/(req+100): 0.5 A and 0.059 A.
 tool: th
 n1: 2
 n2: 0
-note: For the other two loads, evaluate vth/(req+10) and vth/(req+100): 0.5 A and 0.059 A.
 rounding: exact
 si: no
 units: yes
@@ -94,10 +97,10 @@ r2,2,0,280
 j,2,0,560'm
 
 analysis: dc
+note: Find the Norton equivalent of the circuit left of a-b. Version 9 reports the Norton current in the direction it flows, so the sign differs from the calculator's 0.36.
 tool: th
 n1: 2
 n2: 0
-note: Version 9 reports the Norton current in the direction it flows, so the sign differs from the calculator's 0.36.
 rounding: 3
 si: no
 units: yes
@@ -111,7 +114,7 @@ rl,n,0,168
 j,0,n,180'm
 
 analysis: dc
-note: The equivalent from the previous entry, with the load and the 180 mA source connected.
+note: The equivalent from the previous entry, with the 168 ohm load and the 180 mA source connected. Find the current through RL: the rl block reads -0.06 A, that is, 60 mA flowing from 0 to n.
 rounding: 3
 si: no
 units: yes

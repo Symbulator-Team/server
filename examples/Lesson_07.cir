@@ -9,8 +9,8 @@ r1,1,2,5
 c,2,0,.1
 
 analysis: ac
+note: In this problem, we run an AC (phasor) analysis for the first time: find v(t) and i(t). The first AC problem. The source is the phasor of 10 cos(4t), and the capacitor is in farads, which is why the frequency is needed. Read ir1 and vc with the aa mini-tool, then convert back to sinusoids by hand.
 omega: 4
-note: The first AC problem. The source is the phasor of 10 cos(4t), and the capacitor is in farads, which is why the frequency is needed.
 rounding: 4
 si: no
 units: yes
@@ -25,8 +25,8 @@ r1,1,2,4
 l,2,0,.2
 
 analysis: ac
+note: Find v(t) and i(t) — read ir1 and vl. The source is written in polar form, which version 9 reads as typed.
 omega: 10
-note: The source is written in polar form, which version 9 reads as typed.
 rounding: 4
 si: no
 units: yes
@@ -43,6 +43,7 @@ l1,2,4,.2
 r2,4,0,8
 
 analysis: ac
+note: Find the input impedance of the circuit at ω = 50 rad/s. A passive network, so the Resistance / impedance equivalent between nodes 1 and 0 does it: zeq = 3.22 - 11.07j ohm.
 omega: 50
 tool: er
 n1: 1
@@ -62,6 +63,7 @@ c,2,3,5'm
 l,3,0,20'm
 
 analysis: ac
+note: Find the steady-state current i when vs = 50 cos(200t) V: aa(ir) gives 4.789 A at -16.7°.
 omega: 200
 rounding: 4
 si: no
@@ -76,8 +78,8 @@ e,1,0,12
 r1,1,0,4+20j+[16,-14j+25j]
 
 analysis: ac
+note: Find the equivalent impedance, and from it the current I. Every value is already an impedance, so the frequency is asked for but never used. The bracket shorthand does the parallel reduction inside the value.
 omega: 1
-note: Every value is already an impedance, so the frequency is asked for but never used. The bracket shorthand does the parallel reduction inside the value.
 rounding: 4
 si: no
 units: yes
@@ -97,11 +99,11 @@ r34,3,4,4
 r14,1,4,-4j
 
 analysis: ac
+note: Find the equivalent impedance between nodes 1 and 0: 0.3794 + 1.46j ohm. Eight impedances and no source, so this is the equivalent-impedance tool rather than a solve.
 omega: 1
 tool: er
 n1: 1
 n2: 0
-note: Eight impedances and no source, so this is the equivalent-impedance tool rather than a solve.
 rounding: 4
 si: no
 units: yes
@@ -119,6 +121,7 @@ j1,0,3,2*icx
 l2,3,0,.5
 
 analysis: ac
+note: Find ix — the current through the capacitor cx, which also controls the current source: aa(icx) gives 7.589 A at 108.4°.
 omega: 4
 rounding: 4
 si: no
@@ -137,6 +140,7 @@ r,2,3,4
 e,3,0,3*vrx
 
 analysis: ac
+note: Find v1 and v2; the dependent source is controlled by the voltage across rx this time.
 omega: 2
 rounding: 4
 si: no
@@ -155,6 +159,7 @@ j1,0,3,.5*ico
 ro,3,0,2'k
 
 analysis: ac
+note: Find vo and io — read vro and ico with aa: 1.55 V at -95.18° and 3.26 mA at -3.74°.
 omega: 1000
 rounding: 4
 si: no
@@ -176,8 +181,8 @@ r6,2,3,2+2j
 e,3,0,(18∠30°)
 
 analysis: ac
+note: Find V1 and V2. Values all in ohms again, so the frequency does not matter.
 omega: 1
-note: Values all in ohms again, so the frequency does not matter.
 rounding: 4
 si: no
 units: yes
@@ -192,11 +197,11 @@ r1,1,2,10
 l,2,0,5'm
 
 analysis: ac
+note: Find the C that makes the net impedance purely resistive at 2 kHz: solve im(zeq) = 0 for c, which gives 1.235 µF — not the book's answer. The omega box takes an expression, so the frequency in hertz can be converted in place. Real solutions only, or the answer carries an im(c) term.
 omega: 2*pi*2e3
 tool: er
 n1: 1
 n2: 0
-note: The omega box takes an expression, so the frequency in hertz can be converted in place. Real solutions only, or the answer carries an im(c) term.
 rounding: 4
 si: no
 units: yes
@@ -214,11 +219,11 @@ r1,1,2,10
 l,2,0,5'm
 
 analysis: ac
+note: The same solve at 2000 rad/s gives c = 25 — the book's 25 µF. The capacitance is declared as c'u, so the answer comes out in microfarads. Roberto's reading is that the book asked for 2 kHz when it meant 2000 rad/s.
 omega: 2000
 tool: er
 n1: 1
 n2: 0
-note: The capacitance is declared as c'u, so the answer comes out in microfarads. Roberto's reading is that the book asked for 2 kHz when it meant 2000 rad/s.
 rounding: 4
 si: no
 units: yes
@@ -237,8 +242,8 @@ r1,2,o,r
 o,0,2,o
 
 analysis: ac
+note: Find Vo/Vs symbolically: -c*omega*r*j. The omega box takes a name as readily as a number, so the answer comes back as a function of it.
 omega: omega
-note: The omega box takes a name as readily as a number, so the answer comes back as a function of it.
 rounding: exact
 si: no
 units: yes
@@ -258,8 +263,8 @@ cb,3,o,cb
 r2,3,o,r2
 
 analysis: ac
+note: Compute the closed-loop gain Vo/Vs with every value a symbol. Everything symbolic including the frequency -- about the limit of what is worth solving this way.
 omega: omega
-note: Everything symbolic including the frequency -- about the limit of what is worth solving this way.
 rounding: exact
 si: no
 units: yes

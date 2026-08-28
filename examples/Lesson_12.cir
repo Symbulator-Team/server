@@ -11,7 +11,7 @@ c,2,0,1/3,0
 l,o,0,1,0
 
 analysis: tr
-note: This problem does not need the s-domain at all: the source is a function of time and so is the wanted answer, so TR does it in one step, with the source written in time.
+note: Find vo(t), assuming zero initial conditions. This problem does not need the s-domain at all: the source is a function of time and so is the wanted answer, so TR does it in one step, with the source written in time.
 rounding: exact
 si: no
 units: yes
@@ -26,7 +26,7 @@ r3,2,0,3/s
 r4,o,0,s
 
 analysis: fd
-note: The capacitor written as 3/s and the inductor as s, to show it can be done. Only valid because the initial conditions are zero.
+note: In this problem, we run an FD (complex frequency domain) analysis for the first time: the same circuit, with the unit step written as 1/s. The capacitor written as 3/s and the inductor as s, to show it can be done. Only valid because the initial conditions are zero.
 rounding: exact
 si: no
 units: yes
@@ -41,7 +41,7 @@ c,2,0,1/3,0
 l,o,0,1,0
 
 analysis: fd
-note: The same answer with the schematic's own units, which is what you would actually type.
+note: Find vo(s) = 3/(s^2+8s+18). The same answer with the schematic's own units, which is what you would actually type. The source is 1/s, not 1 — in FD a bare 1 would be an impulse.
 rounding: exact
 si: no
 units: yes
@@ -56,7 +56,7 @@ c,2,0,1/3,0
 l,o,0,1,0
 
 analysis: fd
-note: t2s on the way in, s2t on the way out. Both work anywhere an expression is accepted.
+note: The whole round trip: find vo(t) from an FD solve. t2s on the way in, s2t on the way out. Both work anywhere an expression is accepted.
 rounding: exact
 si: no
 units: yes
@@ -72,6 +72,7 @@ l,1,o,2,0
 r2,o,0,3
 
 analysis: fd
+note: Determine vo(t): the same shape as the example — solve in FD with the source converted by t2s, then transform the answer back with s2t(vo) on the Evaluate line.
 rounding: exact
 si: no
 units: yes
@@ -86,7 +87,7 @@ c,2,0,1'µ
 r2,2,o,1'k
 
 analysis: fd
-note: A transfer function needs no special tool: solve with a symbolic source and divide.
+note: Find the transfer function H(s) = Vo/Vs — the Evaluate line, vo/vs. A transfer function needs no special tool: solve with a symbolic source and divide.
 rounding: exact
 si: no
 units: yes

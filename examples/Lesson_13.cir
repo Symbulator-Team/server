@@ -9,6 +9,7 @@ r2,2,0,40
 r3,2,3,30
 
 analysis: dc
+note: In this problem, we find a two-port equivalent for the first time. Determine the z parameters of the T network between nodes 1 and 3: z11 = 60, z12 = z21 = 40, z22 = 70.
 tool: port
 n1: 1
 n2: 3
@@ -25,8 +26,8 @@ z,1,2
 r,2,0,10
 
 analysis: ac
+note: In this problem, we use a two-port as an element (z,1,2) for the first time. Find I1 and I2 — aa(iz1) and aa(iz2). The four parameters are pinned in Expert Mode, which works here because this is a plain solve rather than an equivalent.
 omega: omega
-note: The four parameters are pinned in Expert Mode, which works here because this is a plain solve rather than an equivalent.
 equations: z11 = 40
 equations: z12 = 20j
 equations: z21 = 30j
@@ -45,6 +46,7 @@ r2,1,2,2
 r3,2,0,8
 
 analysis: dc
+note: Obtain the y parameters between nodes 1 and 2: 3/4, -1/2, -1/2 and 5/8.
 tool: port
 n1: 1
 n2: 2
@@ -62,6 +64,7 @@ r3,2,3,4
 j,2,3,2*ir1
 
 analysis: dc
+note: Determine the y parameters of the two-port with a dependent source inside. A two-port equivalent works perfectly well around a controlled source.
 tool: port
 n1: 1
 n2: 3
@@ -78,6 +81,7 @@ r2,2,0,6
 r3,2,3,3
 
 analysis: dc
+note: Find the hybrid (h) parameters between nodes 1 and 3: 4, 2/3, -2/3 and 1/9.
 tool: port
 n1: 1
 n2: 3
@@ -94,10 +98,10 @@ r,1,2,40
 h,2,3
 
 analysis: dc
+note: Find the Thévenin equivalent at the output port of a circuit built around an h-parameter two-port. The equivalent tools take no Expert Mode equations, so the answers come back as formulas in the h parameters and the numbers go in afterwards. Naming the four as unknowns is what makes their equations bite.
 tool: th
 n1: 3
 n2: 0
-note: The equivalent tools take no Expert Mode equations, so the answers come back as formulas in the h parameters and the numbers go in afterwards. Naming the four as unknowns is what makes their equations bite.
 rounding: 4
 si: no
 units: yes
@@ -117,6 +121,7 @@ r,2,0,1
 c,2,3,1
 
 analysis: fd
+note: Find the g parameters as functions of s — the same two-port equivalent, run in FD.
 tool: port
 n1: 1
 n2: 3
@@ -134,6 +139,7 @@ l2,2,3,1
 r2,3,0,1
 
 analysis: fd
+note: Determine the g parameters of the ladder network in the s domain.
 tool: port
 n1: 1
 n2: 3
@@ -150,6 +156,7 @@ r2,2,0,20
 e,2,3,3*ir1
 
 analysis: dc
+note: Find the transmission (a) parameters of the two-port with the dependent source: 1.765, 15.29, 0.0588 and 1.176.
 tool: port
 n1: 1
 n2: 3
@@ -167,7 +174,7 @@ rl,2,0,20
 y,1,2
 
 analysis: dc
-note: The gains come from the gain mini-tool, given v1, iy1, v2 and iy2 -- not something an input file can carry, so they are recorded here. The source is 1 V because its value cancels out of a gain.
+note: Find Gv, Gi, Gp and Zin for the loaded y-parameter two-port: 55.56, -9.615, 534.2 and 3.462 ohm. The gains come from the gain mini-tool, given v1, iy1, v2 and iy2 -- not something an input file can carry, so they are recorded here. The source is 1 V because its value cancels out of a gain.
 equations: y11 = 0.4
 equations: y12 = -0.002
 equations: y21 = -5
@@ -185,7 +192,7 @@ rl,2,0,2
 z,1,2
 
 analysis: dc
-note: The second gain example, restored to the chapter on 27 Aug 2026 -- both 2023 pages carried it and the conversion dropped it. Same shape as the first with z parameters instead of y. Given v1, iz1, v2 and iz2, the gain mini-tool answers Av 4, Ai -2, Ap 8 and Zi 1 ohm.
+note: Find Gv, Gi, Gp and Zin again. The second gain example, restored to the chapter on 27 Aug 2026 -- both 2023 pages carried it and the conversion dropped it. Same shape as the first with z parameters instead of y. Given v1, iz1, v2 and iz2, the gain mini-tool answers Av 4, Ai -2, Ap 8 and Zi 1 ohm.
 equations: z11 = 4
 equations: z12 = 1.5
 equations: z21 = 10

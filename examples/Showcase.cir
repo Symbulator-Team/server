@@ -27,8 +27,8 @@
 #   tool:       th | er | port          (leave out for a normal solve)
 #   n1:, n2:    the two port nodes, for th/er/port
 #   kind:       z | y | h | g | a | b      (for tool: port)
-#   equation:   an expert-mode added equation (repeat for more)
-#   condition:  an expert-mode substitution (repeat for more)
+#   equations:  an expert-mode added equation (repeat for more)
+#   conditions: an expert-mode substitution (repeat for more)
 #   unknowns:   extra symbols to solve for, comma-separated
 #   note:       a line of your own about this entry, shown when it is
 #               loaded. Nothing in the app writes one -- add it by hand
@@ -39,8 +39,8 @@
 #   rms:        yes | no -- RMS phasor convention for AC power (default no).
 #               Only written for AC circuits; it does nothing elsewhere.
 #   evaluate:   an expression to evaluate against the solved answers
-#   solve_equation:   an equation for the standalone equation solver (repeat for more)
-#   solve_condition:  a substitution for it (repeat for more)
+#   solve_equations:  an equation for the standalone equation solver (repeat for more)
+#   solve_conditions: a substitution for it (repeat for more)
 #   solve_unknowns:   which symbols it should solve for, comma-separated
 #   solve_real_only:  yes | no -- keep only its real solutions (default no)
 #
@@ -73,6 +73,7 @@ r1,1,2,1'k
 r2,2,0,1'k
 
 analysis: dc
+note: The simplest circuit there is: a 5 V source across two equal resistors. Run it and see node 2 sit at half the supply, 2.5 V.
 
 
 [Resistive ladder (DC)]
@@ -83,6 +84,7 @@ r2,2,3,3'k
 r3,3,0,2'k
 
 analysis: dc
+note: The tutorial's first circuit, from Lesson 1: a series ladder in DC. Find the voltage at each node and the current, voltage and power of each element — sixteen answers from four lines.
 
 
 [Series RLC (AC, w=1000)]
@@ -93,6 +95,7 @@ l1,2,3,0.1
 c1,3,0,1e-6
 
 analysis: ac
+note: An AC (phasor) solve: a series RLC at 1000 rad/s. The answers are complex; tick 'Show AC answers as polar phasors' in Settings to read them as amplitude and angle.
 omega: 1000
 
 
@@ -103,6 +106,7 @@ r1,1,2,1000
 c1,2,0,1e-6
 
 analysis: tr
+note: A transient analysis: the classic RC charging curve. The limited-results box asks for just v_2, which comes back 5 - 5e^(-1000t).
 variables: v_2
 
 
@@ -112,6 +116,7 @@ l1,0,2,0.2,3
 r1,2,0,100
 
 analysis: tr
+note: A transient with an initial condition: the inductor starts at 3 A (the fifth field of its description) and discharges through the resistor. i_l1 decays exponentially.
 variables: i_l1
 
 
@@ -122,6 +127,7 @@ r1,1,2,r_a
 r2,2,0,r_b
 
 analysis: dc
+note: What sets Symbulator apart: no numbers at all. The answers are formulas — v_2 comes back vin*r_b/(r_a + r_b), the voltage divider you would write by hand.
 
 
 [Inverting op-amp, gain -4 (DC)]
@@ -132,6 +138,7 @@ rf,2,3,4'k
 o1,0,2,3
 
 analysis: dc
+note: An ideal op amp (the o element): the inverting amplifier with rf/rin = 4, so the 2 V input comes out as -8 V at node 3.
 
 
 [Thevenin equivalent at node 2 (tool)]
@@ -144,6 +151,7 @@ tool: th
 n1: 2
 n2: 0
 analysis: dc
+note: The Find equivalent analysis: the Thévenin / Norton equivalent seen from node 2 — vth, ino, req and pmax arrive together.
 
 
 [Two-port z parameters of a T network (tool)]
@@ -157,6 +165,7 @@ kind: z
 n1: 1
 n2: 2
 analysis: dc
+note: Another equivalent: the z parameters of a T network between nodes 1 and 2, four numbers that stand in for the whole network.
 
 
 [Design: find r_b so that v2 = 6 V (expert)]
@@ -166,6 +175,7 @@ r1,1,2,4'k
 r2,2,0,r_b
 
 analysis: dc
+note: Expert Mode: r_b is unknown, and the fact v_2 = 6 is handed over before solving, so the whole circuit comes back numerical — including the r_b that makes it true.
 equations: v_2 = 6
 unknowns: r_b
 
@@ -177,6 +187,7 @@ r1,1,2,1'k
 c1,2,0,1'u
 
 analysis: tr
+note: The Plot card: the RC charging curve of v_2 drawn against time, from 0 to 5 ms.
 plottool: plot_time
 plotkey: v_2
 plotmin: 0
@@ -191,6 +202,7 @@ r1,1,2,1'k
 c1,2,0,1'u
 
 analysis: fd
+note: The Bode plot: gain and phase of v_2 swept from 10 Hz to 100 kHz — flat, then falling 20 dB per decade past the corner, with the phase heading for -90°.
 plottool: bode
 plotkey: v_2
 plotmin: 10

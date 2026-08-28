@@ -8,6 +8,7 @@ j,0,1,10'm
 r1,1,0,20'k
 
 analysis: dc
+note: In this problem, we use a current source (the j element) for the first time. Find the current through and the voltage drop across R1.
 rounding: 3
 si: yes
 units: yes
@@ -23,6 +24,7 @@ r13,1,3,1/2
 j32,3,2,3
 
 analysis: dc
+note: In this problem, we describe conductances for the first time: each siemens value enters as a resistor of 1 over that value. Find the voltage at each node.
 rounding: 3
 si: no
 units: yes
@@ -38,6 +40,7 @@ re1,3,0,[6,3]
 r6,2,0,3
 
 analysis: dc
+note: In this problem, we use the [,] parallel-reduction shorthand for the first time, folding the 6 and 3 ohm resistors into one equivalent; the same circuit was solved element by element in Lesson 1. Evaluate -ie for the current the source delivers: 3 A.
 rounding: exact
 si: no
 units: yes
@@ -51,6 +54,7 @@ r1,1,0,1'k
 re,1,0,[10'k,22'k]
 
 analysis: dc
+note: A partial reduction: R1 stays on its own because we need its current, while R2 and R3 fold into one equivalent with the [,] shorthand.
 rounding: exact
 si: no
 units: yes
@@ -63,6 +67,7 @@ e,1,0,12
 r1,1,0,4
 
 analysis: dc
+note: Find Vs, I1 and I2 — read v1, ie and ir1.
 rounding: exact
 si: no
 units: yes
@@ -77,6 +82,7 @@ r8,0,2,8
 j8,2,0,8
 
 analysis: dc
+note: Find the current through each resistor.
 rounding: 3
 si: no
 units: yes
@@ -91,6 +97,7 @@ r2,0,2,6
 j2,2,0,2
 
 analysis: dc
+note: Find the voltage at each node and the current through each resistor.
 rounding: exact
 si: no
 units: yes
@@ -107,6 +114,7 @@ j12,1,2,17
 j03,0,3,2
 
 analysis: dc
+note: Another circuit given in siemens: find the voltage at each node.
 rounding: 3
 si: no
 units: yes
@@ -123,6 +131,7 @@ j10,2,3,10
 rx,3,4,rx
 
 analysis: dc
+note: Find ix and vx. The resistor rx is unknown, but ir2 is known to be 4 A, so Expert Mode solves the circuit whole; read ir1 and vrx.
 unknowns: rx
 equations: ir2 = 4
 rounding: exact
@@ -142,6 +151,7 @@ r20,2,0,1
 r30,3,0,1/5
 
 analysis: dc
+note: Find the voltage at each node.
 rounding: exact
 si: no
 units: yes
@@ -155,6 +165,7 @@ e2,1,2,5
 r2,0,2,2
 
 analysis: dc
+note: Find the current I2.
 rounding: 3
 si: no
 units: yes
@@ -170,6 +181,7 @@ r30,3,0,1/5
 r13,1,3,1/2
 
 analysis: dc
+note: Find the voltage at each node, and — on the Evaluate line — the current through the voltage source.
 rounding: 3
 si: no
 units: yes
@@ -186,6 +198,7 @@ r2,2,0,2
 j2,2,0,4
 
 analysis: dc
+note: Find V1 and V2.
 rounding: 4
 si: no
 units: yes
@@ -199,6 +212,7 @@ r2,1,0,12
 j,0,1,1
 
 analysis: dc
+note: Find V1, I1 and I2.
 rounding: 3
 si: no
 units: yes
@@ -214,6 +228,7 @@ r3,a,3,2
 e2,0,3,12
 
 analysis: dc
+note: Find I2 and I3.
 rounding: 3
 si: no
 units: yes
@@ -228,6 +243,7 @@ j,1,2,2
 r3,2,0,10
 
 analysis: dc
+note: Find V1, V2, I1, I2 and I3.
 rounding: 4
 si: no
 units: yes
@@ -241,6 +257,7 @@ r2,a,b,40
 r3,a,b,60
 
 analysis: dc
+note: Step 1 of a source-replacement problem: simulate the original circuit to learn the voltage drop (va-vb, on the Evaluate line: 12 V) and the current (0.2 A) that the replacement in Step 2 must preserve.
 rounding: 3
 si: no
 units: yes
@@ -256,7 +273,7 @@ r4,a,b,240
 j,a,b,i4
 
 analysis: dc
-note: Or solve `ir4+ij = 0.2` instead, for the same answer.
+note: Step 2: R3 is replaced by a 240 ohm R4 and a current source of unknown value i4. Solving va-vb = 12 for i4 keeps the drop found in Step 1. Or solve `ir4+ij = 0.2` instead, for the same answer.
 rounding: 3
 si: no
 units: yes
@@ -275,6 +292,7 @@ e1,1,b,10
 e2,b,2,8
 
 analysis: dc
+note: Find the currents through R2 and R3.
 rounding: 3
 si: no
 units: yes
@@ -288,6 +306,7 @@ r2,1,2,1
 e,2,0,20
 
 analysis: dc
+note: A hidden-source problem: the 'hanging' 20 V node becomes a hidden 20 V source. Find Vs and I1.
 rounding: exact
 si: no
 units: yes
@@ -303,6 +322,7 @@ r2,3,0,2
 j,0,3,ix
 
 analysis: dc
+note: Find ix and vx. The current source's value ix is the unknown, and ir8 = 5 A is the fact Expert Mode is given; read ix and v3.
 unknowns: ix
 equations: ir8 = 5
 rounding: exact
@@ -318,6 +338,7 @@ r2,1,0,10'k
 r3,1,0,22'k
 
 analysis: dc
+note: No source is drawn, yet the circuit carries current: a hidden current source supplies the given 12 mA. Find I1.
 rounding: 4
 si: yes
 units: yes
@@ -331,6 +352,7 @@ r2,1,0,3
 r3,1,0,1
 
 analysis: dc
+note: A hidden source and Expert Mode together: the source current is1 is unknown and ir2 = 2 mA is known. Find Is, I1 and I3.
 unknowns: is1
 equations: ir2 = 2'm
 rounding: 3
@@ -346,6 +368,7 @@ jd,0,1,4*v1
 r2,1,0,5
 
 analysis: dc
+note: In this problem, we use a dependent source for the first time: the current source jd depends on the node voltage v1, written directly as its value, 4*v1. Find I1, I2 and v.
 rounding: exact
 si: no
 units: yes
@@ -359,6 +382,7 @@ jd,o,0,iro/4
 r8,o,0,8
 
 analysis: dc
+note: Find vo and io; the dependent current source's value reads iro/4.
 rounding: exact
 si: no
 units: yes
@@ -372,7 +396,7 @@ ed,2,3,2*vra
 ra,0,3,15
 
 analysis: dc
-note: Three answers here: evaluate -pei, then -ped, then pr1+pra.
+note: In this problem, we use a dependent voltage source for the first time: ed's value is 2*vra. Find the power delivered by each source and the power consumed by the two resistors. Three answers here: evaluate -pei, then -ped, then pr1+pra.
 rounding: exact
 si: no
 units: yes
@@ -387,6 +411,7 @@ ed,0,2,2*vx
 ro,1,2,5
 
 analysis: dc
+note: Find vx and vo — read vx and vro.
 rounding: exact
 si: no
 units: yes
@@ -400,6 +425,7 @@ ed,3,2,4*ir1
 r2,3,0,1/5
 
 analysis: dc
+note: Find v1, v2 and i — read as vr1, vr2 and ir1; the dependent source's value is 4*ir1.
 rounding: exact
 si: no
 units: yes
@@ -414,6 +440,7 @@ e4,0,3,4
 ro,o,0,6
 
 analysis: dc
+note: Find vo and i — read vo and iri.
 rounding: exact
 si: no
 units: yes
@@ -428,6 +455,7 @@ r3,2,3,7
 ed,3,0,4*vx
 
 analysis: dc
+note: Find the power absorbed by each of the five elements.
 rounding: 4
 si: no
 units: yes
@@ -443,6 +471,7 @@ r24,a,c,24
 ed,c,0,4*iro
 
 analysis: dc
+note: Find Io.
 rounding: 3
 si: no
 units: yes
@@ -458,6 +487,7 @@ r4,3,0,2
 ed,2,3,ir1/2
 
 analysis: dc
+note: Find i, v and id — read ir1, vr3 and ied. The book's tip about the 4 V drop in the 2 ohm resistor is superfluous: every element value is known.
 rounding: exact
 si: no
 units: yes
@@ -473,6 +503,7 @@ r8,2,3,8
 r4b,2,0,4
 
 analysis: dc
+note: Find the voltage at each node.
 rounding: 3
 si: no
 units: yes
@@ -490,6 +521,7 @@ ed,3,4,3*vrx
 r1,4,0,1
 
 analysis: dc
+note: Find the four node voltages.
 rounding: 4
 si: no
 units: yes
@@ -507,6 +539,7 @@ r1,2,3,1
 r4,3,0,1
 
 analysis: dc
+note: Values given in siemens: find the voltage at each node.
 rounding: exact
 si: no
 units: yes
@@ -524,6 +557,7 @@ ei,3,4,1.5
 ed,4,0,2*vr4
 
 analysis: dc
+note: Find the voltage at every node.
 rounding: exact
 si: no
 units: yes
@@ -541,6 +575,7 @@ r8,3,0,1/8
 r2,2,4,1/2
 
 analysis: dc
+note: Find the voltage at every node.
 rounding: exact
 si: no
 units: yes
@@ -555,6 +590,7 @@ r9,0,x,9
 jr,0,x,2
 
 analysis: dc
+note: Find iA, iB and iC — read ira, ijb and ir9.
 rounding: 3
 si: no
 units: yes
@@ -570,6 +606,7 @@ r3,3,2,3
 r4,1,2,4
 
 analysis: dc
+note: Find i, v, is and vs. One unknown value (vs) and one known fact (vr4 = 4) make this a job for Expert Mode; evaluate -ies for is.
 unknowns: vs
 equations: vr4 = 4
 rounding: exact
@@ -589,6 +626,7 @@ r2,3,4,2
 j,4,0,vr10/15
 
 analysis: dc
+note: Find i, v and vd — read ir2, vr10 and vj. The book's tip that the 6 ohm resistor drops 1.5 V is superfluous: all element values are known.
 rounding: 3
 si: no
 units: yes
@@ -603,6 +641,7 @@ jd,0,o,vx/500
 ro,o,0,500
 
 analysis: dc
+note: The first of the fully symbolic dependent-source problems: find vo and io in terms of the source current is1. The answers come back as formulas, 1000*is1 and 2*is1.
 rounding: exact
 si: no
 units: yes
@@ -618,7 +657,7 @@ r4,o,0,5'k
 j,0,o,100'm*vr2
 
 analysis: dc
-note: Five significant digits, so re reads 10952 as the chapter prints it. vo then shows 0.90413 rather than the chapter's .904 -- the same number, one place further on.
+note: Find vo and the equivalent resistance Rin in terms of vs. Five significant digits, so re reads 10952 as the chapter prints it. vo then shows 0.90413 rather than the chapter's .904 -- the same number, one place further on.
 rounding: 5
 si: no
 units: yes
@@ -634,6 +673,7 @@ r3,o,0,300
 ro,o,0,500
 
 analysis: dc
+note: Find the voltage drop, current and power of the 500 ohm resistor in terms of is1, and — on the Evaluate line — the ratio of that power to the power the independent source delivers: 4320.
 rounding: exact
 si: no
 units: yes
@@ -650,6 +690,7 @@ rc,3,o,rc
 rl,o,0,rl
 
 analysis: dc
+note: A fully symbolic amplifier model: find vo. The answer matches the textbook's formula term for term.
 rounding: exact
 si: no
 units: yes
@@ -665,6 +706,7 @@ rd,2,0,rd
 rl,2,0,rl
 
 analysis: dc
+note: Fully symbolic: find v2. The source's value is named v1, which is why no node here is called 1 — a node 1 would claim that name for its voltage.
 rounding: exact
 si: no
 units: yes
@@ -678,6 +720,7 @@ jd,b,a,β*is1
 rl,b,0,rl
 
 analysis: dc
+note: Find Rin, the resistance seen by the current source: read rji. The answer is re1*(β+1), matching the textbook.
 rounding: exact
 si: no
 units: yes
@@ -693,6 +736,7 @@ rx,1,o,1/gx
 rl,o,0,1/gl
 
 analysis: dc
+note: All resistors given as conductances, and a μ constant in the dependent source: find vo in terms of the circuit's values.
 rounding: exact
 si: no
 units: yes
@@ -708,6 +752,7 @@ rc,1,c,rc
 j,c,e,β*irb
 
 analysis: dc
+note: The transistor bias model, fully symbolic: find iB.
 rounding: exact
 si: no
 units: yes

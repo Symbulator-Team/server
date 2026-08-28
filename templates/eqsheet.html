@@ -157,6 +157,21 @@
   .subbar nav {
     display: flex; align-items: center; gap: 1.15rem;
     flex-wrap: wrap; min-width: 0;
+    /* One row of links, never two (Roberto, 28 Aug 2026: a link that would
+       wrap should hide instead). The row still flex-wraps, but the box is
+       capped at one line-box (0.875rem x 1.4, the size every link in it is
+       pinned to below) and clipped, so anything that wrapped is simply not
+       shown -- at any width, no media query to keep in step with the labels.
+       The padding is not rhythm: focus rings sit 3px off a link and 2px
+       wide, and without the 0.375rem of breathing room the clip would shave
+       them. box-sizing is pinned because the cap must mean the same thing on
+       a host that sets border-box (learn, the landing) and one that does not.
+       overflow is clip, not hidden, so keyboard focus on a hidden link
+       cannot scroll the row into a half-shown state. */
+    box-sizing: content-box;
+    padding-block: 0.375rem;
+    max-height: calc(0.875rem * 1.4);
+    overflow: clip;
   }
   .subbar nav a {
     /* font-family is pinned, not inherited. learn.symbulator.com sets its
@@ -294,6 +309,17 @@
     .brand-name { font-size: 1.4rem; letter-spacing: 0.3px; }
     .brand-sub { font-size: 0.9rem; margin-top: 0.25rem; }
     .theme-toggle { width: 2.15rem; height: 2.15rem; font-size: 1.05rem; }
+  }
+
+  /* The second line hides before it wraps (Roberto, 28 Aug 2026: one line or
+     none). Measured 28 Aug 2026 on the docs preview, Chrome on Windows: at
+     this block's sizes the line holds to 450px of viewport and wraps by 440.
+     480 leaves ~35px for wider system faces -- the stack above resolves to
+     Roboto on Android and SF on iOS, neither of which was the one measured.
+     If the subtitle's wording or any width in the 520px block above changes,
+     re-measure; do not trust 480 across such a change. */
+  @media (max-width: 480px) {
+    .brand-sub { display: none; }
   }
   /* ==== END banner.css ====================================== */
   *{box-sizing:border-box}

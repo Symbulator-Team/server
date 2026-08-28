@@ -12,7 +12,7 @@ r3o,3,o,20'k
 o,3,2,o
 
 analysis: dc
-note: The op amp's power is negative, so it delivers 0.63 mW to the circuit rather than absorbing it.
+note: In this problem, we use an ideal op amp (the o element) for the first time. Find vo and the power absorbed by the op amp. The op amp's power is negative, so it delivers 0.63 mW to the circuit rather than absorbing it.
 rounding: 2
 si: no
 units: yes
@@ -26,10 +26,10 @@ r2,2,3,r2
 o,1,2,3
 
 analysis: dc
+note: Find the Thévenin equivalent of the op-amp circuit. The tricky one. An ideal op amp holds its output voltage whatever current is drawn, so the short-circuit round has no solution -- and until 0.5.13 the whole answer was lost with it. Symbulator now measures the short instead of assuming it, and reports what the chapter asserts but never shows: the Norton current is unbounded and the Thevenin resistance is 0.
 tool: th
 n1: 3
 n2: 0
-note: The tricky one. An ideal op amp holds its output voltage whatever current is drawn, so the short-circuit round has no solution -- and until 0.5.13 the whole answer was lost with it. Symbulator now measures the short instead of assuming it, and reports what the chapter asserts but never shows: the Norton current is unbounded and the Thevenin resistance is 0.
 rounding: exact
 si: no
 units: yes
@@ -44,6 +44,7 @@ r2,o,0,20'k
 o,2,1,o
 
 analysis: dc
+note: Find vo and io: 9 V and 0.65 mA.
 rounding: 2
 si: no
 units: yes
@@ -57,6 +58,7 @@ r2,1,o,r2
 o,1,0,o
 
 analysis: dc
+note: The inverting amplifier: find the overall gain, vo/vs, on the Evaluate line. It comes back -r2/r1.
 rounding: exact
 si: no
 units: yes
@@ -71,6 +73,7 @@ rf,1,o,rf
 o,0,1,o
 
 analysis: dc
+note: Find vo, symbolically: -(rf/r1)*vi.
 rounding: exact
 si: no
 units: yes
@@ -84,6 +87,7 @@ rf,1,o,25'k
 o,0,1,o
 
 analysis: dc
+note: With vi = 0.5 V, find the output voltage vo and the current in the 10 kohm resistor.
 rounding: 3
 si: no
 units: yes
@@ -97,7 +101,7 @@ r2,2,o,33'k
 o,0,2,o
 
 analysis: dc
-note: For the other two, put vs = -4 then vs = 6 in Evaluate's Conditions box: 13.2 and -19.8. The op amp is limited to +/-15 V, so the real answer for vs = 6 is -15.
+note: Find vo when vs is 2 V, -4 V and 6 V. The Evaluate line answers vs = 2: -6.6 V. For the other two, put vs = -4 then vs = 6 in Evaluate's Conditions box: 13.2 and -19.8. The op amp is limited to +/-15 V, so the real answer for vs = 6 is -15.
 rounding: 3
 si: no
 units: yes
@@ -113,6 +117,7 @@ rf,1,o,15'k
 o,0,1,o
 
 analysis: dc
+note: Find the op amp's output voltage vo and the current through the 15 kohm feedback resistor.
 rounding: 3
 si: no
 units: yes
@@ -127,6 +132,7 @@ rf,a,o,40'k
 o,a,b,o
 
 analysis: dc
+note: Find vo — an inverting amplifier whose non-inverting input sits at 2 V rather than at ground. The answer is -6 V.
 rounding: exact
 si: no
 units: yes
@@ -143,6 +149,7 @@ o,0,a,o
 rl,o,0,rl
 
 analysis: dc
+note: Find the input-output relationship, vo/vs, the formal way: the whole circuit with a symbolic load rl.
 rounding: exact
 si: no
 units: yes
@@ -160,6 +167,7 @@ o,0,a,o
 rl,o,0,1
 
 analysis: dc
+note: The same ratio the quicker way: with the source at 1 and the load at 1, vo/v1 is the same expression, found faster.
 rounding: exact
 si: no
 units: yes
@@ -173,7 +181,7 @@ r,1,o,r
 o,0,1,o
 
 analysis: dc
-note: The chapter says to evaluate vo/is; the source is called is1 here, since `is` is a Python keyword.
+note: A current-to-voltage converter, also called a transresistance amplifier: find vo/is, which comes back -r. The chapter says to evaluate vo/is; the source is called is1 here, since `is` is a Python keyword.
 rounding: exact
 si: no
 units: yes
@@ -189,6 +197,7 @@ r3,2,o,r3
 o,0,1,o
 
 analysis: dc
+note: Another transresistance amplifier: find vo/is1. The answer is the book's expression, gathered differently.
 rounding: exact
 si: no
 units: yes
@@ -203,6 +212,7 @@ r2,1,o,r2
 o,p,1,o
 
 analysis: dc
+note: The non-inverting amplifier: find the gain vo/v1 on the Evaluate line. It comes back 1 + r2/r1.
 rounding: exact
 si: no
 units: yes
@@ -217,6 +227,7 @@ rf,1,o,rf
 o,2,1,o
 
 analysis: dc
+note: Find vo: ((r1+rf)/r1)*vi.
 rounding: exact
 si: no
 units: yes
@@ -232,6 +243,7 @@ r3,o,3,r3
 r4,3,0,r4
 
 analysis: dc
+note: Find Vo/Vs in a single simulation: r2*(r3+r4)/((r1+r2)*r4).
 rounding: exact
 si: no
 units: yes
@@ -245,6 +257,7 @@ r1,1,2,r1
 r2,2,0,r2
 
 analysis: dc
+note: The same problem solved in stages: the left half's voltage divider gives v2/vs = r2/(r1+r2).
 rounding: exact
 si: no
 units: yes
@@ -259,7 +272,7 @@ r3,o,3,r3
 r4,3,0,r4
 
 analysis: dc
-note: The product of this and the previous entry is the whole circuit's gain.
+note: The right half gives vo/v2 = (r3+r4)/r4. The product of this and the previous entry is the whole circuit's gain.
 rounding: exact
 si: no
 units: yes
@@ -272,6 +285,7 @@ e,1,0,vi
 o,1,o,o
 
 analysis: dc
+note: The voltage follower: find vo, which is simply vi.
 rounding: exact
 si: no
 units: yes
@@ -283,10 +297,10 @@ e,1,0,1.5
 rs,1,2,2'k
 
 analysis: dc
+note: The bare source of circuit (b): find its maximum power and the power a 1 kohm load would draw. The chapter writes the load power as prL|L=1000, which version 9 has no equivalent for; this is the algebraic form Lesson 4 uses.
 tool: th
 n1: 2
 n2: 0
-note: The chapter writes the load power as prL|L=1000, which version 9 has no equivalent for; this is the algebraic form Lesson 4 uses.
 rounding: 5
 si: no
 units: yes
@@ -301,7 +315,7 @@ o,2,o,o
 rl,o,0,1'k
 
 analysis: dc
-note: The load draws more than the bare source could deliver, because the ideal op amp in the schematic stands in for a real one with its own supply.
+note: Circuit (a): the same source buffered by a voltage follower. Find prl, the power in the 1 kohm load: 2.25 mW. The load draws more than the bare source could deliver, because the ideal op amp in the schematic stands in for a real one with its own supply.
 rounding: 3
 si: no
 units: yes
@@ -316,6 +330,7 @@ e4,b,0,4
 o,b,a,o
 
 analysis: dc
+note: Find vo: -1 V.
 rounding: exact
 si: no
 units: yes
@@ -331,6 +346,7 @@ r5,3,o,5'k
 o,2,3,o
 
 analysis: dc
+note: Calculate vo: 7 V.
 rounding: exact
 si: no
 units: yes

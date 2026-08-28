@@ -10,6 +10,7 @@ l,1,0,1
 c,1,0,1/8
 
 analysis: dc
+note: The is-the-textbook-wrong problem, over four entries. First interval in DC: il = 2 A and vc = 0.
 rounding: exact
 si: no
 units: yes
@@ -22,7 +23,7 @@ l,1,0,1,2
 c,1,0,1/8,0
 
 analysis: tr
-note: This is the point of the problem: the schematic says 1 H and the answer disagrees with the printed one.
+note: Solve with the schematic's inductor and compare with the printed answer. This is the point of the problem: the schematic says 1 H and the answer disagrees with the printed one.
 rounding: exact
 si: no
 units: yes
@@ -35,7 +36,7 @@ l,1,0,1/2,2
 c,1,0,1/8,0
 
 analysis: tr
-note: With half a henry the answer matches, so the schematic is wrong and the previous owner's pencilled correction right.
+note: The same TR run with the inductor at 1/2 H. With half a henry the answer matches, so the schematic is wrong and the previous owner's pencilled correction right.
 rounding: exact
 si: no
 units: yes
@@ -65,6 +66,7 @@ r3,1,2,3
 l2,2,0,4
 
 analysis: dc
+note: The source drops from 12 V at t = 0. Find i2(t) for t >= 0; this DC interval gives il1 = 2 A and il2 = 0.
 rounding: exact
 si: no
 units: yes
@@ -78,6 +80,7 @@ r3,1,2,3
 l2,2,0,4,0
 
 analysis: tr
+note: Second interval in TR: il2 comes back (12/11)(e^(-3t) - e^(-t/4)).
 rounding: exact
 si: no
 units: yes
@@ -94,6 +97,7 @@ cb,2,o,1/4
 o,0,2,o
 
 analysis: dc
+note: Two capacitors around an op amp. Find vo(t) for t >= 0; this DC interval gives vca = 0 and vcb = 4 V.
 rounding: exact
 si: no
 units: yes
@@ -109,6 +113,7 @@ cb,2,o,1/4,4
 o,0,2,o
 
 analysis: tr
+note: Second interval in TR: vo comes back (-4t-4)e^(-t).
 rounding: exact
 si: no
 units: yes
@@ -122,7 +127,7 @@ l,2,3,2,0
 c,3,0,1/50,0
 
 analysis: tr
-note: The Plot card takes an answer's name rather than an expression, so v_c. Plot i_l the same way for the current.
+note: In this problem, we use the Plot card for the first time: find v(t) and i(t) for the series RLC, then plot each between 0 and 1.5 s. The Plot card takes an answer's name rather than an expression, so v_c. Plot i_l the same way for the current.
 rounding: exact
 si: no
 units: yes
@@ -141,6 +146,7 @@ l,2,3,1/2,0
 c,3,0,1/8,0
 
 analysis: tr
+note: The same series RLC with vs = 3 V, R = 5, L = 1/2 and C = 1/8: find v(t) and i(t) — read vc and il.
 rounding: exact
 si: no
 units: yes
@@ -154,6 +160,7 @@ l,2,3,1/2,0
 c,3,0,1/8,0
 
 analysis: tr
+note: The circuit of the previous entry with a ramp source, 3t: find vc.
 rounding: exact
 si: no
 units: yes
@@ -168,6 +175,7 @@ c,3,0,1'µ
 s1,3,0
 
 analysis: dc
+note: First interval, with the switch closed as a short: DC gives il = 4 A and vc = 0.
 rounding: exact
 si: no
 units: yes
@@ -181,7 +189,7 @@ l,2,3,1,4
 c,3,0,1'µ,0
 
 analysis: tr
-note: Worth plotting: a 12 V source, and the inductor swings to 3990.6 V at t = 1.57 ms -- which is the chapter's 'around 1.57 ms ... 3991 volts', measured.
+note: Second interval: plot the inductor's voltage between 0 and 5 ms. Worth plotting: a 12 V source, and the inductor swings to 3990.6 V at t = 1.57 ms -- which is the chapter's 'around 1.57 ms ... 3991 volts', measured.
 rounding: exact
 si: no
 units: yes
@@ -200,6 +208,7 @@ l,1,0,2,0
 c,1,0,1/2,0
 
 analysis: tr
+note: A parallel RLC driven by a unit step of current: find i(t) and v(t) — read il and vc; a repeated pole puts a t in the answer.
 rounding: exact
 si: no
 units: yes
@@ -215,6 +224,7 @@ cb,1,o,1,0
 o,2,o,o
 
 analysis: tr
+note: An op amp with two capacitors and a unit-step input: find vo(t) — a decaying sinusoid settling to 1.
 rounding: exact
 si: no
 units: yes
@@ -230,6 +240,7 @@ cb,1,o,1,0
 o,2,o,o
 
 analysis: tr
+note: The circuit above with ca changed to 25/16 F and a 3 V step: find vo(t).
 rounding: exact
 si: no
 units: yes
@@ -244,6 +255,7 @@ c,2,0,1,0
 l,1,0,1,0
 
 analysis: tr
+note: An exponential source, 2e^(-2t), on a second-order circuit: find i(t) — read il.
 rounding: exact
 si: no
 units: yes
@@ -260,6 +272,7 @@ r6,2,0,6
 cb,2,0,1/3
 
 analysis: dc
+note: Professor Boulet's exam problem, from her circuits class at UTP. First interval in DC: the two capacitors sit at 9 V and 9/4 V.
 rounding: exact
 si: no
 units: yes
@@ -275,8 +288,8 @@ cb,2,0,1/3,9/4
 j,0,2,10e^(-t)*sin(2t+30*pi/180)
 
 analysis: tr
+note: Find v1 and v2 with the damped sinusoidal source connected; the limited-results box asks for just those two. Professor Boulet's problem. Seventy-eight seconds on the calculator; about a second here.
 variables: v1, v2
-note: Professor Boulet's problem. Seventy-eight seconds on the calculator; about a second here.
 rounding: exact
 si: no
 units: yes
@@ -289,7 +302,7 @@ r,1,2,2
 c,2,0,1,0
 
 analysis: tr
-note: Everything typed into Expert Mode in version 9 is read in the time domain, so the answer you know goes in as you would write it on paper.
+note: Expert Mode in TR: the step value a is the unknown, and the known answer 1-e^(-t/2) = vc is the extra equation. Find vr, ic and the source's value, which is 1 V. Everything typed into Expert Mode in version 9 is read in the time domain, so the answer you know goes in as you would write it on paper.
 unknowns: a
 equations: 1-e^(-t/2) = vc
 rounding: exact
@@ -304,6 +317,7 @@ r,1,2,1
 c,2,0,1,0
 
 analysis: tr
+note: The same trick: vs is unknown and vr = e^(-t) is known. The source turns out to be 1 V.
 unknowns: vs
 equations: vr = e^(-t)
 rounding: exact
@@ -318,6 +332,7 @@ r,1,2,2
 l,2,0,1,0
 
 analysis: tr
+note: The RL version: vs is unknown and il = 1-e^(-2t) is known. The source turns out to be 2 V.
 unknowns: vs
 equations: 1-e^(-2*t) = il
 rounding: exact
