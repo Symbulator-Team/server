@@ -58,6 +58,13 @@ in DC only, `u(...)`: the unit step (u(0) = 1), for systems handed over
 from a transient solve. `u` only acts as the step when it is *called*;
 a plain variable named `u` still works.
 
+Any identifier is a valid variable name, Python keywords included:
+`is` — the natural name for a source current — works, as do `in`, `if`
+and the rest. They are shielded from Python's parser behind sentinel
+names, the same cure the solver applied in 0.5.19; the page only ever
+sees the plain names. (`True`, `False` and `None` stay refused: those
+are literals.)
+
 ## Importing a Symbulator system
 The app's **Numerical Solver** button does this with one click — the
 payload is built at solve time in `symbulator_ui.solve_ui` and travels

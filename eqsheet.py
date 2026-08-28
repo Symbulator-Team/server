@@ -27,6 +27,7 @@ app.py's solve worker re-imports this module in every spawned child
 circuit solve should not pay EqSheet's import bill.
 """
 
+import keyword
 import re
 
 from flask import Blueprint, request, jsonify, render_template
@@ -74,11 +75,47 @@ def _step(x):
     return sp.Heaviside(x, 1)
 
 
+# Python keywords, usable as plain variable names in an equation. The
+# most natural name for a source current is `is`, and parse_expr reads
+# through Python's own tokenizer, which refuses a bare keyword with
+# "invalid syntax" (Roberto hit exactly this, 28 Aug 2026). Same cure
+# as the solver's si_prefix (0.5.19, and the monograph's footnote on
+# the name): a standalone keyword token is shielded behind a sentinel
+# name before parsing. Unlike the solver, the sentinel is never
+# unshielded inside the expression -- lambdify would have to dodge a
+# keyword-named argument -- so the sentinel symbol stays internal, and
+# the two helpers below translate at the API boundary instead: the
+# variable names the page sees, and the knowns/guesses it sends back,
+# are the plain keywords. True/False/None stay refused: those are
+# literals, and a clear refusal beats quietly making symbols of them.
+_SHIELDABLE = [k for k in keyword.kwlist if k not in ("True", "False", "None")]
+# A keyword counts only as a standalone name: not part of a longer
+# identifier, not attribute-ish, and not called like a function.
+_KW_RE = re.compile(r"(?<![\w.])(" + "|".join(_SHIELDABLE) + r")(?![\w(])")
+_KW_SENTINEL = "_kw_{}_zz"
+_KW_BACK = re.compile(r"^_kw_(\w+)_zz$")
+
+
+def _shield_keywords(text):
+    return _KW_RE.sub(lambda m: _KW_SENTINEL.format(m.group(1)), text)
+
+
+def _display_name(name):
+    """The name the user knows: sentinel symbols read back as keywords."""
+    m = _KW_BACK.match(name)
+    return m.group(1) if m else name
+
+
+def _internal_name(name):
+    """The symbol actually inside the parsed expressions."""
+    return _KW_SENTINEL.format(name) if name in _SHIELDABLE else name
+
+
 def parse_side(text, mode):
     gd = ALLOWED_AC if mode == "ac" else ALLOWED
     if mode != "ac" and _CALLS_U.search(text):
         gd = dict(gd, u=_step)
-    return parse_expr(text, transformations=TRANSFORMS,
+    return parse_expr(_shield_keywords(text), transformations=TRANSFORMS,
                       global_dict=gd, evaluate=True)
 
 
@@ -104,7 +141,7 @@ def parse_rules(text, mode):
         rules.append({
             "line": lineno,
             "text": line,
-            "vars": sorted(str(s) for s in residual.free_symbols),
+            "vars": sorted(_display_name(str(s)) for s in residual.free_symbols),
             "residual": residual,
         })
     return rules, errors
@@ -181,8 +218,8 @@ def solve_dc(data, active):
     if not unknowns:
         return jsonify({"ok": False, "message": "no unknowns to solve for"})
 
-    syms = [sp.Symbol(u) for u in unknowns]
-    subs = {sp.Symbol(k): v for k, v in knowns.items()}
+    syms = [sp.Symbol(_internal_name(u)) for u in unknowns]
+    subs = {sp.Symbol(_internal_name(k)): v for k, v in knowns.items()}
     residuals = [r["residual"].subs(subs) for r in active]
     try:
         fns = [sp.lambdify(syms, res, modules=["numpy"]) for res in residuals]
@@ -243,8 +280,8 @@ def solve_ac(data, active):
         layout.append((name, dom, ire, iim))
     n_scalar = len(x0)
 
-    syms = [sp.Symbol(n) for n in unames]
-    subs = {sp.Symbol(k): v for k, v in knowns.items()}
+    syms = [sp.Symbol(_internal_name(n)) for n in unames]
+    subs = {sp.Symbol(_internal_name(k)): v for k, v in knowns.items()}
     residuals = [r["residual"].subs(subs) for r in active]
     try:
         fns = [sp.lambdify(syms, res, modules=["numpy"]) for res in residuals]
