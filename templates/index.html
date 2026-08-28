@@ -888,7 +888,10 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
         <img src="/static/logo.png" alt="Symbulator logo" class="header-logo">
       </a>
       <div class="header-title">
-        <h1 class="brand-name">Symbulator <span class="tm">9</span></h1>
+        <!-- The β is temporary (Roberto, 28 Aug 2026): version 9 is in
+             beta, and the numeral says so until it is not. Banner
+             wordmark only -- nowhere else. -->
+        <h1 class="brand-name">Symbulator <span class="tm">9β</span></h1>
         <p class="brand-sub">the best portable symbolic simulator of linear circuits</p>
         <!-- server-only: the property mark (#135). Roberto's brief:
              the hosted app and PythonAnywhere say where you are, the
@@ -1743,9 +1746,9 @@ units: yes</pre>
        with t as a Known starting at 0. Only an ac solve with a symbolic
        omega, or a tr solve whose every answer contains delta(t), leaves
        the card inactive. -->
-  <div class="card inactive" id="exploreCard">
+  <div class="card" id="exploreCard">
     <details id="exploreBox">
-      <summary class="results-h section-toggle">Explore numerically</summary>
+      <summary class="results-h section-toggle">Explore Numerically</summary>
       <!-- One line up front, the rest folded away (Roberto, 28 Aug
            2026: the card carried too much text). The folded copy drops
            the old opening sentence, which said what the intro line now
@@ -1773,7 +1776,7 @@ units: yes</pre>
         </ul>
       </details>
       <div class="dl-row">
-        <button id="whatifBtn" disabled
+        <button id="whatifBtn"
           title="opens the equation system in the Numerical Solver">Numerical Solver</button>
       </div>
       <!-- Shown only when the system was too large to travel in the
@@ -1981,7 +1984,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-28 12:03 UTC
+  Symbulator 9 version 2026-08-28 12:26 UTC
 </footer>
 
 <script>
@@ -2250,9 +2253,9 @@ function activatePostSolve() {
   // Explore numerically comes on only when the solve carried a payload
   // for the Numerical Solver -- all four domains build one now (#124);
   // the exceptions that leave it off are in symbulator_ui.
-  const canExplore = !!(last && last.eqsheet);
-  $('whatifBtn').disabled = !canExplore;
-  $('exploreCard').classList.toggle('inactive', !canExplore);
+  // The Explore Numerically card is always active (#136): with a solved
+  // payload the button hands the system over, without one it opens a
+  // blank solver -- the click handler tells the two apart.
   $('miniBtn').disabled = false;
   $('miniCard').classList.remove('inactive');
 }
@@ -2292,8 +2295,8 @@ function clearResults() {
   $('sympyBtn').disabled = true;
   $('dlBtn').disabled = true;
   $('dlCard').classList.add('inactive');
-  $('whatifBtn').disabled = true;
-  $('exploreCard').classList.add('inactive');
+  // The Explore Numerically card stays active (#136): with nothing
+  // solved its button opens a blank Numerical Solver.
   markAllStale();
 }
 
@@ -2558,6 +2561,9 @@ async function loadExamples() {
   // it, and otherwise the examples are what belongs there.
   // A restored workspace wins; otherwise the first input file of the set
   // opens, so there is always something to press Solve on.
+  // A link that names its own content (#138) takes precedence over the
+  // restored workspace and over the default first file.
+  if (await openFromUrl()) return;
   if (!restoreState()) {
     currentEntry = null;
     if (exampleFiles.length) { openExampleFile(exampleFiles[0].name, true); }
@@ -2620,6 +2626,67 @@ function sizeExamplesMenu() {
 }
 $('examplesMenu').addEventListener('toggle', sizeExamplesMenu);
 window.addEventListener('resize', sizeExamplesMenu);
+
+// The panel closes on a click anywhere outside it, or on Escape --
+// the same manners as learn's version picker. Until 28 Aug 2026 it
+// stayed open until "Built-in Examples" was clicked a second time,
+// which Roberto found annoying, hehe.
+document.addEventListener('click', ev => {
+  const menu = $('examplesMenu');
+  if (menu && menu.open && !menu.contains(ev.target)) menu.open = false;
+});
+document.addEventListener('keydown', ev => {
+  const menu = $('examplesMenu');
+  if (ev.key === 'Escape' && menu && menu.open) {
+    menu.open = false;
+    menu.querySelector('summary').focus();
+  }
+});
+
+// #138 (Roberto, 28 Aug 2026): a shareable link can name the entry the
+// app should open on -- ?lesson=4b&entry=17 loads the 17th entry of
+// Lesson_04b, and ?input= is an alias for ?lesson= (both of Roberto's
+// spellings work); lesson=showcase and lesson=monograph reach the two
+// non-lesson books, and entry is 1-based with 1 the default. The
+// link's word wins over a restored workspace: the point of sharing it
+// is that it opens the same thing for everyone. Absent or
+// unrecognisable parameters fall through to the normal start.
+async function openFromUrl() {
+  let q;
+  try { q = new URLSearchParams(location.search); } catch (e) { return false; }
+  const lesson = (q.get('lesson') || q.get('input') || '').trim().toLowerCase();
+  if (!lesson) return false;
+  let name = null;
+  if (lesson === 'showcase') name = 'Showcase.cir';
+  else if (lesson === 'monograph') name = 'The_Monograph.cir';
+  else {
+    const m = lesson.match(/^0?(\d{1,2})([a-d]?)$/);
+    if (m) name = 'Lesson_' + m[1].padStart(2, '0') + m[2] + '.cir';
+  }
+  if (!name || !exampleFiles.some(f => f.name === name)) {
+    showNote(`This link asks for lesson '${lesson}', which this build does not have.`, true);
+    return false;
+  }
+  currentEntry = null;
+  await openExampleFile(name, true);
+  const entries = (openFile && openFile.entries) || [];
+  if (!entries.length) return true;
+  const n = parseInt(q.get('entry') || '1', 10);
+  const c = entries[n - 1];
+  if (!c) {
+    showNote(`This link asks for entry ${q.get('entry')}, but `
+             + `${openFile.title || name} has ${entries.length} entries.`, true);
+    return true;
+  }
+  applyCircuit(c);
+  currentEntry = c;
+  markInputsSaved();
+  $('examples').value = String(entries.indexOf(c));
+  lastPickerValue = $('examples').value;
+  refreshEntryLinks();
+  persistState();
+  return true;
+}
 
 // Open one of them. `quiet` is the first load at startup, where there is
 // nothing yet to discard and nothing to say about it.
@@ -4469,8 +4536,17 @@ $('sympyBtn').addEventListener('click', () => {
 const EQSHEET_URL = 'https://symbulator.pythonanywhere.com/eqsheet/';
 const EQSHEET_URL_MAX = 6000;
 $('whatifBtn').addEventListener('click', () => {
-  if (!last || !last.eqsheet) return;
   $('whatifNote').hidden = true;
+  if (!last || !last.eqsheet) {
+    // Nothing solved yet (or the solve carried no payload): a blank
+    // Numerical Solver is the destination (#136).
+    const a = document.createElement('a');
+    a.href = EQSHEET_URL;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.click();
+    return;
+  }
   const json = JSON.stringify(last.eqsheet);
   const b64 = btoa(unescape(encodeURIComponent(json)))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
