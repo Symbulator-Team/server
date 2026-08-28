@@ -30,7 +30,7 @@ rf,a,o,rf
 o,0,a,o
 
 analysis: dc
-note: Find vo for the three-input adder: -rf*v1/r1 - rf*v2/r2 - rf*v3/r3. The chapter asks Evaluate for expand(vo). Version 9 has no expand, and this circuit's rf would defeat the Evaluate card anyway, so read vo from the results instead.
+note: Find vo for the three-input adder: ask Evaluate for expand(vo), exactly as on the calculator, and it comes back -rf*v1/r1 - rf*v2/r2 - rf*v3/r3.
 rounding: exact
 si: no
 units: yes
@@ -320,7 +320,7 @@ r5,5,o,20'k
 r6,5,0,10'k
 
 analysis: dc
-note: Derive vo in terms of the input: -2.4*v1 - 6. The chapter asks Evaluate for expand(vo); read vo from the results instead.
+note: Derive vo in terms of the input: ask Evaluate for expand(vo) with Rounding set to approximate — what the calculator spells expand(approx(vo)) — and it comes back -2.4*v1 - 6.
 rounding: exact
 si: no
 units: yes
