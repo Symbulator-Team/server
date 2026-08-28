@@ -221,6 +221,48 @@
     color: #8ea3c4; cursor: default; text-decoration: none;
   }
 
+  /* The property mark (#135, Roberto's brief of 28 Aug 2026): which of
+     the properties the reader is on, said once and quietly -- spaced
+     capitals in the sky at 55%, the app's [ T O O L S ] motif moved into
+     the banner. The styling is shared vocabulary here; each property
+     supplies its own word (Documentation, Welcome, Application,
+     Numerical), and the app's is wrapped in the template markers that
+     the offline build strips, so the downloaded copy stays unmarked,
+     per the brief. (Named indirectly here on purpose: build_local
+     counts the literal marker token in its output as proof none
+     survived the strip, and a stylesheet comment must not trip it.)
+
+     One mark, two spellings in the markup, exactly one ever shown
+     (treatment 2 of the mockup Roberto chose): .property-mark-top sits
+     at the right of the top band, a flex sibling of .header-brand
+     inside .topbar-inner, full size above 640px and shrunk below;
+     .property-mark-slot sits under the wordmark inside the lockup and
+     takes over at <=480px, where the subtitle has hidden (see below)
+     and left it the room. The negative right margin on the top form
+     swallows the last letter's trailing letter-space, so the mark ends
+     on the band's own right edge. */
+  .property-mark {
+    /* the system stack, pinned like the lockup's own -- see .header-brand */
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.38em; text-transform: uppercase;
+    color: var(--sky, #8ec7f5); opacity: 0.55;
+    white-space: nowrap;
+  }
+  .property-mark-top { align-self: center; flex: none; margin-right: -0.38em; }
+  .property-mark-slot { display: none; margin: 0.3rem 0 0; }
+  @media (max-width: 640px) {
+    .property-mark-top {
+      font-size: 0.58rem; letter-spacing: 0.3em; margin-right: -0.3em;
+    }
+  }
+  @media (max-width: 480px) {
+    .property-mark-top { display: none; }
+    .property-mark-slot {
+      display: block; font-size: 0.58rem; letter-spacing: 0.3em;
+    }
+  }
+
   /* A header with no controls ribbon still needs its bottom edge. */
   .topbar:last-child { border-bottom: 3px solid var(--sky, #8ec7f5); }
 
@@ -423,8 +465,13 @@
       <div class="header-title">
         <h1 class="brand-name">Symbulator <span class="tm">9</span></h1>
         <p class="brand-sub">the best portable symbolic simulator of linear circuits</p>
+        <!-- The property mark (#135): one word, two spellings, exactly
+             one shown -- the top form on wide screens, this slot form
+             on phones. Styled by the shared banner.css. -->
+        <p class="property-mark property-mark-slot">Numerical</p>
       </div>
     </div>
+    <span class="property-mark property-mark-top">Numerical</span>
   </div>
 </header>
 
@@ -463,8 +510,6 @@ Iin  = Vin / (R1 + R2)
 T = T0 + P2 * Rth</textarea>
       <div class="toolbar">
         <button class="primary" id="parse">Update equations</button>
-        <button class="ghost" id="openfile" title="load a system saved by the app's Numerical Solver button">Open a system file…</button>
-        <input type="file" id="filein" accept=".json,application/json" hidden>
         <span class="hint" id="synhint"></span>
       </div>
       <div id="perr" class="msg bad"></div>
@@ -486,6 +531,13 @@ T = T0 + P2 * Rth</textarea>
       <button class="primary" id="solve">Solve</button>
       <label class="inter"><input type="checkbox" id="interactive">
         Interactive Mode</label>
+      <label class="inter">Rounding <select id="disp">
+        <option value="">full</option>
+        <option value="3">3 digits</option>
+        <option value="4">4 digits</option>
+        <option value="5">5 digits</option>
+        <option value="6">6 digits</option>
+      </select></label>
       <span class="msg" id="smsg"></span>
     </div>
     <div class="pad" id="residbox" hidden>
@@ -625,7 +677,7 @@ function renderResult(name, tr){
     out.textContent = fmt(s/f) + sym;
   }else{
     out.innerHTML = `${fmt(s.re/f)} ${s.im<0?'−':'+'} j ${fmt(Math.abs(s.im)/f)}${sym}`
-      + `<small>${fmt(s.mag/f)}${sym} ∠ ${s.deg.toFixed(2)}°</small>`;
+      + `<small>${fmt(s.mag/f)}${sym} ∠ ${fmtDeg(s.deg)}°</small>`;
   }
 }
 
@@ -677,7 +729,7 @@ function echoKnown(name, tr){
     const mag = Math.hypot(re, im);
     const deg = (re||im) ? Math.atan2(im, re)*180/Math.PI : 0;
     out.innerHTML = `${fmt(re)} ${im<0?'−':'+'} j ${fmt(Math.abs(im))}${sym}`
-      + `<small>${fmt(mag)}${sym} ∠ ${deg.toFixed(2)}°</small>`;
+      + `<small>${fmt(mag)}${sym} ∠ ${fmtDeg(deg)}°</small>`;
   }
 }
 
@@ -750,7 +802,7 @@ function renderVars(){
 // range's two ends read in the row's SI prefix, like the guess.
 function restrictCell(){
   return `<select data-sg>
-      <option value="any">Unrestricted</option>
+      <option value="any">None</option>
       <option value="pos">Positive</option>
       <option value="neg">Negative</option>
       <option value="range">Range…</option></select>
@@ -937,10 +989,33 @@ async function doSolve(){
 }
 $('solve').onclick = ()=>doSolve();
 
+// A display-only rounding for the Result cells (#134). The solver's
+// numbers and the residuals line stay raw -- the same doctrine as the
+// noise chop -- and the choice sticks in localStorage like the theme.
+// "full" is the page's original behaviour, digit for digit.
+let dispDigits = null;
+try {
+  const _s = localStorage.getItem('eqsheet-rounding');
+  if (_s) { dispDigits = +_s || null; $('disp').value = _s; }
+} catch(e) {}
+$('disp').onchange = () => {
+  dispDigits = +$('disp').value || null;
+  try { localStorage.setItem('eqsheet-rounding', $('disp').value); } catch(e) {}
+  renderVars();          // re-displays every Result from lastSol
+};
+
 function fmt(x){
   if(x===0) return '0';
   const a=Math.abs(x);
+  if(dispDigits)
+    return (a>=1e5||a<1e-3) ? x.toExponential(dispDigits-1)
+                            : +x.toPrecision(dispDigits)+'';
   return (a>=1e5||a<1e-3) ? x.toExponential(4) : +x.toPrecision(6)+'';
+}
+// The angle keeps its two decimals until a rounding is chosen; then it
+// follows the same significant-digits choice as the magnitudes.
+function fmtDeg(d){
+  return dispDigits ? +d.toPrecision(dispDigits)+'' : d.toFixed(2);
 }
 
 async function importData(d){
@@ -989,11 +1064,12 @@ function setModeSilently(m){
 // ---- Open a system file --------------------------------------------
 // The same {mode, equations, results} JSON the ?import= link carries,
 // saved to a file by the app's Numerical Solver button when the payload
-// is too large for a URL -- and re-openable any time, which a URL never
-// was.
-$('openfile').onclick = ()=> $('filein').click();
-$('filein').onchange = async ()=>{
-  const file = $('filein').files[0];
+// is too large for a URL. There is no button for it any more (Roberto,
+// 28 Aug 2026): the file is not something a user authors -- it exists
+// only as that fallback -- so the chrome went and the functionality
+// stayed. Drop the saved numerical_system.json anywhere on this page
+// and it loads; the app's fallback message says exactly that.
+async function importFile(file){
   if(!file) return;
   try{
     const d = JSON.parse(await file.text());
@@ -1002,8 +1078,13 @@ $('filein').onchange = async ()=>{
   }catch(e){
     $('perr').textContent = 'system file: ' + e.message;
   }
-  $('filein').value = '';
-};
+}
+window.addEventListener('dragover', ev=>{ ev.preventDefault(); });
+window.addEventListener('drop', ev=>{
+  ev.preventDefault();
+  const f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+  importFile(f);
+});
 
 // ---- Dark Mode ------------------------------------------------------
 // The same toggle, icons, attribute and storage key as the app, so the

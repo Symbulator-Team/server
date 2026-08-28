@@ -292,6 +292,48 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
     color: #8ea3c4; cursor: default; text-decoration: none;
   }
 
+  /* The property mark (#135, Roberto's brief of 28 Aug 2026): which of
+     the properties the reader is on, said once and quietly -- spaced
+     capitals in the sky at 55%, the app's [ T O O L S ] motif moved into
+     the banner. The styling is shared vocabulary here; each property
+     supplies its own word (Documentation, Welcome, Application,
+     Numerical), and the app's is wrapped in the template markers that
+     the offline build strips, so the downloaded copy stays unmarked,
+     per the brief. (Named indirectly here on purpose: build_local
+     counts the literal marker token in its output as proof none
+     survived the strip, and a stylesheet comment must not trip it.)
+
+     One mark, two spellings in the markup, exactly one ever shown
+     (treatment 2 of the mockup Roberto chose): .property-mark-top sits
+     at the right of the top band, a flex sibling of .header-brand
+     inside .topbar-inner, full size above 640px and shrunk below;
+     .property-mark-slot sits under the wordmark inside the lockup and
+     takes over at <=480px, where the subtitle has hidden (see below)
+     and left it the room. The negative right margin on the top form
+     swallows the last letter's trailing letter-space, so the mark ends
+     on the band's own right edge. */
+  .property-mark {
+    /* the system stack, pinned like the lockup's own -- see .header-brand */
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.38em; text-transform: uppercase;
+    color: var(--sky, #8ec7f5); opacity: 0.55;
+    white-space: nowrap;
+  }
+  .property-mark-top { align-self: center; flex: none; margin-right: -0.38em; }
+  .property-mark-slot { display: none; margin: 0.3rem 0 0; }
+  @media (max-width: 640px) {
+    .property-mark-top {
+      font-size: 0.58rem; letter-spacing: 0.3em; margin-right: -0.3em;
+    }
+  }
+  @media (max-width: 480px) {
+    .property-mark-top { display: none; }
+    .property-mark-slot {
+      display: block; font-size: 0.58rem; letter-spacing: 0.3em;
+    }
+  }
+
   /* A header with no controls ribbon still needs its bottom edge. */
   .topbar:last-child { border-bottom: 3px solid var(--sky, #8ec7f5); }
 
@@ -848,8 +890,18 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
       <div class="header-title">
         <h1 class="brand-name">Symbulator <span class="tm">9</span></h1>
         <p class="brand-sub">the best portable symbolic simulator of linear circuits</p>
+        <!-- server-only: the property mark (#135). Roberto's brief:
+             the hosted app and PythonAnywhere say where you are, the
+             downloaded local build stays unmarked -- which the
+             server-only strip gives us for free. One word, two
+             spellings, exactly one shown; see banner.css. -->
+        <p class="property-mark property-mark-slot">Application</p>
+        <!-- /server-only -->
       </div>
     </div>
+    <!-- server-only: the top form of the same mark. -->
+    <span class="property-mark property-mark-top">Application</span>
+    <!-- /server-only -->
   </div>
 </header>
 
@@ -1694,22 +1746,44 @@ units: yes</pre>
   <div class="card inactive" id="exploreCard">
     <details id="exploreBox">
       <summary class="results-h section-toggle">Explore numerically</summary>
+      <!-- One line up front, the rest folded away (Roberto, 28 Aug
+           2026: the card carried too much text). The folded copy drops
+           the old opening sentence, which said what the intro line now
+           says. -->
       <p class="hint" style="margin:0 0 .9rem">
-        Want to explore some &#8220;what ifs&#8221; numerically, using the
-        system of equations Symbulator generated for your circuit? Here is
-        a handy numerical solver you can use. It opens in a new tab,
-        preloaded with this solve&#8217;s equations and results — untick
-        an equation, flip a Known to Unknown, and see how the results
-        change. A transient (TR) solve hands over its answers as functions
-        of time, with <code>t</code> as a Known you can set — or make
-        <code>t</code> the Unknown and find when a waveform reaches a
-        value. An FD solve hands over its s-domain system with
-        <code>s</code> as a Known complex number to play with.
+        Explore the equations generated for your circuit with a handy
+        numerical solver.
       </p>
+      <details style="margin:0 0 .9rem">
+        <summary>What you can do with it</summary>
+        <p class="hint" style="margin:.4rem 0 .3rem">
+          The solver opens in a new tab, preloaded with this
+          solve&#8217;s equations and results. From there:
+        </p>
+        <ul class="hint" style="margin:0; padding-left:1.3rem">
+          <li style="margin:.25rem 0">Untick an equation, flip a Known to
+            Unknown, and watch the results follow.</li>
+          <li style="margin:.25rem 0">A transient (TR) solve hands over its
+            answers as functions of time, with <code>t</code> as a Known
+            you can set &#8212; or make <code>t</code> the Unknown and find
+            <em>when</em> a waveform reaches a value.</li>
+          <li style="margin:.25rem 0">An FD solve hands over its s-domain
+            system, with <code>s</code> as a Known complex number you can
+            move around the plane.</li>
+        </ul>
+      </details>
       <div class="dl-row">
         <button id="whatifBtn" disabled
           title="opens the equation system in the Numerical Solver">Numerical Solver</button>
       </div>
+      <!-- Shown only when the system was too large to travel in the
+           link and went as a file instead -- the one case where the
+           user has something to do. -->
+      <p class="hint" id="whatifNote" style="margin:.6rem 0 0" hidden>
+        This system is too large to travel in a link, so it was saved as
+        <code>numerical_system.json</code> — drop that file anywhere on
+        the Numerical Solver page that just opened, and it loads.
+      </p>
     </details>
   </div>
 
@@ -1907,7 +1981,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-28 11:29 UTC
+  Symbulator 9 version 2026-08-28 12:03 UTC
 </footer>
 
 <script>
@@ -4274,6 +4348,20 @@ function sympySymbolsIn(values) {
   return [...found].sort();
 }
 
+// A Python keyword cannot be an assignment target, and `is` is the most
+// natural name a source current can have (the solver admits it since
+// 0.5.19, and the monograph's showcase uses it). Such names export with
+// a trailing underscore -- is_ -- PEP 8's own convention for dodging a
+// keyword, while the SymPy Symbol inside keeps the true name, so
+// algebra and printing still say `is`. (#133.)
+const PY_KEYWORDS = new Set([
+  'False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await',
+  'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except',
+  'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is',
+  'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try',
+  'while', 'with', 'yield']);
+const pyName = n => PY_KEYWORDS.has(n) ? n + '_' : n;
+
 function sympyScript() {
   const values = last.values || {};
   const names = Object.keys(values).sort();
@@ -4300,8 +4388,14 @@ function sympyScript() {
   out.push('');
   const syms = sympySymbolsIn(values);
   if (syms.length) {
-    out.push(syms.join(', ') + (syms.length === 1 ? ',' : '')
+    out.push(syms.map(pyName).join(', ') + (syms.length === 1 ? ',' : '')
              + " = sp.symbols('" + syms.join(' ') + "')");
+    const kw = syms.filter(n => PY_KEYWORDS.has(n));
+    if (kw.length) {
+      out.push('# Python keywords among the names take a trailing');
+      out.push('# underscore here: ' + kw.map(n => n + ' -> ' + pyName(n)).join(', ')
+               + '. The symbols themselves keep the true names.');
+    }
     // The circuit's names must take precedence over SymPy's own, or an
     // answer carrying `rf` is read as the rising factorial and the
     // script dies on its first line -- the same trap as #105, one file
@@ -4311,7 +4405,7 @@ function sympyScript() {
     out.push('# The circuit\'s own names win over SymPy\'s here:');
     out.push('#   rf is a resistor, not the rising factorial.');
     out.push('_ns = {' + syms.map(function (n) {
-      return JSON.stringify(n) + ': ' + n; }).join(', ') + '}');
+      return JSON.stringify(n) + ': ' + pyName(n); }).join(', ') + '}');
     out.push('_S = lambda text: sp.sympify(text, locals=_ns)');
     out.push('');
   }
@@ -4325,7 +4419,7 @@ function sympyScript() {
     // JSON.stringify quotes and escapes it in a way Python reads the
     // same, which beats hand-rolling the escaping for a string neither
     // language should ever see a surprise in.
-    out.push(name + ' = ' + (syms.length ? '_S(' : 'sp.S(') + JSON.stringify(String(values[name])) + ')');
+    out.push(pyName(name) + ' = ' + (syms.length ? '_S(' : 'sp.S(') + JSON.stringify(String(values[name])) + ')');
   }
   out.push('');
   out.push('# For example:');
@@ -4338,10 +4432,10 @@ function sympyScript() {
   const sample = names.find(n => symbolic(String(values[n])))
                  || names.find(n => n.startsWith('v_')) || names[0];
   if (sample) {
-    out.push('#     sp.expand(' + sample + ')');
-    out.push('#     sp.simplify(' + sample + ')');
+    out.push('#     sp.expand(' + pyName(sample) + ')');
+    out.push('#     sp.simplify(' + pyName(sample) + ')');
     if (syms.length) {
-      out.push('#     ' + sample + '.subs({' + syms[0] + ': 1000})');
+      out.push('#     ' + pyName(sample) + '.subs({' + pyName(syms[0]) + ': 1000})');
     }
   }
   return out.join('\n');
@@ -4376,17 +4470,22 @@ const EQSHEET_URL = 'https://symbulator.pythonanywhere.com/eqsheet/';
 const EQSHEET_URL_MAX = 6000;
 $('whatifBtn').addEventListener('click', () => {
   if (!last || !last.eqsheet) return;
+  $('whatifNote').hidden = true;
   const json = JSON.stringify(last.eqsheet);
   const b64 = btoa(unescape(encodeURIComponent(json)))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const url = EQSHEET_URL + '?import=' + b64;
   if (url.length > EQSHEET_URL_MAX) {
+    // The solver's page has no "open a file" button any more -- the
+    // file loads by being dropped on it -- so this is the one moment
+    // to say so, on the card the user just clicked.
     const f = new Blob([json], { type: 'application/json' });
     const save = document.createElement('a');
     save.href = URL.createObjectURL(f);
     save.download = 'numerical_system.json';
     save.click();
     URL.revokeObjectURL(save.href);
+    $('whatifNote').hidden = false;
     const open = document.createElement('a');
     open.href = EQSHEET_URL;
     open.target = '_blank';
