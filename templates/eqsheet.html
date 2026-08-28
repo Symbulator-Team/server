@@ -368,6 +368,11 @@
     border:1px solid var(--line);border-radius:5px;background:var(--lcd)}
   input.val:disabled{background:var(--rule-2);color:var(--ink-3)}
   select.pre{font:13px var(--mono);width:3.4rem}
+  /* The Restriction cell (#131): the range's two ends sit beside the
+     dropdown, small, and only while Range… is chosen. */
+  td.rstcell{white-space:nowrap}
+  .rng{font-size:12px;color:var(--ink-2)}
+  input.val.rlim{width:3.8rem;padding:.25rem .35rem;font-size:13px}
   select{font:14px var(--sans);padding:.32rem .4rem;border:1px solid var(--line);
     border-radius:5px;background:var(--card);color:var(--ink)}
   .status{padding:.6rem 1rem;font-size:.9rem;border-top:1px solid var(--line);
@@ -571,8 +576,12 @@ function ensure(name){
   // Every new variable -- imported or typed by hand -- starts Unknown
   // with a guess of zero; the user flips things to Known as they pin
   // them down. Imports overwrite the zero with the solved value.
+  // rst: 'any' | 'pos' | 'neg' | 'range' -- an unknown's search-space
+  // restriction (#131), with lo/hi carrying the range's two ends in
+  // the row's own prefix, like the guess.
   if(!state.vs[name])
-    state.vs[name] = {mode:'unknown', domain:'complex', value:'0', re:'0', im:'0', pre:''};
+    state.vs[name] = {mode:'unknown', domain:'complex', value:'0', re:'0', im:'0', pre:'',
+                      rst:'any', lo:'', hi:''};
   return state.vs[name];
 }
 
@@ -674,8 +683,8 @@ function echoKnown(name, tr){
 
 function renderVars(){
   $('vhead').innerHTML = mode==='dc'
-    ? '<th>Variable</th><th>Result</th><th>Status</th><th>Value / guess</th><th>SI Prefix</th>'
-    : '<th>Variable</th><th>Result</th><th>Status</th><th>Domain</th><th>Re</th><th>Im</th><th>SI Prefix</th>';
+    ? '<th>Variable</th><th>Result</th><th>Status</th><th>Restriction</th><th>Value / guess</th><th>SI Prefix</th>'
+    : '<th>Variable</th><th>Result</th><th>Status</th><th>Domain</th><th>Restriction</th><th>Re</th><th>Im</th><th>SI Prefix</th>';
   const tb = $('vtab').querySelector('tbody'); tb.innerHTML='';
   activeVars().forEach(name=>{
     const v = ensure(name);
@@ -684,12 +693,16 @@ function renderVars(){
       tr.innerHTML = `<td class="eq">${name}</td>
         <td class="out" data-out></td>
         <td><select data-st><option value="known">Known</option><option value="unknown">Unknown</option></select></td>
+        <td class="rstcell">${restrictCell()}</td>
         <td><input class="val" data-v placeholder="${v.mode==='known'?'value':'guess'}"></td>
         <td><select data-pre class="pre">${preOpts(v.pre)}</select></td>`;
       const st = tr.querySelector('[data-st]'), inp = tr.querySelector('[data-v]');
       const pr = tr.querySelector('[data-pre]');
       st.value = v.mode; inp.value = v.value;
-      st.onchange = ()=>{ v.mode = st.value; inp.placeholder = v.mode==='known'?'value':'guess'; renderResult(name, tr); count(); queueSolve(); };
+      // The restriction belongs to the search, so it only applies -- and
+      // only offers itself -- while the variable is an Unknown.
+      const syncRst = wireRestrict(tr, v, ()=>v.mode==='unknown');
+      st.onchange = ()=>{ v.mode = st.value; inp.placeholder = v.mode==='known'?'value':'guess'; syncRst(); renderResult(name, tr); count(); queueSolve(); };
       inp.oninput = ()=>{ v.value = inp.value; renderResult(name, tr); queueSolve(); };
       pr.onchange = ()=>{ v.pre = pr.value; renderResult(name, tr); queueSolve(); };
       renderResult(name, tr);
@@ -698,6 +711,7 @@ function renderVars(){
         <td class="out" data-out></td>
         <td><select data-st><option value="known">Known</option><option value="unknown">Unknown</option></select></td>
         <td><select data-dom><option value="complex">Complex</option><option value="real">Real only</option><option value="imag">Imag only</option></select></td>
+        <td class="rstcell">${restrictCell()}</td>
         <td><input class="val" data-re></td>
         <td><span class="jlab">j</span> <input class="val" data-im></td>
         <td><select data-pre class="pre">${preOpts(v.pre)}</select></td>`;
@@ -705,12 +719,18 @@ function renderVars(){
       const re = tr.querySelector('[data-re]'), im = tr.querySelector('[data-im]');
       const pr = tr.querySelector('[data-pre]');
       st.value = v.mode; dm.value = v.domain; re.value = v.re; im.value = v.im;
+      // A restriction is a statement about one real scalar, so it offers
+      // itself only on Real only / Imag only unknowns -- a complex value
+      // has no sign, and a range over it would mean nothing.
+      const syncRst = wireRestrict(tr, v,
+        ()=>v.mode==='unknown' && v.domain!=='complex');
       const sync = ()=>{
         re.disabled = v.domain==='imag';
         im.disabled = v.domain==='real';
         const ph = v.mode==='known' ? 'value' : 'guess';
         re.placeholder = re.disabled ? '0' : ph;
         im.placeholder = im.disabled ? '0' : ph;
+        syncRst();
       };
       sync();
       st.onchange = ()=>{ v.mode = st.value; sync(); renderResult(name, tr); count(); queueSolve(); };
@@ -723,6 +743,47 @@ function renderVars(){
     tb.appendChild(tr);
   });
   count();
+}
+
+// The Restriction cell (#131): where the solver may look for an
+// unknown. Unrestricted, one sign only, or an explicit range -- the
+// range's two ends read in the row's SI prefix, like the guess.
+function restrictCell(){
+  return `<select data-sg>
+      <option value="any">Unrestricted</option>
+      <option value="pos">Positive</option>
+      <option value="neg">Negative</option>
+      <option value="range">Range…</option></select>
+    <span class="rng" data-rng hidden>from <input class="val rlim" data-lo>
+      to <input class="val rlim" data-hi></span>`;
+}
+function wireRestrict(tr, v, enabledFn){
+  const sg = tr.querySelector('[data-sg]'), rng = tr.querySelector('[data-rng]');
+  const lo = tr.querySelector('[data-lo]'), hi = tr.querySelector('[data-hi]');
+  sg.value = v.rst || 'any'; lo.value = v.lo || ''; hi.value = v.hi || '';
+  const sync = ()=>{
+    sg.disabled = !enabledFn();
+    rng.hidden = sg.disabled || (v.rst || 'any') !== 'range';
+  };
+  sg.onchange = ()=>{ v.rst = sg.value; sync(); queueSolve(); };
+  lo.oninput = ()=>{ v.lo = lo.value; queueSolve(); };
+  hi.oninput = ()=>{ v.hi = hi.value; queueSolve(); };
+  sync();
+  return sync;
+}
+// One unknown's restriction as the API wants it, wrapped so an error
+// cannot be mistaken for a value ('neg' is a string too): {} means
+// unrestricted, {r: 'pos'|'neg'|[lo,hi]} a restriction in base units,
+// {err: message} a problem for the status line.
+function restrictionOf(name, v){
+  const rst = v.rst || 'any';
+  if(rst === 'pos' || rst === 'neg') return {r: rst};
+  if(rst !== 'range') return {};
+  const f = PFACT[v.pre];
+  const lo = parseFloat((v.lo || '').trim()), hi = parseFloat((v.hi || '').trim());
+  if(isNaN(lo) || isNaN(hi)) return {err: `give both ends of the range for ${name}`};
+  if(!(lo < hi)) return {err: `empty range for ${name} — 'from' must be below 'to'`};
+  return {r: [lo * f, hi * f]};
 }
 
 function scalars(v){          // scalar unknowns a variable contributes (AC)
@@ -790,7 +851,7 @@ async function doSolve(){
   const m = $('smsg');
   const body = {text:$('rules').value, mode, selected:[...state.sel]};
   if(mode==='dc'){
-    const knowns={}, guesses={};
+    const knowns={}, guesses={}, restrict={};
     for(const n of activeVars()){
       const v = state.vs[n];
       // An empty guess means zero; only a Known insists on a value.
@@ -799,8 +860,13 @@ async function doSolve(){
         ? 0 : parseFloat(raw) * PFACT[v.pre];
       if(isNaN(num)){ m.textContent=`give a ${v.mode==='known'?'value':'guess'} for ${n}`; m.className='msg bad'; return; }
       (v.mode==='known'?knowns:guesses)[n]=num;
+      if(v.mode==='unknown'){
+        const q = restrictionOf(n, v);
+        if(q.err){ m.textContent=q.err; m.className='msg bad'; return; }
+        if(q.r !== undefined) restrict[n] = q.r;
+      }
     }
-    body.knowns=knowns; body.guesses=guesses;
+    body.knowns=knowns; body.guesses=guesses; body.restrict=restrict;
   }else{
     const knowns={}, unknowns={};
     for(const n of activeVars()){
@@ -809,7 +875,14 @@ async function doSolve(){
       const im = (v.domain==='real' ? 0 : parseFloat(v.im||'0')) * f;
       if(isNaN(re)||isNaN(im)){ m.textContent=`bad number for ${n}`; m.className='msg bad'; return; }
       if(v.mode==='known') knowns[n]={re,im};
-      else unknowns[n]={domain:v.domain, re, im};
+      else{
+        unknowns[n]={domain:v.domain, re, im};
+        if(v.domain!=='complex'){
+          const q = restrictionOf(n, v);
+          if(q.err){ m.textContent=q.err; m.className='msg bad'; return; }
+          if(q.r !== undefined) unknowns[n].restrict = q.r;
+        }
+      }
     }
     body.knowns=knowns; body.unknowns=unknowns;
   }
@@ -818,6 +891,7 @@ async function doSolve(){
   if(!d.solution){ m.textContent=d.message; m.className='msg bad'; return; }
   m.textContent = d.message
     + (d.mode==='least-squares' ? ` (least-squares: ${d.n_eq} equations, ${d.n_un} unknowns)` : '')
+    + (d.mode==='bounded' ? ' (restricted)' : '')
     + ` — ${d.nfev} evaluations`;
   m.className = 'msg ' + (d.ok?'ok':'bad');
 

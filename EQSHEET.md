@@ -58,6 +58,20 @@ in DC only, `u(...)`: the unit step (u(0) = 1), for systems handed over
 from a transient solve. `u` only acts as the step when it is *called*;
 a plain variable named `u` still works.
 
+## Restricting where the solver looks (#131)
+Every unknown's row carries a **Restriction** menu: *Unrestricted*
+(the default), *Positive*, *Negative*, or *Range…* with a from/to
+pair read in the row's SI prefix, like the guess. A restricted solve
+runs through SciPy's `least_squares` with bounds instead of MINPACK's
+hybr (which takes none); a square restricted system is judged by its
+residual, so a system whose root lies outside the restriction says
+"no solution found under the restrictions" rather than presenting a
+boundary minimum as an answer. A guess outside its restriction is
+moved to an interior starting point — never onto the boundary, where
+the trust-region method stalls. In AC the menu applies to Real only /
+Imag only unknowns and greys out on Complex ones: a restriction is a
+statement about one real scalar, and a complex value has no sign.
+
 Any identifier is a valid variable name, Python keywords included:
 `is` — the natural name for a source current — works, as do `in`, `if`
 and the rest. They are shielded from Python's parser behind sentinel

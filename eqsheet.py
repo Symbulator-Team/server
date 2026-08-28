@@ -205,11 +205,66 @@ def api_solve():
     return solve_ac(data, active) if mode == "ac" else solve_dc(data, active)
 
 
+def _parse_restrictions(raw):
+    """Per-unknown search restrictions: name -> 'pos' | 'neg' | [lo, hi].
+    Returns (validated dict, error message). Anything unrecognised, or
+    an absent name, means unrestricted; a range endpoint of null means
+    open on that side."""
+    out = {}
+    for k, v in (raw or {}).items():
+        if v in ("pos", "neg"):
+            out[k] = v
+        elif isinstance(v, (list, tuple)) and len(v) == 2:
+            try:
+                lo = None if v[0] is None else float(v[0])
+                hi = None if v[1] is None else float(v[1])
+            except (TypeError, ValueError):
+                return None, f"bad range for {k}"
+            if lo is not None and hi is not None and not lo < hi:
+                return None, (f"empty range for {k} — "
+                              "'from' must be below 'to'")
+            out[k] = (lo, hi)
+    return out, None
+
+
+def _restriction_bounds(restr_by_index, n, np):
+    """Lower/upper bound arrays from {index: restriction}, or None when
+    every entry is unrestricted. 'pos' keeps the search in [0, inf),
+    'neg' in (-inf, 0], a (lo, hi) pair in [lo, hi]."""
+    if not restr_by_index:
+        return None
+    lb = np.full(n, -np.inf)
+    ub = np.full(n, np.inf)
+    for i, r in restr_by_index.items():
+        if r == "pos":
+            lb[i] = 0.0
+        elif r == "neg":
+            ub[i] = 0.0
+        else:
+            lo, hi = r
+            if lo is not None:
+                lb[i] = lo
+            if hi is not None:
+                ub[i] = hi
+    return lb, ub
+
+
+def _fail_message(mode_s):
+    if mode_s == "bounded":
+        return ("no solution found under the restrictions — "
+                "loosen them or try different guesses")
+    return "did not converge — try different guesses"
+
+
 def solve_dc(data, active):
     import numpy as np
 
     knowns = {k: float(v) for k, v in data.get("knowns", {}).items()}
     guesses = {k: float(v) for k, v in data.get("guesses", {}).items()}
+    # Per-unknown search restrictions (#131).
+    restrict, msg = _parse_restrictions(data.get("restrict"))
+    if msg:
+        return jsonify({"ok": False, "message": msg})
 
     needed, msg = _check_coverage(active, knowns, guesses)
     if msg:
@@ -230,7 +285,9 @@ def solve_dc(data, active):
         return np.array([f(*x) for f in fns], dtype=float)
 
     x0 = np.array([guesses[u] for u in unknowns], dtype=float)
-    out = _run_solver(F, x0, len(active), len(unknowns))
+    bounds = _restriction_bounds({i: restrict[u] for i, u in enumerate(unknowns)
+                                  if u in restrict}, len(unknowns), np)
+    out = _run_solver(F, x0, len(active), len(unknowns), bounds)
     if isinstance(out, str):
         return jsonify({"ok": False, "message": out})
     x, ok, nfev, mode_s = out
@@ -239,7 +296,7 @@ def solve_dc(data, active):
     return jsonify({
         "ok": bool(ok), "mode": mode_s,
         "n_eq": len(active), "n_un": len(unknowns), "nfev": int(nfev),
-        "message": "solved" if ok else "did not converge — try different guesses",
+        "message": "solved" if ok else _fail_message(mode_s),
         "solution": {u: float(v) for u, v in zip(unknowns, x)},
         "residuals": [{"rule": r["text"], "value": float(v)}
                       for r, v in zip(active, res_final)],
@@ -266,17 +323,32 @@ def solve_ac(data, active):
     if not unames:
         return jsonify({"ok": False, "message": "no unknowns to solve for"})
 
+    # Per-unknown search restrictions (#131). A restriction only means
+    # something for a single real scalar, so it applies to Real only /
+    # Imag only unknowns and is ignored on a Complex one (the page
+    # greys it out there).
+    restrict, msg = _parse_restrictions(
+        {n: s.get("restrict") for n, s in unknowns_in.items()
+         if s.get("domain", "complex") in ("real", "imag")})
+    if msg:
+        return jsonify({"ok": False, "message": msg})
+
     # scalar layout: for each unknown, which components are free
     layout = []          # (name, domain, index into x for re, index for im)
     x0 = []
+    scalar_restr = {}    # scalar index -> restriction
     for name in unames:
         spec = unknowns_in[name]
         dom = spec.get("domain", "complex")
         ire = iim = None
         if dom in ("complex", "real"):
             ire = len(x0); x0.append(float(spec.get("re", 0) or 0))
+            if dom == "real" and name in restrict:
+                scalar_restr[ire] = restrict[name]
         if dom in ("complex", "imag"):
             iim = len(x0); x0.append(float(spec.get("im", 0) or 0))
+            if dom == "imag" and name in restrict:
+                scalar_restr[iim] = restrict[name]
         layout.append((name, dom, ire, iim))
     n_scalar = len(x0)
 
@@ -302,7 +374,8 @@ def solve_ac(data, active):
         return np.concatenate([r.real, r.imag])
 
     n_eq_real = 2 * len(active)
-    out = _run_solver(F, np.array(x0, dtype=float), n_eq_real, n_scalar)
+    bounds = _restriction_bounds(scalar_restr, n_scalar, np)
+    out = _run_solver(F, np.array(x0, dtype=float), n_eq_real, n_scalar, bounds)
     if isinstance(out, str):
         return jsonify({"ok": False, "message": out})
     x, ok, nfev, mode_s = out
@@ -316,18 +389,59 @@ def solve_ac(data, active):
     return jsonify({
         "ok": bool(ok), "mode": mode_s,
         "n_eq": n_eq_real, "n_un": n_scalar, "nfev": int(nfev),
-        "message": "solved" if ok else "did not converge — try different guesses",
+        "message": "solved" if ok else _fail_message(mode_s),
         "solution": solution,
         "residuals": [{"rule": r["text"], "value": float(abs(v))}
                       for r, v in zip(active, res_final)],
     })
 
 
-def _run_solver(F, x0, n_eq, n_un):
-    """Square -> hybrid Powell root; rectangular -> least squares."""
+def _run_solver(F, x0, n_eq, n_un, bounds=None):
+    """Square -> hybrid Powell root; rectangular -> least squares.
+
+    With `bounds` (a sign-restricted solve, #131) everything goes
+    through least_squares, whose trust-region method honours bounds;
+    MINPACK's hybr does not take them. A square bounded system is
+    judged by its residual, the same doctrine as the hybr fallback
+    below: least_squares happily reports success on a boundary minimum
+    that is not a root, and a root is what was asked for."""
     import numpy as np
     from scipy.optimize import root, least_squares
+
+    def _residual_ok(x):
+        r = np.abs(np.asarray(F(x), dtype=float))
+        scale = max(1.0, float(np.max(np.abs(x)))) if x.size else 1.0
+        return bool(r.size == 0 or float(np.max(r)) < 1e-9 * scale)
+
     try:
+        if bounds is not None:
+            lb, ub = bounds
+            # A guess outside its restriction is moved to a genuinely
+            # interior start rather than refused -- and never onto the
+            # boundary itself: started exactly on a bound, trf nudges
+            # inward by ~1e-10 and promptly reports convergence without
+            # moving (measured), so an infeasible guess is placed a
+            # deliberate distance inside. One-sided restrictions
+            # reflect the guess's distance (at least 1) across the
+            # bound; a finite range steps 10% of its width in from the
+            # violated end.
+            x0 = np.array(x0, dtype=float)
+            for i in range(x0.size):
+                lo, hi = lb[i], ub[i]
+                if np.isfinite(lo) and np.isfinite(hi):
+                    margin = 0.1 * (hi - lo)
+                    if x0[i] <= lo:
+                        x0[i] = lo + margin
+                    elif x0[i] >= hi:
+                        x0[i] = hi - margin
+                elif np.isfinite(lo) and x0[i] <= lo:
+                    x0[i] = lo + max(1.0, abs(x0[i] - lo))
+                elif np.isfinite(hi) and x0[i] >= hi:
+                    x0[i] = hi - max(1.0, abs(x0[i] - hi))
+            sol = least_squares(F, x0, bounds=(lb, ub))
+            if n_eq == n_un:
+                return sol.x, _residual_ok(sol.x), sol.nfev, "bounded"
+            return sol.x, sol.success, sol.nfev, "least-squares"
         if n_eq == n_un:
             sol = root(F, x0, method="hybr")
             success = bool(sol.success)
