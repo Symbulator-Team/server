@@ -1827,15 +1827,83 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                     _text_renames = sorted(
                         ((str(k), str(v)) for k, v in _rename.items()),
                         key=lambda kv: -len(kv[0]))
-                    for extra in list(extra_equations or []) + list(
-                            extra_conditions or []):
+                    # Expert equations only. Conditions used to ride along
+                    # here and arrived in the sheet's List of Equations as
+                    # parse errors -- `is > 0` is not an equation, and the
+                    # sheet demands exactly one `=` per line. Roberto
+                    # caught it on the monograph's showcase circuit,
+                    # 28 Aug 2026: conditions are a filter on the solve
+                    # that produced this payload, not part of the system.
+                    #
+                    # And the equations cross *rewritten*: a third-degree
+                    # name in them (a power p_jd1, a branch voltage, a
+                    # source's r_e) is expanded into the system's own
+                    # first/second-degree variables, the way the original
+                    # calculator evaluated expert extras in CAS space
+                    # (Roberto, same day, same circuit). Without this,
+                    # `p_jd1 = -80` lands on the sheet as a brand-new free
+                    # variable pinned to -80 by a trivial equation --
+                    # nothing ties it to the circuit. The expansion is the
+                    # solver's own: _derived_definition, the same formulas
+                    # the expert solve stamps in, applied recursively
+                    # because a power's defining v and i may themselves be
+                    # derived names.
+                    from symbulator.engine import (
+                        _parse_extra_equation, _canonicalize,
+                        _derived_definition)
+
+                    def _expand_derived(_expr):
+                        for _ in range(8):
+                            _subs = {}
+                            for _s in _expr.free_symbols:
+                                try:
+                                    _d = _derived_definition(
+                                        circ, str(_s), domain)
+                                except Exception:
+                                    _d = None
+                                if _d is None:
+                                    continue
+                                _deq, _dsym = _d
+                                if _deq.lhs == _dsym:
+                                    _subs[_s] = _deq.rhs
+                                else:
+                                    # the r_/z_ form: sym * (-i) = vdiff
+                                    _sol = sp.solve(_deq, _dsym)
+                                    if _sol:
+                                        _subs[_s] = _sol[0]
+                            if not _subs:
+                                return _expr
+                            _expr = _expr.subs(_subs)
+                        return _expr
+
+                    for extra in list(extra_equations or []):
                         try:
-                            _txt = expand_shorthand(extra, si=True)
+                            _eq = _parse_extra_equation(
+                                extra, reserve_imaginary=(domain == "ac"))
+                            _eq = _canonicalize(_eq, circ.alias_map)
+                            _lhs = _expand_derived(_eq.lhs).subs(_rename)
+                            _rhs = _expand_derived(_eq.rhs).subs(_rename)
+                            # any surviving underscored name (a new expert
+                            # unknown, say) still drops its underscore
+                            for _s in (_lhs.free_symbols
+                                       | _rhs.free_symbols):
+                                _n = str(_s)
+                                if "_" in _n:
+                                    _m = {_s: sp.Symbol(_n.replace("_", ""))}
+                                    _lhs = _lhs.subs(_m)
+                                    _rhs = _rhs.subs(_m)
+                            eq_strings.append(
+                                f"{sp.sstr(_lhs)} = {sp.sstr(_rhs)}")
                         except Exception:
-                            _txt = extra
-                        for _old, _new in _text_renames:
-                            _txt = re.sub(rf"\b{re.escape(_old)}\b", _new, _txt)
-                        eq_strings.append(_txt)
+                            # fall back to the old textual rendering
+                            try:
+                                _txt = expand_shorthand(extra, si=True)
+                            except Exception:
+                                _txt = extra
+                            for _old, _new in _text_renames:
+                                _txt = re.sub(
+                                    rf"\b{re.escape(_old)}\b", _new, _txt)
+                            eq_strings.append(_txt)
                     _complex_mode = domain in ("ac", "fd")
                     results = {}
                     for _name, _value in values.items():
