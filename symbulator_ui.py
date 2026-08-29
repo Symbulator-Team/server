@@ -1357,7 +1357,21 @@ def ambiguous_answer_names(elements, alias: dict) -> list:
             # free symbols at all and the clash Roberto described would go
             # unreported. The text is the honest source for "what did the
             # user write here".
-            symbols = set(re.findall(r"[A-Za-z_]\w*", raw))
+            #
+            # A name followed by "(" is a function CALL, never an answer
+            # reference, and must not warn (#167). Three shapes reach
+            # here that way: a typed pr(6,3), a resistor's [6,3] (which
+            # the shorthand has already rewritten to pr(6,3)), and a
+            # two-port's [p11,...] parameter term (same rewrite). On any
+            # circuit with an element named `r`, all three used to trip
+            # the warning -- `pr` spells p_r there -- which is how
+            # Lesson 13's Example 19.2 earned a note about a `pr` the
+            # user never wrote.
+            symbols = set()
+            for m in re.finditer(r"[A-Za-z_]\w*", raw):
+                if raw[m.end():].lstrip().startswith("("):
+                    continue
+                symbols.add(m.group(0))
             for s in sorted(symbols & set(alias)):
                 quantity = s[0]
                 if (el.kind in _CONTROL_KINDS
