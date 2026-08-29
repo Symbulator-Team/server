@@ -2080,7 +2080,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-29 09:57 UTC
+  Symbulator 9 version 2026-08-29 10:15 UTC
 </footer>
 
 <script>
@@ -3662,6 +3662,50 @@ async function renderSolveResult(data, idx) {
       count++;
     }
     out.appendChild(lcd);
+
+    // #166: after a two-port-parameters run, offer the four values as a
+    // ready-to-paste parameter term, so "reduce a network, then use it
+    // as an element" is a copy and a paste rather than a transcription.
+    // Built from `values` (exact expressions), not the rounded display.
+    if (data.tool === 'port') {
+      const names = ['11', '12', '21', '22'].map(sfx =>
+        (sol.extras.find(ex => ex.name.endsWith(sfx)) || {}).name);
+      const vals = names.map(n => (data.values || {})[n]);
+      if (vals.every(v => v !== undefined)) {
+        const term = '[' + vals.map(v => String(v).replace(/\s+/g, '')).join(',') + ']';
+        const rowd = document.createElement('div');
+        rowd.className = 'hint';
+        rowd.style.marginTop = '.55rem';
+        rowd.append('As a two-port element’s parameter term: ');
+        const code = document.createElement('code');
+        code.textContent = term;
+        rowd.appendChild(code);
+        const btn = document.createElement('button');
+        btn.textContent = 'Copy';
+        btn.style.marginLeft = '.6rem';
+        btn.addEventListener('click', async () => {
+          let done = false;
+          try {
+            await navigator.clipboard.writeText(term);
+            done = true;
+          } catch (e) {
+            // Fallback for contexts without the async clipboard API.
+            const ta = document.createElement('textarea');
+            ta.value = term;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try { done = document.execCommand('copy'); } catch (e2) {}
+            ta.remove();
+          }
+          btn.textContent = done ? 'Copied' : 'Select and copy by hand';
+          setTimeout(() => { btn.textContent = 'Copy'; }, 1600);
+        });
+        rowd.appendChild(btn);
+        out.appendChild(rowd);
+      }
+    }
   }
 
   if (!count) {
