@@ -228,6 +228,21 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .subbar nav {
     display: flex; align-items: center; gap: 1.15rem;
     flex-wrap: wrap; min-width: 0;
+    /* flex-basis 0, so the nav never makes the ribbon two rows (#143).
+       Flexbox wraps a row by hypothetical (content) sizes before it
+       shrinks anything, so with basis auto a crowded learn ribbon dropped
+       its version picker to a second line while the nav still showed all
+       its links -- and the one-line clip below never got its chance. At
+       basis 0 the nav claims no width of its own, growing into what the
+       row can spare, and a link that does not fit wraps inside the nav and
+       is clipped. The row itself stays one line at every width.
+
+       Grow 999, not 1: .subbar-spacer grows too, and at equal factors it
+       took half the free space and starved the nav into clipping links it
+       had room for (measured at 375px on the landing page). At 999 the
+       nav takes what the row can spare and its own empty tail does the
+       spacer's job; the spacer stays for rows that have no nav. */
+    flex: 999 1 0;
     /* One row of links, never two (Roberto, 28 Aug 2026: a link that would
        wrap should hide instead). The row still flex-wraps, but the box is
        capped at one line-box (0.875rem x 1.4, the size every link in it is
@@ -290,6 +305,26 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   }
   .subbar button.subbar-action:disabled {
     color: #8ea3c4; cursor: default; text-decoration: none;
+  }
+
+  /* Short spellings for a crowded ribbon (#144, #145, Roberto's brief of
+     29 Aug 2026): a ribbon control may carry two labels --
+
+       <a href="...">Documentation<span class="subbar-lbl-short">Docs</span>
+       </a>  is wrong; the pair is two spans:
+       <span class="subbar-lbl">Documentation</span>
+       <span class="subbar-lbl-short">Docs</span>
+
+     -- and the ribbon shows exactly one: the full spelling above 480px,
+     the short one at or below, where the phone-width media queries
+     already move the property mark and hide the subtitle. The app says
+     App / Docs / Clear inputs there; the Numerical Solver says Docs.
+     Same two-spellings idea as the property mark and learn's version
+     key, shared here so every property abbreviates at the same width. */
+  .subbar .subbar-lbl-short { display: none; }
+  @media (max-width: 480px) {
+    .subbar .subbar-lbl { display: none; }
+    .subbar .subbar-lbl-short { display: inline; }
   }
 
   /* The property mark (#135, Roberto's brief of 28 Aug 2026): which of
@@ -511,7 +546,12 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   #solveBtn:hover:not(:disabled) { box-shadow: 0 3px 12px rgba(32,56,100,.34); }
   .run-row #status, .run-row #plotStatus { display: block; margin-top: .6rem; }
   .examples { font-size: .88rem; color: var(--muted); }
-  .examples select { width: auto; font-family: inherit; font-size: .88rem; background-color: var(--card); }
+  /* max-width, because a native select's default width is its widest
+     option's text: entry names like "Bo2's Drill Exercise 5.2 (DC)" ran
+     the menu off the right edge of a phone (#147). Capped, the closed
+     select clips its label and the opened list is drawn by the OS at
+     whatever width the screen allows, so nothing is lost. */
+  .examples select { width: auto; max-width: 100%; font-family: inherit; font-size: .88rem; background-color: var(--card); }
   #status, #plotStatus { font-size: .88rem; color: var(--muted); }
   .lcd {
     background: linear-gradient(180deg, #102338 0%, var(--lcd-bg) 55%);
@@ -784,7 +824,9 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
      the Outputs heading before anything had been run. Anything here that
      sets display has to say this too. */
   .solution-pick[hidden] { display: none; }
-  .solution-pick select { width: auto; min-width: 11rem; margin: 0; }
+  /* max-width for the same reason as .examples select (#147): a
+     solution's label quotes the root it picked, which can be long. */
+  .solution-pick select { width: auto; min-width: 11rem; max-width: 100%; margin: 0; }
   .solution-pick label { margin: 0; font-weight: 600; }
   .group-intro { margin: 0 0 1.2rem; }
   #evalOut, #solveqOut { margin-top: .9rem; display: none; }
@@ -917,9 +959,12 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
            offline copy. So the link has to go with it: left in, the offline
            builds would carry a Download that scrolls to an anchor
            build_local.py has removed, and clicking it would do nothing. -->
-      <a href="#runLocallyCard">Download App</a>
+      <!-- Two spellings per label (#144), the shared banner.css showing
+           exactly one: full above 480px, short at phone widths, so the
+           ribbon stays one line on any screen. -->
+      <a href="#runLocallyCard"><span class="subbar-lbl">Download App</span><span class="subbar-lbl-short">App</span></a>
       <!-- /server-only -->
-      <a href="https://learn.symbulator.com">Documentation</a>
+      <a href="https://learn.symbulator.com"><span class="subbar-lbl">Documentation</span><span class="subbar-lbl-short">Docs</span></a>
     </nav>
     <span class="subbar-spacer"></span>
     <!-- Clear all inputs lived beside the [ I N P U T S ] heading until
@@ -934,7 +979,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
          .subbar rather than from .subbar nav -- this button is not in the
          <nav>. -->
     <button type="button" id="clearAllBtn" class="subbar-action"
-      title="Empty every input and start over">Clear all inputs</button>
+      title="Empty every input and start over"><span class="subbar-lbl">Clear all inputs</span><span class="subbar-lbl-short">Clear inputs</span></button>
     <button type="button" id="themeToggle" class="theme-toggle"
             aria-label="Switch to dark mode" title="Switch to dark mode"><svg viewBox="0 0 24 24" style="width:1.2em;height:1.2em;flex:none" fill="#8ec7f5" aria-hidden="true"><path d="M20.4 14.7A8.5 8.5 0 1 1 9.3 3.6a7 7 0 1 0 11.1 11.1Z"/></svg></button>
   </div>
@@ -1435,8 +1480,12 @@ units: yes</pre>
 
       <div class="row" style="margin-top:.9rem">
         <div>
-          <label for="eqs">Add equations — <span class="hint">one per line, or separate
-            equations with <code>and</code>, e.g. <code>v_2 = 6 and p_e1=10</code>;
+          <!-- The separator phrasing is canonical across all seven hint
+               spans (#148): equations and conditions read "one per line
+               or separated by `and`", unknowns "one per line or
+               separated by commas", each with an e.g. -->
+          <label for="eqs">Add equations — <span class="hint">one per line or separated
+            by <code>and</code>, e.g. <code>v_2 = 6 and p_e1=10</code>;
             parsed the same as circuit values — SI shorthand like <code>4.7'k</code>
             and, in AC, imaginary units (<code>i</code>/<code>j</code>) both work, but a bare
             suffix like <code>4.7k</code> with no apostrophe doesn't</span></label>
@@ -1446,15 +1495,15 @@ units: yes</pre>
 
       <div class="row">
         <div>
-          <label for="unks">Add unknowns — <span class="hint">separated by commas
-            or one per line, e.g. <code>vx</code> or <code>v_x</code></span></label>
+          <label for="unks">Add unknowns — <span class="hint">one per line or separated
+            by commas, e.g. <code>vx</code> or <code>v_x</code></span></label>
           <textarea id="unks" spellcheck="false" style="min-height:2.4rem" disabled></textarea>
         </div>
       </div>
       <div class="row">
         <div>
           <label for="conds">Add conditions
-            <span class="hint">— separate conditions with <code>and</code>,
+            <span class="hint">— one per line or separated by <code>and</code>,
             e.g. <code>pr1 > 0 and v1 = 12</code>;
             use <code>>=</code> and <code>&lt;=</code>, not <code>=></code> and <code>=&lt;</code></span>
           </label>
@@ -1561,7 +1610,8 @@ units: yes</pre>
       <div class="row" style="margin-top:.7rem">
         <div>
           <label for="evalConds">Conditions
-            <span class="hint">— one per line. <code>t = to</code> substitutes
+            <span class="hint">— one per line or separated by <code>and</code>,
+            e.g. <code>t = to</code>, which substitutes
             a value before evaluating, the way the calculator&#39;s
             <code>|</code> does; <code>pr1 &gt; 0</code> states an assumption.
             Use <code>&gt;=</code> and <code>&lt;=</code>, not <code>=&gt;</code>
@@ -1585,15 +1635,16 @@ units: yes</pre>
     <details>
       <summary class="results-h section-toggle">Solve</summary>
       <label for="solveqEqs">Equation(s) to solve in terms of the results
-        <span class="hint">— e.g. <code>v2 = 6</code> or <code>v_2 = 6</code>, one equation
-        per line or separated with <code>and</code></span>
+        <span class="hint">— one per line or separated by <code>and</code>,
+        e.g. <code>v2 = 6</code> or <code>v_2 = 6</code></span>
       </label>
       <textarea id="solveqEqs" spellcheck="false" style="min-height:3.4rem;margin-top:.7rem"
         placeholder="solve a circuit first…" disabled></textarea>
       <div class="row" style="margin-top:.7rem">
         <div>
           <label for="solveqUnks">Unknown(s) to solve for
-            <span class="hint">— separated by commas or one per line; leave blank
+            <span class="hint">— one per line or separated by commas,
+            e.g. <code>vx</code> or <code>v_x</code>; leave blank
             to solve for whatever is left</span>
           </label>
           <textarea id="solveqUnks" spellcheck="false" style="min-height:2.4rem"
@@ -1603,7 +1654,8 @@ units: yes</pre>
       <div class="row" style="margin-top:.7rem">
         <div>
           <label for="solveqConds">Conditions
-            <span class="hint">— e.g. <code>pr1 > 0</code> and <code>v1 = 12</code>;
+            <span class="hint">— one per line or separated by <code>and</code>,
+            e.g. <code>pr1 > 0 and v1 = 12</code>;
             use <code>>=</code> and <code>&lt;=</code>, not <code>=></code> and <code>=&lt;</code></span>
           </label>
           <textarea id="solveqConds" spellcheck="false" style="min-height:2.4rem" disabled></textarea>
@@ -1666,7 +1718,9 @@ units: yes</pre>
        until wanted. Their arguments resolve against the solved answers,
        which is the point: you name `i_r1` rather than copying a phasor
        out of the results by hand. -->
-  <div class="card inactive" id="miniCard">
+  <!-- Active before any solve (#149): the three mini-tools are
+       standalone calculators on typed arguments. -->
+  <div class="card" id="miniCard">
     <details id="miniBox">
       <summary class="results-h section-toggle">Mini-Tools</summary>
       <div class="row" style="margin-top:.7rem">
@@ -1682,7 +1736,7 @@ units: yes</pre>
       <div id="miniArgs" class="row" style="margin-top:.7rem"></div>
       <div class="hint" id="miniHint" style="margin-top:.35rem"></div>
       <div class="actions" style="margin-top:.7rem">
-        <button id="miniBtn" disabled>Run</button>
+        <button id="miniBtn">Run</button>
       </div>
       <div id="miniOut" class="lcd"></div>
     </details>
@@ -1694,11 +1748,15 @@ units: yes</pre>
       <div class="row">
         <div>
           <label for="plotTool">Plot type</label>
+          <!-- Order and labels per #146 (Roberto, 29 Aug 2026): the DC
+               sweep leads and the TR plot closes; the H(s) label drops
+               its "(FD)" so it stays one line on a phone -- the H(s)
+               gives the analysis away. Values unchanged. -->
           <select id="plotTool">
-            <option value="plot_time">Plot a function of time (TR)</option>
+            <option value="sweep">Plot a variable against another (DC)</option>
             <option value="bode">Bode plot of a variable (FD)</option>
-            <option value="bode_tf">Bode plot of a transfer function H(s) (FD)</option>
-            <option value="sweep">Plot a variable against another variable (DC)</option>
+            <option value="bode_tf">Bode plot of transfer function H(s)</option>
+            <option value="plot_time">Plot a function of time (TR)</option>
           </select>
         </div>
       </div>
@@ -1978,13 +2036,18 @@ units: yes</pre>
 </main>
 
 <footer>
-  Symbulator © 1999–2026 Roberto Perez-Franco ·
+  <!-- Two unbreakable segments (#150): if the line must wrap on a
+       narrow screen, it breaks between the copyright and the links,
+       never inside either -- the separator dot leads the second line,
+       per Roberto's example of 29 Aug 2026. -->
+  <span style="white-space:nowrap">Symbulator © 1999–2026 Roberto Perez-Franco</span>
+  <span style="white-space:nowrap">·
   <a href="https://symbulator.com" target="_blank" rel="noopener">symbulator.com</a> ·
   <a href="https://www.facebook.com/Symbulator/" target="_blank" rel="noopener">Facebook</a> ·
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
-  <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a><br>
+  <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-28 12:26 UTC
+  Symbulator 9 version 2026-08-29 04:11 UTC
 </footer>
 
 <script>
@@ -2256,8 +2319,8 @@ function activatePostSolve() {
   // The Explore Numerically card is always active (#136): with a solved
   // payload the button hands the system over, without one it opens a
   // blank solver -- the click handler tells the two apart.
-  $('miniBtn').disabled = false;
-  $('miniCard').classList.remove('inactive');
+  // Mini-Tools is always active too (#149): aa, pf and gain work on
+  // typed arguments and read nothing from a solve, so nothing here.
 }
 
 // The exact mirror of activatePostSolve: put the page back to how it
@@ -2287,8 +2350,8 @@ function clearResults() {
   $('solveqBtn').disabled = true;
   $('solveqCard').classList.add('inactive');
   $('miniOut').innerHTML = '';
-  $('miniBtn').disabled = true;
-  $('miniCard').classList.add('inactive');
+  // Mini-Tools stays active (#149): its three calculators owe nothing
+  // to the cleared circuit, only their last answer is stale.
   $('plotOut').innerHTML = '<div class="lcd"><div class="placeholder">— no plot run yet —</div></div>';
   $('plotStatus').textContent = '';
   for (const id of ['dlDesc', 'dlEqs', 'dlAns']) $(id).disabled = true;
@@ -3285,7 +3348,7 @@ function clearAllInputs() {
   $('plotKey').value = ''; $('plotX').value = '';
   $('plotMin').value = ''; $('plotMax').value = '';
   $('plotN').value = 300;
-  $('plotTool').value = 'plot_time';
+  $('plotTool').value = 'sweep';   // the menu's rest state since #146
   syncPlotFields();
   // Results: an emptied page must not keep showing answers to a circuit
   // that is no longer there.
@@ -4183,7 +4246,9 @@ function miniFields() {
 }
 
 async function runMiniTool() {
-  if (!last) return;
+  // No solve required (#149): the three tools work on typed arguments.
+  // A solved circuit only adds its answer names to what the arguments
+  // may reference, via the values sent below.
   const btn = $('miniBtn'), out = $('miniOut');
   const tool = $('miniTool').value;
   const args = [...$('miniArgs').querySelectorAll('input')].map(i => i.value);
@@ -4238,7 +4303,8 @@ async function callMiniTool(tool, args) {
   const r = await fetch('/api/minitool', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ tool: tool, args: args, values: last.values,
+    body: JSON.stringify({ tool: tool, args: args,
+                           values: last ? last.values : {},
                            ...roundingState() })
   });
   return await r.json();

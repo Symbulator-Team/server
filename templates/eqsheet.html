@@ -157,6 +157,21 @@
   .subbar nav {
     display: flex; align-items: center; gap: 1.15rem;
     flex-wrap: wrap; min-width: 0;
+    /* flex-basis 0, so the nav never makes the ribbon two rows (#143).
+       Flexbox wraps a row by hypothetical (content) sizes before it
+       shrinks anything, so with basis auto a crowded learn ribbon dropped
+       its version picker to a second line while the nav still showed all
+       its links -- and the one-line clip below never got its chance. At
+       basis 0 the nav claims no width of its own, growing into what the
+       row can spare, and a link that does not fit wraps inside the nav and
+       is clipped. The row itself stays one line at every width.
+
+       Grow 999, not 1: .subbar-spacer grows too, and at equal factors it
+       took half the free space and starved the nav into clipping links it
+       had room for (measured at 375px on the landing page). At 999 the
+       nav takes what the row can spare and its own empty tail does the
+       spacer's job; the spacer stays for rows that have no nav. */
+    flex: 999 1 0;
     /* One row of links, never two (Roberto, 28 Aug 2026: a link that would
        wrap should hide instead). The row still flex-wraps, but the box is
        capped at one line-box (0.875rem x 1.4, the size every link in it is
@@ -219,6 +234,26 @@
   }
   .subbar button.subbar-action:disabled {
     color: #8ea3c4; cursor: default; text-decoration: none;
+  }
+
+  /* Short spellings for a crowded ribbon (#144, #145, Roberto's brief of
+     29 Aug 2026): a ribbon control may carry two labels --
+
+       <a href="...">Documentation<span class="subbar-lbl-short">Docs</span>
+       </a>  is wrong; the pair is two spans:
+       <span class="subbar-lbl">Documentation</span>
+       <span class="subbar-lbl-short">Docs</span>
+
+     -- and the ribbon shows exactly one: the full spelling above 480px,
+     the short one at or below, where the phone-width media queries
+     already move the property mark and hide the subtitle. The app says
+     App / Docs / Clear inputs there; the Numerical Solver says Docs.
+     Same two-spellings idea as the property mark and learn's version
+     key, shared here so every property abbreviates at the same width. */
+  .subbar .subbar-lbl-short { display: none; }
+  @media (max-width: 480px) {
+    .subbar .subbar-lbl { display: none; }
+    .subbar .subbar-lbl-short { display: inline; }
   }
 
   /* The property mark (#135, Roberto's brief of 28 Aug 2026): which of
@@ -370,9 +405,9 @@
      mode toggle and the theme toggle. The shared file styles the bands
      and the link vocabulary; these are the "genuinely local controls"
      it leaves to each property. */
-  .sheet-id{font:600 .95rem var(--sans);color:#fff;white-space:nowrap}
-  .sheet-id .fx{font-family:Georgia,"Times New Roman",serif;font-style:italic;
-    color:var(--sky);font-weight:400}
+  /* .sheet-id is gone (#145): the sheet's name lives in the property
+     mark now, and the ribbon carries only Documentation, the mode
+     toggle and the theme toggle. */
   /* height 2.5rem: the ribbon's standard control height (the app's theme
      toggle, learn's version picker), so the band measures the same here
      as on the other properties. Shorter buttons shrank the whole band to
@@ -471,19 +506,23 @@
         <!-- The property mark (#135): one word, two spellings, exactly
              one shown -- the top form on wide screens, this slot form
              on phones. Styled by the shared banner.css. -->
-        <p class="property-mark property-mark-slot">Numerical</p>
+        <p class="property-mark property-mark-slot">Numerical Solver</p>
       </div>
     </div>
-    <span class="property-mark property-mark-top">Numerical</span>
+    <span class="property-mark property-mark-top">Numerical Solver</span>
   </div>
 </header>
 
 <div class="subbar">
   <div class="subbar-inner">
-    <span class="sheet-id">Numerical <span class="fx">Solver</span></span>
+    <!-- #145 (Roberto, 29 Aug 2026): the sheet's name moved into the
+         property mark up in the top band ("Numerical Solver"), so the
+         ribbon dropped both the sheet-id and the "Symbulator App" link
+         -- the scorpion in the lockup still leads out, and the app's
+         Explore Numerically card is the way in. Documentation is the
+         one link left, with the shared short spelling at phone widths. -->
     <nav>
-      <a href="/">Symbulator App</a>
-      <a href="https://learn.symbulator.com">Documentation</a>
+      <a href="https://learn.symbulator.com"><span class="subbar-lbl">Documentation</span><span class="subbar-lbl-short">Docs</span></a>
     </nav>
     <span class="subbar-spacer"></span>
     <div class="mode" role="group" aria-label="mode">
