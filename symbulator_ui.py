@@ -320,7 +320,8 @@ def expand_defines_in_desc(desc, table):
     is the same map prepare_inputs uses to draw that line."""
     if not desc or not table:
         return desc
-    from symbulator.elements import parse_circuit, _IDENTIFIER_FIELD_IDX
+    from symbulator.elements import (parse_circuit, _IDENTIFIER_FIELD_IDX,
+                                     TWO_PORT_KINDS)
     try:
         elements = parse_circuit(desc, expand_si=False)
     except Exception:
@@ -328,6 +329,18 @@ def expand_defines_in_desc(desc, table):
         # -- expanding blind would have to treat names and nodes as values.
         return desc
     changed = False
+    # A two-port without its parameter term has the tacit one,
+    # [<name>11,<name>12,<name>21,<name>22] (#163). When Define supplies
+    # any of those names, the term is materialised so the definitions
+    # have somewhere to land -- Case B of the design. Untouched
+    # otherwise, so a description that never mentions parameters is
+    # echoed exactly as typed.
+    for el in elements:
+        if el.kind in TWO_PORT_KINDS and len(el.fields) == 2:
+            names = [f"{el.name}{ij}" for ij in ("11", "12", "21", "22")]
+            if any(n in table for n in names):
+                el.fields.append("[" + ",".join(names) + "]")
+                changed = True
     for el in elements:
         ident = _IDENTIFIER_FIELD_IDX.get(el.kind, ())
         for idx in range(len(el.fields)):
