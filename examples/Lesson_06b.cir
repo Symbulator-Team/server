@@ -133,7 +133,7 @@ units: yes
 
 [Bo2's Example 5.7 (Op Amp, step)]
 
-e,1,0,1
+e,1,0,u(t)
 o,1,2,o
 c,2,o,1/8,0
 r2,2,o,2
@@ -148,7 +148,7 @@ units: yes
 
 [Bo2's Drill Exercise 5.8 (Op Amp, step)]
 
-e,1,0,1
+e,1,0,u(t)
 r1,1,2,1
 r2,2,o,2
 c,2,o,1/8,0
@@ -228,7 +228,7 @@ units: yes
 
 [Bo2's Figure 5.36 (TR, second interval)]
 
-e,1,0,-4
+e,1,0,-4*u(t)
 r3,1,2,3
 r5,2,3,5
 c,3,0,1,2
@@ -258,7 +258,7 @@ units: yes
 
 [Bo2's Drill Exercise 5.11 (TR)]
 
-e,1,0,3
+e,1,0,3*u(t)
 o,1,2,o
 c,2,o,1/4,-2
 r2,2,o,2

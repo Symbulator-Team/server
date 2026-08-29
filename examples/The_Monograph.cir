@@ -20,7 +20,7 @@ r6,4,0,2'k
 
 analysis: fd
 note: The circuit that closed the 1999 paper and the thesis's Problem 87: a two-stage amplifier whose gain Bode diagram Prof. Yee asked for. An FD solve returns every node voltage in s, and the gain is the Evaluate line, v4/v5. For the Bode plot itself, set vg to 1 (so v_4 is the transfer function) and plot v_4 between 1.6e3 and 1.6e12 Hz. Three minutes on the TI-89 in 2001; under a second here.
-rounding: exact
+rounding: approx
 si: no
 units: yes
 evaluate: v4/v5

@@ -94,6 +94,7 @@ r1,1,2,100
 l1,2,3,0.1
 c1,3,0,1e-6
 
+rounding: approx
 analysis: ac
 note: An AC (phasor) solve: a series RLC at 1000 rad/s. The answers are complex; tick 'Show AC answers as polar phasors' in Settings to read them as amplitude and angle.
 omega: 1000
@@ -101,10 +102,11 @@ omega: 1000
 
 [RC step response (TR)]
 
-e1,1,0,5
+e1,1,0,5*u(t)
 r1,1,2,1000
 c1,2,0,1e-6
 
+rounding: approx
 analysis: tr
 note: A transient analysis: the classic RC charging curve. The limited-results box asks for just v_2, which comes back 5 - 5e^(-1000t).
 variables: v_2
@@ -115,6 +117,7 @@ variables: v_2
 l1,0,2,0.2,3
 r1,2,0,100
 
+rounding: approx
 analysis: tr
 note: A transient with an initial condition: the inductor starts at 3 A (the fifth field of its description) and discharges through the resistor. i_l1 decays exponentially.
 variables: i_l1
@@ -182,7 +185,7 @@ unknowns: r_b
 
 [RC step response, plotted (plot vs. time)]
 
-e1,1,0,5
+e1,1,0,5*u(t)
 r1,1,2,1'k
 c1,2,0,1'u
 

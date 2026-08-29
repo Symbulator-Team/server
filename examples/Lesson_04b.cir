@@ -214,7 +214,7 @@ note: Find the Thévenin equivalent between nodes 1 and 0.
 tool: th
 n1: 1
 n2: 0
-rounding: exact
+rounding: approx
 si: no
 units: yes
 
@@ -335,7 +335,7 @@ note: Two hidden sources supply the -6 V and 10 V rails. Find the Thévenin equi
 tool: th
 n1: 1
 n2: 0
-rounding: exact
+rounding: approx
 si: yes
 units: yes
 
@@ -605,7 +605,7 @@ note: Find the Thévenin equivalent left of a-b, then the current through RL for
 tool: th
 n1: 3
 n2: 0
-rounding: exact
+rounding: approx
 si: no
 units: yes
 evaluate: vth/(req+6)
@@ -642,7 +642,7 @@ note: Find the Norton equivalent external to RL, then the load current for RL of
 tool: th
 n1: 2
 n2: 0
-rounding: exact
+rounding: approx
 si: no
 units: yes
 evaluate: vth/(req+0)
@@ -741,7 +741,7 @@ note: Find the Norton equivalent between nodes 4 and 0, then the load current at
 tool: th
 n1: 4
 n2: 0
-rounding: exact
+rounding: approx
 si: no
 units: yes
 evaluate: ino*req/(req+0)

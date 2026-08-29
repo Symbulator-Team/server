@@ -301,7 +301,7 @@ o3,0,6,o
 
 analysis: dc
 note: With v1 = 2 V and v2 = 1.5 V, find vo: 9 V.
-rounding: exact
+rounding: approx
 si: no
 units: yes
 

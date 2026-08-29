@@ -16,7 +16,7 @@ s4,3,5
 
 analysis: dc
 note: In this problem, we use short circuits (the s element) for the first time — four of them, one for each current the problem asks about. Find i1, i2, i3 and i4, on the current through line of each short's block.
-rounding: exact
+rounding: approx
 si: no
 units: yes
 

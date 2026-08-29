@@ -727,7 +727,7 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
                 new_entries = []
                 for entry in entries:
                     raw = _IMPLICIT_IMAGINARY.sub(r"\1*\2", entry)
-                    if re.search(r"(?<![\w.])[iIjJ](?![\w])", raw):
+                    if re.search(r"(?<![\w.])[iIJ](?![\w])", raw):
                         try:
                             expr = safe_sympify(expand_shorthand(raw, si=True))
                             if expr.has(sp.I):
@@ -755,7 +755,19 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
             # letter following the unit already disqualifies it, so `3irx`
             # and `2*i_r1` are untouched either way.
             raw = _IMPLICIT_IMAGINARY.sub(r"\1*\2", original)
-            if not re.search(r"(?<![\w.])[iIjJ](?![\w])", raw):
+            # Only a value that actually spells the imaginary unit as
+            # `i`, `I` or `J` needs respelling. One already written in
+            # j-form is left exactly as typed (#169): rewriting it
+            # anyway produced a "normalised '8-6j' to '8 - 6j'" note on
+            # nearly every AC example in the library -- a yellow box
+            # for a spacing change -- and, worse, the sympify-and-
+            # reprint step *evaluated* structure, collapsing a typed
+            # `4+20j+pr(16,...)` into an opaque fraction. The same
+            # guard skips any value containing a function call: calls
+            # cannot be reprinted without evaluating them.
+            if not re.search(r"(?<![\w.])[iIJ](?![\w])", raw):
+                continue
+            if re.search(r"[A-Za-z_]\w*\s*\(", raw):
                 continue
             try:
                 expr = safe_sympify(expand_shorthand(raw, si=True))
@@ -819,12 +831,19 @@ def _hijack_notes(elements, reserve_imaginary: bool = True):
     "hijacked" when they were in fact read as ordinary variables."""
     from symbulator.si_prefix import hijacked_names
 
+    # A name that belongs to the circuit is obviously the circuit's --
+    # a feedback resistor named `rf` is the resistor, not SymPy's rising
+    # factorial -- so no note for those (#169). The note keeps its job
+    # for names that shadow SymPy and name nothing in the circuit.
+    own = {el.name for el in elements}
     seen, notes = set(), []
     for el in elements:
         for idx in (2, 3):
             if idx >= len(el.fields):
                 continue
             for name in hijacked_names(el.fields[idx], reserve_imaginary=reserve_imaginary):
+                if name.lower() in own:
+                    continue
                 if name not in seen:
                     seen.add(name)
                     notes.append(
@@ -1373,6 +1392,13 @@ def ambiguous_answer_names(elements, alias: dict) -> list:
                     continue
                 symbols.add(m.group(0))
             for s in sorted(symbols & set(alias)):
+                # An element valued by its own name is the documented
+                # idiom ("it is not a problem that the symbolic value is
+                # the same as the name" -- Lesson 2), not an unusual
+                # answer reference: no note (#170, the transistor bias
+                # model's emitter resistor `re1,e,0,re1`).
+                if s.lower() == el.name:
+                    continue
                 quantity = s[0]
                 if (el.kind in _CONTROL_KINDS
                         and quantity in _CONTROL_QUANTITIES):

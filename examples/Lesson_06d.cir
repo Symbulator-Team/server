@@ -121,7 +121,7 @@ units: yes
 
 [Bo2's Example 6.5 (Plot)]
 
-e,1,0,2/5
+e,1,0,2/5*u(t)
 r,1,2,12
 l,2,3,2,0
 c,3,0,1/50,0
@@ -140,7 +140,7 @@ plotpoints: 300
 
 [Bo2's Drill Exercise 6.7]
 
-e,1,0,3
+e,1,0,3*u(t)
 r,1,2,5
 l,2,3,1/2,0
 c,3,0,1/8,0
@@ -183,14 +183,14 @@ units: yes
 
 [Bo2's Example 6.6 (Plot, TR)]
 
-e,1,0,12.
+e,1,0,12.0*u(t)
 r,1,2,3
 l,2,3,1,4
 c,3,0,1'µ,0
 
 analysis: tr
 note: Second interval: plot the inductor's voltage between 0 and 5 ms. Worth plotting: a 12 V source, and the inductor swings to 3990.6 V at t = 1.57 ms -- which is the chapter's 'around 1.57 ms ... 3991 volts', measured.
-rounding: exact
+rounding: approx
 si: no
 units: yes
 plottool: time
@@ -202,7 +202,7 @@ plotpoints: 300
 
 [Bo2's Drill Exercise 6.9]
 
-j,0,1,1
+j,0,1,u(t)
 r,1,0,1
 l,1,0,2,0
 c,1,0,1/2,0
@@ -216,7 +216,7 @@ units: yes
 
 [Bo2's Figure 6.23 (Op Amp)]
 
-e,3,0,1
+e,3,0,u(t)
 r1,3,1,1
 r2,1,2,1
 ca,2,0,1/5,0
@@ -232,7 +232,7 @@ units: yes
 
 [Bo2's Drill Exercise 6.10 (Op Amp)]
 
-e,3,0,3
+e,3,0,3*u(t)
 r1,3,1,1
 r2,1,2,1
 ca,2,0,25/16,0

@@ -41,7 +41,7 @@ r6,2,0,3
 
 analysis: dc
 note: In this problem, we use the [,] parallel-reduction shorthand for the first time, folding the 6 and 3 ohm resistors into one equivalent; the same circuit was solved element by element in Lesson 1. Evaluate -ie for the current the source delivers: 3 A.
-rounding: exact
+rounding: approx
 si: no
 units: yes
 evaluate: -ie
@@ -558,7 +558,7 @@ ed,4,0,2*vr4
 
 analysis: dc
 note: Find the voltage at every node.
-rounding: exact
+rounding: approx
 si: no
 units: yes
 
@@ -576,7 +576,7 @@ r2,2,4,1/2
 
 analysis: dc
 note: Find the voltage at every node.
-rounding: exact
+rounding: approx
 si: no
 units: yes
 
