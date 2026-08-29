@@ -63,6 +63,7 @@ SOLVE_TIMEOUT_S = float(os.environ.get("SYMBULATOR_TIMEOUT", "25"))
 # solving runs in a killable child process.
 from symbulator_ui import (                                   # noqa: E402
     solve_ui, evaluate_ui, solveq_ui, mini_tool_ui, MINI_TOOLS,
+    spice_ui,
     normalise_imaginary,
     plot_time_ui, bode_ui,
     _validate, _validate_extras, _expand_and, _clean_digits, _exc_text,
@@ -895,6 +896,28 @@ def api_minitool():
         return jsonify({"ok": False, "error": payload,
                         "elapsed": elapsed}), 422
     return jsonify({"ok": True, "elapsed": elapsed, **payload})
+
+
+@app.post("/api/spice")
+def api_spice():
+    """Translate between Symbulator notation and a SPICE netlist (the
+    SPICE Translator card, #160). Pure parsing, no solve, so it runs
+    in-process; the solver's own guarded sympify vets every value."""
+    data = request.get_json(silent=True) or {}
+    direction = str(data.get("direction", "")).strip()
+    text = data.get("text", "")
+
+    if direction not in ("to_spice", "from_spice"):
+        return jsonify({"ok": False, "error": "Unknown direction."}), 400
+    if not isinstance(text, str) or len(text) > 20000:
+        return jsonify({"ok": False,
+                        "error": "The circuit text is too long."}), 400
+
+    payload = spice_ui(direction, text)
+    if not payload.get("ok"):
+        return jsonify(payload), 422
+    return jsonify({"ok": True, "output": payload["output"],
+                    "warnings": payload.get("warnings") or []})
 
 
 if __name__ == "__main__":

@@ -3257,3 +3257,26 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
         return _err(_exc_text(exc))
 
 
+
+
+def spice_ui(direction: str, text: str):
+    """Translate between Symbulator notation and a SPICE netlist (the
+    SPICE Translator card, #160). `direction` is "to_spice" or
+    "from_spice"; the answer carries the translated text and the
+    translator's warnings -- elements or values the destination cannot
+    express are reported there, never silently mistranslated."""
+    try:
+        from symbulator.spice import to_spice, from_spice
+
+        text = (text or "").strip()
+        if not text:
+            return _err("Enter a circuit first.")
+        if direction == "to_spice":
+            out, warnings = to_spice(text)
+        elif direction == "from_spice":
+            out, warnings = from_spice(text)
+        else:
+            return _err(f"Unknown direction `{direction}`.")
+        return _ok({"output": out, "warnings": warnings})
+    except Exception as exc:  # noqa: BLE001
+        return _err(_exc_text(exc))
