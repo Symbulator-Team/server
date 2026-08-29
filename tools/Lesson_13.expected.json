@@ -1,12 +1,13 @@
 {
- "AS7's Example 19.1 (z parameters)": "z11 = 60, z12 = 40, z21 = 40, z22 = 70",
- "AS7's Example 19.2 (a two-port as an element)": "iz1 = 2 at 0 deg, iz2 = 1 at -90 deg",
- "AS7's Example 19.3 (y parameters)": "y11 = 3/4, y12 = -1/2, y21 = -1/2, y22 = 5/8",
- "AS7's Example 19.4 (y parameters around a dependent source)": "y11 = 3/20, y12 = -1/20, y21 = -1/4, y22 = 1/4",
- "AS7's Example 19.5 (h parameters)": "h11 = 4, h12 = 2/3, h21 = -2/3, h22 = 1/9",
- "AS7's Example 19.6 (Thevenin at the output port)": "x = -29.69 V and y = 51.46 Ohm",
- "AS7's Example 19.7 (g parameters in s)": "g11 = 1/(s+1), g12 = -1/(s+1), g21 = 1/(s+1), g22 = (s**2+s+1)/(s*(s+1))",
- "AS7's Practice Problem 19.7 (a ladder in s)": "g11 = (s+2)/(s**2+3*s+1), g12 = -1/(s**2+3*s+1), g21 = 1/(s**2+3*s+1), g22 = s*(s+2)/(s**2+3*s+1)",
- "AS7's Example 19.8 (transmission parameters)": "a11 = 1.765, a12 = 15.29, a21 = 0.0588, a22 = 1.176",
- "Gain Example 1 (the gain tool)": "the gain tool gives Av = 55.56, Ai = -9.615, Ap = 534.2 and Zi = 3.462 Ohm"
+  "AS7's Example 19.1 (z parameters)": "z11 = 60, z12 = 40, z21 = 40, z22 = 70",
+  "AS7's Example 19.2 (a two-port as an element)": "i_z1 = 2 at 0 deg, i_z2 = 1 at -90 deg",
+  "AS7's Example 19.3 (y parameters)": "y11 = 3/4, y12 = -1/2, y21 = -1/2, y22 = 5/8",
+  "AS7's Example 19.4 (y parameters around a dependent source)": "y11 = 3/20, y12 = -1/20, y21 = -1/4, y22 = 1/4",
+  "AS7's Example 19.5 (h parameters)": "h11 = 4, h12 = 2/3, h21 = -2/3, h22 = 1/9",
+  "AS7's Example 19.6 (Thevenin at the output port)": "vth = -29.69 V and req = 51.46 Ohm",
+  "AS7's Example 19.7 (g parameters in s)": "g11 = 1/(s+1), g12 = -1/(s+1), g21 = 1/(s+1), g22 = (s**2+s+1)/(s*(s+1))",
+  "AS7's Practice Problem 19.7 (a ladder in s)": "g11 = (s+2)/(s**2+3*s+1), g12 = -1/(s**2+3*s+1), g21 = 1/(s**2+3*s+1), g22 = s*(s+2)/(s**2+3*s+1)",
+  "AS7's Example 19.8 (transmission parameters)": "a11 = 1.765, a12 = 15.29, a21 = 0.0588, a22 = 1.176",
+  "Gain Example 1 (the gain tool)": "the gain tool gives Av = 55.56, Ai = -9.615, Ap = 534.2 and Zi = 3.462 Ohm",
+  "Gain Example 2 (z parameters)": "the gain tool gives Av = 4, Ai = -2, Ap = 8 and Zi = 1 Ohm"
 }

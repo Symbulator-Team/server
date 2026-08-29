@@ -687,7 +687,8 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
     should be rewritten. `domain` defaults to "ac" so any caller that
     hasn't been updated to pass it keeps today's behaviour."""
     import sympy as sp
-    from symbulator.elements import parse_circuit, _IDENTIFIER_FIELD_IDX
+    from symbulator.elements import (parse_circuit, _IDENTIFIER_FIELD_IDX,
+                                     TWO_PORT_KINDS)
     from symbulator.si_prefix import safe_sympify, expand_shorthand
 
     if domain != "ac":
@@ -710,6 +711,38 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
             if idx in _IDENTIFIER_FIELD_IDX.get(el.kind, ()):
                 continue                      # a node or element reference
             original = el.fields[idx]
+            # A two-port's parameter term (#163) is a LIST, not a value:
+            # sympifying it whole would evaluate the pr(...) encoding as
+            # the parallel-combination function and collapse the four
+            # entries into one number. Normalise each entry on its own
+            # and reassemble in the bracket notation the user types.
+            if idx == 2 and el.kind in TWO_PORT_KINDS:
+                from symbulator.elements import two_port_param_texts
+                try:
+                    entries = two_port_param_texts(el)
+                except Exception:
+                    continue
+                if not entries:
+                    continue
+                new_entries = []
+                for entry in entries:
+                    raw = _IMPLICIT_IMAGINARY.sub(r"\1*\2", entry)
+                    if re.search(r"(?<![\w.])[iIjJ](?![\w])", raw):
+                        try:
+                            expr = safe_sympify(expand_shorthand(raw, si=True))
+                            if expr.has(sp.I):
+                                entry_new = _plain_with_j(expr)
+                                if entry_new != entry:
+                                    notes.append(
+                                        f"normalised '{entry}' to "
+                                        f"'{entry_new}' in {el.name}")
+                                    entry = entry_new
+                                    changed = True
+                        except Exception:
+                            pass
+                    new_entries.append(entry)
+                el.fields[idx] = "[" + ",".join(new_entries) + "]"
+                continue
             # `10+5i` the way it is written on paper: a number against the
             # imaginary unit with no operator between them. SymPy will not
             # parse that -- it reads as one malformed literal -- so put the

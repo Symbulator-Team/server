@@ -22,16 +22,12 @@ units: yes
 [AS7's Example 19.2 (a two-port as an element)]
 
 e,1,0,100
-z,1,2
+z,1,2,[40,20j,30j,50]
 r,2,0,10
 
 analysis: ac
-note: In this problem, we use a two-port as an element (z,1,2) for the first time. Find I1 and I2 — aa(iz1) and aa(iz2). The four parameters are pinned in Expert Mode, which works here because this is a plain solve rather than an equivalent.
+note: In this problem, we use a two-port as an element for the first time, with its four parameters riding in the description's fourth term (z,1,2,[40,20j,30j,50] — the order is 11, 12, 21, 22). Find I1 and I2 — aa(iz1) and aa(iz2).
 omega: omega
-equations: z11 = 40
-equations: z12 = 20j
-equations: z21 = 30j
-equations: z22 = 50
 rounding: 4
 si: no
 units: yes
@@ -95,23 +91,16 @@ units: yes
 
 e,1,0,60
 r,1,2,40
-h,2,3
+h,2,3,[1000,-2,10,2e-4]
 
 analysis: dc
-note: Find the Thévenin equivalent at the output port of a circuit built around an h-parameter two-port. The equivalent tools take no Expert Mode equations, so the answers come back as formulas in the h parameters and the numbers go in afterwards. Naming the four as unknowns is what makes their equations bite.
+note: Find the Thévenin equivalent at the output port of a circuit built around an h-parameter two-port. The parameters ride in the description's fourth term, so they reach the equivalent tool like any other value and the answers come straight back as numbers: vth = -29.69 V, req = 51.46 ohm. (Leave the fourth term off and the same run answers with formulas in the four parameters instead.)
 tool: th
 n1: 3
 n2: 0
 rounding: 4
 si: no
 units: yes
-solve_equations: x = vth
-solve_equations: y = req
-solve_equations: h11 = 1000
-solve_equations: h12 = -2
-solve_equations: h21 = 10
-solve_equations: h22 = 2e-4
-solve_unknowns: x, y, h11, h12, h21, h22
 
 
 [AS7's Example 19.7 (g parameters in s)]
@@ -171,14 +160,10 @@ units: yes
 es,3,0,1
 rs,3,1,2
 rl,2,0,20
-y,1,2
+y,1,2,[0.4,-0.002,-5,0.04]
 
 analysis: dc
-note: Find Gv, Gi, Gp and Zin for the loaded y-parameter two-port: 55.56, -9.615, 534.2 and 3.462 ohm. The gains come from the gain mini-tool, given v1, iy1, v2 and iy2 -- not something an input file can carry, so they are recorded here. The source is 1 V because its value cancels out of a gain.
-equations: y11 = 0.4
-equations: y12 = -0.002
-equations: y21 = -5
-equations: y22 = 0.04
+note: Find Gv, Gi, Gp and Zin for the loaded y-parameter two-port: 55.56, -9.615, 534.2 and 3.462 ohm. The parameters ride in the description; the gains come from the gain mini-tool, given v1, iy1, v2 and iy2 -- not something an input file can carry, so they are recorded here. The source is 1 V because its value cancels out of a gain.
 rounding: 4
 si: no
 units: yes
@@ -189,14 +174,10 @@ units: yes
 es,3,0,1
 rs,3,1,5
 rl,2,0,2
-z,1,2
+z,1,2,[4,1.5,10,3]
 
 analysis: dc
-note: Find Gv, Gi, Gp and Zin again. The second gain example, restored to the chapter on 27 Aug 2026 -- both 2023 pages carried it and the conversion dropped it. Same shape as the first with z parameters instead of y. Given v1, iz1, v2 and iz2, the gain mini-tool answers Av 4, Ai -2, Ap 8 and Zi 1 ohm.
-equations: z11 = 4
-equations: z12 = 1.5
-equations: z21 = 10
-equations: z22 = 3
+note: Find Gv, Gi, Gp and Zin again. The second gain example, restored to the chapter on 27 Aug 2026 -- both 2023 pages carried it and the conversion dropped it. Same shape as the first with z parameters instead of y, riding in the description. Given v1, iz1, v2 and iz2, the gain mini-tool answers Av 4, Ai -2, Ap 8 and Zi 1 ohm.
 rounding: 4
 si: no
 units: yes
