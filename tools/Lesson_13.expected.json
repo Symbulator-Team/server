@@ -1,6 +1,6 @@
 {
   "AS7's Example 19.1 (z parameters)": "z11 = 60, z12 = 40, z21 = 40, z22 = 70",
-  "AS7's Example 19.2 (a two-port as an element)": "i_z1 = 2 at 0 deg, i_z2 = 1 at -90 deg",
+  "AS7's Example 19.2 (a two-port as an element)": "iz1 = 2 at 0 deg, iz2 = 1 at -90 deg",
   "AS7's Example 19.3 (y parameters)": "y11 = 3/4, y12 = -1/2, y21 = -1/2, y22 = 5/8",
   "AS7's Example 19.4 (y parameters around a dependent source)": "y11 = 3/20, y12 = -1/20, y21 = -1/4, y22 = 1/4",
   "AS7's Example 19.5 (h parameters)": "h11 = 4, h12 = 2/3, h21 = -2/3, h22 = 1/9",

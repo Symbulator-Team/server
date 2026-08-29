@@ -1746,6 +1746,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                 return values.get(f"v_{n}")
 
             element_cards = []
+            from symbulator.elements import TWO_PORT_KINDS as _TP_KINDS
             for el in sorted(elements, key=lambda e: (_KIND_ORDER.get(e.kind, 99),
                                                       _natural_key(e.name))):
                 items = []
@@ -1755,6 +1756,22 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                     items.append({"sym": "i", "label": "current through",
                                   "plain": plain, "latex": latex})
                     used.add(ikey)
+                # A two-port has no single branch current: it has one per
+                # port, i_<name><node>, the current *entering the two-port*
+                # at that node (the engine stamps it as leaving the node
+                # into the block). They used to fall through to the
+                # catch-all section and show under "Expert mode unknowns",
+                # which they are not -- Roberto, 29 Aug 2026 (#168).
+                if el.kind in _TP_KINDS:
+                    for node in (el.n1, el.n2):
+                        key = f"i_{el.name}{node}"
+                        if key in values:
+                            plain, latex = fmt(values[key], "A")
+                            items.append({"sym": "i",
+                                          "sub": f"{el.name}{node}",
+                                          "label": f"current into port at node {node}",
+                                          "plain": plain, "latex": latex})
+                            used.add(key)
                 # Voltage drop across the element: stored as v_<name> by
                 # symbulator >= 0.2, else derived from the node voltages.
                 if el.kind in "rlcejs":

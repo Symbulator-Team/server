@@ -47,7 +47,8 @@ def shown_answers(r):
     for el in r.get("elements") or []:
         name = el.get("name", "")
         for item in el.get("items") or []:
-            out[str(item.get("sym", "")) + name] = item.get("plain", "")
+            sub = item.get("sub") or name    # two-port rows carry their own
+            out[str(item.get("sym", "")) + sub] = item.get("plain", "")
     for ex in r.get("extras") or []:
         if ex.get("name"):
             out[ex["name"]] = ex.get("plain", "")

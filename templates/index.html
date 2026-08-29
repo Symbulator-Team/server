@@ -1742,39 +1742,6 @@ units: yes</pre>
     </details>
   </div>
 
-  <!-- SPICE Translator (#160): the two notations side by side,
-       translate either way. Standalone like Mini-Tools -- it reads
-       nothing from a solve, so it is active from the start. Warnings
-       name every element or value the destination notation cannot
-       express: the translation is partial and says so, never wrong. -->
-  <div class="card" id="spiceCard">
-    <details id="spiceBox">
-      <summary class="results-h section-toggle">SPICE Translator</summary>
-      <p class="hint" style="margin:.6rem 0 0">
-        Translate a circuit between Symbulator notation and a SPICE
-        netlist (ngspice, LTspice, PSpice). Whatever the destination
-        notation cannot express is reported below and left out, rather
-        than mistranslated. <strong>This translator is in beta</strong> —
-        check the translated circuit before relying on it.
-      </p>
-      <div class="row" style="margin-top:.7rem">
-        <div>
-          <label for="spiceSym">Symbulator Notation</label>
-          <textarea id="spiceSym" spellcheck="false" placeholder="e1,1,0,5&#10;r1,1,2,1'k&#10;r2,2,0,1'k"></textarea>
-        </div>
-        <div>
-          <label for="spiceNet">SPICE Notation</label>
-          <textarea id="spiceNet" spellcheck="false" placeholder="V1 1 0 5&#10;R1 1 2 1k&#10;R2 2 0 1k"></textarea>
-        </div>
-      </div>
-      <div class="actions" style="margin-top:.7rem">
-        <button id="spiceFromBtn">SPICE to Symbulator</button>
-        <button id="spiceToBtn">Symbulator to SPICE</button>
-      </div>
-      <div id="spiceWarn" style="margin-top:.5rem"></div>
-    </details>
-  </div>
-
   <div class="card" id="plotCard">
     <details id="plotBox">
       <summary class="results-h section-toggle">Plot</summary>
@@ -1878,6 +1845,39 @@ units: yes</pre>
         <code>numerical_system.json</code> — drop that file anywhere on
         the Numerical Solver page that just opened, and it loads.
       </p>
+    </details>
+  </div>
+
+  <!-- SPICE Translator (#160): the two notations side by side,
+       translate either way. Standalone like Mini-Tools -- it reads
+       nothing from a solve, so it is active from the start. Warnings
+       name every element or value the destination notation cannot
+       express: the translation is partial and says so, never wrong. -->
+  <div class="card" id="spiceCard">
+    <details id="spiceBox">
+      <summary class="results-h section-toggle">SPICE Translator</summary>
+      <p class="hint" style="margin:.6rem 0 0">
+        Translate a circuit between Symbulator notation and a SPICE
+        netlist (ngspice, LTspice, PSpice). Whatever the destination
+        notation cannot express is reported below and left out, rather
+        than mistranslated. <strong>This translator is in beta</strong> —
+        check the translated circuit before relying on it.
+      </p>
+      <div class="row" style="margin-top:.7rem">
+        <div>
+          <label for="spiceSym">Symbulator Notation</label>
+          <textarea id="spiceSym" spellcheck="false" placeholder="e1,1,0,5&#10;r1,1,2,1'k&#10;r2,2,0,1'k"></textarea>
+        </div>
+        <div>
+          <label for="spiceNet">SPICE Notation</label>
+          <textarea id="spiceNet" spellcheck="false" placeholder="V1 1 0 5&#10;R1 1 2 1k&#10;R2 2 0 1k"></textarea>
+        </div>
+      </div>
+      <div class="actions" style="margin-top:.7rem">
+        <button id="spiceToBtn">Symbulator to SPICE</button>
+        <button id="spiceFromBtn">SPICE to Symbulator</button>
+      </div>
+      <div id="spiceWarn" style="margin-top:.5rem"></div>
     </details>
   </div>
 
@@ -2080,7 +2080,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-29 10:39 UTC
+  Symbulator 9 version 2026-08-29 10:51 UTC
 </footer>
 
 <script>
@@ -3623,8 +3623,12 @@ async function renderSolveResult(data, idx) {
         lab.className = 'el-label';
         lab.textContent = it.label;
         item.appendChild(lab);
-        item.appendChild(tex(`${it.sym}_{${el.name}} = ${it.latex}`,
-                             `${it.sym}_${el.name} = ${it.plain}`));
+        // A row's symbol is subscripted with the element name, except
+        // where the item carries its own subscript -- a two-port's two
+        // port currents are i_z1 and i_z2, one per port node (#168).
+        const sub = it.sub || el.name;
+        item.appendChild(tex(`${it.sym}_{${sub}} = ${it.latex}`,
+                             `${it.sym}_${sub} = ${it.plain}`));
         card.appendChild(item);
         count++;
       }
