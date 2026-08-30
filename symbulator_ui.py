@@ -1129,12 +1129,60 @@ def _sympify_row(sp, text):
         return text
 
 
+def _has_exact_form(sp, expr, polar: bool) -> bool:
+    """Is there an exact rendering of `expr` worth showing beside the
+    approximation? (#181)
+
+    No, in two cases, and the mode then folds to plain approximate:
+
+    - **Polar display.** `_polar_format` numericises. A phasor has no
+      exact polar form, and asking for one with the rounding off yields
+      2.00000000000000 angle 180.000000000000 -- which is *set* as the
+      same 2.0 angle 180.0 the rounded half is. Two identical halves.
+    - **The value already carries a Float.** An approximate input (2E3,
+      or any answer built from one) was never exact to begin with; its
+      "exact" half is only a longer decimal.
+    """
+    if polar:
+        return False
+    try:
+        return not expr.atoms(sp.Float)
+    except Exception:
+        return True
+
+
+def _is_whole(sp, expr) -> bool:
+    """A whole number, real or complex -- nothing to round to. (#181)
+
+    Distinct from `_has_exact_form`: here the exact form is real and is
+    the *better* of the two, so the fold keeps it. A real whole number
+    already folds on the string test, both halves printing "5"; a
+    complex one does not, because the approximation writes 1.0j where
+    the exact form writes 1j -- a bracket that tells the reader nothing,
+    and the wrong half to keep if it were dropped the other way.
+    """
+    try:
+        re_, im_ = expr.as_real_imag()
+        return bool(re_.is_Integer and im_.is_Integer)
+    except Exception:
+        return False
+
+
 def _join_dual(exact, approximate):
-    """(plain, latex) for the pair, or `exact` alone when the two would
-    read the same -- an answer that is already 0.5 gains nothing from
-    "0.5 (= 0.5)", and a whole number even less."""
-    if approximate is None or approximate[0] == exact[0]:
+    """(plain, latex) for the pair, or one of them alone when the two
+    would read the same.
+
+    Both halves are compared, plain **and** LaTeX. The LaTeX is what the
+    reader sees, and the two can disagree -- a polar phasor prints
+    different plain text for the same rendered value, which is how #181
+    reached Lesson 13 as "2.0 angle 180.0 A (= 2.0 angle 180.0 A)". An
+    answer that is already 0.5 gains nothing from "0.5 (= 0.5)", and a
+    whole number even less.
+    """
+    if approximate is None:
         return exact
+    if approximate[0] == exact[0] or approximate[1] == exact[1]:
+        return approximate
     return (f"{exact[0]}  (≈ {approximate[0]})",
             rf"{exact[1]}\;\;(\approx {approximate[1]})")
 
@@ -1147,19 +1195,27 @@ def _dualise(one, sp, expr, unit, digits, si, polar):
     defaulting to the call's settings precisely so this can override
     them without a second copy of the formatting logic.
     """
-    exact = one(expr, unit, digits=0, si=False, approx=False, polar=polar)
+    def exactly():
+        return one(expr, unit, digits=0, si=False, approx=False, polar=polar)
+
     try:
         settled = sp.simplify(expr)
     except Exception:
         settled = expr
     if getattr(settled, "free_symbols", None):
-        return exact
+        # Symbolic: the exact form is the whole answer, and there is
+        # nothing to approximate.
+        return exactly()
     try:
         approximate = one(expr, unit, digits=digits, si=si, approx=False,
                           polar=polar)
     except Exception:
-        return exact
-    return _join_dual(exact, approximate)
+        return exactly()
+    if not _has_exact_form(sp, settled, polar):
+        return approximate                                          # #181
+    if _is_whole(sp, settled):
+        return exactly()                                            # #181
+    return _join_dual(exactly(), approximate)
 
 
 # --------------------------------------------------------------------------
@@ -3324,6 +3380,10 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
                                          approx=False)
             except Exception:
                 return exact
+            if not _has_exact_form(sp, result, False):            # #181
+                return approximate
+            if _is_whole(sp, result):
+                return exact                                         # #181
             return _join_dual(exact, approximate)
 
         # pf() is answered before the ordinary path, because it wants its
