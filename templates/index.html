@@ -2123,7 +2123,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-30 08:42 UTC
+  Symbulator 9 version 2026-08-30 09:02 UTC
 </footer>
 
 <script>
@@ -2549,6 +2549,15 @@ function showNote(text, isWarning) {
 // per line even when the file wrote them colon-separated, since that's
 // how the textarea reads best.
 function applyCircuit(c) {
+  // #182: the answers on screen belong to the circuit that produced them.
+  // Putting a different circuit in the box without clearing them left the
+  // previous entry's results sitting under the new one as though they were
+  // its own -- and left `last` alive, so the settings listeners' "if (last)
+  // solve()" fired a solve of the new circuit the moment any setting was
+  // touched, before the reader had asked for one. Clearing here rather
+  // than at each call site covers the picker, the ?lesson= deep link and
+  // the session restore alike, and any caller added later.
+  clearResults();
   $('desc').value = (c.desc || '').replace(/:/g, '\n');
   domainSel.value = c.domain || 'dc';
   // The plot type has its own key. Files written before it existed put it
@@ -3999,6 +4008,14 @@ async function solve(suffixChoices) {
     if (data.approx_forced) {
       $('digits').value = 'approx';
       syncSettings();
+      // #182: absorb it into the baseline. This is the app correcting
+      // itself, not the reader editing anything, and leaving it out of
+      // step made the very next load ask "Discard your unsaved changes?"
+      // over a change nobody made -- which teaches people to click
+      // through the warnings that do matter. Only this one key is
+      // rebased, so a reader who *does* have unsaved edits still gets
+      // told about those.
+      if (loadedSnapshot) loadedSnapshot.rounding = roundingLabel();
       refreshEntryLinks(); persistState();
       settingsNote('rounding', 'A decimal or scientific-notation value was found in '
                     + 'the inputs, so rounding switched from exact to approximate.');
