@@ -1,0 +1,662 @@
+# -*- coding: utf-8 -*-
+"""The app's translation machinery (#197).
+
+Symbulator ships as three builds of one template and two of them run no
+Python at all -- the install site and the downloaded ZIP are static files
+with Pyodide in the tab.  So the interface cannot be translated the usual
+server-side way: no Flask-Babel, no gettext, no per-language template.  It
+has to be a **client-side dictionary applied in the page**, which is what
+this script builds.
+
+Three jobs, in the order they run:
+
+``tag``
+    Walk the markup, decide which elements are translation units, and
+    write a ``data-i18n="<key>"`` attribute into each one's start tag.
+    Idempotent: an element that already carries the right key is left
+    alone.
+
+``pack``
+    Read ``i18n/*.json`` and write them into the template between the
+    ``BEGIN/END i18n`` markers as one inline ``<script>``.  Inline
+    because the offline build is a single page opened from a folder: it
+    cannot fetch a dictionary it might not have cached.
+
+``check``
+    Fail if the template's English has drifted from ``i18n/en.json``, if
+    the packed block is stale, or if a language is missing keys.
+
+A translation unit is the OUTERMOST element that contains text and whose
+descendants are all inline (``<code>``, ``<em>``, ``<a>`` ...).  Keying the
+whole paragraph rather than its text nodes is what lets a translation move
+the ``<code>`` or the ``<a>`` to where its own sentence wants it -- word
+order is the first thing that changes between languages, and a
+per-text-node scheme freezes the English one.
+
+Three things are deliberately never a unit:
+
+* anything inside ``class="notranslate"`` -- the wordmark, the build
+  stamp, the syntax columns of the reference tables;
+* anything spanning a ``server-only`` marker, because ``build_local.py``
+  deletes those blocks from the offline page and a dictionary entry
+  holding a copy would paint them straight back in;
+* the regions the page's own JavaScript writes into, listed in
+  ``SKIP_IDS``.  Those translate through ``t()`` instead.
+
+The key is a readable slug plus four hex of the English's SHA-1, so
+editing the English produces a NEW key and the stale translation shows up
+as an orphan in ``check`` instead of quietly staying on screen.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import sys
+import unicodedata
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+SERVER = HERE.parent
+I18N = SERVER / "i18n"
+
+TEMPLATES = ["templates/index.html", "templates/eqsheet.html"]
+
+# Every language the app speaks, in menu order, with the name each one
+# calls itself: a reader looking for their own language is looking for
+# the word they would write, not its English name.
+LANGS = [
+    ("en", "English"),
+    ("es", "Espanol"),
+    ("fr", "Francais"),
+    ("de", "Deutsch"),
+    ("pt", "Portugues"),
+    ("zh", "Zhongwen"),
+    ("ja", "Nihongo"),
+    ("ko", "Hangugeo"),
+    ("eo", "Esperanto"),
+]
+TARGETS = [c for c, _ in LANGS if c != "en"]
+
+INLINE = {
+    "a", "abbr", "b", "br", "code", "em", "i", "kbd", "s", "samp", "small",
+    "span", "strong", "sub", "sup", "time", "u", "var", "wbr",
+}
+VOID = {
+    "area", "base", "br", "col", "embed", "hr", "img", "input", "link",
+    "meta", "param", "source", "track", "wbr",
+}
+NEVER_UNIT = {"code", "pre", "kbd", "samp", "var", "svg", "path", "textarea"}
+OPAQUE = {"script", "style", "svg"}
+
+SKIP_IDS = {
+    "results", "out", "err", "schematic", "plotbox", "solutionPick",
+    "examplesList", "entriesList", "eqTable", "varTable", "residuals",
+    "status", "evalOut", "solveqOut", "miniOut", "spiceOut", "noteBox",
+    "siNote", "roundNote", "expertEqFlag",
+}
+
+TEXT_ATTRS = ("placeholder", "title", "aria-label", "alt")
+
+TAG_RE = re.compile(
+    r"<(/?)([a-zA-Z][-a-zA-Z0-9]*)((?:\"[^\"]*\"|'[^']*'|[^>\"'])*?)(/?)>")
+COMMENT_RE = re.compile(r"<!--.*?-->", re.S)
+# Digits belong in the name class: without them `data-i18n` parses as the
+# attribute `n`, every element looks untagged, and `check` reports the
+# whole page as stale on a file that is perfectly in order.
+ATTR_RE = re.compile(r"([-a-zA-Z0-9_:]+)\s*=\s*\"([^\"]*)\"")
+
+BEGIN = "<!-- BEGIN i18n dictionaries -->"
+END = "<!-- END i18n dictionaries -->"
+
+
+class Node:
+    __slots__ = ("tag", "attrs", "open_start", "open_end", "close_start",
+                 "parent", "kids", "text")
+
+    def __init__(self, tag, attrs, open_start, open_end, parent):
+        self.tag = tag
+        self.attrs = attrs
+        self.open_start = open_start
+        self.open_end = open_end
+        self.close_start = None
+        self.parent = parent
+        self.kids = []
+        self.text = 0
+
+
+def parse(body: str, offset: int = 0):
+    """A deliberately small tag walker.
+
+    Not an HTML parser and not trying to be: it needs source offsets so
+    ``tag`` can be surgical, and these two templates are hand written,
+    well formed, and free of ``<`` inside attribute values.
+    """
+    root = Node("#root", {}, 0, 0, None)
+    cur = root
+    nodes = []
+    pos = 0
+    blanked = COMMENT_RE.sub(lambda m: " " * len(m.group(0)), body)
+    opaque_until = None
+    for m in TAG_RE.finditer(blanked):
+        if opaque_until is not None:
+            if m.group(1) and m.group(2).lower() == opaque_until:
+                opaque_until = None
+            pos = m.end()
+            continue
+        tag = m.group(2).lower()
+        chunk = blanked[pos:m.start()]
+        if chunk.strip():
+            cur.text += len(chunk.strip())
+        pos = m.end()
+        if not m.group(1):
+            if tag in OPAQUE:
+                opaque_until = tag
+                continue
+            attrs = dict(ATTR_RE.findall(m.group(3)))
+            n = Node(tag, attrs, m.start() + offset, m.end() + offset, cur)
+            cur.kids.append(n)
+            nodes.append(n)
+            if tag in VOID or m.group(4):
+                n.close_start = m.end() + offset
+                continue
+            cur = n
+        else:
+            walk = cur
+            while walk is not root and walk.tag != tag:
+                walk = walk.parent
+            if walk is not root:
+                walk.close_start = m.start() + offset
+                cur = walk.parent
+    return root, nodes
+
+
+def subtree_text(n: Node) -> int:
+    return n.text + sum(subtree_text(k) for k in n.kids)
+
+
+def all_inline(n: Node) -> bool:
+    return all(k.tag in INLINE and all_inline(k) for k in n.kids)
+
+
+def is_nt(n: Node) -> bool:
+    return "notranslate" in (n.attrs.get("class") or "").split()
+
+
+def has_nt_inside(n: Node) -> bool:
+    return any(is_nt(k) or has_nt_inside(k) for k in n.kids)
+
+
+def in_skipped(n: Node) -> bool:
+    while n is not None:
+        if n.attrs.get("id") in SKIP_IDS or is_nt(n):
+            return True
+        n = n.parent
+    return False
+
+
+def units(root: Node, src: str):
+    out = []
+
+    def walk(n: Node):
+        for k in n.kids:
+            if k.tag in NEVER_UNIT or in_skipped(k):
+                continue
+            if k.close_start is None:
+                walk(k)
+                continue
+            inner_src = src[k.open_end:k.close_start]
+            if (subtree_text(k) and all_inline(k)
+                    and not has_nt_inside(k)
+                    and "server-only" not in inner_src
+                    and has_words(strip_markup(inner_src))):
+                out.append(k)
+            else:
+                walk(k)
+
+    walk(root)
+    return out
+
+
+def strip_markup(s: str) -> str:
+    return COMMENT_RE.sub("", TAG_RE.sub("", s))
+
+
+def has_words(text: str) -> bool:
+    """Two letters or more -- counted, not required to be adjacent.
+
+    The group headings are spaced capitals, `[ I N P U T S ]`, so a
+    two-consecutive-letters test reads them as having no words at all and
+    leaves the three loudest headings on the page in English.
+    """
+    return len(re.findall(r"[A-Za-z]", text)) >= 2
+
+
+def clean(s: str) -> str:
+    """The text as the dictionary stores it: comments gone, edge
+    whitespace gone, runs of whitespace collapsed to one space.
+
+    Collapsing matters more than it looks.  The template wraps its prose
+    at 72 columns, so the same sentence indented differently would key
+    differently, and a translator would be handed the same words twice.
+    """
+    s = COMMENT_RE.sub("", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def key_for(text: str, tag: str) -> str:
+    words = re.findall(r"[A-Za-z]+", strip_markup(text).lower())
+    slug = "-".join(words[:4])[:28].strip("-") or tag
+    slug = unicodedata.normalize("NFKD", slug).encode("ascii", "ignore").decode()
+    h = hashlib.sha1(text.encode("utf-8")).hexdigest()[:4]
+    return f"{slug}.{h}"
+
+
+def scan(path: Path):
+    """(source, [(node, kind, english)]) for one template."""
+    src = path.read_text(encoding="utf-8")
+    b0 = src.index("<body>")
+    b1 = src.rindex("</body>") + len("</body>")
+    root, nodes = parse(src[b0:b1], offset=b0)
+    found = []
+    for u in units(root, src):
+        found.append((u, "text", clean(src[u.open_end:u.close_start])))
+    for n in nodes:
+        if in_skipped(n):
+            continue
+        for a in TEXT_ATTRS:
+            v = n.attrs.get(a)
+            if v and re.search(r"[A-Za-z]{2}", v):
+                found.append((n, a, v))
+    return src, found
+
+
+# ---------------------------------------------------------------- tag ---
+
+def tag_templates(write: bool) -> tuple[dict, list]:
+    """Give every unit its data-i18n attribute; return the English map."""
+    en = {}
+    problems = []
+    for rel in TEMPLATES:
+        path = SERVER / rel
+        src, found = scan(path)
+        edits = []
+        for node, kind, text in found:
+            k = key_for(text, node.tag)
+            if k in en and en[k] != text:
+                problems.append(f"key collision on {k}")
+            en[k] = text
+            attr = "data-i18n" if kind == "text" else f"data-i18n-{kind}"
+            if node.attrs.get(attr) == k:
+                continue
+            edits.append((node, attr, k))
+        if not write:
+            if edits:
+                problems.append(
+                    f"{rel}: {len(edits)} element(s) not tagged or tagged "
+                    f"with a stale key -- run tools/i18n.py tag")
+            continue
+        # Right to left, so earlier offsets stay valid.
+        out = src
+        for node, attr, k in sorted(edits, key=lambda e: -e[0].open_start):
+            head = out[node.open_start:node.open_end]
+            existing = re.search(r'\s' + re.escape(attr) + r'="[^"]*"', head)
+            if existing:
+                head = head[:existing.start()] + head[existing.end():]
+            # Last, not first. The markup still reads `<p class="hint"
+            # data-i18n="...">` rather than opening with bookkeeping, and
+            # every string in this repo that matches on the START of a tag
+            # -- build_local.py has several -- goes on matching.
+            insert = len(head) - (2 if head.endswith("/>") else 1)
+            head = head[:insert] + f' {attr}="{k}"' + head[insert:]
+            out = out[:node.open_start] + head + out[node.open_end:]
+        if out != src:
+            path.write_text(out, encoding="utf-8")
+    return en, problems
+
+
+# --------------------------------------------------------------- pack ---
+
+def js_string(obj) -> str:
+    """JSON that can never grow a tag or a Jinja construct.
+
+    ``<`` would let a translation close the script element; ``{`` is how
+    Jinja's comment, block and expression openers all start, and one of
+    those inside an HTML comment took every server page down on 30 Aug
+    2026 while the offline builds -- which never see Jinja -- stayed
+    green.  Escaping both at the source means no translation, in any of
+    eight languages none of us can proofread as code, can do it again.
+    """
+    esc = {"<": "\\u003c", ">": "\\u003e", "{": "\\u007b", "&": "\\u0026"}
+    s = json.dumps(obj, ensure_ascii=False, sort_keys=True,
+                   separators=(",", ":"))
+    # Inside string literals only -- the braces holding the object together
+    # are structure, and escaping those produces a script that does not
+    # parse at all (which is how this was found).
+    out = []
+    in_str = False
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if in_str:
+            if c == "\\":
+                out.append(s[i:i + 2])
+                i += 2
+                continue
+            if c == '"':
+                in_str = False
+            else:
+                c = esc.get(c, c)
+        elif c == '"':
+            in_str = True
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
+def load(lang: str) -> dict:
+    p = I18N / f"{lang}.json"
+    if not p.exists():
+        return {}
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def keys_used_by(src: str) -> set:
+    """The keys one template actually asks for.
+
+    Each page carries only its own share. The Numerical Solver needs
+    about fifty strings; shipping it the app's four hundred made its
+    page seven times larger than the page itself.
+    """
+    keys = set(re.findall(r'data-i18n(?:-[a-z-]+)?="([^"]+)"', src))
+    keys |= {m.group(2) for m in
+             re.finditer(r"(?<![\w.$])(t|tv)\(\s*'([a-zA-Z0-9_.-]+)'", src)}
+    if "tSrv(" in src:
+        keys |= {"srv." + w for w in srv_vocabulary()}
+    return keys
+
+
+def pack_block(rel: str) -> str:
+    wanted = keys_used_by((SERVER / rel).read_text(encoding="utf-8"))
+    dicts = {}
+    for code in TARGETS:
+        d = {k: v for k, v in load(code).items() if v and k in wanted}
+        if d:
+            dicts[code] = d
+    lines = [BEGIN,
+             "<!-- Generated by tools/i18n.py -- do not edit between the",
+             "     markers; edit i18n/<lang>.json and run",
+             "     `python tools/i18n.py pack`. English is not in here: it",
+             "     is the page's own markup, snapshotted at load. Nor is",
+             "     any key this page never asks for. -->",
+             "<script>"]
+    lines.append("window.SYMB_I18N = " + js_string(dicts) + ";")
+    lines.append("</script>")
+    lines.append(END)
+    return "\n".join(lines)
+
+
+def pack(write: bool) -> list:
+    problems = []
+    for rel in TEMPLATES:
+        block = pack_block(rel)
+        path = SERVER / rel
+        src = path.read_text(encoding="utf-8")
+        a = src.find(BEGIN)
+        b = src.find(END)
+        if a < 0 or b < 0:
+            problems.append(f"{rel}: no i18n markers")
+            continue
+        cur = src[a:b + len(END)]
+        if cur == block:
+            continue
+        if not write:
+            problems.append(f"{rel}: packed dictionaries are stale -- run "
+                            f"`python tools/i18n.py pack`")
+            continue
+        path.write_text(src[:a] + block + src[b + len(END):], encoding="utf-8")
+    return problems
+
+
+# -------------------------------------------------------------- checks ---
+
+STR_START = re.compile(r"""\s*(['"])""")
+
+
+def _read_js_string(src: str, i: int):
+    """The JavaScript string literal starting at `i`, and where it ends."""
+    q = src[i]
+    j = i + 1
+    buf = []
+    while j < len(src):
+        c = src[j]
+        if c == "\\":
+            nxt = src[j + 1]
+            if nxt == "u":
+                # … and friends. Without this the backslash is simply
+                # dropped and the dictionary holds "first" + "u2026".
+                buf.append(chr(int(src[j + 2:j + 6], 16)))
+                j += 6
+                continue
+            if nxt == "x":
+                buf.append(chr(int(src[j + 2:j + 4], 16)))
+                j += 4
+                continue
+            buf.append({"n": "\n", "t": "\t", "'": "'", '"': '"',
+                        "\\": "\\"}.get(nxt, nxt))
+            j += 2
+            continue
+        if c == q:
+            return "".join(buf), j + 1
+        buf.append(c)
+        j += 1
+    raise ValueError("unterminated string literal")
+
+
+def _read_concat(src: str, i: int):
+    """A run of string literals joined by `+`, as one string.
+
+    The English fallbacks in the page are wrapped at 72 columns like
+    everything else, so most of them arrive as `'...' + '...' + '...'`.
+    """
+    parts = []
+    while True:
+        m = STR_START.match(src, i)
+        if not m:
+            break
+        text, i = _read_js_string(src, m.start(1))
+        parts.append(text)
+        m2 = re.match(r"\s*\+\s*", src[i:])
+        if not m2:
+            break
+        i += m2.end()
+    return "".join(parts), i
+
+
+def js_calls():
+    """{key: English} for every t('key', 'English') and tv(...) in the page.
+
+    The English fallback in the code IS the English dictionary: writing it
+    twice, once in the call and once in a JSON file, is how the two would
+    come to disagree.
+    """
+    out = {}
+    dup = []
+    for rel in TEMPLATES:
+        src = (SERVER / rel).read_text(encoding="utf-8")
+        for m in re.finditer(r"""(?<![\w.$])(t|tv)\(\s*'([a-zA-Z0-9_.-]+)'\s*,""",
+                             src):
+            key = m.group(2)
+            try:
+                en, _ = _read_concat(src, m.end())
+            except ValueError:
+                continue
+            if not en:
+                continue
+            if key in out and out[key] != en:
+                dup.append(key)
+            out[key] = en
+    return out, dup
+
+
+# The maths engine's own closed vocabularies (symbulator_ui.py). The engine
+# is a published package with its own release cycle and stays English; the
+# page looks these up instead, through tSrv(). `check` re-reads them from
+# symbulator_ui.py so a new element kind or parameter description cannot
+# arrive untranslated without saying so.
+SRV_SOURCES = ("_KIND_LABEL", "_ELEMENT_KEYS", "_TOOL_LABELS", "_PORT_LABELS")
+
+
+def srv_vocabulary() -> set:
+    src = (SERVER / "symbulator_ui.py").read_text(encoding="utf-8")
+    words = set()
+    for name in SRV_SOURCES:
+        i = src.index("\n" + name)
+        j = src.index("\n}", i) if name != "_ELEMENT_KEYS" else src.index("\n]", i)
+        block = src[i:j]
+        if name == "_ELEMENT_KEYS":
+            for m in re.finditer(r'"[^"]*",\s*"[^"]*",\s*"([^"]+)"', block):
+                words.add(m.group(1))
+        else:
+            for m in re.finditer(r':\s*"([^"]+)"', block):
+                words.add(m.group(1))
+    # Not in any of those tables: built inline, one per port node (#168).
+    words.add("current through")
+    words.add("voltage drop")
+    return words
+
+
+STRUCT = {
+    "an id": re.compile(r'id="[^"]+"'),
+    "a link": re.compile(r'href="[^"]+"'),
+    "a slot": re.compile(r"%\{\w+\}"),
+    "a script or style tag": re.compile(r"</?(?:script|style)\b"),
+}
+
+
+def structure(code: str, en: dict, d: dict) -> list:
+    """What a translation must carry over from its English unchanged.
+
+    A dictionary value is written straight into the page as innerHTML, so
+    a translation that drops an `id` takes the element the app looks up
+    with it, and one that drops a `%{n}` slot loses the number the
+    sentence was about. Both fail silently at runtime and loudly here.
+    """
+    out = []
+    for key, text in d.items():
+        src = en.get(key)
+        if src is None:
+            continue
+        for what, rx in STRUCT.items():
+            if what == "a script or style tag":
+                if rx.search(text) and not rx.search(src):
+                    out.append(f"i18n/{code}.json: {key!r} introduces "
+                               f"{what}")
+                continue
+            if sorted(rx.findall(src)) != sorted(rx.findall(text)):
+                out.append(f"i18n/{code}.json: {key!r} does not carry over "
+                           f"{what} from the English")
+    return out
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("command",
+                    choices=["scan", "tag", "pack", "check", "seed"])
+    args = ap.parse_args()
+
+    if args.command == "scan":
+        total = 0
+        for rel in TEMPLATES:
+            _, found = scan(SERVER / rel)
+            texts = [f for f in found if f[1] == "text"]
+            print(f"{rel}: {len(texts)} text units, "
+                  f"{len(found) - len(texts)} attributes")
+            total += len(found)
+        print(f"{total} units")
+        return 0
+
+    if args.command in ("tag", "seed"):
+        en, problems = tag_templates(write=True)
+        for p in problems:
+            print(p)
+        I18N.mkdir(exist_ok=True)
+        # en.json is entirely generated. The English lives in the template
+        # markup and in the fallback argument of every t()/tv() call; a
+        # second hand-kept copy of it would only drift from those.
+        calls, dup = js_calls()
+        for k in dup:
+            print(f"two different English texts for {k!r} in the page")
+        srv = {"srv." + w: w for w in srv_vocabulary()}
+        merged = dict(sorted({**en, **calls, **srv}.items()))
+        (I18N / "en.json").write_text(
+            json.dumps(merged, ensure_ascii=False, indent=1) + "\n",
+            encoding="utf-8")
+        print(f"tagged; i18n/en.json has {len(merged)} keys "
+              f"({len(en)} markup, {len(calls)} script, {len(srv)} engine)")
+        return 0
+
+    if args.command == "pack":
+        problems = pack(write=True)
+        for p in problems:
+            print(p)
+        print("packed")
+        return 1 if problems else 0
+
+    # check
+    bad = []
+    en_gen, problems = tag_templates(write=False)
+    bad += problems
+    calls, dup = js_calls()
+    for k in dup:
+        bad.append(f"two different English texts for {k!r} in the page")
+    # A t() call whose key is a variable is invisible to js_calls, so its
+    # key never reaches en.json and never reaches a translator -- and the
+    # page falls back to English in all eight languages with nothing to
+    # say so. Spell every key out at the call.
+    # `key` is the runtime's own parameter name, in `function t(key, en)`
+    # and in tv()'s body; everything else with a variable there is a call
+    # that would go unseen.
+    for rel in TEMPLATES:
+        src = (SERVER / rel).read_text(encoding="utf-8")
+        for m in re.finditer(r"(?<![\w.$])(t|tv)\(\s*(?!['\"])(\w+)", src):
+            if m.group(2) == "key":
+                continue
+            bad.append(f"{rel}: {m.group(1)}({m.group(2)}, ...) -- the key "
+                       f"must be a literal, or it never reaches i18n/en.json")
+    expected = {**en_gen, **calls,
+                **{"srv." + w: w for w in srv_vocabulary()}}
+    en = load("en")
+    for k, v in expected.items():
+        if k not in en:
+            bad.append(f"i18n/en.json is missing {k!r} -- run "
+                       f"`python tools/i18n.py tag`")
+        elif en[k] != v:
+            bad.append(f"i18n/en.json disagrees with the page on {k!r}")
+    for k in en:
+        if k not in expected:
+            bad.append(f"i18n/en.json has an orphan key {k!r}")
+    for code in TARGETS:
+        d = load(code)
+        if not d:
+            bad.append(f"i18n/{code}.json is missing or empty")
+            continue
+        missing = [k for k in en if k not in d or not d[k]]
+        orphan = [k for k in d if k not in en]
+        if missing:
+            bad.append(f"i18n/{code}.json: {len(missing)} untranslated key(s), "
+                       f"first {missing[:3]}")
+        if orphan:
+            bad.append(f"i18n/{code}.json: {len(orphan)} orphan key(s) whose "
+                       f"English has changed, first {orphan[:3]}")
+        bad += structure(code, en, d)
+    bad += pack(write=False)
+    for b in bad:
+        print(b)
+    print("i18n check:", "ok" if not bad else f"{len(bad)} problem(s)")
+    return 1 if bad else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

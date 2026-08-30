@@ -52,3 +52,57 @@ Two categories in the output are not the same thing:
 
 A full sweep takes roughly half an hour. Run it after anything that touches
 value parsing, formatting, or the solver.
+
+## `i18n.py` — the nine languages (#197)
+
+The app speaks nine languages by way of a **client-side dictionary applied
+in the page**, and it has to: two of the three builds are static files with
+Pyodide in the tab, so anything server-rendered would translate the hosted
+app and leave the downloaded one in English. This script is the machinery
+around that dictionary.
+
+    py tools/i18n.py scan     # how many units, and where
+    py tools/i18n.py tag      # give every unit its data-i18n key,
+                              # and regenerate i18n/en.json
+    py tools/i18n.py pack     # write the dictionaries into the templates
+    py tools/i18n.py check    # is everything in step?
+
+**`en.json` is generated, not written.** The English lives in the template
+markup and in the fallback argument of every `t()` / `tv()` call; a second
+hand-kept copy of it would only drift. The other eight are hand-written and
+are the only files a translator edits — then `pack`, and the block between
+the `BEGIN/END i18n dictionaries` markers in each template is rewritten.
+Each page carries only the keys it asks for.
+
+A **translation unit** is the outermost element containing text whose
+descendants are all inline, so a whole paragraph is one entry and a
+translation may move the `<code>` or the `<a>` where its own word order
+wants them. Three things are never units: anything inside
+`class="notranslate"` (the wordmark, the build stamp, the syntax columns of
+the reference tables), anything spanning a `server-only` marker (the
+offline build deletes those blocks, and a dictionary copy would paint them
+back), and the regions the page's own JavaScript writes into.
+
+The **key** is a readable slug plus four hex of the English's SHA-1, so
+editing the English mints a new key and the stale translation shows up as
+an orphan in `check` instead of quietly staying on screen.
+
+What `check` catches, all of it learned the hard way:
+
+* a unit that is not tagged, or tagged with a key its English no longer
+  hashes to;
+* `en.json` disagreeing with the page, and orphans in any language;
+* a translation that drops an `id`, a `href` or a `%{slot}` the English
+  had — each of those fails silently at runtime, because dictionary values
+  are written into the page as innerHTML;
+* a translation that introduces a `<script>` or `<style>`;
+* `t(key, ...)` with a **variable** key, which `en.json` can never see, so
+  the string would fall back to English in all eight languages with
+  nothing to say so;
+* a new element kind or two-port description in `symbulator_ui.py` that no
+  language has a word for yet.
+
+`pack` escapes `<`, `>`, `&` and `{` inside every string, so no translation
+can close the script element or grow a Jinja construct — `{#` in a template
+took every server page down on 30 Aug 2026, and eight languages of new text
+is a lot of new opportunity.

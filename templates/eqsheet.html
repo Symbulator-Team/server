@@ -15,6 +15,21 @@
     var saved = null;
     try { saved = localStorage.getItem('symbulator-theme'); } catch (e) {}
     if (saved === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+    // #197, and the same reasoning as the theme above: 'symbulator-lang'
+    // is shared with the app, so a reader who chose Korean there arrives
+    // here in Korean. The page is hidden until the dictionary has been
+    // applied, so it cannot paint in English first and repaint -- only
+    // when a non-English language is stored, and with a timeout so a
+    // failure shows the page rather than hiding it for good.
+    var lang = null;
+    try { lang = localStorage.getItem('symbulator-lang'); } catch (e) {}
+    if (lang && lang !== 'en') {
+      document.documentElement.setAttribute('lang', lang);
+      document.documentElement.classList.add('i18n-pending');
+      setTimeout(function () {
+        document.documentElement.classList.remove('i18n-pending');
+      }, 2000);
+    }
   })();
 </script>
 <style>
@@ -400,6 +415,36 @@
   }
   /* ==== END banner.css ====================================== */
   *{box-sizing:border-box}
+  /* #197: set by the head script when a non-English language is stored,
+     lifted by applyLang(). Same as the app's. */
+  html.i18n-pending body { visibility: hidden; }
+  /* The language menu (#197), matching the app's, and deliberately not in
+     banner.css: only these two pages speak nine languages. */
+  .subbar .lang-select {
+    appearance: none; -webkit-appearance: none;
+    background: transparent;
+    background-image:
+      url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23dbe6f5' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .15rem center;
+    background-size: .55rem .35rem;
+    /* width:auto because the app's shared field rule sets every select
+       to width:100%, which in the ribbon's flex row makes this one 574px
+       wide and pushes the theme toggle onto a third line. */
+    width: auto; max-width: 9rem; height: auto;
+    border: 0; border-radius: 4px;
+    padding: 0 .95rem 0 0; margin: 0;
+    font-family: var(--sans, -apple-system, "Segoe UI", Roboto, Helvetica,
+                  Arial, sans-serif);
+    font-size: .875rem; line-height: 1.4; font-weight: 400;
+    color: #dbe6f5; cursor: pointer; flex: none;
+    color-scheme: light;
+  }
+  .subbar .lang-select:hover { color: #fff; }
+  .subbar .lang-select:focus-visible {
+    outline: 2px solid var(--sky, #8ec7f5); outline-offset: 3px;
+  }
+  .subbar .lang-select option { color: #1c2330; background: #fff; }
   body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 var(--sans)}
   /* The Numerical Solver's own ribbon occupants: its name, the DC/AC
      mode toggle and the theme toggle. The shared file styles the bands
@@ -494,22 +539,22 @@
   <div class="topbar-inner">
     <div class="header-brand">
       <a class="header-logo-link" href="https://symbulator.com"
-         aria-label="Symbulator home">
-        <img src="/static/logo.png" alt="Symbulator logo" class="header-logo">
+         aria-label="Symbulator home" data-i18n-aria-label="symbulator-home.a3cd">
+        <img src="/static/logo.png" alt="Symbulator logo" class="header-logo" data-i18n-alt="symbulator-logo.bc79">
       </a>
       <div class="header-title">
         <!-- The β is temporary (Roberto, 28 Aug 2026): version 9 is in
              beta, and the numeral says so until it is not. Banner
              wordmark only -- nowhere else. -->
-        <h1 class="brand-name">Symbulator <span class="tm">9β</span></h1>
-        <p class="brand-sub">the best portable symbolic simulator of linear circuits</p>
+        <h1 class="brand-name notranslate">Symbulator <span class="tm">9β</span></h1>
+        <p class="brand-sub" data-i18n="the-best-portable-symbolic.4e2c">the best portable symbolic simulator of linear circuits</p>
         <!-- The property mark (#135): one word, two spellings, exactly
              one shown -- the top form on wide screens, this slot form
              on phones. Styled by the shared banner.css. -->
-        <p class="property-mark property-mark-slot">Numerical Solver</p>
+        <p class="property-mark property-mark-slot" data-i18n="numerical-solver.0d2c">Numerical Solver</p>
       </div>
     </div>
-    <span class="property-mark property-mark-top">Numerical Solver</span>
+    <span class="property-mark property-mark-top" data-i18n="numerical-solver.0d2c">Numerical Solver</span>
   </div>
 </header>
 
@@ -521,31 +566,41 @@
          -- the scorpion in the lockup still leads out, and the app's
          Explore Numerically card is the way in. Documentation is the
          one link left, with the shared short spelling at phone widths. -->
-    <nav>
+    <nav data-i18n="tutorialtutorial.63e5">
       <a href="https://learn.symbulator.com"><span class="subbar-lbl">Tutorial</span><span class="subbar-lbl-short">Tutorial</span></a>
     </nav>
     <span class="subbar-spacer"></span>
-    <div class="mode" role="group" aria-label="mode">
-      <button id="mdc" class="on">DC · real</button><button id="mac">AC · phasor</button>
+    <div class="mode" role="group" aria-label="mode" data-i18n-aria-label="mode.e78f">
+      <!-- Two spellings apiece (#197), the shared banner.css showing
+           exactly one: this ribbon carries more than the app's — the mode
+           pair alone is 186px — and at 375px the row wrapped, taking the
+           Tutorial link with it. Long form above 480px, "DC" / "AC"
+           below, where the pair itself says what the letters mean. -->
+      <button id="mdc" class="on" data-i18n="dc-realdc.addd"><span class="subbar-lbl">DC · real</span><span class="subbar-lbl-short">DC</span></button><button id="mac" data-i18n="ac-phasorac.38d8"><span class="subbar-lbl">AC · phasor</span><span class="subbar-lbl-short">AC</span></button>
     </div>
     <!-- #186: the same control the app carries, in the same place and
          the same class, so the two properties read alike. -->
     <button type="button" id="clearAllBtn" class="subbar-action"
-      title="Empty every input and start over"><span class="subbar-lbl">Clear all inputs</span><span class="subbar-lbl-short">Clear inputs</span></button>
+      title="Empty every input and start over" data-i18n-title="empty-every-input-and.02e4" data-i18n="clear-inputs.bdaa">Clear inputs</button>
+    <!-- The language menu (#197): the app's, in the same place. The
+         options are the languages' own names for themselves, so the
+         control is `notranslate` and its accessible name comes from the
+         dictionary instead. -->
+    <select id="langSel" class="lang-select notranslate"></select>
     <button type="button" id="themeToggle" class="theme-toggle"
-            aria-label="Switch to dark mode" title="Switch to dark mode"></button>
+            aria-label="Switch to dark mode" title="Switch to dark mode" data-i18n-aria-label="switch-to-dark-mode.c292" data-i18n-title="switch-to-dark-mode.c292"></button>
   </div>
 </div>
 </div>
 
-<p class="tagline">An interactive numerical solver to explore your circuit's
+<p class="tagline" data-i18n="an-interactive-numerical-sol.9a63">An interactive numerical solver to explore your circuit's
 equations and variables. Arrives preloaded with the solved circuit's equation
 system and results — untick an equation, flip a Known to Unknown, and see how
 the results change.</p>
 
 <main>
   <section>
-    <h2>List of Equations</h2>
+    <h2 data-i18n="list-of-equations.21d7">List of Equations</h2>
     <div class="pad">
       <!-- #185: empty on purpose. This box used to ship a worked
            example in it -- a voltage divider and a thermal equation --
@@ -557,36 +612,36 @@ the results change.</p>
            the app, opening the solver, and finding a system that was
            neither theirs nor anything Symbulator had produced. -->
       <textarea id="rules" spellcheck="false"
-        placeholder="one equation per line, e.g.   Vout = Vin * R2 / (R1 + R2)"></textarea>
+        placeholder="one equation per line, e.g.   Vout = Vin * R2 / (R1 + R2)" data-i18n-placeholder="one-equation-per-line.fb04"></textarea>
       <div class="toolbar">
-        <button class="primary" id="parse">Update equations</button>
+        <button class="primary" id="parse" data-i18n="update-equations.519b">Update equations</button>
         <span class="hint" id="synhint"></span>
       </div>
       <div id="perr" class="msg bad"></div>
     </div>
     <table id="rtab" hidden>
-      <thead><tr><th></th><th>Equation</th><th>Variables</th></tr></thead>
+      <thead><tr><th></th><th data-i18n="equation.295e">Equation</th><th data-i18n="variables.ac01">Variables</th></tr></thead>
       <tbody></tbody>
     </table>
   </section>
 
   <section>
-    <h2>Variable sheet</h2>
+    <h2 data-i18n="variable-sheet.cd3e">Variable sheet</h2>
     <table id="vtab">
       <thead><tr id="vhead"></tr></thead>
       <tbody></tbody>
     </table>
     <div class="status">
       <span class="badge" id="cnt"></span>
-      <button class="primary" id="solve">Solve</button>
+      <button class="primary" id="solve" data-i18n="solve.67b7">Solve</button>
       <label class="inter"><input type="checkbox" id="interactive">
-        Interactive Mode</label>
-      <label class="inter">Rounding <select id="disp">
-        <option value="">full</option>
-        <option value="3">3 digits</option>
-        <option value="4">4 digits</option>
-        <option value="5">5 digits</option>
-        <option value="6">6 digits</option>
+        <span data-i18n="interactive-mode.af37">Interactive Mode</span></label>
+      <label class="inter"><span data-i18n="rounding.905c">Rounding</span> <select id="disp">
+        <option value="" data-i18n="full.52e6">full</option>
+        <option value="3" data-i18n="digits.a048">3 digits</option>
+        <option value="4" data-i18n="digits.a970">4 digits</option>
+        <option value="5" data-i18n="digits.7822">5 digits</option>
+        <option value="6" data-i18n="digits.ab7f">6 digits</option>
       </select></label>
       <span class="msg" id="smsg"></span>
     </div>
@@ -596,7 +651,138 @@ the results change.</p>
   </section>
 </main>
 
+<!-- BEGIN i18n dictionaries -->
+<!-- Generated by tools/i18n.py -- do not edit between the
+     markers; edit i18n/<lang>.json and run
+     `python tools/i18n.py pack`. English is not in here: it
+     is the page's own markup, snapshotted at load. Nor is
+     any key this page never asks for. -->
 <script>
+window.SYMB_I18N = {"de":{"ac-phasorac.38d8":"\u003cspan class=\"subbar-lbl\"\u003eAC · Zeiger\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eAC\u003c/span\u003e","an-interactive-numerical-sol.9a63":"Ein interaktiver numerischer Löser, um die Gleichungen und Variablen Ihrer Schaltung zu erkunden. Er kommt vorgeladen mit dem Gleichungssystem und den Ergebnissen der gelösten Schaltung — Häkchen bei einer Gleichung entfernen, eine bekannte Größe zur Unbekannten machen und zusehen, wie sich die Ergebnisse ändern.","clear-inputs.bdaa":"Eingaben löschen","dc-realdc.addd":"\u003cspan class=\"subbar-lbl\"\u003eDC · reell\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eDC\u003c/span\u003e","digits.7822":"5 Stellen","digits.a048":"3 Stellen","digits.a970":"4 Stellen","digits.ab7f":"6 Stellen","empty-every-input-and.02e4":"Alle Eingaben leeren und neu beginnen","equation.295e":"Gleichung","full.52e6":"voll","interactive-mode.af37":"Interaktiver Modus","js.eq.badNumber":"ungültige Zahl für %\u007bname}","js.eq.badge":"%\u007bne} %\u007bequations} → %\u007breal} reelle · %\u007bun} skalare %\u007bunknowns}","js.eq.badgeDc":"%\u007bne} %\u007bequations} · %\u007bun} %\u007bunknowns}","js.eq.complex":"Komplex","js.eq.giveFor":"geben Sie %\u007bwhat} für %\u007bname} an","js.eq.guess":"Schätzwert","js.eq.hDomain":"Bereich","js.eq.hPrefix":"SI-Präfix","js.eq.hRestriction":"Einschränkung","js.eq.hResult":"Ergebnis","js.eq.hStatus":"Status","js.eq.hValue":"Wert / Schätzwert","js.eq.hVariable":"Variable","js.eq.hintAc":"Eine Gleichung pro Zeile · \u003ccode\u003ej\u003c/code\u003e oder \u003ccode\u003eI\u003c/code\u003e = imaginäre Einheit · \u003ccode\u003e^\u003c/code\u003e · Kommentare mit \u003ccode\u003e#\u003c/code\u003e · conj re im …","js.eq.hintDc":"Eine Gleichung pro Zeile · \u003ccode\u003e^\u003c/code\u003e erlaubt · Kommentare mit \u003ccode\u003e#\u003c/code\u003e · sin cos exp log sqrt pi u(t) …","js.eq.imagOnly":"Nur imaginär","js.eq.known":"Bekannt","js.eq.rangeBothEnds":"geben Sie beide Enden des Bereichs für %\u007bname} an","js.eq.rangeEmpty":"leerer Bereich für %\u007bname} — „von“ muss kleiner sein als „bis“","js.eq.rangeFrom":"von","js.eq.rangeTo":"bis","js.eq.realOnly":"Nur reell","js.eq.residualMags":"Beträge der Residuen: ","js.eq.residuals":"Residuen: ","js.eq.rstNeg":"Negativ","js.eq.rstNone":"Keine","js.eq.rstPos":"Positiv","js.eq.rstRange":"Bereich…","js.eq.unknown":"Unbekannt","js.eq.value":"Wert","js.eq.wEquation":"Gleichung","js.eq.wEquations":"Gleichungen","js.eq.wUnknown":"Unbekannte","js.eq.wUnknowns":"Unbekannte","js.lang.label":"Sprache","js.theme.toDark":"Zum dunklen Modus wechseln","js.theme.toLight":"Zum hellen Modus wechseln","list-of-equations.21d7":"Liste der Gleichungen","mode.e78f":"Modus","numerical-solver.0d2c":"Numerischer Löser","one-equation-per-line.fb04":"eine Gleichung pro Zeile, z. B.   Vout = Vin * R2 / (R1 + R2)","rounding.905c":"Rundung","solve.67b7":"Lösen","switch-to-dark-mode.c292":"Zum dunklen Modus wechseln","symbulator-home.a3cd":"Symbulator-Startseite","symbulator-logo.bc79":"Symbulator-Logo","the-best-portable-symbolic.4e2c":"der beste tragbare symbolische Simulator linearer Schaltungen","tutorialtutorial.63e5":"\u003ca href=\"https://learn.symbulator.com\"\u003e\u003cspan class=\"subbar-lbl\"\u003eTutorial\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eTutorial\u003c/span\u003e\u003c/a\u003e","update-equations.519b":"Gleichungen aktualisieren","variable-sheet.cd3e":"Variablenblatt","variables.ac01":"Variablen"},"eo":{"ac-phasorac.38d8":"\u003cspan class=\"subbar-lbl\"\u003eAC · fazoro\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eAC\u003c/span\u003e","an-interactive-numerical-sol.9a63":"Interaga nombra solvilo por esplori la ekvaciojn kaj variablojn de via cirkvito. Ĝi alvenas antaŭŝargita per la ekvaciaro kaj la rezultoj de la solvita cirkvito — malmarku ekvacion, ŝanĝu konaton al nekonato, kaj vidu kiel la rezultoj ŝanĝiĝas.","clear-inputs.bdaa":"Vakigi enigojn","dc-realdc.addd":"\u003cspan class=\"subbar-lbl\"\u003eDC · reala\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eDC\u003c/span\u003e","digits.7822":"5 ciferoj","digits.a048":"3 ciferoj","digits.a970":"4 ciferoj","digits.ab7f":"6 ciferoj","empty-every-input-and.02e4":"Vakigi ĉiujn enigojn kaj rekomenci","equation.295e":"Ekvacio","full.52e6":"plena","interactive-mode.af37":"Interaga reĝimo","js.eq.badNumber":"malbona nombro por %\u007bname}","js.eq.badge":"%\u007bne} %\u007bequations} → %\u007breal} realaj · %\u007bun} skalaraj %\u007bunknowns}","js.eq.badgeDc":"%\u007bne} %\u007bequations} · %\u007bun} %\u007bunknowns}","js.eq.complex":"Kompleksa","js.eq.giveFor":"donu %\u007bwhat} por %\u007bname}","js.eq.guess":"konjekto","js.eq.hDomain":"Regiono","js.eq.hPrefix":"SI-prefikso","js.eq.hRestriction":"Limigo","js.eq.hResult":"Rezulto","js.eq.hStatus":"Stato","js.eq.hValue":"Valoro / konjekto","js.eq.hVariable":"Variablo","js.eq.hintAc":"Unu ekvacio en linio · \u003ccode\u003ej\u003c/code\u003e aŭ \u003ccode\u003eI\u003c/code\u003e = imaga unuo · \u003ccode\u003e^\u003c/code\u003e · komentoj per \u003ccode\u003e#\u003c/code\u003e · conj re im …","js.eq.hintDc":"Unu ekvacio en linio · \u003ccode\u003e^\u003c/code\u003e permesata · komentoj per \u003ccode\u003e#\u003c/code\u003e · sin cos exp log sqrt pi u(t) …","js.eq.imagOnly":"Nur imaga","js.eq.known":"Konata","js.eq.rangeBothEnds":"donu ambaŭ finojn de la intervalo por %\u007bname}","js.eq.rangeEmpty":"malplena intervalo por %\u007bname} — „de“ devas esti sub „ĝis“","js.eq.rangeFrom":"de","js.eq.rangeTo":"ĝis","js.eq.realOnly":"Nur reala","js.eq.residualMags":"grandoj de la restaĵoj: ","js.eq.residuals":"restaĵoj: ","js.eq.rstNeg":"Negativa","js.eq.rstNone":"Neniu","js.eq.rstPos":"Pozitiva","js.eq.rstRange":"Intervalo…","js.eq.unknown":"Nekonata","js.eq.value":"valoro","js.eq.wEquation":"ekvacio","js.eq.wEquations":"ekvacioj","js.eq.wUnknown":"nekonato","js.eq.wUnknowns":"nekonatoj","js.lang.label":"Lingvo","js.theme.toDark":"Ŝanĝi al la malhela reĝimo","js.theme.toLight":"Ŝanĝi al la hela reĝimo","list-of-equations.21d7":"Listo de ekvacioj","mode.e78f":"reĝimo","numerical-solver.0d2c":"Nombra solvilo","one-equation-per-line.fb04":"unu ekvacio en linio, ekz.   Vout = Vin * R2 / (R1 + R2)","rounding.905c":"Rondigo","solve.67b7":"Solvi","switch-to-dark-mode.c292":"Ŝanĝi al la malhela reĝimo","symbulator-home.a3cd":"Hejmpaĝo de Symbulator","symbulator-logo.bc79":"Emblemo de Symbulator","the-best-portable-symbolic.4e2c":"la plej bona portebla simbola simulilo de linearaj cirkvitoj","tutorialtutorial.63e5":"\u003ca href=\"https://learn.symbulator.com\"\u003e\u003cspan class=\"subbar-lbl\"\u003eInstruilo\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eInstruilo\u003c/span\u003e\u003c/a\u003e","update-equations.519b":"Ĝisdatigi la ekvaciojn","variable-sheet.cd3e":"Folio de variabloj","variables.ac01":"Variabloj"},"es":{"ac-phasorac.38d8":"\u003cspan class=\"subbar-lbl\"\u003eAC · fasor\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eAC\u003c/span\u003e","an-interactive-numerical-sol.9a63":"Un solucionador numérico interactivo para explorar las ecuaciones y variables de tu circuito. Llega precargado con el sistema de ecuaciones y los resultados del circuito resuelto — desmarca una ecuación, cambia una conocida a incógnita y observa cómo cambian los resultados.","clear-inputs.bdaa":"Borrar entradas","dc-realdc.addd":"\u003cspan class=\"subbar-lbl\"\u003eDC · real\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eDC\u003c/span\u003e","digits.7822":"5 dígitos","digits.a048":"3 dígitos","digits.a970":"4 dígitos","digits.ab7f":"6 dígitos","empty-every-input-and.02e4":"Vaciar todas las entradas y empezar de nuevo","equation.295e":"Ecuación","full.52e6":"completa","interactive-mode.af37":"Modo interactivo","js.eq.badNumber":"número inválido para %\u007bname}","js.eq.badge":"%\u007bne} %\u007bequations} → %\u007breal} reales · %\u007bun} %\u007bunknowns} escalares","js.eq.badgeDc":"%\u007bne} %\u007bequations} · %\u007bun} %\u007bunknowns}","js.eq.complex":"Compleja","js.eq.giveFor":"da un %\u007bwhat} para %\u007bname}","js.eq.guess":"estimación","js.eq.hDomain":"Dominio","js.eq.hPrefix":"Prefijo SI","js.eq.hRestriction":"Restricción","js.eq.hResult":"Resultado","js.eq.hStatus":"Estado","js.eq.hValue":"Valor / estimación","js.eq.hVariable":"Variable","js.eq.hintAc":"Una ecuación por línea · \u003ccode\u003ej\u003c/code\u003e o \u003ccode\u003eI\u003c/code\u003e = unidad imaginaria · \u003ccode\u003e^\u003c/code\u003e · comentarios con \u003ccode\u003e#\u003c/code\u003e · conj re im …","js.eq.hintDc":"Una ecuación por línea · se permite \u003ccode\u003e^\u003c/code\u003e · comentarios con \u003ccode\u003e#\u003c/code\u003e · sin cos exp log sqrt pi u(t) …","js.eq.imagOnly":"Solo imaginaria","js.eq.known":"Conocida","js.eq.rangeBothEnds":"da los dos extremos del rango para %\u007bname}","js.eq.rangeEmpty":"rango vacío para %\u007bname} — «desde» debe ser menor que «hasta»","js.eq.rangeFrom":"desde","js.eq.rangeTo":"hasta","js.eq.realOnly":"Solo real","js.eq.residualMags":"magnitudes de los residuos: ","js.eq.residuals":"residuos: ","js.eq.rstNeg":"Negativa","js.eq.rstNone":"Ninguna","js.eq.rstPos":"Positiva","js.eq.rstRange":"Rango…","js.eq.unknown":"Incógnita","js.eq.value":"valor","js.eq.wEquation":"ecuación","js.eq.wEquations":"ecuaciones","js.eq.wUnknown":"incógnita","js.eq.wUnknowns":"incógnitas","js.lang.label":"Idioma","js.theme.toDark":"Cambiar a modo oscuro","js.theme.toLight":"Cambiar a modo claro","list-of-equations.21d7":"Lista de ecuaciones","mode.e78f":"modo","numerical-solver.0d2c":"Solucionador numérico","one-equation-per-line.fb04":"una ecuación por línea, p. ej.   Vout = Vin * R2 / (R1 + R2)","rounding.905c":"Redondeo","solve.67b7":"Resolver","switch-to-dark-mode.c292":"Cambiar a modo oscuro","symbulator-home.a3cd":"Inicio de Symbulator","symbulator-logo.bc79":"Logotipo de Symbulator","the-best-portable-symbolic.4e2c":"el mejor simulador simbólico portátil de circuitos lineales","tutorialtutorial.63e5":"\u003ca href=\"https://learn.symbulator.com\"\u003e\u003cspan class=\"subbar-lbl\"\u003eTutorial\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eTutorial\u003c/span\u003e\u003c/a\u003e","update-equations.519b":"Actualizar ecuaciones","variable-sheet.cd3e":"Hoja de variables","variables.ac01":"Variables"},"fr":{"ac-phasorac.38d8":"\u003cspan class=\"subbar-lbl\"\u003eAC · phaseur\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eAC\u003c/span\u003e","an-interactive-numerical-sol.9a63":"Un solveur numérique interactif pour explorer les équations et les variables de votre circuit. Il arrive préchargé avec le système d'équations et les résultats du circuit résolu — décochez une équation, faites passer une grandeur connue en inconnue et voyez comment les résultats changent.","clear-inputs.bdaa":"Effacer les entrées","dc-realdc.addd":"\u003cspan class=\"subbar-lbl\"\u003eDC · réel\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eDC\u003c/span\u003e","digits.7822":"5 chiffres","digits.a048":"3 chiffres","digits.a970":"4 chiffres","digits.ab7f":"6 chiffres","empty-every-input-and.02e4":"Vider toutes les entrées et repartir de zéro","equation.295e":"Équation","full.52e6":"complète","interactive-mode.af37":"Mode interactif","js.eq.badNumber":"nombre incorrect pour %\u007bname}","js.eq.badge":"%\u007bne} %\u007bequations} → %\u007breal} réelles · %\u007bun} %\u007bunknowns} scalaires","js.eq.badgeDc":"%\u007bne} %\u007bequations} · %\u007bun} %\u007bunknowns}","js.eq.complex":"Complexe","js.eq.giveFor":"donnez %\u007bwhat} pour %\u007bname}","js.eq.guess":"estimation","js.eq.hDomain":"Domaine","js.eq.hPrefix":"Préfixe SI","js.eq.hRestriction":"Restriction","js.eq.hResult":"Résultat","js.eq.hStatus":"État","js.eq.hValue":"Valeur / estimation","js.eq.hVariable":"Variable","js.eq.hintAc":"Une équation par ligne · \u003ccode\u003ej\u003c/code\u003e ou \u003ccode\u003eI\u003c/code\u003e = unité imaginaire · \u003ccode\u003e^\u003c/code\u003e · commentaires avec \u003ccode\u003e#\u003c/code\u003e · conj re im …","js.eq.hintDc":"Une équation par ligne · \u003ccode\u003e^\u003c/code\u003e permis · commentaires avec \u003ccode\u003e#\u003c/code\u003e · sin cos exp log sqrt pi u(t) …","js.eq.imagOnly":"Imaginaire seule","js.eq.known":"Connue","js.eq.rangeBothEnds":"donnez les deux bornes de l'intervalle pour %\u007bname}","js.eq.rangeEmpty":"intervalle vide pour %\u007bname} — « de » doit être inférieur à « à »","js.eq.rangeFrom":"de","js.eq.rangeTo":"à","js.eq.realOnly":"Réelle seule","js.eq.residualMags":"modules des résidus : ","js.eq.residuals":"résidus : ","js.eq.rstNeg":"Négative","js.eq.rstNone":"Aucune","js.eq.rstPos":"Positive","js.eq.rstRange":"Intervalle…","js.eq.unknown":"Inconnue","js.eq.value":"valeur","js.eq.wEquation":"équation","js.eq.wEquations":"équations","js.eq.wUnknown":"inconnue","js.eq.wUnknowns":"inconnues","js.lang.label":"Langue","js.theme.toDark":"Passer en mode sombre","js.theme.toLight":"Passer en mode clair","list-of-equations.21d7":"Liste des équations","mode.e78f":"mode","numerical-solver.0d2c":"Solveur numérique","one-equation-per-line.fb04":"une équation par ligne, p. ex.   Vout = Vin * R2 / (R1 + R2)","rounding.905c":"Arrondi","solve.67b7":"Résoudre","switch-to-dark-mode.c292":"Passer en mode sombre","symbulator-home.a3cd":"Accueil de Symbulator","symbulator-logo.bc79":"Logo de Symbulator","the-best-portable-symbolic.4e2c":"le meilleur simulateur symbolique portable de circuits linéaires","tutorialtutorial.63e5":"\u003ca href=\"https://learn.symbulator.com\"\u003e\u003cspan class=\"subbar-lbl\"\u003eTutoriel\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eTutoriel\u003c/span\u003e\u003c/a\u003e","update-equations.519b":"Mettre à jour les équations","variable-sheet.cd3e":"Feuille des variables","variables.ac01":"Variables"},"ja":{"ac-phasorac.38d8":"\u003cspan class=\"subbar-lbl\"\u003eAC · フェーザ\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eAC\u003c/span\u003e","an-interactive-numerical-sol.9a63":"回路の方程式と変数を探るための、対話的な数値ソルバーです。解いた回路の方程式系と結果があらかじめ読み込まれた状態で開きます — 方程式のチェックを外し、既知量を未知量に変えて、結果がどう変わるかを見てください。","clear-inputs.bdaa":"入力を消去","dc-realdc.addd":"\u003cspan class=\"subbar-lbl\"\u003eDC · 実数\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eDC\u003c/span\u003e","digits.7822":"5桁","digits.a048":"3桁","digits.a970":"4桁","digits.ab7f":"6桁","empty-every-input-and.02e4":"すべての入力を空にしてやり直す","equation.295e":"方程式","full.52e6":"全精度","interactive-mode.af37":"対話モード","js.eq.badNumber":"%\u007bname} の数値が正しくありません","js.eq.badge":"%\u007bne} 個の%\u007bequations} → 実数 %\u007breal} 個 · スカラー%\u007bunknowns} %\u007bun} 個","js.eq.badgeDc":"%\u007bne} 個の%\u007bequations} · %\u007bun} 個の%\u007bunknowns}","js.eq.complex":"複素数","js.eq.giveFor":"%\u007bname} の%\u007bwhat}を入力してください","js.eq.guess":"初期値","js.eq.hDomain":"定義域","js.eq.hPrefix":"SI 接頭辞","js.eq.hRestriction":"制限","js.eq.hResult":"結果","js.eq.hStatus":"状態","js.eq.hValue":"値／初期値","js.eq.hVariable":"変数","js.eq.hintAc":"1行に1つの方程式 · \u003ccode\u003ej\u003c/code\u003e または \u003ccode\u003eI\u003c/code\u003e = 虚数単位 · \u003ccode\u003e^\u003c/code\u003e · \u003ccode\u003e#\u003c/code\u003e でコメント · conj re im …","js.eq.hintDc":"1行に1つの方程式 · \u003ccode\u003e^\u003c/code\u003e 可 · \u003ccode\u003e#\u003c/code\u003e でコメント · sin cos exp log sqrt pi u(t) …","js.eq.imagOnly":"虚部のみ","js.eq.known":"既知","js.eq.rangeBothEnds":"%\u007bname} の範囲の両端を入力してください","js.eq.rangeEmpty":"%\u007bname} の範囲が空です — 「から」は「まで」より小さくしてください","js.eq.rangeFrom":"から","js.eq.rangeTo":"まで","js.eq.realOnly":"実部のみ","js.eq.residualMags":"残差の大きさ： ","js.eq.residuals":"残差： ","js.eq.rstNeg":"負","js.eq.rstNone":"なし","js.eq.rstPos":"正","js.eq.rstRange":"範囲…","js.eq.unknown":"未知","js.eq.value":"値","js.eq.wEquation":"方程式","js.eq.wEquations":"方程式","js.eq.wUnknown":"未知量","js.eq.wUnknowns":"未知量","js.lang.label":"言語","js.theme.toDark":"ダークモードに切り替える","js.theme.toLight":"ライトモードに切り替える","list-of-equations.21d7":"方程式の一覧","mode.e78f":"モード","numerical-solver.0d2c":"数値ソルバー","one-equation-per-line.fb04":"1行に1つの方程式。例：   Vout = Vin * R2 / (R1 + R2)","rounding.905c":"丸め","solve.67b7":"求解","switch-to-dark-mode.c292":"ダークモードに切り替える","symbulator-home.a3cd":"Symbulator のホーム","symbulator-logo.bc79":"Symbulator のロゴ","the-best-portable-symbolic.4e2c":"最良の携帯型・線形回路の記号シミュレーター","tutorialtutorial.63e5":"\u003ca href=\"https://learn.symbulator.com\"\u003e\u003cspan class=\"subbar-lbl\"\u003eチュートリアル\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003e教材\u003c/span\u003e\u003c/a\u003e","update-equations.519b":"方程式を更新","variable-sheet.cd3e":"変数シート","variables.ac01":"変数"},"ko":{"ac-phasorac.38d8":"\u003cspan class=\"subbar-lbl\"\u003eAC · 페이저\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eAC\u003c/span\u003e","an-interactive-numerical-sol.9a63":"회로의 방정식과 변수를 살펴보는 대화형 수치 풀이기입니다. 풀린 회로의 연립방정식과 결과가 미리 실린 채로 열립니다 — 방정식의 체크를 해제하고, 기지량을 미지량으로 바꾸며 결과가 어떻게 달라지는지 보세요.","clear-inputs.bdaa":"입력 비우기","dc-realdc.addd":"\u003cspan class=\"subbar-lbl\"\u003eDC · 실수\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eDC\u003c/span\u003e","digits.7822":"5자리","digits.a048":"3자리","digits.a970":"4자리","digits.ab7f":"6자리","empty-every-input-and.02e4":"모든 입력을 비우고 처음부터 시작","equation.295e":"방정식","full.52e6":"전체","interactive-mode.af37":"대화형 모드","js.eq.badNumber":"%\u007bname}의 수가 올바르지 않습니다","js.eq.badge":"%\u007bequations} %\u007bne}개 → 실수 %\u007breal}개 · 스칼라 %\u007bunknowns} %\u007bun}개","js.eq.badgeDc":"%\u007bequations} %\u007bne}개 · %\u007bunknowns} %\u007bun}개","js.eq.complex":"복소수","js.eq.giveFor":"%\u007bname}의 %\u007bwhat}을(를) 넣으세요","js.eq.guess":"추정값","js.eq.hDomain":"정의역","js.eq.hPrefix":"SI 접두어","js.eq.hRestriction":"제한","js.eq.hResult":"결과","js.eq.hStatus":"상태","js.eq.hValue":"값 / 추정값","js.eq.hVariable":"변수","js.eq.hintAc":"한 줄에 방정식 하나 · \u003ccode\u003ej\u003c/code\u003e 또는 \u003ccode\u003eI\u003c/code\u003e = 허수 단위 · \u003ccode\u003e^\u003c/code\u003e · \u003ccode\u003e#\u003c/code\u003e 주석 · conj re im …","js.eq.hintDc":"한 줄에 방정식 하나 · \u003ccode\u003e^\u003c/code\u003e 사용 가능 · \u003ccode\u003e#\u003c/code\u003e 주석 · sin cos exp log sqrt pi u(t) …","js.eq.imagOnly":"허수부만","js.eq.known":"기지","js.eq.rangeBothEnds":"%\u007bname}의 범위 양 끝을 넣으세요","js.eq.rangeEmpty":"%\u007bname}의 범위가 비었습니다 — ‘부터’가 ‘까지’보다 작아야 합니다","js.eq.rangeFrom":"부터","js.eq.rangeTo":"까지","js.eq.realOnly":"실수부만","js.eq.residualMags":"잔차의 크기: ","js.eq.residuals":"잔차: ","js.eq.rstNeg":"음수","js.eq.rstNone":"없음","js.eq.rstPos":"양수","js.eq.rstRange":"범위…","js.eq.unknown":"미지","js.eq.value":"값","js.eq.wEquation":"방정식","js.eq.wEquations":"방정식","js.eq.wUnknown":"미지량","js.eq.wUnknowns":"미지량","js.lang.label":"언어","js.theme.toDark":"어두운 모드로 바꾸기","js.theme.toLight":"밝은 모드로 바꾸기","list-of-equations.21d7":"방정식 목록","mode.e78f":"모드","numerical-solver.0d2c":"수치 풀이기","one-equation-per-line.fb04":"한 줄에 방정식 하나, 예:   Vout = Vin * R2 / (R1 + R2)","rounding.905c":"반올림","solve.67b7":"풀기","switch-to-dark-mode.c292":"어두운 모드로 바꾸기","symbulator-home.a3cd":"Symbulator 홈","symbulator-logo.bc79":"Symbulator 로고","the-best-portable-symbolic.4e2c":"가장 뛰어난 휴대용 선형 회로 기호 시뮬레이터","tutorialtutorial.63e5":"\u003ca href=\"https://learn.symbulator.com\"\u003e\u003cspan class=\"subbar-lbl\"\u003e튜토리얼\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003e튜토리얼\u003c/span\u003e\u003c/a\u003e","update-equations.519b":"방정식 갱신","variable-sheet.cd3e":"변수 시트","variables.ac01":"변수"},"pt":{"ac-phasorac.38d8":"\u003cspan class=\"subbar-lbl\"\u003eAC · fasor\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eAC\u003c/span\u003e","an-interactive-numerical-sol.9a63":"Um solucionador numérico interativo para explorar as equações e variáveis do seu circuito. Chega pré-carregado com o sistema de equações e os resultados do circuito resolvido — desmarque uma equação, mude uma conhecida para incógnita e veja como os resultados mudam.","clear-inputs.bdaa":"Limpar entradas","dc-realdc.addd":"\u003cspan class=\"subbar-lbl\"\u003eDC · real\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eDC\u003c/span\u003e","digits.7822":"5 dígitos","digits.a048":"3 dígitos","digits.a970":"4 dígitos","digits.ab7f":"6 dígitos","empty-every-input-and.02e4":"Esvaziar todas as entradas e recomeçar","equation.295e":"Equação","full.52e6":"completa","interactive-mode.af37":"Modo interativo","js.eq.badNumber":"número inválido para %\u007bname}","js.eq.badge":"%\u007bne} %\u007bequations} → %\u007breal} reais · %\u007bun} %\u007bunknowns} escalares","js.eq.badgeDc":"%\u007bne} %\u007bequations} · %\u007bun} %\u007bunknowns}","js.eq.complex":"Complexa","js.eq.giveFor":"dê um %\u007bwhat} para %\u007bname}","js.eq.guess":"palpite","js.eq.hDomain":"Domínio","js.eq.hPrefix":"Prefixo SI","js.eq.hRestriction":"Restrição","js.eq.hResult":"Resultado","js.eq.hStatus":"Estado","js.eq.hValue":"Valor / palpite","js.eq.hVariable":"Variável","js.eq.hintAc":"Uma equação por linha · \u003ccode\u003ej\u003c/code\u003e ou \u003ccode\u003eI\u003c/code\u003e = unidade imaginária · \u003ccode\u003e^\u003c/code\u003e · comentários com \u003ccode\u003e#\u003c/code\u003e · conj re im …","js.eq.hintDc":"Uma equação por linha · \u003ccode\u003e^\u003c/code\u003e permitido · comentários com \u003ccode\u003e#\u003c/code\u003e · sin cos exp log sqrt pi u(t) …","js.eq.imagOnly":"Só imaginária","js.eq.known":"Conhecida","js.eq.rangeBothEnds":"dê os dois extremos do intervalo para %\u007bname}","js.eq.rangeEmpty":"intervalo vazio para %\u007bname} — “de” deve ser menor que “até”","js.eq.rangeFrom":"de","js.eq.rangeTo":"até","js.eq.realOnly":"Só real","js.eq.residualMags":"magnitudes dos resíduos: ","js.eq.residuals":"resíduos: ","js.eq.rstNeg":"Negativa","js.eq.rstNone":"Nenhuma","js.eq.rstPos":"Positiva","js.eq.rstRange":"Intervalo…","js.eq.unknown":"Incógnita","js.eq.value":"valor","js.eq.wEquation":"equação","js.eq.wEquations":"equações","js.eq.wUnknown":"incógnita","js.eq.wUnknowns":"incógnitas","js.lang.label":"Idioma","js.theme.toDark":"Mudar para o modo escuro","js.theme.toLight":"Mudar para o modo claro","list-of-equations.21d7":"Lista de equações","mode.e78f":"modo","numerical-solver.0d2c":"Solucionador numérico","one-equation-per-line.fb04":"uma equação por linha, p. ex.   Vout = Vin * R2 / (R1 + R2)","rounding.905c":"Arredondamento","solve.67b7":"Resolver","switch-to-dark-mode.c292":"Mudar para o modo escuro","symbulator-home.a3cd":"Início do Symbulator","symbulator-logo.bc79":"Logotipo do Symbulator","the-best-portable-symbolic.4e2c":"o melhor simulador simbólico portátil de circuitos lineares","tutorialtutorial.63e5":"\u003ca href=\"https://learn.symbulator.com\"\u003e\u003cspan class=\"subbar-lbl\"\u003eTutorial\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eTutorial\u003c/span\u003e\u003c/a\u003e","update-equations.519b":"Atualizar equações","variable-sheet.cd3e":"Folha de variáveis","variables.ac01":"Variáveis"},"zh":{"ac-phasorac.38d8":"\u003cspan class=\"subbar-lbl\"\u003eAC · 相量\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eAC\u003c/span\u003e","an-interactive-numerical-sol.9a63":"一个交互式数值求解器，用来探索电路的方程与变量。它会预先载入已求解电路的方程组和结果 — 取消勾选某个方程，把已知量改为未知量，看看结果如何变化。","clear-inputs.bdaa":"清空输入","dc-realdc.addd":"\u003cspan class=\"subbar-lbl\"\u003eDC · 实数\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003eDC\u003c/span\u003e","digits.7822":"5 位","digits.a048":"3 位","digits.a970":"4 位","digits.ab7f":"6 位","empty-every-input-and.02e4":"清空所有输入并重新开始","equation.295e":"方程","full.52e6":"完整","interactive-mode.af37":"交互模式","js.eq.badNumber":"%\u007bname} 的数值无效","js.eq.badge":"%\u007bne} 个%\u007bequations} → %\u007breal} 个实方程 · %\u007bun} 个标量%\u007bunknowns}","js.eq.badgeDc":"%\u007bne} 个%\u007bequations} · %\u007bun} 个%\u007bunknowns}","js.eq.complex":"复数","js.eq.giveFor":"请为 %\u007bname} 给出%\u007bwhat}","js.eq.guess":"初值","js.eq.hDomain":"定义域","js.eq.hPrefix":"SI 前缀","js.eq.hRestriction":"限制","js.eq.hResult":"结果","js.eq.hStatus":"状态","js.eq.hValue":"值／初值","js.eq.hVariable":"变量","js.eq.hintAc":"每行一个方程 · \u003ccode\u003ej\u003c/code\u003e 或 \u003ccode\u003eI\u003c/code\u003e = 虚数单位 · \u003ccode\u003e^\u003c/code\u003e · \u003ccode\u003e#\u003c/code\u003e 注释 · conj re im …","js.eq.hintDc":"每行一个方程 · 可用 \u003ccode\u003e^\u003c/code\u003e · \u003ccode\u003e#\u003c/code\u003e 注释 · sin cos exp log sqrt pi u(t) …","js.eq.imagOnly":"仅虚部","js.eq.known":"已知","js.eq.rangeBothEnds":"请给出 %\u007bname} 区间的两端","js.eq.rangeEmpty":"%\u007bname} 的区间为空 — “从”必须小于“到”","js.eq.rangeFrom":"从","js.eq.rangeTo":"到","js.eq.realOnly":"仅实数","js.eq.residualMags":"残差模值： ","js.eq.residuals":"残差： ","js.eq.rstNeg":"负","js.eq.rstNone":"无","js.eq.rstPos":"正","js.eq.rstRange":"区间…","js.eq.unknown":"未知","js.eq.value":"值","js.eq.wEquation":"方程","js.eq.wEquations":"方程","js.eq.wUnknown":"未知量","js.eq.wUnknowns":"未知量","js.lang.label":"语言","js.theme.toDark":"切换到深色模式","js.theme.toLight":"切换到浅色模式","list-of-equations.21d7":"方程列表","mode.e78f":"模式","numerical-solver.0d2c":"数值求解器","one-equation-per-line.fb04":"每行一个方程，例如   Vout = Vin * R2 / (R1 + R2)","rounding.905c":"舍入","solve.67b7":"求解","switch-to-dark-mode.c292":"切换到深色模式","symbulator-home.a3cd":"Symbulator 主页","symbulator-logo.bc79":"Symbulator 徽标","the-best-portable-symbolic.4e2c":"最好的便携式线性电路符号仿真器","tutorialtutorial.63e5":"\u003ca href=\"https://learn.symbulator.com\"\u003e\u003cspan class=\"subbar-lbl\"\u003e教程\u003c/span\u003e\u003cspan class=\"subbar-lbl-short\"\u003e教程\u003c/span\u003e\u003c/a\u003e","update-equations.519b":"更新方程","variable-sheet.cd3e":"变量表","variables.ac01":"变量"}};
+</script>
+<!-- END i18n dictionaries -->
+
+<script>
+// ---- Languages (#197) ----------------------------------------------
+// The app's scheme, in the app's words: a client-side dictionary applied
+// in the page, English kept as the page's own markup and snapshotted
+// rather than duplicated, and the choice shared with the app through
+// localStorage. See templates/index.html for the long version and
+// tools/i18n.py for what is and is not a translation unit.
+const LANGS = [
+  ['en', 'English',    'EN'],
+  ['es', 'Español',    'ES'],
+  ['fr', 'Français',   'FR'],
+  ['de', 'Deutsch',    'DE'],
+  ['pt', 'Português',  'PT'],
+  ['zh', '中文',        'ZH'],
+  ['ja', '日本語',      'JA'],
+  ['ko', '한국어',      'KO'],
+  ['eo', 'Esperanto',  'EO'],
+];
+const LANG_CODES = LANGS.map(l => l[0]);
+const DICTS = window.SYMB_I18N || {};
+let lang = 'en';
+try {
+  const stored = localStorage.getItem('symbulator-lang');
+  if (stored && LANG_CODES.includes(stored)) { lang = stored; }
+} catch (e) {}
+const i18nBase = new WeakMap();
+const i18nLast = new WeakMap();
+const i18nAttrBase = new WeakMap();
+function dict() { return DICTS[lang] || {}; }
+function t(key, en) {
+  const v = dict()[key];
+  return (v === undefined || v === '') ? en : v;
+}
+// Named slots, never positional -- see the app's copy for why.
+function tv(key, en, vars) {
+  return t(key, en).replace(/%\{(\w+)\}/g,
+    (m, k) => (vars && vars[k] !== undefined) ? String(vars[k]) : m);
+}
+function applyLang(next) {
+  lang = LANG_CODES.includes(next) ? next : 'en';
+  const d = dict();
+  document.documentElement.setAttribute('lang', lang);
+  for (const el of document.querySelectorAll('[data-i18n]')) {
+    const key = el.getAttribute('data-i18n');
+    let base = i18nBase.get(el);
+    if (base === undefined) { base = el.innerHTML; i18nBase.set(el, base); }
+    else if (el.innerHTML !== (i18nLast.get(el) || base)) { continue; }
+    const text = (d[key] === undefined || d[key] === '') ? base : d[key];
+    el.innerHTML = text;
+    i18nLast.set(el, text);
+  }
+  for (const attr of ['title', 'placeholder', 'aria-label', 'alt']) {
+    for (const el of document.querySelectorAll('[data-i18n-' + attr + ']')) {
+      const key = el.getAttribute('data-i18n-' + attr);
+      let store = i18nAttrBase.get(el);
+      if (!store) { store = {}; i18nAttrBase.set(el, store); }
+      if (store[attr] === undefined) { store[attr] = el.getAttribute(attr) || ''; }
+      const text = (d[key] === undefined || d[key] === '') ? store[attr] : d[key];
+      el.setAttribute(attr, text);
+    }
+  }
+  try { localStorage.setItem('symbulator-lang', lang); } catch (e) {}
+  document.documentElement.classList.remove('i18n-pending');
+}
+// The app's menu, and the app's reason for measuring rather than asking a
+// media query: the ribbon must stay one line, and what fits depends on the
+// language it is in. See templates/index.html for the long version.
+function ribbonRows() {
+  const inner = document.querySelector('.subbar-inner');
+  // Zero-width viewport (a hidden pane) measures every element onto its
+  // own row; see the app's copy.
+  if (!inner || !window.innerWidth) return 1;
+  const rows = [];
+  for (const el of inner.children) {
+    const r = el.getBoundingClientRect();
+    if (!r.width) continue;
+    const mid = r.top + r.height / 2;
+    if (!rows.some(y => Math.abs(y - mid) < 4)) rows.push(mid);
+  }
+  return rows.length || 1;
+}
+function setLangOptionText(short) {
+  const sel = document.getElementById('langSel');
+  if (!sel.options.length) {
+    for (const [code] of LANGS) {
+      const o = document.createElement('option');
+      o.value = code;
+      sel.appendChild(o);
+    }
+  }
+  LANGS.forEach(([code, name, abbr], i) => {
+    sel.options[i].textContent = short ? abbr : name;
+  });
+  sel.value = lang;
+}
+// banner.css clips <nav> at one line-box rather than letting the row wrap,
+// so a crowded ribbon can drop the Tutorial link instead of growing. See
+// the app's copy for the case that found it.
+function ribbonCrowded() {
+  if (ribbonRows() > 1) return true;
+  const nav = document.querySelector('.subbar nav');
+  return !!nav && nav.scrollHeight > nav.clientHeight + 1;
+}
+function syncLangMenu() {
+  const sel = document.getElementById('langSel');
+  if (!sel) return;
+  const label = t('js.lang.label', 'Language');
+  sel.setAttribute('aria-label', label);
+  sel.setAttribute('title', label);
+  setLangOptionText(false);
+  if (ribbonCrowded()) { setLangOptionText(true); }
+}
+let ribbonTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(ribbonTimer);
+  ribbonTimer = setTimeout(syncLangMenu, 120);
+});
+// Before anything below takes an element reference: applyLang replaces
+// the innerHTML of every tagged element, and with it the nodes inside.
+applyLang(lang);
+
 let rules = [];
 let mode = 'dc';
 // '' is the no-prefix option: it renders as a blank entry in the
@@ -736,8 +922,10 @@ function setMode(m){
   $('mdc').className = m==='dc' ? 'on' : '';
   $('mac').className = m==='ac' ? 'on' : '';
   $('synhint').innerHTML = m==='dc'
-    ? 'One equation per line · <code>^</code> allowed · <code>#</code> comments · sin cos exp log sqrt pi u(t) …'
-    : 'One equation per line · <code>j</code> or <code>I</code> = imaginary unit · <code>^</code> · <code>#</code> comments · conj re im …';
+    ? t('js.eq.hintDc',
+        'One equation per line · <code>^</code> allowed · <code>#</code> comments · sin cos exp log sqrt pi u(t) …')
+    : t('js.eq.hintAc',
+        'One equation per line · <code>j</code> or <code>I</code> = imaginary unit · <code>^</code> · <code>#</code> comments · conj re im …');
   doParse();
 }
 $('mdc').onclick = ()=>setMode('dc');
@@ -784,9 +972,25 @@ function echoKnown(name, tr){
 }
 
 function renderVars(){
-  $('vhead').innerHTML = mode==='dc'
-    ? '<th>Variable</th><th>Result</th><th>Status</th><th>Restriction</th><th>Value / guess</th><th>SI Prefix</th>'
-    : '<th>Variable</th><th>Result</th><th>Status</th><th>Domain</th><th>Restriction</th><th>Re</th><th>Im</th><th>SI Prefix</th>';
+  // Built in script rather than in the markup, because DC and AC want
+  // different columns -- so the headings translate through t() like the
+  // rows beneath them. Re and Im are the mathematics and stay.
+  //
+  // Written out one call at a time, not through a `th(key, en)` helper:
+  // tools/i18n.py collects the English from the literal arguments of
+  // t()/tv(), and a helper hides them from it -- the keys would then be
+  // missing from all eight dictionaries with nothing to say so.
+  $('vhead').innerHTML =
+    '<th>' + t('js.eq.hVariable', 'Variable') + '</th>'
+    + '<th>' + t('js.eq.hResult', 'Result') + '</th>'
+    + '<th>' + t('js.eq.hStatus', 'Status') + '</th>'
+    + (mode === 'dc' ? ''
+        : '<th>' + t('js.eq.hDomain', 'Domain') + '</th>')
+    + '<th>' + t('js.eq.hRestriction', 'Restriction') + '</th>'
+    + (mode === 'dc'
+        ? '<th>' + t('js.eq.hValue', 'Value / guess') + '</th>'
+        : '<th>Re</th><th>Im</th>')
+    + '<th>' + t('js.eq.hPrefix', 'SI Prefix') + '</th>';
   const tb = $('vtab').querySelector('tbody'); tb.innerHTML='';
   activeVars().forEach(name=>{
     const v = ensure(name);
@@ -794,9 +998,9 @@ function renderVars(){
     if(mode==='dc'){
       tr.innerHTML = `<td class="eq">${name}</td>
         <td class="out" data-out></td>
-        <td><select data-st><option value="known">Known</option><option value="unknown">Unknown</option></select></td>
+        <td><select data-st><option value="known">${t('js.eq.known','Known')}</option><option value="unknown">${t('js.eq.unknown','Unknown')}</option></select></td>
         <td class="rstcell">${restrictCell()}</td>
-        <td><input class="val" data-v placeholder="${v.mode==='known'?'value':'guess'}"></td>
+        <td><input class="val" data-v placeholder="${v.mode==='known'?t('js.eq.value','value'):t('js.eq.guess','guess')}"></td>
         <td><select data-pre class="pre">${preOpts(v.pre)}</select></td>`;
       const st = tr.querySelector('[data-st]'), inp = tr.querySelector('[data-v]');
       const pr = tr.querySelector('[data-pre]');
@@ -804,15 +1008,15 @@ function renderVars(){
       // The restriction belongs to the search, so it only applies -- and
       // only offers itself -- while the variable is an Unknown.
       const syncRst = wireRestrict(tr, v, ()=>v.mode==='unknown');
-      st.onchange = ()=>{ v.mode = st.value; inp.placeholder = v.mode==='known'?'value':'guess'; syncRst(); renderResult(name, tr); count(); queueSolve(); };
+      st.onchange = ()=>{ v.mode = st.value; inp.placeholder = v.mode==='known'?t('js.eq.value','value'):t('js.eq.guess','guess'); syncRst(); renderResult(name, tr); count(); queueSolve(); };
       inp.oninput = ()=>{ v.value = inp.value; renderResult(name, tr); queueSolve(); };
       pr.onchange = ()=>{ v.pre = pr.value; renderResult(name, tr); queueSolve(); };
       renderResult(name, tr);
     }else{
       tr.innerHTML = `<td class="eq">${name}</td>
         <td class="out" data-out></td>
-        <td><select data-st><option value="known">Known</option><option value="unknown">Unknown</option></select></td>
-        <td><select data-dom><option value="complex">Complex</option><option value="real">Real only</option><option value="imag">Imag only</option></select></td>
+        <td><select data-st><option value="known">${t('js.eq.known','Known')}</option><option value="unknown">${t('js.eq.unknown','Unknown')}</option></select></td>
+        <td><select data-dom><option value="complex">${t('js.eq.complex','Complex')}</option><option value="real">${t('js.eq.realOnly','Real only')}</option><option value="imag">${t('js.eq.imagOnly','Imag only')}</option></select></td>
         <td class="rstcell">${restrictCell()}</td>
         <td><input class="val" data-re></td>
         <td><span class="jlab">j</span> <input class="val" data-im></td>
@@ -852,12 +1056,12 @@ function renderVars(){
 // range's two ends read in the row's SI prefix, like the guess.
 function restrictCell(){
   return `<select data-sg>
-      <option value="any">None</option>
-      <option value="pos">Positive</option>
-      <option value="neg">Negative</option>
-      <option value="range">Range…</option></select>
-    <span class="rng" data-rng hidden>from <input class="val rlim" data-lo>
-      to <input class="val rlim" data-hi></span>`;
+      <option value="any">${t('js.eq.rstNone','None')}</option>
+      <option value="pos">${t('js.eq.rstPos','Positive')}</option>
+      <option value="neg">${t('js.eq.rstNeg','Negative')}</option>
+      <option value="range">${t('js.eq.rstRange','Range…')}</option></select>
+    <span class="rng" data-rng hidden>${t('js.eq.rangeFrom','from')} <input class="val rlim" data-lo>
+      ${t('js.eq.rangeTo','to')} <input class="val rlim" data-hi></span>`;
 }
 function wireRestrict(tr, v, enabledFn){
   const sg = tr.querySelector('[data-sg]'), rng = tr.querySelector('[data-rng]');
@@ -883,8 +1087,15 @@ function restrictionOf(name, v){
   if(rst !== 'range') return {};
   const f = PFACT[v.pre];
   const lo = parseFloat((v.lo || '').trim()), hi = parseFloat((v.hi || '').trim());
-  if(isNaN(lo) || isNaN(hi)) return {err: `give both ends of the range for ${name}`};
-  if(!(lo < hi)) return {err: `empty range for ${name} — 'from' must be below 'to'`};
+  if(isNaN(lo) || isNaN(hi)) {
+    return {err: tv('js.eq.rangeBothEnds',
+                    'give both ends of the range for %{name}', {name})};
+  }
+  if(!(lo < hi)) {
+    return {err: tv('js.eq.rangeEmpty',
+                    "empty range for %{name} — 'from' must be below 'to'",
+                    {name})};
+  }
   return {r: [lo * f, hi * f]};
 }
 
@@ -897,12 +1108,23 @@ function count(){
   const b = $('cnt');
   if(mode==='dc'){
     const un = vars.filter(n=>state.vs[n].mode==='unknown').length;
-    b.textContent = `${ne} equation${ne!==1?'s':''} · ${un} unknown${un!==1?'s':''}`;
+    b.textContent = tv('js.eq.badgeDc', '%{ne} %{equations} · %{un} %{unknowns}',
+      {ne, un,
+       equations: ne!==1 ? t('js.eq.wEquations','equations')
+                         : t('js.eq.wEquation','equation'),
+       unknowns: un!==1 ? t('js.eq.wUnknowns','unknowns')
+                        : t('js.eq.wUnknown','unknown')});
     b.className = 'badge ' + (ne && ne===un ? 'ok' : (un ? 'bad' : ''));
   }else{
     const un = vars.filter(n=>state.vs[n].mode==='unknown')
                    .reduce((s,n)=>s+scalars(state.vs[n]),0);
-    b.textContent = `${ne} equation${ne!==1?'s':''} → ${2*ne} real · ${un} scalar unknown${un!==1?'s':''}`;
+    b.textContent = tv('js.eq.badge',
+      '%{ne} %{equations} → %{real} real · %{un} scalar %{unknowns}',
+      {ne, real: 2*ne, un,
+       equations: ne!==1 ? t('js.eq.wEquations','equations')
+                         : t('js.eq.wEquation','equation'),
+       unknowns: un!==1 ? t('js.eq.wUnknowns','unknowns')
+                        : t('js.eq.wUnknown','unknown')});
     b.className = 'badge ' + (ne && 2*ne===un ? 'ok' : (un ? 'bad' : ''));
   }
 }
@@ -985,7 +1207,11 @@ async function doSolve(){
       const raw = (v.value || '').trim();
       const num = (raw === '' && v.mode === 'unknown')
         ? 0 : parseFloat(raw) * PFACT[v.pre];
-      if(isNaN(num)){ m.textContent=`give a ${v.mode==='known'?'value':'guess'} for ${n}`; m.className='msg bad'; return; }
+      if(isNaN(num)){
+        m.textContent = tv('js.eq.giveFor', 'give a %{what} for %{name}',
+          {what: v.mode==='known' ? t('js.eq.value','value')
+                                  : t('js.eq.guess','guess'), name: n});
+        m.className='msg bad'; return; }
       (v.mode==='known'?knowns:guesses)[n]=num;
       if(v.mode==='unknown'){
         const q = restrictionOf(n, v);
@@ -1000,7 +1226,9 @@ async function doSolve(){
       const v = state.vs[n], f = PFACT[v.pre];
       const re = (v.domain==='imag' ? 0 : parseFloat(v.re||'0')) * f;
       const im = (v.domain==='real' ? 0 : parseFloat(v.im||'0')) * f;
-      if(isNaN(re)||isNaN(im)){ m.textContent=`bad number for ${n}`; m.className='msg bad'; return; }
+      if(isNaN(re)||isNaN(im)){
+        m.textContent = tv('js.eq.badNumber', 'bad number for %{name}', {name: n});
+        m.className='msg bad'; return; }
       if(v.mode==='known') knowns[n]={re,im};
       else{
         unknowns[n]={domain:v.domain, re, im};
@@ -1059,7 +1287,9 @@ async function doSolve(){
     renderResult(name, tr);
   });
   $('residbox').hidden=false;
-  $('resid').innerHTML = (mode==='ac'?'residual magnitudes: ':'residuals: ') +
+  $('resid').innerHTML = (mode==='ac'
+      ? t('js.eq.residualMags', 'residual magnitudes: ')
+      : t('js.eq.residuals', 'residuals: ')) +
     d.residuals.map(r=>`${r.rule.split('=')[0].trim()}: ${r.value.toExponential(2)}`).join(' · ');
 }
 $('solve').onclick = ()=>doSolve();
@@ -1171,7 +1401,8 @@ function isDarkTheme(){ return document.documentElement.getAttribute('data-theme
 function syncThemeToggle(){
   const dark = isDarkTheme();
   themeToggleBtn.innerHTML = dark ? ICON_SUN : ICON_MOON;
-  const label = dark ? 'Switch to light mode' : 'Switch to dark mode';
+  const label = dark ? t('js.theme.toLight', 'Switch to light mode')
+                     : t('js.theme.toDark', 'Switch to dark mode');
   themeToggleBtn.setAttribute('aria-label', label);
   themeToggleBtn.title = label;
 }
@@ -1183,6 +1414,17 @@ themeToggleBtn.addEventListener('click', ()=>{
   syncThemeToggle();
 });
 syncThemeToggle();
+
+// The language menu, wired once everything it repaints exists. A change
+// never re-solves: the sheet's numbers are the same in every language.
+syncLangMenu();
+document.getElementById('langSel').addEventListener('change', ev => {
+  applyLang(ev.target.value);
+  syncLangMenu();
+  syncThemeToggle();
+  setMode(mode);          // the syntax hint, and a re-parse behind it
+  renderVars();
+});
 
 const urlImp = new URLSearchParams(location.search).get('import');
 if(urlImp){
