@@ -33,9 +33,12 @@
 #   note:       a line of your own about this entry, shown when it is
 #               loaded. Nothing in the app writes one -- add it by hand
 #               here -- but it survives being loaded and saved again.
-#   rounding:   exact | approx | a number of significant digits (default exact)
+#   rounding:   exact | approx | a number of significant digits |
+#               exact+n, which shows both at once (default exact)
 #   si:         yes | no -- SI-prefix display, e.g. 1.2 k instead of 1200 (default no)
 #   units:      yes | no -- show V/A/W/Ω units on answers (default yes)
+#   show_equations: yes | no -- the Equations card, listing the system
+#               the solver assembled (default no)
 #   rms:        yes | no -- RMS phasor convention for AC power (default no).
 #               Only written for AC circuits; it does nothing elsewhere.
 #   evaluate:   an expression to evaluate against the solved answers

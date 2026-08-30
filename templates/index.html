@@ -1426,15 +1426,20 @@ units: yes</pre>
         <div style="flex: 0 1 24rem">
           <label for="digits">Rounding</label>
           <select id="digits">
+            <!-- #179, Roberto, 30 Aug 2026: this order and this wording.
+                 Most exact first, and the two modes that use the **n**
+                 box sit together. The `value` of each option is
+                 deliberately unchanged -- they are what roundingLabel()
+                 writes into a .cir and applyCircuit() reads back, so
+                 every file ever saved still loads. -->
             <option value="exact">exact</option>
-            <option value="approx">approximate</option>
-            <option value="n">approximate to n significant digits</option>
-            <!-- #175, Antony García's suggestion via Roberto, 30 Aug 2026:
-                 solve exactly, then show the approximation beside the
-                 exact value for every answer that is a pure number. A
-                 symbolic answer has nothing to approximate and is left
-                 exact. Uses the same n as the option above it. -->
+            <!-- #175, Antony García's suggestion via Roberto: solve
+                 exactly, then show the approximation beside the exact
+                 value for every answer that is a pure number. A symbolic
+                 answer has nothing to approximate and is left exact. -->
             <option value="both">exact and approx to n digits</option>
+            <option value="n">approx to n digits</option>
+            <option value="approx">approx</option>
           </select>
           <!-- A message about this control belongs under this control, not
                in a shared box at the foot of the card. -->
@@ -2116,7 +2121,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-30 07:25 UTC
+  Symbulator 9 version 2026-08-30 07:35 UTC
 </footer>
 
 <script>
