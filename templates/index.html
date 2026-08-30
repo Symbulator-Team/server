@@ -649,6 +649,26 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
   .result-math::-webkit-scrollbar-button, .el-item::-webkit-scrollbar-button { display: none; }
   .fieldnote { color: var(--note-warn); font-size: .84rem; line-height: 1.45;
                margin-top: .4rem; }
+  /* #191. The tag straddles the top border, so it paints the card's own
+     background over the line to make the notch -- which is why the colour
+     is --card and not a fixed white: in dark mode the card is #1b212c and
+     a white notch would be a bright bar across the border. */
+  .setnote {
+    position: relative; margin-top: 1.15rem;
+    border: 1px solid var(--note-line); border-radius: 10px;
+    padding: .85rem .95rem .75rem;
+  }
+  .setnote-tag {
+    position: absolute; top: 0; left: .8rem; transform: translateY(-50%);
+    background: var(--card); padding: 0 .45rem;
+    font-size: .72rem; font-weight: 700; letter-spacing: .03em;
+    color: var(--accent);
+  }
+  /* The one line in here that means something just happened. It already
+     carries --note-warn; bold is what makes it read as an event rather
+     than more explanation, now that the box is not tinted. */
+  .setnote .fieldnote { font-weight: 600; margin-top: 0; margin-bottom: .5rem; }
+  .setnote .hint:last-child { display: block; }
   .error { background: var(--err-bg); color: var(--err-ink); border: 1px solid var(--err-line);
            border-radius: 8px; padding: .7rem 1rem; font-size: .92rem; }
   details { margin-top: .4rem; }
@@ -1439,7 +1459,7 @@ units: yes</pre>
                  answer has nothing to approximate and is left exact. -->
             <option value="both">exact and approx to n digits</option>
             <option value="n">approx to n digits</option>
-            <option value="approx">approx</option>
+            <option value="approx">approx (full precision)</option>
           </select>
           <!-- A message about this control belongs under this control, not
                in a shared box at the foot of the card. -->
@@ -1468,11 +1488,25 @@ units: yes</pre>
           <label class="checkline"><input type="checkbox" id="showEquations"><span>Show
             equations <span class="hint">— adds an Equations card listing the
             system the solver assembled</span></span></label>
-          <div class="fieldnote" id="siNote" hidden></div>
-          <div class="hint" id="settingsNote" style="margin-top:.5rem">
-            SI prefixes apply to numeric answers only; a symbolic answer such as
-            <code>x·vin/(r1 + x)</code> is left as it is. A prefixed value is a
-            decimal, so SI prefixes and <em>exact</em> can't both apply.
+          <!-- #191, Roberto, 30 Aug 2026: the notes about the settings sit
+               in a box of their own with a tag on its border, rather than
+               running on as loose text under the last checkbox.
+               Deliberately transparent, not tinted: what is usually in
+               here is the standing explanation, saying nothing has
+               happened, and a permanent tint would give permanent weight
+               to that. The dynamic line carries its own colour when there
+               is something to say.
+               The Rounding control's own note is NOT in here -- see the
+               comment beside it; a message about one control belongs
+               under that control. -->
+          <div class="setnote">
+            <span class="setnote-tag">A word about your settings</span>
+            <div class="fieldnote" id="siNote" hidden></div>
+            <div class="hint" id="settingsNote">
+              SI prefixes apply to numeric answers only; a symbolic answer such as
+              <code>x·vin/(r1 + x)</code> is left as it is. A prefixed value is a
+              decimal, so SI prefixes and <em>exact</em> can't both apply.
+            </div>
           </div>
         </div>
       </div>
@@ -1905,7 +1939,10 @@ units: yes</pre>
           <textarea id="spiceNet" spellcheck="false" placeholder="V1 1 0 5&#10;R1 1 2 1k&#10;R2 2 0 1k"></textarea>
         </div>
       </div>
-      <div class="actions" style="margin-top:.7rem">
+      <!-- #187: centred, not left-aligned. Set here rather than on
+           .actions, which four cards share -- the others are meant to
+           line up with the text above them. -->
+      <div class="actions" style="margin-top:.7rem;justify-content:center">
         <button id="spiceToBtn">Symbulator to SPICE</button>
         <button id="spiceFromBtn">SPICE to Symbulator</button>
       </div>
@@ -2381,7 +2418,9 @@ function activatePostSolve() {
   $('solveqEqs').disabled = false;
   $('solveqEqs').placeholder = 'e.g. p_r2 = 0.05';
   $('solveqUnks').disabled = false;
+  $('solveqUnks').placeholder = 'x';            // the live hints, back (#184)
   $('solveqConds').disabled = false;
+  $('solveqConds').placeholder = '';
   $('solveqReal').disabled = false;
   $('solveqBtn').disabled = false;
   $('solveqCard').classList.remove('inactive');
@@ -2398,6 +2437,11 @@ function activatePostSolve() {
   // Mini-Tools is always active too (#149): aa, pf and gain work on
   // typed arguments and read nothing from a solve, so nothing here.
 }
+
+//: What a field says while it waits for a circuit to be solved. One
+//: spelling, because Evaluate and Solve must not drift apart -- #184 was
+//: exactly that drift, the Solve card having been left without it.
+const WAITING_FOR_SOLVE = 'solve a circuit first\u2026';
 
 // The exact mirror of activatePostSolve: put the page back to how it
 // looks before anything has been run. Used by "Clear all inputs", where
@@ -2420,10 +2464,17 @@ function clearResults() {
   $('evalBtn').disabled = true;
   $('evalCard').classList.add('inactive');
   $('solveqOut').innerHTML = '';
+  // #184: the Solve card's fields were already disabled here, exactly as
+  // Evaluate's are -- but they did not *say* so. This one was blanked,
+  // `solveqUnks` kept its live "x" hint and `solveqConds` never had one,
+  // so a card that could not be used read as one that could. All three
+  // now carry Evaluate's wording while they wait.
   $('solveqEqs').disabled = true;
-  $('solveqEqs').placeholder = '';
+  $('solveqEqs').placeholder = WAITING_FOR_SOLVE;
   $('solveqUnks').disabled = true;
+  $('solveqUnks').placeholder = WAITING_FOR_SOLVE;
   $('solveqConds').disabled = true;
+  $('solveqConds').placeholder = WAITING_FOR_SOLVE;
   $('solveqReal').disabled = true;
   $('solveqBtn').disabled = true;
   $('solveqCard').classList.add('inactive');

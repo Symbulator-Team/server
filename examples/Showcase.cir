@@ -67,7 +67,7 @@
 # A bare 1k is ambiguous and the site will stop to ask which you meant.
 # ---------------------------------------------------------------------
 
-title: A sample of what Symbulator can do
+title: Claude's sampler for Symbulator 9
 
 [Voltage divider (DC)]
 
