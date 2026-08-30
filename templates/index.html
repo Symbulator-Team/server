@@ -2060,8 +2060,10 @@ units: yes</pre>
              build keeps it rather than hiding it, because a reader who
              is offline is better served by a link that waits than by no
              link at all. Points at version 9's credits, this being
-             version 9; the anchor is the "## Acknowledgements
-             {#acknowledgements}" heading in src/99-credits.md. -->
+             version 9; the anchor is the Acknowledgements heading in
+             src/99-credits.md. Do not write that heading's brace-hash
+             anchor form here: Jinja reads brace-hash as a comment
+             opener and the whole template stops parsing. -->
         <a href="https://learn.symbulator.com/9/credits#acknowledgements"
            target="_blank" rel="noopener">Acknowledgements</a>
       </p>
