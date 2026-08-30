@@ -2160,7 +2160,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-30 12:29 UTC
+  Symbulator 9 version 2026-08-30 13:32 UTC
 </footer>
 
 <script>
@@ -3039,10 +3039,23 @@ function syncSettings() {
   $('rmsRow').style.display = isAc ? '' : 'none';
   $('useRms').disabled = !isAc;
   // Polar display is the same story: in DC every answer is real, and in
-  // FD/TR they are functions of s or t, with no angle to take.
+  // FD/TR they are functions of s or t, with no angle to take. So it
+  // hides too (#183, Roberto), finishing the choice made for the row
+  // above on 28 Aug 2026 -- a control that can never be used where it
+  // stands is clutter, not information.
+  //
+  // Hiding one `.checkline` rather than a whole `.row`: this tick lives
+  // in the Display block beside Show units, Use SI prefixes and Show
+  // equations, so the others close up behind it. The opacity and title
+  // that used to explain the greyed state are gone with the greying --
+  // both existed only to apologise for a control being there.
+  //
+  // The value is deliberately left alone while hidden, exactly as the
+  // RMS one is: `polar` rides in the .cir and in inputsSnapshot(), so
+  // clearing it would edit the reader's entry behind their back and,
+  // since #182, would be reported as an unsaved change they never made.
+  $('polarLine').style.display = isAc ? '' : 'none';
   $('polarPhasors').disabled = !isAc;
-  $('polarLine').style.opacity = isAc ? '1' : '.5';
-  $('polarLine').title = isAc ? '' : 'Applies to AC analysis only';
 }
 
 // SI prefixes and exact answers contradict each other -- a prefixed
