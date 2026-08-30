@@ -2123,7 +2123,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-30 07:35 UTC
+  Symbulator 9 version 2026-08-30 08:21 UTC
 </footer>
 
 <script>
@@ -3610,7 +3610,11 @@ function shownFrom(sol) {
 function renderEquations(system) {
   const card = $('equationsCard'), out = $('equationsOut');
   const wanted = $('showEquations').checked;
-  if (!wanted || !system || !(system.equations || []).length) {
+  // Counted over the merged list (#180), not the stamped equations
+  // alone: a system that produced only knowns would otherwise hide a
+  // card that has something to show.
+  const rows = system ? (system.equations || []).concat(system.known || []) : [];
+  if (!wanted || !system || !rows.length) {
     card.hidden = true;
     card.classList.add('inactive');
     return;
@@ -3655,8 +3659,16 @@ function renderEquations(system) {
     out.appendChild(lcd);
   };
 
-  group('', system.equations);
-  group('Known', system.known);
+  // #180, Roberto, 30 Aug 2026: the knowns are equations like any other
+  // -- `i_c1 = s*v_2/1000000` is an equation, and heading it "Known" only
+  // asked the reader to care about a distinction the solver makes for
+  // itself. They join the main list, in the order the stamp produced
+  // them. The expert-mode additions and the conditions stay apart,
+  // because those are the reader's own and worth finding at a glance.
+  //
+  // The payload still carries `known` separately; it is the presentation
+  // that merges, so anything else reading `system` keeps the detail.
+  group('', rows);
   group('Added in expert mode', system.added);
   group('Conditions', system.conditions);
 
