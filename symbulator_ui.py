@@ -1096,6 +1096,72 @@ def _with_unit(plain: str, latex: str, unit: str, show: bool):
             f"{latex}\\,{_UNIT_LATEX.get(unit, unit)}")
 
 
+#: #175: the two halves of an "exact and approximate" answer, joined.
+#: Exact first, the approximation after it in brackets -- Antony García's
+#: suggestion, Roberto's choice of layout, 30 Aug 2026. An answer that
+#: still has free symbols never gets here: there is nothing to
+#: approximate, and the exact form is the whole answer.
+def _sympify_row(sp, text):
+    """An expert-mode equation or condition as SymPy, for typesetting.
+
+    These arrive as the reader typed them ("re = 12'k", "is > 0"), so
+    they go through the same shorthand expansion a circuit value gets.
+    Anything that will not parse comes back as the original text, which
+    `_tex` then declines to typeset -- the card falls back to plain.
+    """
+    try:
+        from symbulator.si_prefix import expand_shorthand
+        body = expand_shorthand(str(text))
+    except Exception:
+        body = str(text)
+    for op, builder in (("<=", sp.Le), (">=", sp.Ge), ("=", sp.Eq),
+                        ("<", sp.Lt), (">", sp.Gt)):
+        if op in body:
+            left, _, right = body.partition(op)
+            try:
+                return builder(sp.sympify(left.strip()),
+                               sp.sympify(right.strip()), evaluate=False)
+            except Exception:
+                return text
+    try:
+        return sp.sympify(body)
+    except Exception:
+        return text
+
+
+def _join_dual(exact, approximate):
+    """(plain, latex) for the pair, or `exact` alone when the two would
+    read the same -- an answer that is already 0.5 gains nothing from
+    "0.5 (= 0.5)", and a whole number even less."""
+    if approximate is None or approximate[0] == exact[0]:
+        return exact
+    return (f"{exact[0]}  (≈ {approximate[0]})",
+            rf"{exact[1]}\;\;(\approx {approximate[1]})")
+
+
+def _dualise(one, sp, expr, unit, digits, si, polar):
+    """Format `expr` twice through `one` -- the caller's own formatter --
+    once exactly and once to `digits` significant figures, and join them.
+
+    `one` is fmt/fmt0 from solve_ui, whose flags are keyword parameters
+    defaulting to the call's settings precisely so this can override
+    them without a second copy of the formatting logic.
+    """
+    exact = one(expr, unit, digits=0, si=False, approx=False, polar=polar)
+    try:
+        settled = sp.simplify(expr)
+    except Exception:
+        settled = expr
+    if getattr(settled, "free_symbols", None):
+        return exact
+    try:
+        approximate = one(expr, unit, digits=digits, si=si, approx=False,
+                          polar=polar)
+    except Exception:
+        return exact
+    return _join_dual(exact, approximate)
+
+
 # --------------------------------------------------------------------------
 # Names that cannot be used, because their answers collide
 # --------------------------------------------------------------------------
@@ -1472,7 +1538,8 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                   extra_equations, extra_unknowns, extra_conditions,
                   digits: int = 0, si: bool = False,
                   units: bool = False, use_rms: bool = False,
-                  approx: bool = False, polar: bool = False):
+                  approx: bool = False, polar: bool = False,
+                  dual: bool = False):
     """Solve a full circuit, or run the th/er/port tools. Returns
     {"ok": True, ...} with the payload grouping answers into node voltages
     and per-element results (or, for the special tools, one block of named
@@ -1489,7 +1556,8 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         # is nothing to take an angle of.
         polar = polar and domain == "ac"
 
-        def fmt0(expr, unit=""):
+        def fmt0(expr, unit="", *, digits=digits, si=si, approx=approx,
+                 polar=polar):
             """Format one answer from a special tool (th/er/port) as a
             (plain-text, LaTeX) pair: SI-prefix notation first (if `si`),
             then forced-decimal (if `approx`), else the exact symbolic
@@ -1692,7 +1760,8 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         # 0.4.6 exposes every root; older solvers have only the one.
         solutions = list(getattr(res, "solutions", None) or [values])
 
-        def fmt(expr, unit=""):
+        def fmt(expr, unit="", *, digits=digits, si=si, approx=approx,
+                polar=polar):
             """Same formatting logic as `fmt0` above, for a normal
             dc/ac/fd/tr solve's node-voltage and element answers -- see
             `fmt0`'s docstring for why these two aren't merged into one
@@ -1730,6 +1799,20 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             expr = _round_expr(expr, digits)
             return _with_unit(_plain_with_j(expr), _latex_with_j(expr),
                               unit, show_unit)
+
+        # #175: "exact and approximate". Both formatters are wrapped
+        # rather than rewritten -- each answer goes through the very same
+        # code twice, once with the rounding off and once with it on, so
+        # the two halves cannot drift apart in units, polar form or the
+        # infinity spelling.
+        if dual and digits:
+            _fmt0_once, _fmt_once = fmt0, fmt
+
+            def fmt0(expr, unit=""):                       # noqa: F811
+                return _dualise(_fmt0_once, sp, expr, unit, digits, si, polar)
+
+            def fmt(expr, unit=""):                        # noqa: F811
+                return _dualise(_fmt_once, sp, expr, unit, digits, si, polar)
 
         elements = parse_circuit(desc)
         # Formatting one solution. An expert-mode equation on a power is
@@ -1853,24 +1936,103 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                     "extras": extras, "values": flat}
 
 
-        # ---- The equation system the solver assembled (for download).
+        # ---- The equation system the solver assembled.
+        #
+        # Two shapes of the same thing. `equations` is the flat list of
+        # strings the Export Output card has always downloaded, unchanged.
+        # `system` (#176) is the same content grouped and carrying a LaTeX
+        # rendering of each line, for the Equations card to set with
+        # MathJax -- Antony García's suggestion, 30 Aug 2026.
+        #
+        # A TR solve is transformed into the s-domain, solved there and
+        # inverted, so what there is to show for it is that system, and
+        # `domain_note` says so rather than letting it pass for the
+        # time-domain equations a reader would assume -- Roberto's call.
         equations = []
+        system = None
         try:
             from symbulator.engine import Circuit
             eq_domain = "fd" if domain == "tr" else domain
-            circ = Circuit(elements, eq_domain,
+            # TR is solved as FD over a description whose sources have
+            # already been moved into s -- see laplace.tr(), which stamps
+            # _sources_to_s(desc), not desc. Stamping the raw description
+            # here instead produced a system nobody solves: reactive
+            # elements in s (s*v_2/1000000) beside a source still in t
+            # (v_1 = 12*u(t)). The source's line is its own defining
+            # equation, "the drop across it is its value", so it is
+            # exactly the line that shows which domain the value is in.
+            stamp_elements, stamp_extra_eqs, stamp_extra_conds = (
+                elements, extra_equations, extra_conditions)
+            if domain == "tr":
+                from symbulator.laplace import (_sources_to_s,
+                                                _relations_to_s)
+                _s_desc = _sources_to_s(desc)
+                stamp_elements = parse_circuit(_s_desc)
+                # The extras cross with them: tr() transforms the added
+                # equations and conditions too, so a listing that left
+                # them in t would disagree with the system around them.
+                stamp_extra_eqs = _relations_to_s(extra_equations, desc)
+                stamp_extra_conds = _relations_to_s(extra_conditions, desc)
+            circ = Circuit(stamp_elements, eq_domain,
                            omega=sp.sympify(omega) if domain == "ac" else None)
             circ.stamp_all()
+
+            # SymPy sets Heaviside as theta(t). The app's own input
+            # language, and the whole tutorial, call the unit step u(t),
+            # and the EqSheet export already rewrites it that way (see
+            # the `_u` substitution below) -- so the card does too rather
+            # than showing the reader a symbol they were never taught.
+            _u = sp.Function("u")
+
+            def _as_u(obj):
+                try:
+                    return obj.replace(sp.Heaviside, lambda *a: _u(a[0]))
+                except Exception:
+                    return obj
+
+            def _tex(obj):
+                """LaTeX for one line, falling back to its plain text --
+                the card renders whatever it is given, and a fallback that
+                reads as text beats a card that fails to typeset."""
+                try:
+                    return sp.latex(_as_u(obj))
+                except Exception:
+                    return None
+
+            eq_rows, known_rows, added_rows, cond_rows = [], [], [], []
             for eq in circ.equations:
                 equations.append(f"{eq.lhs} = {eq.rhs}")
+                shown = sp.Eq(_as_u(eq.lhs), _as_u(eq.rhs), evaluate=False)
+                eq_rows.append({"plain": f"{shown.lhs} = {shown.rhs}",
+                                "latex": _tex(shown)})
             for kname, kexpr in circ.known.items():
                 equations.append(f"{kname} = {kexpr}")
-            for extra in (extra_equations or []):
+                shown = sp.Eq(sp.Symbol(str(kname)), _as_u(kexpr),
+                              evaluate=False)
+                known_rows.append({"plain": f"{kname} = {shown.rhs}",
+                                   "latex": _tex(shown)})
+            for extra in (stamp_extra_eqs or []):
                 equations.append(f"{extra}   (added)")
-            for cond in (extra_conditions or []):
+                added_rows.append({"plain": str(extra),
+                                   "latex": _tex(_sympify_row(sp, extra))})
+            for cond in (stamp_extra_conds or []):
                 equations.append(f"{cond}   (condition)")
+                cond_rows.append({"plain": str(cond),
+                                  "latex": _tex(_sympify_row(sp, cond))})
             unk = [str(u) for u in circ.unknowns] + list(extra_unknowns or [])
             equations.append("unknowns: " + ", ".join(unk))
+
+            note = ""
+            if domain == "tr":
+                note = ("Shown in the s-domain, which is where a transient "
+                        "is actually solved: Symbulator transforms the "
+                        "sources into s, solves the system below, and "
+                        "inverts the answers back into time. A step typed "
+                        "as 12*u(t) therefore appears here as 12/s.")
+            system = {"equations": eq_rows, "known": known_rows,
+                      "added": added_rows, "conditions": cond_rows,
+                      "unknowns": unk, "domain": domain,
+                      "domain_note": note}
         except Exception:
             pass  # equations are a bonus; never fail the solve over them
 
@@ -2061,6 +2223,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                     "extras": first["extras"], "values": first["values"],
                     "solutions": rendered,
                     "equations": equations, "eqsheet": eqsheet,
+                    "system": system,
                     "notes": _notes,
                     "approx": approx, "approx_forced": approx_forced})
     except Exception as exc:  # noqa: BLE001 -- anything goes back as text
@@ -3112,7 +3275,7 @@ def _power_factor(expr_str: str, values: dict, subs_map=None,
 
 def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
                  si: bool = False, approx: bool = False,
-                 domain: str = "", conditions=None):
+                 domain: str = "", conditions=None, dual: bool = False):
     """Evaluate a user expression against the solved values. Names match
     however they are spelled: `i_r1`, `i_R1`, `iR1` and `IR1` all find
     the same answer, since element names are lowercase by this point."""
@@ -3133,6 +3296,36 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
             return conds                     # an error reading the box
         subs_map, assumptions = conds
 
+        # The one formatting recipe this function uses, in one place --
+        # it appeared twice, and #175 would have made it twice again.
+        def shown_pair(result, *, digits=digits, si=si, approx=approx):
+            if si:
+                got = _si_format(result, digits)
+                if got is not None:
+                    return got
+            if approx and not digits:
+                got = _approx_format(result)
+                if got is not None:
+                    return got
+                result = sp.N(result)
+            result = _round_expr(result, digits)
+            return _plain_with_j(result), _latex_with_j(result)
+
+        def shown(result):
+            """#175: exact, then the approximation in brackets, when the
+            mode asks for both and the answer is a pure number."""
+            if not (dual and digits):
+                return shown_pair(result)
+            exact = shown_pair(result, digits=0, si=False, approx=False)
+            if getattr(result, "free_symbols", None):
+                return exact
+            try:
+                approximate = shown_pair(result, digits=digits, si=si,
+                                         approx=False)
+            except Exception:
+                return exact
+            return _join_dual(exact, approximate)
+
         # pf() is answered before the ordinary path, because it wants its
         # arguments as numbers and gives back a sentence.
         power_factor = _power_factor(expr_str, values, subs_map, assumptions)
@@ -3146,18 +3339,8 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
             return transformed          # an error from the transform
         if transformed is not None:
             result = sp.simplify(transformed)
-            if si:
-                shown = _si_format(result, digits)
-                if shown is not None:
-                    return _ok({"plain": shown[0], "latex": shown[1]})
-            if approx and not digits:
-                shown = _approx_format(result)
-                if shown is not None:
-                    return _ok({"plain": shown[0], "latex": shown[1]})
-                result = sp.N(result)
-            result = _round_expr(result, digits)
-            return _ok({"plain": _plain_with_j(result),
-                        "latex": _latex_with_j(result)})
+            plain, latex = shown(result)
+            return _ok({"plain": plain, "latex": latex})
 
         # Through the same shorthand a circuit value gets, so `^`, an
         # implied multiplication and `2'k` mean here what they mean in the
@@ -3178,18 +3361,8 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
         # what was typed. Everything else still gets tidied as before.
         if not rearranged:
             result = sp.simplify(result)
-        if si:
-            shown = _si_format(result, digits)
-            if shown is not None:
-                return _ok({"plain": shown[0], "latex": shown[1]})
-        if approx and not digits:
-            shown = _approx_format(result)
-            if shown is not None:
-                return _ok({"plain": shown[0], "latex": shown[1]})
-            result = sp.N(result)
-        result = _round_expr(result, digits)
-        return _ok({"plain": _plain_with_j(result),
-                    "latex": _latex_with_j(result)})
+        plain, latex = shown(result)
+        return _ok({"plain": plain, "latex": latex})
     except Exception as exc:  # noqa: BLE001
         return _err(_exc_text(exc))
 
@@ -3203,7 +3376,7 @@ _PREFIX_UNITS = {"v": "V", "i": "A", "p": "W", "ap": "W", "s": "VA",
 def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
                    si: bool = False, approx: bool = False,
                    units: bool = False, real_only: bool = False,
-                   conditions=None, domain: str = ""):
+                   conditions=None, domain: str = "", dual: bool = False):
     """Solve user equations against the circuit's answers -- the web
     counterpart of the calculator's solve()/cSolve(). Known answers are
     substituted in first, so an equation can be written directly in
@@ -3323,24 +3496,30 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
             equation system -- yet another copy of that same small
             formatting recipe, here because solveq_ui doesn't share a
             call frame with solve_ui."""
-            try:
-                expr = sp.simplify(expr)
-            except Exception:
-                pass
-            has_syms = bool(getattr(expr, "free_symbols", None))
-            show_unit = units and not has_syms
-            if si:
-                shown = _si_format(expr, digits, unit if show_unit else "")
-                if shown is not None:
-                    return shown
-            if approx and not digits:
-                shown = _approx_format(expr)
-                if shown is not None:
-                    return _with_unit(shown[0], shown[1], unit, show_unit)
-                expr = sp.N(expr)
-            expr = _round_expr(expr, digits)
-            return _with_unit(_plain_with_j(expr), _latex_with_j(expr),
-                              unit, show_unit)
+            def once(expr, unit="", *, digits=digits, si=si, approx=approx,
+                     polar=False):
+                try:
+                    expr = sp.simplify(expr)
+                except Exception:
+                    pass
+                has_syms = bool(getattr(expr, "free_symbols", None))
+                show_unit = units and not has_syms
+                if si:
+                    got = _si_format(expr, digits, unit if show_unit else "")
+                    if got is not None:
+                        return got
+                if approx and not digits:
+                    got = _approx_format(expr)
+                    if got is not None:
+                        return _with_unit(got[0], got[1], unit, show_unit)
+                    expr = sp.N(expr)
+                expr = _round_expr(expr, digits)
+                return _with_unit(_plain_with_j(expr), _latex_with_j(expr),
+                                  unit, show_unit)
+
+            if dual and digits:                                     # #175
+                return _dualise(once, sp, expr, unit, digits, si, False)
+            return once(expr, unit)
 
         out = []
         for sol in sols:

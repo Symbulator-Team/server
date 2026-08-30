@@ -405,7 +405,7 @@ def api_solveq():
     ok, payload = _run_in_process(
         "solveq_ui",
         (equations, unknowns, clean, digits, si, approx, units, real_only,
-         conditions, domain))
+         conditions, domain, bool(data.get('dual'))))
     elapsed = round(time.time() - t0, 2)
     if not ok:
         return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
@@ -457,6 +457,9 @@ def api_solve():
     use_rms = bool(data.get("use_rms"))
     polar = bool(data.get("polar"))
     approx = bool(data.get("approx"))
+    # #175: "exact and approximate to n digits" -- one mode, not two
+    # settings, so it rides beside `digits` rather than replacing it.
+    dual = bool(data.get("dual"))
 
     def _lines(field):
         """Read `field` from the posted JSON as a list of non-blank
@@ -601,7 +604,7 @@ def api_solve():
     ok, payload = _run_in_process(
         "solve_ui", (desc, domain, omega, variables, tool, n1, n2, kind,
                         extra_equations, extra_unknowns, extra_conditions,
-                        digits, si, units, use_rms, approx, polar))
+                        digits, si, units, use_rms, approx, polar, dual))
     elapsed = round(time.time() - t0, 2)
 
     if not ok:
@@ -618,7 +621,7 @@ def api_solve():
     return jsonify({"ok": True, "domain": domain, "tool": tool,
                     "elapsed": elapsed, "desc_used": desc_used,
                     "digits": digits, "si": si, "units": units,
-                    "use_rms": use_rms, "polar": polar,
+                    "use_rms": use_rms, "polar": polar, "dual": dual,
                     "approx": payload.get("approx", approx),
                     "approx_forced": payload.get("approx_forced", False),
                     "nodes": payload["nodes"],
@@ -634,6 +637,10 @@ def api_solve():
                     # by hand, so a key added in symbulator_ui must be
                     # named or the server variant silently drops it.
                     "eqsheet": payload.get("eqsheet"),
+                    # #176: the same system, grouped and with LaTeX per
+                    # line, for the Equations card. Named here for the
+                    # reason the comment above gives.
+                    "system": payload.get("system"),
                     "notes": payload["notes"]})
 
 
@@ -821,6 +828,7 @@ def api_evaluate():
     digits = _clean_digits(data.get("digits"))
     si = bool(data.get("si"))
     approx = bool(data.get("approx"))
+    dual = bool(data.get("dual"))                                   # #175
     # The Conditions box (#96) -- read and guarded exactly as the Solve
     # card's is, including `and` between clauses, so the two boxes accept
     # the same things. _ALLOWED is the wrong guard here: it has no `=`,
@@ -846,7 +854,8 @@ def api_evaluate():
     t0 = time.time()
     domain = str(data.get("domain", "")).strip().lower()
     ok, payload = _run_in_process("evaluate_ui", (expr, clean, digits, si,
-                                                  approx, domain, conditions))
+                                                  approx, domain, conditions,
+                                                  dual))
     elapsed = round(time.time() - t0, 2)
     if not ok:
         return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422

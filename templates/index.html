@@ -1116,8 +1116,10 @@ units: yes</pre>
         <code>equations</code>, <code>conditions</code> and
         <code>unknowns</code>; the Settings
         <code>rounding</code> (exact/approx/a number of significant
-        digits), <code>si</code>, <code>units</code> and <code>rms</code>
-        (each yes/no); and, if you were using them when you saved,
+        digits/<code>exact+n</code> for both at once), <code>si</code>,
+        <code>units</code>, <code>rms</code> and
+        <code>show_equations</code> (each yes/no); and, if you were using
+        them when you saved,
         <code>evaluate</code> with its own
         <code>evaluate_conditions</code>, the standalone equation solver's
         <code>solve_equations</code> / <code>solve_conditions</code> /
@@ -1427,6 +1429,12 @@ units: yes</pre>
             <option value="exact">exact</option>
             <option value="approx">approximate</option>
             <option value="n">approximate to n significant digits</option>
+            <!-- #175, Antony García's suggestion via Roberto, 30 Aug 2026:
+                 solve exactly, then show the approximation beside the
+                 exact value for every answer that is a pure number. A
+                 symbolic answer has nothing to approximate and is left
+                 exact. Uses the same n as the option above it. -->
+            <option value="both">exact and approx to n digits</option>
           </select>
           <!-- A message about this control belongs under this control, not
                in a shared box at the foot of the card. -->
@@ -1448,6 +1456,13 @@ units: yes</pre>
           <label class="checkline" id="polarLine"><input type="checkbox" id="polarPhasors"><span>Show
             AC answers as polar phasors <span class="hint">— 3 + 4j becomes 5∠53.13°;
             average power stays real</span></span></label>
+          <!-- #176, Antony García's suggestion via Roberto, 30 Aug 2026.
+               Off by default: the system is a page of algebra on anything
+               bigger than a teaching circuit, and most readers want the
+               answers. -->
+          <label class="checkline"><input type="checkbox" id="showEquations"><span>Show
+            equations <span class="hint">— adds an Equations card listing the
+            system the solver assembled</span></span></label>
           <div class="fieldnote" id="siNote" hidden></div>
           <div class="hint" id="settingsNote" style="margin-top:.5rem">
             SI prefixes apply to numeric answers only; a symbolic answer such as
@@ -1534,6 +1549,18 @@ units: yes</pre>
     <details id="resultsBox">
       <summary class="results-h section-toggle">Results</summary>
       <div id="out">
+        <div class="lcd"><div class="placeholder">— no analysis run yet —</div></div>
+      </div>
+    </details>
+  </div>
+
+  <!-- #176. Hidden unless "Show equations" is ticked AND a solve
+       produced a system; both, so the card never appears empty. It sits
+       directly under Results because it explains them. -->
+  <div class="card inactive" id="equationsCard" hidden>
+    <details id="equationsBox">
+      <summary class="results-h section-toggle">Equations</summary>
+      <div id="equationsOut">
         <div class="lcd"><div class="placeholder">— no analysis run yet —</div></div>
       </div>
     </details>
@@ -2080,7 +2107,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-30 04:36 UTC
+  Symbulator 9 version 2026-08-30 07:17 UTC
 </footer>
 
 <script>
@@ -2365,6 +2392,8 @@ function clearResults() {
   lastSolve = null;
   buildSolutionPicker({});
   $('out').innerHTML = '<div class="lcd"><div class="placeholder">— no analysis run yet —</div></div>';
+  $('equationsCard').hidden = true;                              // #176
+  $('equationsCard').classList.add('inactive');
   $('status').textContent = '';
   $('resultsCard').classList.add('inactive');
   $('evalOut').innerHTML = '';
@@ -2553,17 +2582,23 @@ function applyCircuit(c) {
   const rounding = c.rounding || 'exact';
   if (rounding === 'exact' || rounding === 'approx') {
     $('digits').value = rounding;
+  } else if (/^exact\+\d+$/.test(String(rounding))) {          // #175
+    const n = parseInt(String(rounding).slice(6), 10);
+    $('digits').value = 'both';
+    $('nDigits').value = Number.isFinite(n) ? Math.min(12, Math.max(2, n)) : 4;
   } else {
     const n = parseInt(rounding, 10);
     $('digits').value = 'n';
     $('nDigits').value = Number.isFinite(n) ? Math.min(12, Math.max(2, n)) : 4;
   }
+  $('showEquations').checked = !!c.show_equations;               // #176
   $('siUnits').checked = !!c.si;
   $('showUnits').checked = c.units === undefined || c.units === null ? true : !!c.units;
   $('useRms').checked = !!c.rms;
   $('polarPhasors').checked = !!c.polar;
   syncSettings();
-  if (rounding !== 'exact' || c.si || c.rms || c.polar || c.units === false) $('settingsBox').open = true;
+  if (rounding !== 'exact' || c.si || c.rms || c.polar || c.units === false
+      || c.show_equations) $('settingsBox').open = true;
 
   // Evaluate and the standalone "Solve equations" tool -- both stay
   // disabled until the circuit is solved (see activatePostSolve), but
@@ -2851,18 +2886,24 @@ $('fileInput').addEventListener('change', async ev => {
 });
 
 // ---- Settings: rounding, SI prefixes, units, AC convention ----------
-// The three rounding states map onto what the solver already accepts:
-//   exact          -> digits 0, approx off
-//   approximate    -> digits 0, approx on
-//   approximate to n -> digits n
+// The four rounding states map onto what the solver already accepts:
+//   exact                    -> digits 0, approx off
+//   approximate              -> digits 0, approx on
+//   approximate to n         -> digits n
+//   exact and approx to n    -> digits n, dual on            (#175)
+// The last one is not a fifth setting on the server: it carries the same
+// n, and `dual` tells the formatter to run each answer through twice --
+// once exactly, once rounded -- and print both.
+function nDigitsValue() {
+  let n = parseInt($('nDigits').value, 10);
+  if (!Number.isFinite(n)) n = 4;
+  return Math.min(12, Math.max(2, n));
+}
+
 function roundingState() {
   const mode = $('digits').value;
-  if (mode === 'n') {
-    let n = parseInt($('nDigits').value, 10);
-    if (!Number.isFinite(n)) n = 4;
-    n = Math.min(12, Math.max(2, n));
-    return { digits: n, approx: false };
-  }
+  if (mode === 'n')    return { digits: nDigitsValue(), approx: false };
+  if (mode === 'both') return { digits: nDigitsValue(), approx: false, dual: true };
   return { digits: 0, approx: mode === 'approx' };
 }
 
@@ -2872,12 +2913,12 @@ function roundingState() {
 // applyCircuit() when loading one back.
 function roundingLabel() {
   const mode = $('digits').value;
-  if (mode === 'n') {
-    let n = parseInt($('nDigits').value, 10);
-    if (!Number.isFinite(n)) n = 4;
-    n = Math.min(12, Math.max(2, n));
-    return String(n);
-  }
+  // "exact+4" for the dual mode (#175). A reader of the .cir file can
+  // see what it means, and an older Symbulator that does not know the
+  // spelling falls through applyCircuit's parseInt to plain n digits --
+  // wrong in the display, right in the arithmetic.
+  if (mode === 'both') return 'exact+' + nDigitsValue();
+  if (mode === 'n')    return String(nDigitsValue());
   return mode;
 }
 
@@ -2908,7 +2949,10 @@ function clearSettingsNotes() {
 // states (the "n" digits box only under "approximate to n digits", RMS
 // only in AC -- see the comment on $('useRms') below).
 function syncSettings() {
-  $('nField').style.display = $('digits').value === 'n' ? 'block' : 'none';
+  // 'both' is "exact and approx to n digits" (#175), so it wants the n
+  // box just as much as 'n' does.
+  $('nField').style.display =
+    ($('digits').value === 'n' || $('digits').value === 'both') ? 'block' : 'none';
   // The RMS convention only affects AC power, so it is inert elsewhere.
   // The whole row hides outside AC -- it used to grey out instead, on the
   // theory that a vanishing setting feels unstable, and Roberto weighed
@@ -3072,6 +3116,7 @@ function inputsSnapshot() {
     // applicable": a saved circuit always has some rounding/display
     // state, even if it's every default.
     rounding: roundingLabel(),
+    show_equations: $('showEquations').checked,                  // #176
     si: $('siUnits').checked,
     units: $('showUnits').checked,
     rms: $('useRms').checked,
@@ -3537,6 +3582,92 @@ function shownFrom(sol) {
   return shown;
 }
 
+// #176: the equation system the solver assembled, set as mathematics.
+//
+// `system` is built in symbulator_ui and carries a LaTeX rendering per
+// line beside the plain text; anything SymPy declined to typeset arrives
+// with `latex: null` and is shown as its plain form instead, so a line
+// that cannot be set never costs the reader the line.
+//
+// The card is hidden unless the setting is on AND there is a system to
+// show -- an empty card headed "Equations" is worse than no card.
+function renderEquations(system) {
+  const card = $('equationsCard'), out = $('equationsOut');
+  const wanted = $('showEquations').checked;
+  if (!wanted || !system || !(system.equations || []).length) {
+    card.hidden = true;
+    card.classList.add('inactive');
+    return;
+  }
+  const mjReady = window.MathJax && MathJax.typesetPromise;
+  const tex = (t, plain) => {
+    const div = document.createElement('div');
+    if (mjReady && t) { div.innerHTML = `\\(${t}\\)`; }
+    else { div.style.fontFamily = 'var(--mono)'; div.style.fontSize = '.9rem';
+           div.textContent = plain; }
+    return div;
+  };
+  out.innerHTML = '';
+
+  if (system.domain_note) {
+    const note = document.createElement('div');
+    note.className = 'hint';
+    note.style.margin = '0 0 .7rem';
+    note.textContent = system.domain_note;
+    out.appendChild(note);
+  }
+
+  const group = (caption, rows) => {
+    if (!rows || !rows.length) return;
+    if (caption) {
+      const cap = document.createElement('div');
+      cap.className = 'section-cap';
+      cap.textContent = caption;
+      out.appendChild(cap);
+    }
+    const lcd = document.createElement('div');
+    lcd.className = 'lcd';
+    for (const row of rows) {
+      const line = document.createElement('div');
+      line.className = 'result-row';
+      const math = document.createElement('div');
+      math.className = 'result-math';
+      math.appendChild(tex(row.latex, row.plain));
+      line.appendChild(math);
+      lcd.appendChild(line);
+    }
+    out.appendChild(lcd);
+  };
+
+  group('', system.equations);
+  group('Known', system.known);
+  group('Added in expert mode', system.added);
+  group('Conditions', system.conditions);
+
+  if ((system.unknowns || []).length) {
+    const unk = document.createElement('div');
+    unk.className = 'hint';
+    unk.style.marginTop = '.6rem';
+    unk.textContent = 'Unknowns: '
+      + system.unknowns.map(u => String(u).replace(/_/g, '')).join(', ');
+    out.appendChild(unk);
+  }
+
+  card.hidden = false;
+  card.classList.remove('inactive');
+  if (mjReady) MathJax.typesetPromise([out]);
+}
+
+// Ticking the setting after a solve should not need another solve: the
+// system is already in `last`.
+document.addEventListener('DOMContentLoaded', () => {
+  const box = $('showEquations');
+  if (box) box.addEventListener('change', () => {
+    renderEquations(last && last.system);
+    refreshEntryLinks(); persistState();
+  });
+});
+
 async function renderSolveResult(data, idx) {
   const out = $('out'), status = $('status');
   // A payload without `solutions` is itself the single solution, which is
@@ -3738,8 +3869,10 @@ async function renderSolveResult(data, idx) {
     rms: !!data.use_rms,
     approx: !!data.approx,
     equations: data.equations || [],
-    eqsheet: data.eqsheet || null
+    eqsheet: data.eqsheet || null,
+    system: data.system || null                                  // #176
   };
+  renderEquations(data.system);
   // A fresh main solve invalidates any earlier Evaluate/Solve results,
   // since they were computed against the previous answers.
   lastEval = null;

@@ -96,6 +96,10 @@ _KEYS = {
     # restored this, but it was missing here, so it was dropped on the way
     # into the file and every reload came back rectangular.
     "polar": "polar",
+    # #176: the Equations card. Part of the display state like the rest of
+    # this group -- an entry that was saved with the system on screen
+    # comes back with it on screen.
+    "show_equations": "show_equations",
     # The Evaluate box, and the standalone "Solve equations" tool -- both
     # separate from a circuit's own Expert Mode (equation/condition/
     # unknowns above), which is why they get their own key names instead
@@ -127,7 +131,8 @@ _MULTI = {"equations": "equations",
 # JSON fields (the _KEYS values above, not the file-text keys) that are
 # booleans rather than plain text -- parse_book converts their text
 # ("yes"/"no"/...) to real True/False so the front end never has to.
-_BOOL_FIELDS = {"si", "units", "rms", "polar", "solve_real_only"}
+_BOOL_FIELDS = {"si", "units", "rms", "polar", "solve_real_only",
+                "show_equations"}
 _TRUE_WORDS = {"yes", "true", "1", "on"}
 
 _SECTION_RE = re.compile(r"^\[(?P<name>.+)\]\s*$")
@@ -286,6 +291,11 @@ def format_book(circuits: List[dict], title: str = "") -> str:
         meta.append(f"rounding: {c.get('rounding') or 'exact'}")
         meta.append(f"si: {_bool_word(c.get('si'))}")
         meta.append(f"units: {_bool_word(c.get('units', True))}")
+        # Written only when it is on: every entry in the library predates
+        # it, and a "show_equations: no" on all 330 of them would be noise
+        # in a file people read by hand.
+        if c.get("show_equations"):
+            meta.append("show_equations: yes")
         # The RMS convention applies to AC power only, so writing it for a
         # DC or transient circuit records a setting that cannot do anything
         # there. Left out entirely unless the analysis is AC.
