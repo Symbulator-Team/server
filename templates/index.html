@@ -953,7 +953,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 <div class="subbar">
   <div class="subbar-inner">
     <nav>
-      <!-- server-only: Download points at this page's own "Run Symbulator 9
+      <!-- server-only: Local App points at this page's own "Run Symbulator 9
            locally" card, and that card is itself server-only -- it explains
            how to get the offline copy, which is meaningless once you are the
            offline copy. So the link has to go with it: left in, the offline
@@ -962,9 +962,9 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
       <!-- Two spellings per label (#144), the shared banner.css showing
            exactly one: full above 480px, short at phone widths, so the
            ribbon stays one line on any screen. -->
-      <a href="#runLocallyCard"><span class="subbar-lbl">Download App</span><span class="subbar-lbl-short">App</span></a>
+      <a href="#runLocallyCard"><span class="subbar-lbl">Local App</span><span class="subbar-lbl-short">App</span></a>
       <!-- /server-only -->
-      <a href="https://learn.symbulator.com"><span class="subbar-lbl">Documentation</span><span class="subbar-lbl-short">Docs</span></a>
+      <a href="https://learn.symbulator.com"><span class="subbar-lbl">Tutorial</span><span class="subbar-lbl-short">Tutorial</span></a>
     </nav>
     <span class="subbar-spacer"></span>
     <!-- Clear all inputs lived beside the [ I N P U T S ] heading until
@@ -1744,7 +1744,7 @@ units: yes</pre>
 
   <div class="card" id="plotCard">
     <details id="plotBox">
-      <summary class="results-h section-toggle">Plot</summary>
+      <summary class="results-h section-toggle">Plotting Tools</summary>
       <div class="row">
         <div>
           <label for="plotTool">Plot type</label>
@@ -1806,7 +1806,7 @@ units: yes</pre>
        the card inactive. -->
   <div class="card" id="exploreCard">
     <details id="exploreBox">
-      <summary class="results-h section-toggle">Explore Numerically</summary>
+      <summary class="results-h section-toggle">Numerical Solver</summary>
       <!-- One line up front, the rest folded away (Roberto, 28 Aug
            2026: the card carried too much text). The folded copy drops
            the old opening sentence, which said what the intro line now
@@ -2080,7 +2080,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-29 13:24 UTC
+  Symbulator 9 version 2026-08-30 04:36 UTC
 </footer>
 
 <script>
@@ -4799,14 +4799,14 @@ themeToggleBtn.addEventListener('click', () => {
 });
 </script>
   <!-- server-only: this opens the "Run Symbulator 9 locally" card when
-       the ribbon's "Download App" link, or the host notice, points at it.
+       the ribbon's "Local App" link, or the host notice, points at it.
        Both of those are themselves server-only, so the handler goes with
        them -- in the offline build there is no such card to open. It is a
        separate <script> purely so these markers can strip it: they are
        what build_local.py matches on, and a // comment is not. -->
   <script>
 // a fragment link to a <details> scrolls to it but leaves it
-// shut, so "Download App" in the ribbon landed the reader on a collapsed
+// shut, so "Local App" in the ribbon landed the reader on a collapsed
 // one-line summary with the explanation still folded away. Open it. Any
 // in-page link pointing at a <details> gets this, which also covers the
 // host notice's "Run Symbulator 9 locally" link -- same card, same intent.
