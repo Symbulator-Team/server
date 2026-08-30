@@ -669,6 +669,11 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
      than more explanation, now that the box is not tinted. */
   .setnote .fieldnote { font-weight: 600; margin-top: 0; margin-bottom: .5rem; }
   .setnote .hint:last-child { display: block; }
+  /* #196. The rule above sets `display` explicitly, and an author rule
+     out-ranks the `hidden` attribute's UA `display:none` -- so without
+     this the standing note would keep showing while marked hidden. Equal
+     specificity, later in the sheet, which is what settles it. */
+  .setnote .hint[hidden] { display: none; }
   .error { background: var(--err-bg); color: var(--err-ink); border: 1px solid var(--err-line);
            border-radius: 8px; padding: .7rem 1rem; font-size: .92rem; }
   details { margin-top: .4rem; }
@@ -1499,10 +1504,15 @@ units: yes</pre>
                The Rounding control's own note is NOT in here -- see the
                comment beside it; a message about one control belongs
                under that control. -->
-          <div class="setnote">
+          <div class="setnote" id="setnoteBox">
             <span class="setnote-tag">A word about your settings</span>
             <div class="fieldnote" id="siNote" hidden></div>
-            <div class="hint" id="settingsNote">
+            <!-- #196, Roberto, 30 Aug 2026: this is the standing
+                 explanation of what SI prefixes do, so it belongs on
+                 screen only while they are on. Hidden here rather than
+                 shown-then-hidden by script, so it never flashes on a
+                 load with SI off (the common case: si defaults to no). -->
+            <div class="hint" id="settingsNote" hidden>
               SI prefixes apply to numeric answers only; a symbolic answer such as
               <code>x·vin/(r1 + x)</code> is left as it is. A prefixed value is a
               decimal, so SI prefixes and <em>exact</em> can't both apply.
@@ -2160,7 +2170,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   Free and open-source software under the MIT licence · results are symbolic, powered by SymPy<br>
-  Symbulator 9 version 2026-08-30 13:32 UTC
+  Symbulator 9 version 2026-08-30 13:43 UTC
 </footer>
 
 <script>
@@ -3012,6 +3022,21 @@ function settingsNote(where, text) {
   // versus exact -- so raising one always retires the other. Without this
   // both stand at once, each describing a change the other just undid.
   if (text) { $(other).textContent = ''; $(other).hidden = true; }
+  syncSetnote();
+}
+
+// #196. The standing SI explanation shows only while SI prefixes are on,
+// and the box around it shows only while something is inside it -- an
+// empty bordered box with "A word about your settings" on its border and
+// nothing under it reads as a bug, not as calm.
+//
+// Called from three places because the two lines in the box move
+// independently: syncSettings() for anything that reloads the card (an
+// entry loading, a rounding change), the siUnits handler for the tick
+// itself, and settingsNote() above for the dynamic line.
+function syncSetnote() {
+  $('settingsNote').hidden = !$('siUnits').checked;
+  $('setnoteBox').hidden = $('settingsNote').hidden && $('siNote').hidden;
 }
 
 // Both notices describe one conflict -- SI prefixes versus exact -- so
@@ -3056,6 +3081,8 @@ function syncSettings() {
   // since #182, would be reported as an unsaved change they never made.
   $('polarLine').style.display = isAc ? '' : 'none';
   $('polarPhasors').disabled = !isAc;
+
+  syncSetnote();
 }
 
 // SI prefixes and exact answers contradict each other -- a prefixed
@@ -3071,6 +3098,7 @@ $('siUnits').addEventListener('change', () => {
   } else {
     clearSettingsNotes();
   }
+  syncSetnote();                                                  // #196
   if (last) solve();
 });
 $('digits').addEventListener('change', () => {
