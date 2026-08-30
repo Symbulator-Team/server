@@ -528,6 +528,10 @@
     <div class="mode" role="group" aria-label="mode">
       <button id="mdc" class="on">DC · real</button><button id="mac">AC · phasor</button>
     </div>
+    <!-- #186: the same control the app carries, in the same place and
+         the same class, so the two properties read alike. -->
+    <button type="button" id="clearAllBtn" class="subbar-action"
+      title="Empty every input and start over"><span class="subbar-lbl">Clear all inputs</span><span class="subbar-lbl-short">Clear inputs</span></button>
     <button type="button" id="themeToggle" class="theme-toggle"
             aria-label="Switch to dark mode" title="Switch to dark mode"></button>
   </div>
@@ -543,13 +547,17 @@ the results change.</p>
   <section>
     <h2>List of Equations</h2>
     <div class="pad">
-      <textarea id="rules" spellcheck="false"># Voltage divider with load
-Vout = Vin * R2 / (R1 + R2)
-P2   = Vout^2 / R2
-Iin  = Vin / (R1 + R2)
-
-# Thermal
-T = T0 + P2 * Rth</textarea>
+      <!-- #185: empty on purpose. This box used to ship a worked
+           example in it -- a voltage divider and a thermal equation --
+           so the page was never blank for someone arriving at /eqsheet/
+           cold. But the tagline directly above says the sheet "arrives
+           preloaded with the solved circuit's equation system", and the
+           app opens this page with no payload whenever nothing has been
+           solved (#136). The result was a reader clearing every input in
+           the app, opening the solver, and finding a system that was
+           neither theirs nor anything Symbulator had produced. -->
+      <textarea id="rules" spellcheck="false"
+        placeholder="one equation per line, e.g.   Vout = Vin * R2 / (R1 + R2)"></textarea>
       <div class="toolbar">
         <button class="primary" id="parse">Update equations</button>
         <span class="hint" id="synhint"></span>
@@ -911,6 +919,31 @@ async function doParse(){
   renderRules(); renderVars();
 }
 $('parse').onclick = async ()=>{ await doParse(); queueSolve(); };
+
+// #186: empty the sheet in one click, the way the app's own Clear all
+// inputs does. Everything derived from the equations goes with them --
+// the parsed rules, which are ticked, every variable's Known/Unknown
+// status and value, the stored solution, the residuals and both status
+// lines. Done locally rather than by re-parsing an empty box, so it
+// needs no round trip and works with the server unreachable.
+//
+// Deliberately kept: the DC/AC mode and the rounding menu. Those are
+// preferences about how the sheet works, not inputs typed into it, and
+// the rounding one is remembered in localStorage across visits.
+$('clearAllBtn').onclick = ()=>{
+  $('rules').value = '';
+  rules = [];
+  state.sel.clear();
+  state.vs = {};
+  lastSol = {};
+  $('perr').textContent = '';
+  $('smsg').textContent = '';
+  $('smsg').className = 'msg';
+  $('resid').innerHTML = '';
+  $('residbox').hidden = true;
+  renderRules(); renderVars(); count();
+  $('rules').focus();
+};
 
 // In Interactive Mode an edit to the equations re-parses on its own --
 // a little later than the solve debounce, so half-typed lines settle --

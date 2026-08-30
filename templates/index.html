@@ -1905,7 +1905,10 @@ units: yes</pre>
           <textarea id="spiceNet" spellcheck="false" placeholder="V1 1 0 5&#10;R1 1 2 1k&#10;R2 2 0 1k"></textarea>
         </div>
       </div>
-      <div class="actions" style="margin-top:.7rem">
+      <!-- #187: centred, not left-aligned. Set here rather than on
+           .actions, which four cards share -- the others are meant to
+           line up with the text above them. -->
+      <div class="actions" style="margin-top:.7rem;justify-content:center">
         <button id="spiceToBtn">Symbulator to SPICE</button>
         <button id="spiceFromBtn">SPICE to Symbulator</button>
       </div>
@@ -2381,7 +2384,9 @@ function activatePostSolve() {
   $('solveqEqs').disabled = false;
   $('solveqEqs').placeholder = 'e.g. p_r2 = 0.05';
   $('solveqUnks').disabled = false;
+  $('solveqUnks').placeholder = 'x';            // the live hints, back (#184)
   $('solveqConds').disabled = false;
+  $('solveqConds').placeholder = '';
   $('solveqReal').disabled = false;
   $('solveqBtn').disabled = false;
   $('solveqCard').classList.remove('inactive');
@@ -2398,6 +2403,11 @@ function activatePostSolve() {
   // Mini-Tools is always active too (#149): aa, pf and gain work on
   // typed arguments and read nothing from a solve, so nothing here.
 }
+
+//: What a field says while it waits for a circuit to be solved. One
+//: spelling, because Evaluate and Solve must not drift apart -- #184 was
+//: exactly that drift, the Solve card having been left without it.
+const WAITING_FOR_SOLVE = 'solve a circuit first\u2026';
 
 // The exact mirror of activatePostSolve: put the page back to how it
 // looks before anything has been run. Used by "Clear all inputs", where
@@ -2420,10 +2430,17 @@ function clearResults() {
   $('evalBtn').disabled = true;
   $('evalCard').classList.add('inactive');
   $('solveqOut').innerHTML = '';
+  // #184: the Solve card's fields were already disabled here, exactly as
+  // Evaluate's are -- but they did not *say* so. This one was blanked,
+  // `solveqUnks` kept its live "x" hint and `solveqConds` never had one,
+  // so a card that could not be used read as one that could. All three
+  // now carry Evaluate's wording while they wait.
   $('solveqEqs').disabled = true;
-  $('solveqEqs').placeholder = '';
+  $('solveqEqs').placeholder = WAITING_FOR_SOLVE;
   $('solveqUnks').disabled = true;
+  $('solveqUnks').placeholder = WAITING_FOR_SOLVE;
   $('solveqConds').disabled = true;
+  $('solveqConds').placeholder = WAITING_FOR_SOLVE;
   $('solveqReal').disabled = true;
   $('solveqBtn').disabled = true;
   $('solveqCard').classList.add('inactive');
