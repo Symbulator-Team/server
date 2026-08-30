@@ -63,6 +63,19 @@ I18N = SERVER / "i18n"
 
 TEMPLATES = ["templates/index.html", "templates/eqsheet.html"]
 
+# The offline builds carry markup and script this repo does not: the boot
+# bar, the install bar, and the Pyodide bridge's own messages, all injected
+# by build_local.py from constants. They are reader-facing, so they are
+# translated too -- which means their keys have to be collected from that
+# file and packed into THIS template, since the offline page is generated
+# from it. The path is the sibling layout build_local.py itself requires.
+LOCAL_BUILD = SERVER.parent / "local" / "build_local.py"
+
+
+def local_build_source() -> str:
+    return (LOCAL_BUILD.read_text(encoding="utf-8")
+            if LOCAL_BUILD.exists() else "")
+
 # Every language the app speaks, in menu order, with the name each one
 # calls itself: a reader looking for their own language is looking for
 # the word they would write, not its English name.
@@ -378,7 +391,14 @@ def keys_used_by(src: str) -> set:
 
 
 def pack_block(rel: str) -> str:
-    wanted = keys_used_by((SERVER / rel).read_text(encoding="utf-8"))
+    src = (SERVER / rel).read_text(encoding="utf-8")
+    if rel.endswith("index.html"):
+        # The offline page is generated from this template, so it must
+        # also carry the keys build_local.py injects with the boot bar,
+        # the install bar and the Pyodide bridge's own messages. The
+        # Numerical Solver has no offline build and needs none of them.
+        src += local_build_source()
+    wanted = keys_used_by(src)
     dicts = {}
     for code in TARGETS:
         d = {k: v for k, v in load(code).items() if v and k in wanted}
@@ -483,8 +503,9 @@ def js_calls():
     """
     out = {}
     dup = []
-    for rel in TEMPLATES:
-        src = (SERVER / rel).read_text(encoding="utf-8")
+    sources = [(SERVER / rel).read_text(encoding="utf-8") for rel in TEMPLATES]
+    sources.append(local_build_source())
+    for src in sources:
         for m in re.finditer(r"""(?<![\w.$])(t|tv)\(\s*'([a-zA-Z0-9_.-]+)'\s*,""",
                              src):
             key = m.group(2)
