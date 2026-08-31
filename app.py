@@ -28,7 +28,8 @@ import os
 import re
 import time
 
-from flask import Flask, jsonify, render_template, request
+from flask import (Flask, jsonify, render_template, request,
+                   send_from_directory)
 
 from circuitbook import parse_book
 
@@ -47,6 +48,14 @@ app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES
 
 EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                             "examples")
+#: The generated per-language dictionaries (#204). One file per language,
+#: loaded only when that language is actually used; the offline builds
+#: carry the same files beside the page instead.
+I18N_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "i18n", "dist")
+#: A language code, and nothing else: this arrives from the URL and is
+#: joined to a path. Two letters is every code the app has or plans.
+_LANG_RE = re.compile(r"^[a-z]{2}$")
 #: A file the reader may ask for by name. Kept deliberately tight: this
 #: is a name arriving from a query string and being joined to a path.
 _EXAMPLE_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,79}\.cir$")
@@ -118,6 +127,29 @@ def _run_in_process(fn_name, args):
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
+@app.get("/i18n/<lang>.js")
+def i18n_dict(lang):
+    """One language's dictionary, as a file.
+
+    Root-absolute on purpose: the app is served at / and the Numerical
+    Solver at /eqsheet/, so a relative path would resolve differently on
+    the two pages. The offline builds rewrite it to a relative path,
+    where there is only one page and it sits at the root.
+
+    Cached hard because the URL carries a ?v= stamp that changes with
+    the dictionaries -- see tools/i18n.py, stamp().
+    """
+    if not _LANG_RE.match(lang or ""):
+        return jsonify(error="unknown language"), 404
+    path = os.path.join(I18N_DIR, lang + ".js")
+    if not os.path.isfile(path):
+        return jsonify(error="unknown language"), 404
+    resp = send_from_directory(I18N_DIR, lang + ".js",
+                               mimetype="application/javascript")
+    resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return resp
+
 
 @app.get("/")
 def index():
