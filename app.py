@@ -38,7 +38,9 @@ app = Flask(__name__)
 # EqSheet, the what-if numerical solver, mounted at /eqsheet/. It is its
 # own Blueprint (its /api/solve must not collide with this file's), and
 # the "What if..." button after a solve opens it preloaded via ?import=.
-from eqsheet import bp as eqsheet_bp                          # noqa: E402
+# The Blueprint lives in eqsheet_web.py; eqsheet.py itself is Flask-free
+# so the offline builds can import it into Pyodide (#208).
+from eqsheet_web import bp as eqsheet_bp                      # noqa: E402
 app.register_blueprint(eqsheet_bp)
 
 # Uploaded circuit books are plain text; half a megabyte is far more

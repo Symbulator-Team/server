@@ -478,7 +478,7 @@
  "who-made-symbulator.4d28": "Symbulator를 만든 사람",
  "windows.26d9": "Windows",
  "works-on-mobile-devices.8ab6": "모바일 기기, Windows, macOS, Linux에서 작동합니다. 브라우저에서 바로 로컬 사본을 설치하려면 <a href=\"https://install.symbulator.com\" target=\"_blank\" rel=\"noopener\">install.symbulator.com</a>을 찾으세요. 그 쪽에는 자체 <strong>설치</strong> 단추가 있습니다 — 누르고 확인하면 끝입니다.",
- "works-on-windows-macos.f74e": "Windows, macOS, Linux에서 작동합니다. 같은 오프라인 판은 약 17 MB짜리 하나의 .zip으로도 배포됩니다 — 설치할 인터넷이 없을 때, USB 메모리나 로컬 네트워크로 옮겨야 할 때, 또는 이 사이트에 무슨 일이 있어도 계속 쓸 수 있는 사본을 두고 싶을 때 쓸모가 있습니다. 아무 데나 풀고 그 안의 실행 파일을 여세요: <a href=\"https://symbulator.com/9/local.zip\" target=\"_blank\" rel=\"noopener\" download=\"symbulator-local.zip\">.zip 내려받기</a>.",
+ "works-on-windows-macos.b9b9": "Windows, macOS, Linux에서 작동합니다. 같은 오프라인 판은 약 30 MB짜리 하나의 .zip으로도 배포됩니다 — 설치할 인터넷이 없을 때, USB 메모리나 로컬 네트워크로 옮겨야 할 때, 또는 이 사이트에 무슨 일이 있어도 계속 쓸 수 있는 사본을 두고 싶을 때 쓸모가 있습니다. 아무 데나 풀고 그 안의 실행 파일을 여세요: <a href=\"https://symbulator.com/9/local.zip\" target=\"_blank\" rel=\"noopener\" download=\"symbulator-local.zip\">.zip 내려받기</a>.",
  "write-the-apostrophe-k.c85a": "아포스트로피를 쓰세요 — <code>1'k</code> — SI 접두어를 뜻한다고 분명히 밝히려는 것입니다. 맨 <code>1k</code>도 작동하지만 모호합니다(1킬로인지, k라는 이름의 변수의 1배인지). 그러면 Symbulator는 멈추고 묻습니다.",
  "y-admittance.94f4": "y — 어드미턴스",
  "y-parameters-admittance-two.6867": "y 파라미터(어드미턴스) 2포트 블록",

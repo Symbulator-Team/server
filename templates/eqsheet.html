@@ -31,7 +31,7 @@
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "c3017a611d";
+window.SYMB_I18N_V = "389f2ba69c";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -963,6 +963,7 @@ function renderResult(name, tr){
     echoKnown(name, tr);
     return;
   }
+  if(s === null){ out.textContent = '\u2014'; return; }
   const f = PFACT[v.pre];
   const sym = suffixOf(name);
   if(mode==='dc'){
@@ -1314,10 +1315,10 @@ async function doSolve(){
     yard[g] = Math.max(yard[g]||0, mag); };
   if(mode==='dc'){
     for(const [n, x] of Object.entries(body.knowns)) addYard(n, Math.abs(x));
-    for(const [n, x] of Object.entries(d.solution)) addYard(n, Math.abs(x));
+    for(const [n, x] of Object.entries(d.solution)) if(x!==null) addYard(n, Math.abs(x));
   }else{
     for(const [n, z] of Object.entries(body.knowns)) addYard(n, Math.hypot(z.re, z.im));
-    for(const [n, s] of Object.entries(d.solution)) addYard(n, s.mag);
+    for(const [n, s] of Object.entries(d.solution)) if(s!==null) addYard(n, s.mag);
   }
 
   lastSol = {};
@@ -1326,6 +1327,14 @@ async function doSolve(){
     const s = d.solution[name];
     if(s===undefined){
       // Not solved for -- a Known keeps showing its given value.
+      renderResult(name, tr); return;
+    }
+    if(s===null){
+      // Not a number: the solve wandered off, and eqsheet.py sends
+      // null rather than a NaN no JSON parser will accept. The status
+      // line above already says the solve failed; the cell says which
+      // variables have nothing behind them.
+      lastSol[name] = null;
       renderResult(name, tr); return;
     }
     const y = yard[prefixGroup(name)];
@@ -1346,7 +1355,8 @@ async function doSolve(){
   $('resid').innerHTML = (mode==='ac'
       ? t('js.eq.residualMags', 'residual magnitudes: ')
       : t('js.eq.residuals', 'residuals: ')) +
-    d.residuals.map(r=>`${r.rule.split('=')[0].trim()}: ${r.value.toExponential(2)}`).join(' · ');
+    d.residuals.map(r=>`${r.rule.split('=')[0].trim()}: `
+      + (r.value === null ? '\u2014' : r.value.toExponential(2))).join(' · ');
 }
 $('solve').onclick = ()=>doSolve();
 

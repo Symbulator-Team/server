@@ -478,7 +478,7 @@
  "who-made-symbulator.4d28": "Symbulator を作ったのは",
  "windows.26d9": "Windows",
  "works-on-mobile-devices.8ab6": "モバイル機器、Windows、macOS、Linux で動きます。ブラウザから直接ローカルの複製をインストールするには <a href=\"https://install.symbulator.com\" target=\"_blank\" rel=\"noopener\">install.symbulator.com</a> をご覧ください。そのページには専用の<strong>インストール</strong>ボタンがあります — 押して確認すれば、それで完了です。",
- "works-on-windows-macos.f74e": "Windows、macOS、Linux で動きます。同じオフライン版は、およそ 17 MB のひとつの .zip としても公開されています — インストール元になるインターネットがないとき、USB メモリやローカルネットワークで持ち運ぶ必要があるとき、あるいはこのサイトに何があっても動き続ける複製を手元に置いておきたいときに便利です。どこにでも展開して、中の起動ファイルを開いてください：<a href=\"https://symbulator.com/9/local.zip\" target=\"_blank\" rel=\"noopener\" download=\"symbulator-local.zip\">.zip をダウンロード</a>。",
+ "works-on-windows-macos.b9b9": "Windows、macOS、Linux で動きます。同じオフライン版は、およそ 30 MB のひとつの .zip としても公開されています — インストール元になるインターネットがないとき、USB メモリやローカルネットワークで持ち運ぶ必要があるとき、あるいはこのサイトに何があっても動き続ける複製を手元に置いておきたいときに便利です。どこにでも展開して、中の起動ファイルを開いてください：<a href=\"https://symbulator.com/9/local.zip\" target=\"_blank\" rel=\"noopener\" download=\"symbulator-local.zip\">.zip をダウンロード</a>。",
  "write-the-apostrophe-k.c85a": "アポストロフィを書いて — <code>1'k</code> — SI 接頭辞のつもりだとはっきり示してください。裸の <code>1k</code> でも動きますが、あいまいです（1キロなのか、k という名の変数の1倍なのか）。Symbulator はそこで止まって尋ねます。",
  "y-admittance.94f4": "y — アドミタンス",
  "y-parameters-admittance-two.6867": "yパラメータ（アドミタンス）二端子対ブロック",

@@ -15,28 +15,36 @@ Modes:             DC  -- all quantities real
 Solve:             numerical root finding (SciPy) on the residuals
 
 Developed standalone (Aug 2026) and handed over as a single-file Flask
-app; here it is a Blueprint so the main app mounts it without a second
-web app on the host. The page itself is templates/eqsheet.html. The
-"What if..." button after a solve opens it with ?import= carrying the
-solved circuit's equation system and results -- the payload contract is
-documented in tools/eqsheet_export.py, the reference implementation.
+app. The page itself is templates/eqsheet.html.  The "What if..." button
+after a solve opens it with ?import= carrying the solved circuit's
+equation system and results -- the payload contract is documented in
+tools/eqsheet_export.py, the reference implementation.
+
+**This module knows nothing about Flask** (#208, 31 Aug 2026). It was a
+Blueprint until the Numerical Solver had to run in the offline builds
+too, where there is no server at all and the same code is imported by
+Pyodide inside the tab. So the two entry points below, api_parse() and
+api_solve(), take a plain dict and return a plain dict; eqsheet_web.py
+wraps them in the Blueprint the server mounts, and repos/local's
+bridge.py calls them straight. Keep it that way: an import of flask
+here would break the offline build, and it would break it at boot,
+silently, in a build nothing renders through Jinja.
 
 numpy and scipy are imported inside the handlers, not at module top:
 app.py's solve worker re-imports this module in every spawned child
 (on platforms where multiprocessing spawns rather than forks), and the
-circuit solve should not pay EqSheet's import bill.
+circuit solve should not pay EqSheet's import bill. Offline that same
+lateness is what keeps scipy -- 13.4 MB of wheel -- off the boot path
+of a reader who never opens the Solver.
 """
 
 import keyword
 import re
 
-from flask import Blueprint, request, jsonify, render_template
 import sympy as sp
 from sympy.parsing.sympy_parser import (
     parse_expr, standard_transformations, convert_xor,
 )
-
-bp = Blueprint("eqsheet", __name__, url_prefix="/eqsheet")
 
 TRANSFORMS = standard_transformations + (convert_xor,)
 
@@ -149,34 +157,34 @@ def parse_rules(text, mode):
 
 def _too_long(data):
     if len(str(data.get("text", ""))) > MAX_TEXT_LEN:
-        return jsonify({"ok": False,
-                        "message": "that list of equations is too long"})
+        return {"ok": False,
+                "message": "that list of equations is too long"}
     return None
 
 
-@bp.post("/api/parse")
-def api_parse():
-    data = request.get_json(force=True)
+def api_parse(data):
+    """The page's 'Update equations': read the list of equations and
+    report, per line, what it says and which variables it names."""
     err = _too_long(data)
     if err:
         return err
     rules, errors = parse_rules(data.get("text", ""), data.get("mode", "dc"))
-    return jsonify({
+    return {
         "rules": [{k: r[k] for k in ("line", "text", "vars")} for r in rules],
         "errors": errors,
-    })
+    }
 
 
 def _active_rules(data):
     rules, errors = parse_rules(data.get("text", ""), data.get("mode", "dc"))
     if errors:
-        return None, jsonify({"ok": False,
-                              "message": "fix the list of equations first",
-                              "errors": errors})
+        return None, {"ok": False,
+                      "message": "fix the list of equations first",
+                      "errors": errors}
     selected = set(data.get("selected", []))
     active = [r for r in rules if r["line"] in selected]
     if not active:
-        return None, jsonify({"ok": False, "message": "no equations selected"})
+        return None, {"ok": False, "message": "no equations selected"}
     return active, None
 
 
@@ -192,9 +200,9 @@ def _check_coverage(active, knowns, unknowns):
     return needed, None
 
 
-@bp.post("/api/solve")
-def api_solve():
-    data = request.get_json(force=True)
+def api_solve(data):
+    """The page's Solve: run the ticked equations against the knowns and
+    the guesses, and hand back the roots."""
     err = _too_long(data)
     if err:
         return err
@@ -249,6 +257,29 @@ def _restriction_bounds(restr_by_index, n, np):
     return lb, ub
 
 
+def _finite(x):
+    """A float for JSON, or None when it is not a number.
+
+    `json.dumps` writes a bare NaN or Infinity, which is Python-legal
+    and **not valid JSON**: `JSON.parse` throws on it, and so does
+    `Response.json()`. Found 31 Aug 2026 while porting this module to
+    the offline build (#208), but it was never an offline problem --
+    the hosted Solver did it too, and had since the beginning. Give it
+    every variable Unknown at a guess of zero, which is exactly what
+    the page starts a fresh sheet with, and a divider equation
+    evaluates 0/0 at the start point; the residual came back NaN, the
+    page could not read the reply at all, and the sheet sat on
+    "solving..." for ever with a SyntaxError in the console and nothing
+    on screen. A failed solve is a normal thing to say; saying it in
+    unparseable JSON is not.
+
+    None, not a string: the page formats these as numbers, and a
+    number-shaped lie would have to be caught somewhere further in.
+    """
+    x = float(x)
+    return x if -float("inf") < x < float("inf") else None
+
+
 def _fail_message(mode_s):
     if mode_s == "bounded":
         return ("no solution found under the restrictions — "
@@ -264,14 +295,14 @@ def solve_dc(data, active):
     # Per-unknown search restrictions (#131).
     restrict, msg = _parse_restrictions(data.get("restrict"))
     if msg:
-        return jsonify({"ok": False, "message": msg})
+        return {"ok": False, "message": msg}
 
     needed, msg = _check_coverage(active, knowns, guesses)
     if msg:
-        return jsonify({"ok": False, "message": msg})
+        return {"ok": False, "message": msg}
     unknowns = sorted(needed & set(guesses))
     if not unknowns:
-        return jsonify({"ok": False, "message": "no unknowns to solve for"})
+        return {"ok": False, "message": "no unknowns to solve for"}
 
     syms = [sp.Symbol(_internal_name(u)) for u in unknowns]
     subs = {sp.Symbol(_internal_name(k)): v for k, v in knowns.items()}
@@ -279,7 +310,7 @@ def solve_dc(data, active):
     try:
         fns = [sp.lambdify(syms, res, modules=["numpy"]) for res in residuals]
     except Exception as exc:
-        return jsonify({"ok": False, "message": f"could not compile system: {exc}"})
+        return {"ok": False, "message": f"could not compile system: {exc}"}
 
     def F(x):
         return np.array([f(*x) for f in fns], dtype=float)
@@ -289,18 +320,18 @@ def solve_dc(data, active):
                                   if u in restrict}, len(unknowns), np)
     out = _run_solver(F, x0, len(active), len(unknowns), bounds)
     if isinstance(out, str):
-        return jsonify({"ok": False, "message": out})
+        return {"ok": False, "message": out}
     x, ok, nfev, mode_s = out
 
     res_final = F(x)
-    return jsonify({
+    return {
         "ok": bool(ok), "mode": mode_s,
         "n_eq": len(active), "n_un": len(unknowns), "nfev": int(nfev),
         "message": "solved" if ok else _fail_message(mode_s),
-        "solution": {u: float(v) for u, v in zip(unknowns, x)},
-        "residuals": [{"rule": r["text"], "value": float(v)}
+        "solution": {u: _finite(v) for u, v in zip(unknowns, x)},
+        "residuals": [{"rule": r["text"], "value": _finite(v)}
                       for r, v in zip(active, res_final)],
-    })
+    }
 
 
 def solve_ac(data, active):
@@ -318,10 +349,10 @@ def solve_ac(data, active):
 
     needed, msg = _check_coverage(active, knowns, unknowns_in)
     if msg:
-        return jsonify({"ok": False, "message": msg})
+        return {"ok": False, "message": msg}
     unames = sorted(needed & set(unknowns_in))
     if not unames:
-        return jsonify({"ok": False, "message": "no unknowns to solve for"})
+        return {"ok": False, "message": "no unknowns to solve for"}
 
     # Per-unknown search restrictions (#131). A restriction only means
     # something for a single real scalar, so it applies to Real only /
@@ -331,7 +362,7 @@ def solve_ac(data, active):
         {n: s.get("restrict") for n, s in unknowns_in.items()
          if s.get("domain", "complex") in ("real", "imag")})
     if msg:
-        return jsonify({"ok": False, "message": msg})
+        return {"ok": False, "message": msg}
 
     # scalar layout: for each unknown, which components are free
     layout = []          # (name, domain, index into x for re, index for im)
@@ -358,7 +389,7 @@ def solve_ac(data, active):
     try:
         fns = [sp.lambdify(syms, res, modules=["numpy"]) for res in residuals]
     except Exception as exc:
-        return jsonify({"ok": False, "message": f"could not compile system: {exc}"})
+        return {"ok": False, "message": f"could not compile system: {exc}"}
 
     def unpack(x):
         vals = []
@@ -377,23 +408,28 @@ def solve_ac(data, active):
     bounds = _restriction_bounds(scalar_restr, n_scalar, np)
     out = _run_solver(F, np.array(x0, dtype=float), n_eq_real, n_scalar, bounds)
     if isinstance(out, str):
-        return jsonify({"ok": False, "message": out})
+        return {"ok": False, "message": out}
     x, ok, nfev, mode_s = out
 
     zsol = unpack(x)
     res_final = np.array([f(*zsol) for f in fns], dtype=complex)
     solution = {}
     for (name, dom, _, _), z in zip(layout, zsol):
-        solution[name] = {"re": z.real, "im": z.imag,
-                          "mag": abs(z), "deg": float(np.degrees(np.angle(z)))}
-    return jsonify({
+        parts = {"re": _finite(z.real), "im": _finite(z.imag),
+                 "mag": _finite(abs(z)),
+                 "deg": _finite(np.degrees(np.angle(z)))}
+        # All four or none: a phasor with a real part and no imaginary
+        # part is not a partial answer, it is a broken one, and the
+        # page draws it as "3 + j —".
+        solution[name] = None if any(v is None for v in parts.values()) else parts
+    return {
         "ok": bool(ok), "mode": mode_s,
         "n_eq": n_eq_real, "n_un": n_scalar, "nfev": int(nfev),
         "message": "solved" if ok else _fail_message(mode_s),
         "solution": solution,
-        "residuals": [{"rule": r["text"], "value": float(abs(v))}
+        "residuals": [{"rule": r["text"], "value": _finite(abs(v))}
                       for r, v in zip(active, res_final)],
-    })
+    }
 
 
 def _run_solver(F, x0, n_eq, n_un, bounds=None):
@@ -464,7 +500,3 @@ def _run_solver(F, x0, n_eq, n_un, bounds=None):
     except Exception as exc:
         return f"solver failed: {exc}"
 
-
-@bp.get("/")
-def index():
-    return render_template("eqsheet.html")

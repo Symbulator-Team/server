@@ -478,7 +478,7 @@
  "who-made-symbulator.4d28": "谁做了 Symbulator",
  "windows.26d9": "Windows",
  "works-on-mobile-devices.8ab6": "可用于移动设备、Windows、macOS 和 Linux。要直接从浏览器安装一份本地副本，请访问 <a href=\"https://install.symbulator.com\" target=\"_blank\" rel=\"noopener\">install.symbulator.com</a>。那个页面自带一个<strong>安装</strong>按钮 — 轻点并确认，就完成了。",
- "works-on-windows-macos.f74e": "可用于 Windows、macOS 和 Linux。同一个离线版本还以约 17 MB 的单个 .zip 文件发布 — 在没有网络可供安装时、需要用 U 盘或局域网传递时，或者只是想留一份无论这个网站发生什么都还能用的副本时，都很有用。把它解压到任意位置，打开里面的启动器：<a href=\"https://symbulator.com/9/local.zip\" target=\"_blank\" rel=\"noopener\" download=\"symbulator-local.zip\">下载 .zip</a>。",
+ "works-on-windows-macos.b9b9": "可用于 Windows、macOS 和 Linux。同一个离线版本还以约 30 MB 的单个 .zip 文件发布 — 在没有网络可供安装时、需要用 U 盘或局域网传递时，或者只是想留一份无论这个网站发生什么都还能用的副本时，都很有用。把它解压到任意位置，打开里面的启动器：<a href=\"https://symbulator.com/9/local.zip\" target=\"_blank\" rel=\"noopener\" download=\"symbulator-local.zip\">下载 .zip</a>。",
  "write-the-apostrophe-k.c85a": "写上撇号 — <code>1'k</code> — 明确表示你指的是 SI 前缀。裸写 <code>1k</code> 也可以，但它有歧义（是一千，还是 1 乘以名为 k 的变量？），Symbulator 会停下来询问。",
  "y-admittance.94f4": "y — 导纳",
  "y-parameters-admittance-two.6867": "y 参数（导纳）二端口模块",

@@ -7,8 +7,26 @@ keep it as the internal handle; everything a user sees says
 Numerical Solver (#118).
 
 Mounted on the main app at
-`https://symbulator.pythonanywhere.com/eqsheet/` — `eqsheet.py` is the
-Blueprint (routes and solver), `templates/eqsheet.html` is the page.
+`https://symbulator.pythonanywhere.com/eqsheet/` — and, since **#208**
+(31 Aug 2026), in the two offline builds as well, at `eqsheet.html`
+beside the app.
+
+`eqsheet.py` is the parsing and the solving and **imports no web
+framework**: its two entry points, `api_parse(data)` and
+`api_solve(data)`, take a plain dict and return one.
+`eqsheet_web.py` is the Flask Blueprint the server mounts on top of
+them; `repos/local/eqbridge.py` is the same wrapping in JSON, for
+Pyodide in the tab. `templates/eqsheet.html` is the page, and
+`build_local.py` generates the offline copy of it by replacing the
+body of one function — `post()` — because those two calls are
+everything the page asks the server for.
+
+**Do not import flask here.** It would break the offline build at
+boot, silently, in a build that never passes through Jinja and so is
+green in every check the server has.
+
+The offline Solver needs SciPy, which is why the ZIP is about 30 MB
+rather than 17.8. See #208 in `repos/local/NEXT.md`.
 Developed standalone in Aug 2026 and integrated the same month; the
 app's **Numerical Solver** button (the Explore numerically card, active
 after a DC or numeric-ω AC solve) opens it preloaded with that solve's
