@@ -30,7 +30,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "9a4135ef41";
+window.SYMB_I18N_V = "420b4c22e2";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -2317,7 +2317,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-08-31 05:58 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-08-31 06:20 UTC</span>
 </footer>
 
 <script>
@@ -2981,6 +2981,49 @@ const UI_MESSAGES = {
                 + 'values. Those are impulses, not steady levels, so they '
                 + 'contribute nothing for t > 0. For a step of %{value} '
                 + 'volts (or amps) switched on at t = 0, write %{value}/s.', a),
+  817: a  => tv('js.ui.m817', 'Too many definitions (max %{max}).', a),
+  818: a  => tv('js.ui.m818', 'Definition is too long: %{item}', a),
+  819: a  => tv('js.ui.m819',
+                'Each definition needs the form name = expression: %{item}', a),
+  825: a  => tv('js.ui.m825',
+                'Definition contains invalid characters: %{item}', a),
+  826: a  => tv('js.ui.m826', '%{name} is defined twice.', a),
+  827: a  => tv('js.ui.m827', 'Cannot limit the results to %{names}. A '
+                + 'transient analysis answers in element currents and node '
+                + "voltages \u2014 an element's voltage drop, such as v_r1, is "
+                + 'worked out from its nodes and may be asked for too. Powers '
+                + 'are not available in TR. Check the spelling against the '
+                + 'names in Results.', a),
+  828: () => t('js.ui.m828', 'Give a value.'),
+  829: a  => tv('js.ui.m829', '`%{text}` still contains %{unknown}. These '
+                + 'tools need a number \u2014 solve the circuit first, then '
+                + 'name one of its answers.', a),
+  834: a  => tv('js.ui.m834', "The value of '%{name}' works out complex, and "
+                + 'complex values only apply to AC analysis. Switch the '
+                + 'analysis to AC, or rewrite the value so it stays real.', a),
+  835: a  => tv('js.ui.m835', '`%{name}` cannot be used as an element name. '
+                + 'Its answers would be spelled `%{produces}`, and %{produces} '
+                + 'is already %{owner} \u2014 so it would be read as that '
+                + 'rather than as your circuit. Rename the element: '
+                + '`%{suggestion}` works.', a),
+  836: a  => tv('js.ui.m836', '`%{name}` cannot be used as a node name. Its '
+                + 'voltage would be spelled `%{produces}`, and %{produces} is '
+                + 'already %{owner}. Rename the node: `%{suggestion}` works.', a),
+  // `what` is the engine's own vocabulary, not this sentence's: it goes
+  // through tSrv() like every other term the engine names, so the noun
+  // inside the translated sentence is translated too.
+  837: a  => tv('js.ui.m837', 'Is that what you meant by `%{name}`? This '
+                + 'circuit has `%{target}`, so `%{name}` is its %{what}, and '
+                + '`%{element}` has been given that as its value \u2014 an '
+                + 'element whose value tracks another answer. That is legal '
+                + 'and sometimes deliberate, but it is unusual. If you meant '
+                + '`%{name}` as an unknown of your own, rename it: '
+                + '`%{suggestion}`, or anything not spelled like an answer.',
+                Object.assign({}, a, { what: tSrv(a.what) })),
+  838: () => t('js.ui.m838',
+               'No solution satisfies the given conditions / constraints.'),
+  839: () => t('js.ui.m839', 'No real solution. Untick \u201creal solutions '
+                + 'only\u201d to search the complex plane as well.'),
   877: () => t('js.ui.m877', 'A decimal or scientific-notation value (like '
                 + "0.1 or 2e3) was found in the inputs, so the answers can't "
                 + 'be exact -- switched "Rounding" from exact to approximate.'),

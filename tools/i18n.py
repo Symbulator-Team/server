@@ -50,6 +50,7 @@ as an orphan in ``check`` instead of quietly staying on screen.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import re
@@ -700,6 +701,116 @@ def untranslated() -> list:
     return out
 
 
+# ---------------------------------------------------------------------
+# #200: message text in the Python that never reaches msg()
+#
+# The #209 guard asks this of the page's JavaScript. This asks it of the
+# engine, and it had to: three hand sweeps of symbulator_ui.py found 34
+# messages, then 5, then 8, and each one was sure it was the last. A
+# fourth pass, run mechanically, found six more -- including two notes
+# that refuse a name outright and the "did you mean" warning, none of
+# which any sweep had reached.
+#
+# A finding is a string literal that reads like a sentence and is
+# returned, or appended to a list of notes, without going through
+# msg(). Anything inside msg(), _exc_text() or tSrv() is accounted for.
+# ---------------------------------------------------------------------
+
+#: The engine's own Python, where its messages live.
+MESSAGE_SOURCES = ("symbulator_ui.py", "eqsheet.py")
+
+#: Sentences that are deliberately not messages. Keep this explicit and
+#: short, and give each one a reason.
+NOT_A_MESSAGE = {
+    # A comment line inside the SymPy export -- a .py file the reader
+    # downloads and opens in an editor. Its comments are code, and stay
+    # English with the rest of the file.
+    "# left out (their answers contain delta(t), "
+    "which has no numeric value): ",
+    # The engine's own phrase, looked up by tSrv() in the page because
+    # it carries a node name and cannot be looked up whole (#168).
+    "current into port at node ",
+}
+
+_MSG_WORD = re.compile(r"\b[A-Za-z][a-z]{1,}\b")
+_MSG_FUNCTION_WORDS = {
+    "the", "a", "an", "of", "to", "in", "on", "for", "and", "or", "not",
+    "no", "is", "are", "be", "it", "its", "this", "that", "you", "your",
+    "with", "from", "at", "as", "but", "so", "than", "then", "there",
+    "when", "which", "what", "how", "why", "give", "enter", "could",
+    "cannot", "does", "run", "try", "one", "two", "each", "every", "some",
+    "needs", "need", "must", "too", "many", "first", "already", "still",
+    "was", "were", "has", "have",
+}
+
+
+def _covered_spans(tree):
+    """Line spans of every msg() / _exc_text() / tSrv() call."""
+    spans = []
+    for n in ast.walk(tree):
+        if not isinstance(n, ast.Call):
+            continue
+        name = getattr(n.func, "id", None) or getattr(n.func, "attr", None)
+        if name in ("msg", "_exc_text", "tSrv"):
+            spans.append((n.lineno, n.end_lineno))
+    return spans
+
+
+def _literals(node):
+    """(line, text) for every string under `node`, f-strings joined."""
+    out = []
+    for n in ast.walk(node):
+        if isinstance(n, ast.Constant) and isinstance(n.value, str):
+            out.append((n.lineno, n.value))
+        elif isinstance(n, ast.JoinedStr):
+            text = "".join(v.value for v in n.values
+                           if isinstance(v, ast.Constant)
+                           and isinstance(v.value, str))
+            if text:
+                out.append((n.lineno, text))
+    return out
+
+
+def uncoded_messages() -> list:
+    """Sentences the engine hands a reader without a code."""
+    out, seen = [], set()
+    for rel in MESSAGE_SOURCES:
+        path = SERVER / rel
+        if not path.is_file():
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        spans = _covered_spans(tree)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Return):
+                target = node.value
+            elif (isinstance(node, ast.Expr)
+                  and isinstance(node.value, ast.Call)
+                  and getattr(node.value.func, "attr", None) == "append"):
+                target = node.value
+            else:
+                continue
+            if target is None:
+                continue
+            for lineno, text in _literals(target):
+                if any(a <= lineno <= b for a, b in spans):
+                    continue
+                if text in NOT_A_MESSAGE:
+                    continue
+                words = [w.lower() for w in _MSG_WORD.findall(text)]
+                if len(words) < 3:
+                    continue
+                if not any(w in _MSG_FUNCTION_WORDS for w in words):
+                    continue
+                key = (rel, lineno, text[:40])
+                if key in seen:
+                    continue
+                seen.add(key)
+                out.append(f"{rel}:{lineno}: {text[:56]!r} reaches a reader "
+                           f"without a code -- wrap it in msg(), or add it "
+                           f"to NOT_A_MESSAGE in tools/i18n.py with a reason")
+    return out
+
+
 def js_calls():
     """{key: English} for every t('key', 'English') and tv(...) in the page.
 
@@ -732,7 +843,8 @@ def js_calls():
 # page looks these up instead, through tSrv(). `check` re-reads them from
 # symbulator_ui.py so a new element kind or parameter description cannot
 # arrive untranslated without saying so.
-SRV_SOURCES = ("_KIND_LABEL", "_ELEMENT_KEYS", "_TOOL_LABELS", "_PORT_LABELS")
+SRV_SOURCES = ("_KIND_LABEL", "_ELEMENT_KEYS", "_TOOL_LABELS",
+               "_PORT_LABELS", "_QUANTITY_WORDS")
 
 
 def srv_vocabulary() -> set:
@@ -879,6 +991,7 @@ def main() -> int:
                        f"English has changed, first {orphan[:3]}")
         bad += structure(code, en, d)
     bad += untranslated()
+    bad += uncoded_messages()
     bad += pack(write=False)
     for b in bad:
         print(b)

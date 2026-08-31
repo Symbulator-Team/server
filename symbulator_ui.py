@@ -123,6 +123,28 @@ M_TR_STEP_MANY     = 874
 M_FD_IMPULSE_ONE   = 875
 M_FD_IMPULSE_MANY  = 876
 M_APPROX_SWITCHED  = 877
+# Definitions again. 817-819 were the last free numbers next to the
+# 811-816 block; 825-826 sit in the gap after plotting because the block
+# had filled up by the time these were found. A code is permanent once
+# published, so the tidy grouping loses to that rule rather than the
+# other way round -- which is the rule working, not failing.
+M_TOO_MANY_DEFINES = 817
+M_DEFINE_TOO_LONG  = 818
+M_DEFINE_FORM      = 819
+M_DEFINE_CHARS     = 825
+M_DEFINE_TWICE     = 826
+# Limiting a TR run's results, and the mini-tools' one-number reader.
+M_TR_CANNOT_LIMIT  = 827
+M_GIVE_A_VALUE     = 828
+M_NEEDS_A_NUMBER   = 829
+# Found by the guard, after three hand sweeps had each declared
+# themselves complete. See tools/check_messages.py.
+M_COMPLEX_NEEDS_AC = 834
+M_BAD_ELEMENT_NAME = 835
+M_BAD_NODE_NAME    = 836
+M_LOOKS_LIKE_ANSWER = 837
+M_NO_SOLUTION_COND = 838
+M_NO_REAL_SOLUTION = 839
 
 CATALOGUE = {
     M_NO_DESC:       ("error", "Please enter a circuit description."),
@@ -223,6 +245,56 @@ CATALOGUE = {
                         "contribute nothing for t > 0. For a step of "
                         "%{value} volts (or amps) switched on at t = 0, "
                         "write %{value}/s."),
+    M_TOO_MANY_DEFINES: ("error", "Too many definitions (max %{max})."),
+    M_DEFINE_TOO_LONG: ("error", "Definition is too long: %{item}"),
+    M_DEFINE_FORM:   ("error", "Each definition needs the form "
+                               "name = expression: %{item}"),
+    M_DEFINE_CHARS:  ("error", "Definition contains invalid characters: "
+                               "%{item}"),
+    M_DEFINE_TWICE:  ("error", "%{name} is defined twice."),
+    M_TR_CANNOT_LIMIT: ("error",
+                        "Cannot limit the results to %{names}. A transient "
+                        "analysis answers in element currents and node "
+                        "voltages \u2014 an element's voltage drop, such as "
+                        "v_r1, is worked out from its nodes and may be asked "
+                        "for too. Powers are not available in TR. Check the "
+                        "spelling against the names in Results."),
+    M_GIVE_A_VALUE:  ("error", "Give a value."),
+    M_NEEDS_A_NUMBER: ("error",
+                       "`%{text}` still contains %{unknown}. These tools need "
+                       "a number \u2014 solve the circuit first, then name "
+                       "one of its answers."),
+    M_COMPLEX_NEEDS_AC: ("error",
+                         "The value of '%{name}' works out complex, and "
+                         "complex values only apply to AC analysis. Switch "
+                         "the analysis to AC, or rewrite the value so it "
+                         "stays real."),
+    M_BAD_ELEMENT_NAME: ("note",
+                         "`%{name}` cannot be used as an element name. Its "
+                         "answers would be spelled `%{produces}`, and "
+                         "%{produces} is already %{owner} \u2014 so it would "
+                         "be read as that rather than as your circuit. "
+                         "Rename the element: `%{suggestion}` works."),
+    M_BAD_NODE_NAME: ("note",
+                      "`%{name}` cannot be used as a node name. Its voltage "
+                      "would be spelled `%{produces}`, and %{produces} is "
+                      "already %{owner}. Rename the node: `%{suggestion}` "
+                      "works."),
+    M_LOOKS_LIKE_ANSWER: ("note",
+                          "Is that what you meant by `%{name}`? This circuit "
+                          "has `%{target}`, so `%{name}` is its %{what}, and "
+                          "`%{element}` has been given that as its value "
+                          "\u2014 an element whose value tracks another "
+                          "answer. That is legal and sometimes deliberate, "
+                          "but it is unusual. If you meant `%{name}` as an "
+                          "unknown of your own, rename it: `%{suggestion}`, "
+                          "or anything not spelled like an answer."),
+    M_NO_SOLUTION_COND: ("note",
+                         "No solution satisfies the given conditions / "
+                         "constraints."),
+    M_NO_REAL_SOLUTION: ("note",
+                         "No real solution. Untick \u201creal solutions "
+                         "only\u201d to search the complex plane as well."),
     M_APPROX_SWITCHED: ("note",
                         "A decimal or scientific-notation value (like 0.1 or "
                         "2e3) was found in the inputs, so the answers can't "
@@ -315,6 +387,24 @@ def _bare_si_suffix_error(label, items):
                        star=f"{tok[:-1]}*{tok[-1]}")
     return None
 
+
+#: The engine's own word for what an answer name means, used in the
+#: "did you mean" note (837). Module-level and named so tools/i18n.py's
+#: SRV_SOURCES can read it: these are the engine's vocabulary, looked up
+#: by their English selves through tSrv(), exactly like the element
+#: kinds. Inline in the function it was invisible to `check`, and one
+#: English noun would have sat inside a translated sentence.
+# The closing brace sits at column 0 on purpose: tools/i18n.py reads
+# these tables by finding the name and scanning to the next line that
+# starts with }, so a brace tucked at the end of the last entry makes it
+# swallow whatever table comes next.
+_QUANTITY_WORDS = {
+    "v": "voltage", "i": "current", "p": "power",
+    "q": "reactive power", "s": "apparent power",
+    "r": "equivalent resistance",
+    "z": "equivalent impedance",
+    "y": "admittance", "?": "answer",
+}
 
 VALID_DOMAINS = {"dc", "ac", "fd", "tr"}
 
@@ -416,21 +506,20 @@ def parse_defines(lines):
     if isinstance(lines, str):
         lines = [ln for ln in re.split(r"[\r\n]+", lines) if ln.strip()]
     if len(lines) > MAX_DEFINES:
-        return {}, f"Too many definitions (max {MAX_DEFINES})."
+        return {}, msg(M_TOO_MANY_DEFINES, max=MAX_DEFINES)
     for raw in lines:
         if not isinstance(raw, str) or not raw.strip():
             continue
         if len(raw) > MAX_EXTRA_LEN:
-            return {}, f"Definition is too long: {raw[:40]!r}"
+            return {}, msg(M_DEFINE_TOO_LONG, item=repr(raw[:40]))
         m = _DEFINE_LINE_RE.match(raw)
         if not m:
-            return {}, (f"Each definition needs the form name = expression: "
-                        f"{raw.strip()[:60]!r}")
+            return {}, msg(M_DEFINE_FORM, item=repr(raw.strip()[:60]))
         name, expr = m.group(1), m.group(2)
         if not _ALLOWED_EQ.match(expr) or "__" in expr:
-            return {}, f"Definition contains invalid characters: {raw.strip()[:60]!r}"
+            return {}, msg(M_DEFINE_CHARS, item=repr(raw.strip()[:60]))
         if name in table:
-            return {}, f"{name} is defined twice."
+            return {}, msg(M_DEFINE_TWICE, name=name)
         table[name] = expr
     err = _defines_cycle(table)
     if err:
@@ -1013,10 +1102,7 @@ def _complex_value_error(elements, domain: str):
             except Exception:
                 continue
             if getattr(expr, "has", None) and expr.has(sp.I):
-                return (
-                    f"The value of '{el.name}' works out complex, and complex "
-                    f"values only apply to AC analysis. Switch the analysis "
-                    f"to AC, or rewrite the value so it stays real.")
+                return msg(M_COMPLEX_NEEDS_AC, name=el.name)
     return None
 
 
@@ -1504,11 +1590,9 @@ def banned_name_errors(elements) -> list:
         if el.name in banned and el.name not in seen:
             seen.add(el.name)
             produces, owner = banned[el.name]
-            out.append(
-                f"`{el.name}` cannot be used as an element name. Its answers "
-                f"would be spelled `{produces}`, and {produces} is already "
-                f"{owner} — so it would be read as that rather than as your "
-                f"circuit. Rename the element: `{el.name}1` works.")
+            out.append(msg(M_BAD_ELEMENT_NAME, name=el.name,
+                           produces=produces, owner=owner,
+                           suggestion=f"{el.name}1"))
         for idx in _IDENTIFIER_FIELD_IDX.get(el.kind, ()):
             if idx >= len(el.fields):
                 continue
@@ -1517,10 +1601,9 @@ def banned_name_errors(elements) -> list:
             if node in banned_nodes and node not in seen:
                 seen.add(node)
                 produces, owner = banned_nodes[node]
-                out.append(
-                    f"`{node}` cannot be used as a node name. Its voltage "
-                    f"would be spelled `{produces}`, and {produces} is "
-                    f"already {owner}. Rename the node: `{node}1` works.")
+                out.append(msg(M_BAD_NODE_NAME, name=node,
+                               produces=produces, owner=owner,
+                               suggestion=f"{node}1"))
     return out
 
 
@@ -1718,19 +1801,10 @@ def ambiguous_answer_names(elements, alias: dict) -> list:
                     continue
                 seen.add(s)
                 target = alias[s].split("_", 1)[1]
-                what = {"v": "voltage", "i": "current", "p": "power",
-                        "q": "reactive power", "s": "apparent power",
-                        "r": "equivalent resistance",
-                        "z": "equivalent impedance",
-                        "y": "admittance"}.get(quantity, "answer")
-                out.append(
-                    f"Is that what you meant by `{s}`? This circuit has "
-                    f"`{target}`, so `{s}` is its {what}, and `{el.name}` "
-                    f"has been given that as its value — an element whose "
-                    f"value tracks another answer. That is legal and "
-                    f"sometimes deliberate, but it is unusual. If you meant "
-                    f"`{s}` as an unknown of your own, rename it: `{s}x`, or "
-                    f"anything not spelled like an answer.")
+                what = _QUANTITY_WORDS.get(quantity, "answer")
+                out.append(msg(M_LOOKS_LIKE_ANSWER, name=s, target=target,
+                               what=what, element=el.name,
+                               suggestion=f"{s}x"))
     return out
 
 
@@ -1979,13 +2053,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             wanted, unknown = _wanted_solver_keys(variables, _guard_elements)
             if unknown:
                 shown = ", ".join(sorted(set(unknown)))
-                return {"ok": False, "error":
-                        f"Cannot limit the results to {shown}. A transient "
-                        f"analysis answers in element currents and node "
-                        f"voltages -- an element's voltage drop, such as "
-                        f"v_r1, is worked out from its nodes and may be "
-                        f"asked for too. Powers are not available in TR. "
-                        f"Check the spelling against the names in Results."}
+                return _err(msg(M_TR_CANNOT_LIMIT, names=shown))
             kwargs["variables"] = wanted
         if extra_equations:
             kwargs["equations"] = extra_equations
@@ -3303,7 +3371,7 @@ def _as_number(text: str, values: dict):
     from symbulator.si_prefix import safe_sympify
 
     if not (text or "").strip():
-        return None, "Give a value."
+        return None, msg(M_GIVE_A_VALUE)
     try:
         parsed = safe_sympify(expand_value_for_ui(text))
     except Exception as exc:                                  # noqa: BLE001
@@ -3311,9 +3379,8 @@ def _as_number(text: str, values: dict):
     got = sp.simplify(parsed.subs(_alias_mapping(values, expr=parsed)))
     if got.free_symbols:
         unknown = ", ".join(sorted(str(s) for s in got.free_symbols))
-        return None, (f"`{text.strip()}` still contains {unknown}. These "
-                      f"tools need a number -- solve the circuit first, "
-                      f"then name one of its answers.")
+        return None, msg(M_NEEDS_A_NUMBER, text=text.strip(),
+                         unknown=unknown)
     return got, None
 
 
@@ -3715,14 +3782,11 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
             if conditions and had_sols:
                 return _ok({"solutions": [],
                             "unknowns": [str(w) for w in wanted],
-                            "notes": ["No solution satisfies the given "
-                                      "conditions / constraints."]})
+                            "notes": [msg(M_NO_SOLUTION_COND)]})
             if real_only:
                 return _ok({"solutions": [],
                             "unknowns": [str(w) for w in wanted],
-                            "notes": ["No real solution. Untick “real "
-                                      "solutions only” to search the "
-                                      "complex plane as well."]})
+                            "notes": [msg(M_NO_REAL_SOLUTION)]})
             return _ok({"solutions": [], "unknowns": [str(w) for w in wanted]})
 
         def render(expr, unit):
