@@ -183,6 +183,59 @@ def i18n_dict(lang):
     return resp
 
 
+# --- #207: the dictionaries as files a translator can take away ------
+#
+# Server-only, deliberately. A translator works from the website: they
+# need to send a corrected file back, which needs a network anyway, so
+# there is nothing for the offline builds to carry. Shipping 817 KB of
+# source JSON in a 30 MB download for a feature its users cannot
+# complete would be paying for it twice over, and it would put install
+# and local out of step with each other, which this project does not do.
+#
+# The app links here by absolute URL, the same way it links the Tutorial
+# and the Acknowledgements: an outward link that needs the internet, kept
+# rather than hidden in the offline build.
+I18N_SRC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "i18n")
+
+
+@app.get("/i18n/<lang>.json")
+def i18n_source(lang):
+    """One language's dictionary, in the form a translator edits.
+
+    Not the same file as /i18n/<lang>.js, which is the packed form the
+    page loads: that one is escaped, stamped and machine-shaped. This is
+    the JSON under it -- one line per phrase, and the only thing anybody
+    should hand-edit.
+
+    en.json is served too, and is generated: half its keys are markup the
+    page could hand back at runtime, but the js.* half lives as literal
+    fallbacks inside t() calls and cannot be harvested in a browser at
+    all. A translator needs both halves or the template looks broken.
+    """
+    if not _LANG_RE.match(lang or ""):
+        return jsonify(error="unknown language"), 404
+    if not os.path.isfile(os.path.join(I18N_SRC_DIR, lang + ".json")):
+        return jsonify(error="unknown language"), 404
+    # No immutable caching here, unlike the packed .js: that URL carries a
+    # ?v= stamp and this one does not, and a translator coming back for a
+    # fresh copy after a release must not be served yesterday's.
+    resp = send_from_directory(I18N_SRC_DIR, lang + ".json",
+                               mimetype="application/json")
+    resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
+
+@app.get("/translate")
+def translate():
+    """The page that explains what to do with those files.
+
+    English-only on purpose: it is addressed to somebody about to
+    translate, who reads English by definition, and a version of it in
+    their own language would be written by the very machine whose work
+    they came to check."""
+    return render_template("translate.html")
+
+
 @app.get("/")
 def index():
     """Serve the single-page app shell -- everything else (solving,

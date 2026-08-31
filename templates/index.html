@@ -30,7 +30,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "420b4c22e2";
+window.SYMB_I18N_V = "c8fbeea13c";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -2256,6 +2256,23 @@ units: yes</pre>
            target="_blank" rel="noopener">Acknowledgements</a>
       </p>
 
+      <div class="section-cap" data-i18n="languages.db07">Languages</div>
+      <p style="font-size:.92rem;margin-top:.2rem" data-i18n="symbulator-speaks-thirteen-l.5bee">
+        Symbulator speaks thirteen languages, and every translation was
+        written by an AI rather than by someone who speaks the language.
+        If you read one of them, correcting a phrase is the most useful
+        thing you can do for this program. The dictionaries are files you
+        can take away, edit and send back.
+        <!-- #207. Outward link, exactly like the Acknowledgements one
+             above: it needs the internet, and the offline build keeps it
+             rather than hiding it. Server-only by design -- a translator
+             has to send the file back, so a network is needed anyway,
+             and 817 KB of source JSON has no business in a download
+             whose readers cannot finish the job. -->
+        <a href="https://symbulator.pythonanywhere.com/translate"
+           target="_blank" rel="noopener">Help translate Symbulator</a>
+      </p>
+
       <div class="section-cap" data-i18n="who-made-symbulator.4d28">Who made Symbulator</div>
       <p style="font-size:.92rem;margin-top:.2rem" data-i18n="symbulator-was-made-by.4a2e">
         Symbulator was made by
@@ -2317,7 +2334,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-08-31 07:12 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-08-31 07:36 UTC</span>
 </footer>
 
 <script>

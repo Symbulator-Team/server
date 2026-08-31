@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Help translate Symbulator</title>
+<link rel="icon" href="/static/favicon.ico">
+<!--
+  #207. Deliberately **not** translated, and deliberately plain.
+
+  Not translated, because it is addressed to somebody who is about to
+  translate: they read English by definition, and a page in their own
+  language would be a page written by the very machine whose work they
+  came to check.
+
+  Plain, because it is the one page in the project with no dependency on
+  anything: no banner.css, no i18n runtime, no Pyodide. It has to keep
+  working when the rest is mid-deploy, and a translator arriving from an
+  email should not meet a broken layout.
+-->
+<style>
+  :root{ --navy:#203864; --ink:#1c2330; --ink-2:#545d6d; --line:#e2e5ea;
+         --paper:#f4f6fa; --card:#fff; --accent:#2f5fa8; }
+  @media (prefers-color-scheme: dark){
+    :root{ --ink:#e7eaf0; --ink-2:#a8b0be; --line:#2b3342;
+           --paper:#141922; --card:#1b212b; --accent:#8ec7f5; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+       font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+  header{background:var(--navy);color:#fff;padding:1.1rem 1.5rem}
+  header h1{margin:0;font-size:1.15rem;letter-spacing:.01em}
+  header p{margin:.25rem 0 0;font-size:.86rem;color:#8ec7f5}
+  main{max-width:44rem;margin:0 auto;padding:1.5rem}
+  h2{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;
+     color:var(--ink-2);margin:2rem 0 .6rem}
+  h2:first-of-type{margin-top:.5rem}
+  p{margin:.6rem 0}
+  code{font-family:ui-monospace,Consolas,monospace;font-size:.9em;
+       background:var(--card);border:1px solid var(--line);
+       border-radius:4px;padding:.05rem .3rem}
+  table{border-collapse:collapse;width:100%;background:var(--card);
+        border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  th,td{text-align:left;padding:.5rem .8rem;border-bottom:1px solid var(--line);
+        font-size:.92rem}
+  th{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;
+     color:var(--ink-2)}
+  tr:last-child td{border-bottom:none}
+  a{color:var(--accent)}
+  .keep{background:var(--card);border:1px solid var(--line);
+        border-left:3px solid var(--accent);border-radius:6px;
+        padding:.8rem 1rem;margin:1rem 0}
+  .keep ul{margin:.4rem 0 0;padding-left:1.2rem}
+  .keep li{margin:.3rem 0;font-size:.93rem}
+  footer{color:var(--ink-2);font-size:.85rem;margin:2.5rem 0 1rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>Help translate Symbulator</h1>
+  <p>The app speaks thirteen languages. None of them has been checked by
+     someone who speaks it.</p>
+</header>
+<main>
+
+<p>Every translation in Symbulator was written by Claude, an AI, working
+   from the English. They are careful, and they are unreviewed. If you
+   read one of these languages, correcting one file is the most useful
+   thing you can do for this program.</p>
+
+<p>You do not need to know how Symbulator works, and you do not need to
+   translate anything technical you are unsure of &mdash; leaving a
+   phrase in English is more useful than a guess, because it tells us
+   where the hard cases are.</p>
+
+<h2>The dictionaries</h2>
+
+<p>Each file is JSON: one line per phrase, as
+   <code>"key": "the translation"</code>. Edit the right-hand side only.
+   <a href="/i18n/en.json">English</a> is the source and is generated
+   from the app itself &mdash; read it, do not edit it.</p>
+
+<table>
+  <tr><th>Language</th><th>File</th></tr>
+  <tr><td>English <em>(source, generated)</em></td><td><a href="/i18n/en.json">en.json</a></td></tr>
+  <tr><td>Español</td><td><a href="/i18n/es.json">es.json</a></td></tr>
+  <tr><td>Esperanto</td><td><a href="/i18n/eo.json">eo.json</a></td></tr>
+  <tr><td>Français</td><td><a href="/i18n/fr.json">fr.json</a></td></tr>
+  <tr><td>Deutsch</td><td><a href="/i18n/de.json">de.json</a></td></tr>
+  <tr><td>Português</td><td><a href="/i18n/pt.json">pt.json</a></td></tr>
+  <tr><td>中文</td><td><a href="/i18n/zh.json">zh.json</a></td></tr>
+  <tr><td>日本語</td><td><a href="/i18n/ja.json">ja.json</a></td></tr>
+  <tr><td>한국어</td><td><a href="/i18n/ko.json">ko.json</a></td></tr>
+  <tr><td>Bahasa Indonesia</td><td><a href="/i18n/id.json">id.json</a></td></tr>
+  <tr><td>हिन्दी</td><td><a href="/i18n/hi.json">hi.json</a></td></tr>
+  <tr><td>বাংলা</td><td><a href="/i18n/bn.json">bn.json</a></td></tr>
+  <tr><td>Українська</td><td><a href="/i18n/uk.json">uk.json</a></td></tr>
+</table>
+
+<h2>What must survive your edit</h2>
+
+<div class="keep">
+  <p style="margin:0"><strong>Four things are machinery, not words.</strong>
+     If one goes missing, that phrase breaks silently &mdash; so a checker
+     compares them against the English and refuses a file that has lost
+     one. You do not have to be careful, only aware:</p>
+  <ul>
+    <li><code>%{name}</code> &mdash; a slot the app fills in with a number
+        or a name. Keep every one. Move it wherever your language's word
+        order wants it.</li>
+    <li><code>&lt;code&gt;…&lt;/code&gt;</code> and other tags &mdash; keep
+        them, and feel free to move them with the words they wrap.</li>
+    <li><code>id="…"</code> inside a tag &mdash; the app looks elements up
+        by these. Copy them exactly.</li>
+    <li><code>href="…"</code> &mdash; the link's destination. Leave it.</li>
+  </ul>
+</div>
+
+<h2>What not to translate</h2>
+
+<p><strong>The mathematics never changes.</strong> Variable names
+   (<code>v_2</code>, <code>i_r1</code>), element letters, the decimal
+   point, and unit symbols (<code>V</code>, <code>Ω</code>,
+   <code>Hz</code>, <code>s</code>) stay exactly as they are in every
+   language. A reader's answers have to match the printed tutorial's.</p>
+
+<p>The rule for a label that contains a unit is: <strong>translate the
+   word, keep the symbol</strong> &mdash; <code>time (s)</code> becomes
+   <em>Zeit (s)</em>, <em>时间（s）</em>, <em>समय (s)</em>.</p>
+
+<h2>Terms of art</h2>
+
+<p>Where a technical term has a settled word in your language, use it.
+   Where it does not, a transliteration a student would recognise beats a
+   coined translation nobody uses. Hindi and Bengali follow that rule
+   already &mdash; components are transliterated
+   (<em>रेज़िस्टर</em>, not <em>प्रतिरोधक</em>) while ordinary physics
+   quantities keep their native word. <strong>Whether that was the right
+   call is exactly the kind of thing a native speaker should overrule.</strong></p>
+
+<h2>Sending it back</h2>
+
+<!--
+  translate@symbulator.com, given by Roberto on 31 Aug 2026 for this
+  page. A role address on his own domain, not a personal inbox: this
+  page invites strangers, a published address cannot be unpublished,
+  and whose inbox it is was his decision rather than mine to make. If
+  it ever needs changing, it is here and in nothing else.
+-->
+<p>Email the edited file to
+   <a href="mailto:translate@symbulator.com?subject=Symbulator%20translation">translate@symbulator.com</a>.
+   Say which language it is, in case the filename does not survive the
+   trip.</p>
+
+<p>Or, if you would rather work in the open, open a pull request at
+   <a href="https://github.com/Symbulator/server" target="_blank" rel="noopener">github.com/Symbulator/server</a>
+   against the file under <code>i18n/</code>. Partial files are welcome
+   either way: ten corrected lines are worth having.</p>
+
+<p>Please say how you would like to be credited, or that you would rather
+   not be.</p>
+
+<footer>
+  <p>Symbulator 9 &middot;
+     <a href="/">the app</a> &middot;
+     <a href="https://learn.symbulator.com" target="_blank" rel="noopener">the tutorial</a> &middot;
+     <a href="https://symbulator.com" target="_blank" rel="noopener">symbulator.com</a></p>
+</footer>
+
+</main>
+</body>
+</html>
