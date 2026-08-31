@@ -42,7 +42,7 @@
  "circuit-description.190f": "priskribo de la cirkvito",
  "circuit-description.38e9": "Priskribo de la cirkvito",
  "circuit-syntax-reference.17ef": "Referenco pri la sintakso de cirkvitoj",
- "clear-inputs.bdaa": "Vakigi enigojn",
+ "clear-inputsclear.9b7a": "<span class=\"subbar-lbl\">Vakigi enigojn</span><span class=\"subbar-lbl-short\">Vakigi</span>",
  "collect-vo-v.ff97": "<code>collect(vo, v1)</code>",
  "conditions-one-per-line.690b": "Kondiĉoj <span class=\"hint\">— po unu en linio aŭ apartigitaj per <code>and</code>, ekz. <code>pr1 > 0 and v1 = 12</code>; uzu <code>>=</code> kaj <code>&lt;=</code>, ne <code>=></code> nek <code>=&lt;</code></span>",
  "conditions-one-per-line.bc4e": "Kondiĉoj <span class=\"hint\">— po unu en linio aŭ apartigitaj per <code>and</code>, ekz. <code>t = to</code>, kiu anstataŭigas valoron antaŭ la kalkulo, same kiel la <code>|</code> de la kalkulilo; <code>pr1 &gt; 0</code> starigas supozon. Uzu <code>&gt;=</code> kaj <code>&lt;=</code>, ne <code>=&gt;</code> nek <code>=&lt;</code></span>",
