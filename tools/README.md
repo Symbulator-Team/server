@@ -14,9 +14,82 @@ output folder lists findings worst-first.
 
 A clean run ends `failed=0 with_issues=0` — the state the Aug 2026
 schematic rework left all 322 tutorial circuits in, and the bar any
-schematic change should keep. It prefers a sibling `repos/solver`
-checkout over the installed package, so it reviews the working tree.
-Run it after anything that touches `schematic.py`.
+schematic change should keep. Run it after anything that touches
+`schematic.py`.
+
+Since #212 it also checks that **no label touches a symbol or a wire**.
+`schematic.py`'s canvas records where each body puts ink (`_Canvas.ink`,
+deliberately narrower than the `obstacle` a *wire* has to clear — a
+value label sits just above its own body by design), and the harness
+compares every label box against it.
+
+That check is an *estimate*: text metrics are guessed from a character
+count, and the ink boxes come from the path geometry. It has a blind
+spot it cannot close — the stroke. `pixel_clearance.py` below is what
+closes it.
+
+**It reviews the working tree**, preferring a sibling `repos/solver`
+checkout over the installed package. That sentence was in this file
+before #212 and was not true: the path had one `os.path.dirname` too
+many and pointed at `Symbulator/solver`, which has never existed, so
+the harness silently reviewed whatever `pip` had installed and could
+not see an edit to `schematic.py` at all. It says so on stderr now if
+the checkout is ever missing, rather than falling back in silence.
+
+## `pixel_clearance.py` — the same question, asked of the pixels
+
+`review_schematics.py` measures label clearance from geometry.
+`pixel_clearance.py` measures it from the rendered picture: headless
+Chrome draws each schematic with the labels forced to pure red and
+every stroke to pure blue, and the blue mask is grown a ring at a time
+until it meets the red one.
+
+    py pixel_clearance.py                  # a five-drawing sample
+    py pixel_clearance.py --all            # every entry of every book
+    py pixel_clearance.py --all --min 3    # non-zero exit below 3px
+
+It exists because geometry got it wrong in a way geometry could not
+see. `stroke-linejoin="miter"` runs a zigzag's peak **2.2px past its
+own vertex**, so `REACH["r"]` — the path's 9px amplitude — understated
+the resistor's ink by a quarter, and labels the fast harness called
+3px clear were 1px clear on screen, which reads as touching. Every
+`REACH` entry is an ink figure now, half a stroke wider than its path
+and the resistor wider still, and `GAP` is 4px.
+
+It has earned its keep twice. The mitre above was the first. The second
+was **descenders**: labels were placed so their *baseline* sat GAP above
+a symbol, and a baseline is not an edge -- `-4j`, `1/gx` and the node
+names `ag`/`bg`/`cg` that the three-phase chapters use all hang below
+it, which left 21 of the 330 example drawings with 1-2px of air. The
+font's extents are measured now (`LABEL_ASCENT`, `LABEL_DESCENT`,
+`CAP_DESCENT` in `schematic.py`; ascent 9.75, descent 3.12, and
+capitals still drop 1.25 for Q's tail) and every placement is stated as
+ink-clears-ink.
+
+**Run it over `--all`, not a sample.** The eight hand-picked drawings
+that proved the mitre fix were all clean while 21 others were not.
+
+Three traps, all paid for once:
+
+* **Read a pixel's ink from the channel it removes from white** — red
+  ink takes the blue channel down, blue ink takes the red channel down.
+  Classifying by "are the R and B values close?" reads a faint
+  antialiased red (255,243,243) as carrying both inks, which made the
+  first version report every drawing as a collision.
+* **Prove it can fail.** Forcing `schematic.GAP` to −14 must make it
+  report; a clearance checker that cannot be made to complain is
+  measuring nothing.
+* **Say which label.** A number per drawing tells you something is
+  wrong and nothing about what; naming the nearest label turned the
+  descender hunt from a guess into a five-minute diagnosis. It also
+  reconfigures stdout to UTF-8, having once died printing a `µ` after
+  a thirty-five minute run.
+
+Needs Chrome, numpy and Pillow — none of which the package depends on,
+which is why this is separate from the fast harness. About a second per
+drawing, so `--all` is a twenty-minute run. Use `review_schematics.py`
+routinely and this after anything that changes a symbol's shape, its
+stroke width, or where a label sits.
 
 ## `verify_lesson.py` — the examples, checked against the book
 

@@ -1,5 +1,5 @@
 flask>=3.0
-symbulator>=0.5.23
+symbulator>=0.5.24
 sympy>=1.13
 # The Numerical Solver (/eqsheet/) needs these two. The offline builds
 # need them as well since #208, but get them from vendor/ as Pyodide
