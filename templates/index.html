@@ -30,7 +30,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "389f2ba69c";
+window.SYMB_I18N_V = "9732c55ea8";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -2317,7 +2317,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-08-31 04:03 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-08-31 05:04 UTC</span>
 </footer>
 
 <script>
@@ -2798,11 +2798,11 @@ function activatePostSolve() {
   $('evalExpr').disabled = false;
   $('evalExpr').placeholder = t('js.eval.hint', 'e.g. v2 - v3, or p_r1 + p_r2');
   $('evalConds').disabled = false;
-  $('evalConds').placeholder = 'e.g. t = to';
+  $('evalConds').placeholder = t('js.eval.condHint', 'e.g. t = to');
   $('evalBtn').disabled = false;
   $('evalCard').classList.remove('inactive');
   $('solveqEqs').disabled = false;
-  $('solveqEqs').placeholder = 'e.g. p_r2 = 0.05';
+  $('solveqEqs').placeholder = t('js.solveq.hint', 'e.g. p_r2 = 0.05');
   $('solveqUnks').disabled = false;
   $('solveqUnks').placeholder = 'x';            // the live hints, back (#184)
   $('solveqConds').disabled = false;
@@ -3334,7 +3334,8 @@ $('fileInput').addEventListener('change', async ev => {
   }
   const fd = new FormData();
   fd.append('file', file);
-  showNote('reading ' + file.name + '…', false);
+  showNote(tv('js.file.reading', 'reading %{file}…',
+                { file: file.name }), false);
   try {
     const r = await fetch('/api/upload', { method: 'POST', body: fd });
     const data = await r.json();
@@ -3823,7 +3824,8 @@ $('updateEntryBtn').addEventListener('click', () => {
   exported = false;
   refreshEntryLinks();
   persistState();
-  showNote(`Updated '${currentEntry.name}' in ${openFile.name}.`, false);
+  showNote(tv('js.updated', "Updated '%{name}' in %{file}.",
+                { name: currentEntry.name, file: openFile.name }), false);
 });
 
 $('newFileBtn').addEventListener('click', () => {
@@ -3855,7 +3857,8 @@ $('renameEntryBtn').addEventListener('click', () => {
   lastPickerValue = String(idx);
   refreshEntryLinks();
   persistState();
-  showNote(`Renamed '${was}' to '${currentEntry.name}'.`, false);
+  showNote(tv('js.renamed', "Renamed '%{was}' to '%{now}'.",
+                { was: was, now: currentEntry.name }), false);
 });
 
 // Deleting removes the entry but leaves the inputs on screen: they are
@@ -3864,7 +3867,9 @@ $('renameEntryBtn').addEventListener('click', () => {
 $('deleteEntryBtn').addEventListener('click', () => {
   if (!currentEntry) return;
   const name = currentEntry.name;
-  if (!window.confirm(`Delete '${name}' from ${openFile.name}?`)) return;
+  if (!window.confirm(tv('js.ask.deleteEntry',
+      "Delete '%{name}' from %{file}?",
+      { name: name, file: openFile.name }))) return;
   const idx = openFile.entries.indexOf(currentEntry);
   if (idx !== -1) openFile.entries.splice(idx, 1);
   currentEntry = null;
@@ -4123,7 +4128,7 @@ function buildSolutionPicker(data) {
   for (let i = 0; i < n; i++) {
     const opt = document.createElement('option');
     opt.value = String(i);
-    opt.textContent = 'Solution #' + (i + 1);
+    opt.textContent = tv('js.sol.option', 'Solution #%{n}', { n: i + 1 });
     sel.appendChild(opt);
   }
   sel.value = '0';
@@ -4220,8 +4225,8 @@ function renderEquations(system) {
     const unk = document.createElement('div');
     unk.className = 'hint';
     unk.style.marginTop = '.6rem';
-    unk.textContent = 'Unknowns: '
-      + system.unknowns.map(u => String(u).replace(/_/g, '')).join(', ');
+    unk.textContent = tv('js.eqs.unknowns', 'Unknowns: %{list}',
+      { list: system.unknowns.map(u => String(u).replace(/_/g, '')).join(', ') });
     out.appendChild(unk);
   }
 
@@ -4394,7 +4399,7 @@ async function renderSolveResult(data, idx) {
         code.textContent = term;
         rowd.appendChild(code);
         const btn = document.createElement('button');
-        btn.textContent = 'Copy';
+        btn.textContent = t('js.copy', 'Copy');
         btn.style.marginLeft = '.6rem';
         btn.addEventListener('click', async () => {
           let done = false;
@@ -4432,7 +4437,9 @@ async function renderSolveResult(data, idx) {
   }
   const meta = document.createElement('div');
   meta.className = 'lcd-meta';
-  meta.textContent = `${data.domain.toUpperCase()} analysis · ${count} result(s) · ${data.elapsed}s`;
+  meta.textContent = tv('js.res.meta',
+    '%{domain} analysis · %{n} result(s) · %{secs}s',
+    { domain: data.domain.toUpperCase(), n: count, secs: data.elapsed });
   out.appendChild(meta);
   status.textContent = '';
   markFresh('solve');
@@ -4773,10 +4780,16 @@ async function plot() {
           yLabel: t('js.plot.degrees', 'degrees'), logX: true});
     } else if (tool === 'sweep') {
       chartWrap.innerHTML = svgLineChart(data.x, data.y, {
-        title: `${data.key} vs. ${data.xname}`, xLabel: data.xname, yLabel: data.key});
+        title: tv('js.plot.vsTitle', '%{y} vs. %{x}',
+                  { y: data.key, x: data.xname }),
+        xLabel: data.xname, yLabel: data.key});
     } else {
       chartWrap.innerHTML = svgLineChart(data.t, data.y, {
-        title: data.key, xLabel: 'time (s)', yLabel: data.key});
+        title: data.key,
+        // The word translates, the unit symbol does not -- Roberto's
+        // ruling, 31 Aug 2026, and what the other unit-bearing labels
+        // on this card already do (js.plot.freqAxis keeps its Hz).
+        xLabel: t('js.plot.timeAxis', 'time (s)'), yLabel: data.key});
     }
     out.appendChild(chartWrap);
     const meta = document.createElement('div');
@@ -4786,9 +4799,11 @@ async function plot() {
       : tool === 'bode_tf' ? t('js.plot.bodeTf', 'Bode plot of H(s)')
       : tool === 'sweep' ? t('js.plot.sweep', 'Variable sweep')
       : t('js.plot.time', 'Time plot');
-    meta.textContent = `${toolLabel} · ${nPts} point(s) · ${data.elapsed}s`;
+    meta.textContent = tv('js.plot.meta',
+      '%{tool} · %{n} point(s) · %{secs}s',
+      { tool: toolLabel, n: nPts, secs: data.elapsed });
     out.appendChild(meta);
-    status.textContent = 'Plotted!';
+    status.textContent = t('js.plotted', 'Plotted!');
     markFresh('plot');
     $('plotDownloadBtn').hidden = false;
   } catch (e) {
@@ -4990,7 +5005,8 @@ async function solveEquations() {
         const cap = document.createElement('div');
         cap.className = 'lcd-meta';
         cap.style.margin = idx ? '.7rem 0 .2rem' : '0 0 .2rem';
-        cap.textContent = `solution ${idx + 1} of ${data.solutions.length}`;
+        cap.textContent = tv('js.sol.caption', 'solution %{i} of %{n}',
+          { i: idx + 1, n: data.solutions.length });
         box.appendChild(cap);
       }
       for (const v of sol) {
@@ -5205,7 +5221,7 @@ async function drawSchematic() {
     return;
   }
   btn.disabled = true;
-  status.textContent = 'drawing…';
+  status.textContent = t('js.busy.drawing', 'drawing…');
   try {
     const r = await fetch('/api/schematic', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -5220,13 +5236,17 @@ async function drawSchematic() {
       div.textContent = data.error
         || t('js.draw.fail', 'Could not draw that circuit.');
       out.appendChild(div);
-      status.textContent = 'Could not draw it.';
+      // Its own key, not js.draw.fail: the panel above shows the full
+      // sentence (or the engine's own error), this is the short line
+      // beside the button. One key with two English texts is what
+      // i18n.py check exists to catch.
+      status.textContent = t('js.draw.failShort', 'Could not draw it.');
       return;
     }
     // The SVG is built by our own drawer, not by anything a user typed:
     // element names reach it through _esc() in schematic.py.
     out.innerHTML = data.svg;
-    status.textContent = 'Drawn.';
+    status.textContent = t('js.drawn', 'Drawn.');
   } catch (e) {
     out.innerHTML = '<div class="error">'
       + t('js.draw.unreachable', 'Could not reach the drawer. Please try again.')

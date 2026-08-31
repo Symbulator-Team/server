@@ -588,6 +588,127 @@ def _read_concat(src: str, i: int):
     return "".join(parts), i
 
 
+# ---------------------------------------------------------------------
+# #209: the strings that never reach the dictionary
+#
+# Everything else `check` does is about a string that is *already* in the
+# scheme -- untagged markup, a key whose English has moved, an orphan, a
+# dropped id or slot, a variable key. A literal that never calls t() at
+# all is invisible to all of it, because there is nothing to compare it
+# against. That is how "DC analysis · 12 result(s) · 0.06s" -- the line
+# under every set of answers -- stayed English through #197 to #206 and
+# was found only by someone reading the page in Chinese.
+#
+# So this rule works the other way round: take every literal that reaches
+# a reader, subtract the ones inside a t()/tv()/tSrv() call, and complain
+# about what is left.
+#
+# It found twenty-one on its first run, and each widening of it found
+# more: a two-word filter walked past 'solving…', a three-letter-word
+# filter walked past `${key} vs. ${xname}`, and neither looked at
+# showNote(), which is not a DOM property at all. Widen it again if you
+# find a twenty-second; do not delete it.
+# ---------------------------------------------------------------------
+
+#: Where a string becomes something a person reads. showNote() is the
+#: app's own; the rest are the DOM's.
+READER_SINKS = re.compile(
+    r"\.(?:textContent|innerHTML|placeholder|title|alt|value)\s*=(?!=)"
+    r"|\b(?:confirm|alert|prompt|showNote)\s*\(")
+
+#: Deliberate exceptions, each one looked at. Keep this list explicit and
+#: short: an exception nobody had to write down is an exception nobody
+#: checked. Match is on the literal's exact text.
+NOT_FOR_READERS = {
+    # State and mode values, compared against rather than shown.
+    "known", "unknown", "complex", "real", "imag", "any", "pos", "neg",
+    "range", "exact", "approx", "both", "solve", "equiv", "sweep", "time",
+    "bode", "bode_tf", "dc", "ac", "fd", "tr", "out", "val", "rstcell",
+    "least-squares", "bounded", "plot", "schematic",
+    # The mathematics, which is never translated.
+    "time (s)", "dB", "v_2", "100/(s^2 + 10*s + 100)", "circuits.cir",
+    # Markup and layout fragments.
+    "result-row", "result-math", "result-name", "msg", "msg bad", "msg ok",
+    "badge", "lcd-meta", "error",
+    # The Numerical Solver's status line, which is half the engine's
+    # words. Translating these three alone would give "solved
+    # (least-squares: ...)" with an English "solved" in front of a
+    # translated tail -- worse than either end of it. They go when
+    # eqsheet.py's messages become codes, and the whole line renders in
+    # one tv() call. See NEXT.md #198; delete these three then.
+    "(least-squares: ${d.n_eq} equations, ${d.n_un} unknowns)",
+    "(restricted)",
+    "\u2014 ${d.nfev} evaluations",
+}
+
+#: A word a person would read: three or more letters, or one of the short
+#: ones that only occur in prose.
+_PROSE_WORD = re.compile(r"\b[A-Za-z]{3,}\b|\b(?:vs|of|to|in|is|no|by|at|on)\b",
+                         re.IGNORECASE)
+
+#: Not prose: selectors, CSS, URLs, single identifiers, pure punctuation.
+_NOT_PROSE = re.compile(
+    r"^(?:[.#][\w-]+)$"
+    r"|^[a-z-]+\s*:\s*[^;]*;?$"
+    r"|^https?://"
+    r"|^[\w.$-]+$"
+    r"|^[^A-Za-z]*$")
+
+
+def _t_call_spans(src: str):
+    """(start, end) of every t()/tv()/tSrv() call, brackets balanced."""
+    spans = []
+    for m in re.finditer(r"(?<![\w.$])(?:t|tv|tSrv)\s*\(", src):
+        i, depth = m.end() - 1, 0
+        while i < len(src):
+            if src[i] == "(":
+                depth += 1
+            elif src[i] == ")":
+                depth -= 1
+                if depth == 0:
+                    spans.append((m.start(), i + 1))
+                    break
+            i += 1
+    return spans
+
+
+_SCRIPT = re.compile(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", re.S)
+_LITERAL = re.compile(
+    r"""'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`((?:[^`\\]|\\.)*)`""",
+    re.S)
+
+
+def untranslated() -> list:
+    """Reader-facing literals in the templates' scripts that skip t()."""
+    out = []
+    for rel in TEMPLATES:
+        text = (SERVER / rel).read_text(encoding="utf-8")
+        for sm in _SCRIPT.finditer(text):
+            body, off = sm.group(1), sm.start(1)
+            spans = _t_call_spans(body)
+            for m in READER_SINKS.finditer(body):
+                # The statement the sink feeds, to the next semicolon.
+                stmt = body[m.end():m.end() + 500].split(";")[0]
+                for lm in _LITERAL.finditer(stmt):
+                    pos = m.end() + lm.start()
+                    if any(a <= pos < b for a, b in spans):
+                        continue          # inside a t() call: accounted for
+                    raw = next(g for g in lm.groups() if g is not None)
+                    lit = raw.strip()
+                    if not lit or lit in NOT_FOR_READERS or _NOT_PROSE.match(lit):
+                        continue
+                    # Judge the prose, not the interpolations or the markup.
+                    plain = re.sub(r"\$\{[^}]*\}|<[^>]*>|&[a-z]+;", " ", lit)
+                    if not _PROSE_WORD.search(plain):
+                        continue
+                    line = text.count("\n", 0, off + pos) + 1
+                    out.append(f"{rel}:{line}: {lit[:60]!r} reaches a reader "
+                               f"without t() -- wrap it, or add it to "
+                               f"NOT_FOR_READERS in tools/i18n.py with a "
+                               f"reason")
+    return out
+
+
 def js_calls():
     """{key: English} for every t('key', 'English') and tv(...) in the page.
 
@@ -766,6 +887,7 @@ def main() -> int:
             bad.append(f"i18n/{code}.json: {len(orphan)} orphan key(s) whose "
                        f"English has changed, first {orphan[:3]}")
         bad += structure(code, en, d)
+    bad += untranslated()
     bad += pack(write=False)
     for b in bad:
         print(b)

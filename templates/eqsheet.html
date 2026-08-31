@@ -31,7 +31,7 @@
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "389f2ba69c";
+window.SYMB_I18N_V = "9732c55ea8";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -1189,7 +1189,8 @@ function count(){
 async function doParse(){
   lastSol = {};   // the equations changed under any stored solution
   const d = await post('api/parse', {text: $('rules').value, mode});
-  $('perr').textContent = d.errors.map(e=>`line ${e.line}: ${e.error}`).join('  ·  ');
+  $('perr').textContent = d.errors.map(e=>tv('js.eq.lineError',
+    'line %{n}: %{msg}', {n: e.line, msg: e.error})).join('  ·  ');
   const old = new Set(rules.map(r=>r.line));
   rules = d.rules;
   rules.forEach(r=>{ if(!old.has(r.line)) state.sel.add(r.line); });
@@ -1298,7 +1299,7 @@ async function doSolve(){
     }
     body.knowns=knowns; body.unknowns=unknowns;
   }
-  m.textContent='solving…'; m.className='msg';
+  m.textContent=t('js.busy.solvingLower', 'solving…'); m.className='msg';
   const d = await post('api/solve', body);
   if(!d.solution){ m.textContent=d.message; m.className='msg bad'; return; }
   m.textContent = d.message
@@ -1390,7 +1391,8 @@ function fmtDeg(d){
 }
 
 async function importData(d){
-  if(!d || !Array.isArray(d.equations)) throw new Error('missing "equations" list');
+  if(!d || !Array.isArray(d.equations))
+    throw new Error(t('js.eq.noEquations', 'missing "equations" list'));
   if(d.mode==='ac' || d.mode==='dc') setModeSilently(d.mode);
   $('rules').value = d.equations.join('\n');
   await doParse();
@@ -1447,7 +1449,8 @@ async function importFile(file){
     await importData(d);
     $('perr').textContent='';
   }catch(e){
-    $('perr').textContent = 'system file: ' + e.message;
+    $('perr').textContent = tv('js.eq.fileError', 'system file: %{msg}',
+      {msg: e.message});
   }
 }
 window.addEventListener('dragover', ev=>{ ev.preventDefault(); });
@@ -1500,8 +1503,10 @@ const urlImp = new URLSearchParams(location.search).get('import');
 if(urlImp){
   try{
     const json = atob(urlImp.replace(/-/g,'+').replace(/_/g,'/'));
-    importData(JSON.parse(json)).catch(e=>{ $('perr').textContent='import: '+e.message; });
-  }catch(e){ $('perr').textContent = 'import link: ' + e.message; }
+    importData(JSON.parse(json)).catch(e=>{ $('perr').textContent =
+      tv('js.eq.importError', 'import: %{msg}', {msg: e.message}); });
+  }catch(e){ $('perr').textContent =
+      tv('js.eq.importLinkError', 'import link: %{msg}', {msg: e.message}); }
 }else{
   setMode('dc');
 }
