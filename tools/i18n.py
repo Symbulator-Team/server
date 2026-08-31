@@ -82,13 +82,14 @@ def local_build_source() -> str:
 LANGS = [
     ("en", "English"),
     ("es", "Espanol"),
+    ("eo", "Esperanto"),
     ("fr", "Francais"),
     ("de", "Deutsch"),
     ("pt", "Portugues"),
     ("zh", "Zhongwen"),
     ("ja", "Nihongo"),
     ("ko", "Hangugeo"),
-    ("eo", "Esperanto"),
+    ("id", "Bahasa Indonesia"),
 ]
 TARGETS = [c for c, _ in LANGS if c != "en"]
 
