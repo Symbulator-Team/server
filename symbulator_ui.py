@@ -66,7 +66,7 @@ def _err(message):
 # i18n/en.json and the only thing a traceback can quote.
 #
 # What is *not* here: every message this file forwards from the solver
-# package -- `_err(_exc_text(exc))` and friends. Those words are the
+# package -- `_err(_exc_msg(exc))` and friends. Those words are the
 # package's, and they get codes in #199. Mixing them in would mean
 # inventing 8xx numbers for sentences that are about to acquire 1xx-6xx
 # ones.
@@ -1232,6 +1232,29 @@ def _exc_text(exc: Exception) -> str:
     if not msg:
         msg = f"{type(exc).__name__} while solving (no further detail)."
     return msg[:400] + ("..." if len(msg) > 400 else "")
+
+
+def _exc_msg(exc: Exception):
+    """A coded message when the engine sent one; otherwise its text.
+
+    Since #199 a CircuitError carries `code` and `args_map`, and
+    forwarding those instead of `str(exc)` is the whole point: it is what
+    lets the page put the *engine's* words into the reader's language
+    rather than only this file's.
+
+    Everything else -- a SymPy error, a ZeroDivisionError, an exception
+    from a library we do not own -- has no code and keeps travelling as
+    text. That is honest rather than lazy: those words are not ours to
+    render, and `_err` takes a string exactly so they can pass through.
+    """
+    code = getattr(exc, "code", None)
+    if code is None:
+        return _exc_text(exc)
+    return {"code": code,
+            "args": {k: str(v)
+                     for k, v in (getattr(exc, "args_map", None) or {}).items()},
+            "severity": getattr(exc, "severity", "error"),
+            "text": _exc_text(exc)}
 
 
 # Display order for the element cards: sources first (voltage, then
@@ -2540,7 +2563,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                     "notes": _notes,
                     "approx": approx, "approx_forced": approx_forced})
     except Exception as exc:  # noqa: BLE001 -- anything goes back as text
-        return _err(_exc_text(exc))
+        return _err(_exc_msg(exc))
 
 
 def _norm_name(name: str) -> str:
@@ -2757,7 +2780,7 @@ def plot_time_ui(desc: str, key: str, t_min: float, t_max: float, n: int,
     except PlotError as exc:
         return _err(str(exc))
     except Exception as exc:  # noqa: BLE001
-        return _err(_exc_text(exc))
+        return _err(_exc_msg(exc))
 
 
 def bode_ui(desc: str, key: str, f_min: float, f_max: float, n: int,
@@ -2818,7 +2841,7 @@ def bode_ui(desc: str, key: str, f_min: float, f_max: float, n: int,
     except PlotError as exc:
         return _err(str(exc))
     except Exception as exc:  # noqa: BLE001
-        return _err(_exc_text(exc))
+        return _err(_exc_msg(exc))
 
 
 def _chart_safe(values) -> list:
@@ -2864,7 +2887,7 @@ def bode_tf_ui(expr_str: str, f_min: float, f_max: float, n: int):
         return _ok({"freq": freq_arr.tolist(), "mag_db": mag_db,
                     "phase_deg": phase_deg, "key": "H(s)", "notes": []})
     except Exception as exc:  # noqa: BLE001
-        return _err(_exc_text(exc))
+        return _err(_exc_msg(exc))
 
 
 def sweep_ui(desc: str, key: str, xname: str, x_min: float, x_max: float,
@@ -2943,7 +2966,7 @@ def sweep_ui(desc: str, key: str, xname: str, x_min: float, x_max: float,
     except PlotError as exc:
         return _err(str(exc))
     except Exception as exc:  # noqa: BLE001
-        return _err(_exc_text(exc))
+        return _err(_exc_msg(exc))
 
 
 def _aliases_from_values(values: dict) -> dict:
@@ -3332,7 +3355,7 @@ def schematic_ui(desc: str):
     try:
         return _ok({"svg": to_svg(desc)})
     except Exception as exc:
-        return _err(_exc_text(exc))
+        return _err(_exc_msg(exc))
 
 
 # --------------------------------------------------------------------------
@@ -3469,7 +3492,7 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
 
         return _err(msg(M_UNKNOWN_TOOL, tool=tool))
     except Exception as exc:                                  # noqa: BLE001
-        return _err(_exc_text(exc))
+        return _err(_exc_msg(exc))
 
 
 # --------------------------------------------------------------------------
@@ -3517,7 +3540,7 @@ def _domain_transform(expr_str: str, values: dict, subs_map=None,
         substituted = _apply_conditions(substituted, subs_map, assumptions)
         got = (s2t if name == "s2t" else t2s)(sp.simplify(substituted))
     except Exception as exc:                                  # noqa: BLE001
-        return _err(_exc_text(exc))
+        return _err(_exc_msg(exc))
     return got
 
 
@@ -3669,7 +3692,7 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
         plain, latex = shown(result)
         return _ok({"plain": plain, "latex": latex})
     except Exception as exc:  # noqa: BLE001
-        return _err(_exc_text(exc))
+        return _err(_exc_msg(exc))
 
 
 # Units inferred from an answer's name prefix, for labelling solved
@@ -3835,7 +3858,7 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
         return _ok({"solutions": out,
                           "unknowns": [str(w) for w in wanted]})
     except Exception as exc:  # noqa: BLE001
-        return _err(_exc_text(exc))
+        return _err(_exc_msg(exc))
 
 
 
@@ -3860,4 +3883,4 @@ def spice_ui(direction: str, text: str):
             return _err(msg(M_BAD_DIRECTION, direction=direction))
         return _ok({"output": out, "warnings": warnings})
     except Exception as exc:  # noqa: BLE001
-        return _err(_exc_text(exc))
+        return _err(_exc_msg(exc))

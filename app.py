@@ -78,6 +78,7 @@ from symbulator_ui import (                                   # noqa: E402
     normalise_imaginary,
     plot_time_ui, bode_ui,
     _validate, _validate_extras, _expand_and, _clean_digits, _exc_text,
+    _exc_msg,
     # #200: the validators return coded messages now, and _err is what
     # keeps the code beside the English on the way out of this file.
     _err,
@@ -97,7 +98,9 @@ def _call_worker(conn, fn_name, args):
     try:
         conn.send(getattr(symbulator_ui, fn_name)(*args))
     except Exception as exc:  # noqa: BLE001
-        conn.send({"ok": False, "error": symbulator_ui._exc_text(exc)})
+        # _exc_msg, not _exc_text: a CircuitError carries a code since
+        # #199, and this is the pipe every solve comes back through.
+        conn.send(symbulator_ui._err(symbulator_ui._exc_msg(exc)))
     finally:
         conn.close()
 
@@ -657,7 +660,10 @@ def api_solve():
         elements = parse_circuit(desc, expand_si=False)
         ambiguous = ambiguous_in_elements(elements)
     except Exception as exc:  # parse errors get the same friendly text
-        return jsonify({"ok": False, "error": str(exc)[:400]}), 422
+        # _exc_msg, not str(exc): this is the parse step, run in the
+        # parent process rather than the worker, and it was the one place
+        # a CircuitError's code (#199) was still being flattened away.
+        return jsonify(_err(_exc_msg(exc))), 422
 
     if ambiguous:
         unresolved = [a for a in ambiguous if a["token"] not in choices]
