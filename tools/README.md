@@ -53,9 +53,9 @@ Two categories in the output are not the same thing:
 A full sweep takes roughly half an hour. Run it after anything that touches
 value parsing, formatting, or the solver.
 
-## `i18n.py` — the nine languages (#197)
+## `i18n.py` — the thirteen languages (#197, #202, #203, #206)
 
-The app speaks nine languages by way of a **client-side dictionary applied
+The app speaks thirteen languages by way of a **client-side dictionary applied
 in the page**, and it has to: two of the three builds are static files with
 Pyodide in the tab, so anything server-rendered would translate the hosted
 app and leave the downloaded one in English. This script is the machinery
@@ -69,7 +69,7 @@ around that dictionary.
 
 **`en.json` is generated, not written.** The English lives in the template
 markup and in the fallback argument of every `t()` / `tv()` call; a second
-hand-kept copy of it would only drift. The other eight are hand-written and
+hand-kept copy of it would only drift. The other twelve are hand-written and
 are the only files a translator edits — then `pack`, and the block between
 the `BEGIN/END i18n dictionaries` markers in each template is rewritten.
 Each page carries only the keys it asks for.
@@ -97,12 +97,38 @@ What `check` catches, all of it learned the hard way:
   are written into the page as innerHTML;
 * a translation that introduces a `<script>` or `<style>`;
 * `t(key, ...)` with a **variable** key, which `en.json` can never see, so
-  the string would fall back to English in all eight languages with
+  the string would fall back to English in all twelve languages with
   nothing to say so;
 * a new element kind or two-port description in `symbulator_ui.py` that no
   language has a word for yet.
 
 `pack` escapes `<`, `>`, `&` and `{` inside every string, so no translation
 can close the script element or grow a Jinja construct — `{#` in a template
-took every server page down on 30 Aug 2026, and eight languages of new text
+took every server page down on 30 Aug 2026, and twelve languages of new text
 is a lot of new opportunity.
+
+### `check` does not measure the ribbon — you have to
+
+`i18n.py check` compares keys and structure. It knows nothing about
+pixels, and the ribbon is where a translation actually breaks: `banner.css`
+caps `.subbar nav` at one line-box with `overflow: clip`, so a label too
+wide for the row does not wrap visibly and does not scroll — the overflow
+is **silently gone**, usually taking the Tutorial link with it.
+
+Ukrainian hit this on 31 Aug 2026 (#203/#206): *Локальний застосунок* is
+149px against English's 62px. It shipped past the first check because that
+check tested whether the link's right edge had passed the nav's right edge
+— and a wrapped element is not to the right, it is *below*.
+
+Measure it on the axis it fails on. For each language, at 375, 481, 520,
+768 and 1100px:
+
+```js
+nav.scrollHeight - nav.clientHeight   // must be 0
+[...nav.children].filter(e =>
+  e.getBoundingClientRect().bottom - nav.getBoundingClientRect().top
+    > nav.clientHeight + 1)           // must be empty
+```
+
+481px is the band to watch: it is the narrowest viewport that still shows
+the *wide* labels. The fix is nearly always the wording, not the CSS.

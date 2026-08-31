@@ -90,6 +90,9 @@ LANGS = [
     ("ja", "Nihongo"),
     ("ko", "Hangugeo"),
     ("id", "Bahasa Indonesia"),
+    ("hi", "Hindi"),
+    ("bn", "Bangla"),
+    ("uk", "Ukrainska"),
 ]
 TARGETS = [c for c, _ in LANGS if c != "en"]
 
