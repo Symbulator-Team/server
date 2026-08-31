@@ -30,7 +30,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "35de665371";
+window.SYMB_I18N_V = "9a4135ef41";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -2317,7 +2317,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-08-31 05:22 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-08-31 05:58 UTC</span>
 </footer>
 
 <script>
@@ -2889,6 +2889,124 @@ function clearResults() {
   markAllStale();
 }
 
+// ---- The engine's messages, put into words (#200) -------------------
+// symbulator_ui.py returns {code, args, severity, text} in `err`, and
+// each entry of `notes`, instead of a finished sentence. Same shape as
+// eqsheet.py's (#198), so this is the same renderer twice rather than
+// two of them.
+//
+// Literal t()/tv() calls keyed by code, not a lookup built from the
+// number: tools/i18n.py harvests the English from the call itself, and
+// `check` refuses a variable key for that reason. Verbose, and visible
+// to every guard in the file as a result.
+const UI_MESSAGES = {
+  801: () => t('js.ui.m801', 'Please enter a circuit description.'),
+  802: a  => tv('js.ui.m802',
+                'Circuit description too long (max %{max} characters).', a),
+  803: () => t('js.ui.m803', "Circuit description contains characters that "
+                + "aren't used in Symbulator syntax. Allowed: letters, "
+                + "digits, , : . + - * / ( ) ' ^"),
+  804: () => t('js.ui.m804', 'Circuit description contains an invalid token.'),
+  805: () => t('js.ui.m805', 'Unknown analysis type. Choose DC, AC, FD, or TR.'),
+  806: () => t('js.ui.m806', 'The `{...}` shorthand is only allowed in FD. It '
+                + 'marks a source value as written in the time domain, and FD '
+                + 'is the one analysis that reads its sources in the s-domain '
+                + '\u2014 every other analysis already reads them as functions '
+                + 'of time. Drop the braces.'),
+  807: () => t('js.ui.m807', 'AC analysis needs an angular frequency (omega).'),
+  808: () => t('js.ui.m808', 'Omega contains invalid characters.'),
+  809: () => t('js.ui.m809', 'Invalid variables list.'),
+  810: a  => tv('js.ui.m810', 'Invalid variable name: %{name}', a),
+  811: a  => tv('js.ui.m811', 'Added %{label} %{item} uses %{token} as a bare '
+                + "unit suffix, which isn't allowed here (unlike a circuit "
+                + "value field, an equation can't ask which meaning you "
+                + 'intend). Write the SI-unit meaning explicitly with an '
+                + 'apostrophe \u2014 %{si} \u2014 matching circuit syntax, or '
+                + 'the variable meaning with a star \u2014 %{star}.', a),
+  812: a  => tv('js.ui.m812', 'Circular definition: %{loop}', a),
+  813: a  => tv('js.ui.m813', 'Too many added %{label}s (max %{max}).', a),
+  814: a  => tv('js.ui.m814',
+                'Added %{label} contains invalid characters: %{item}', a),
+  815: a  => tv('js.ui.m815', 'Too many added unknowns (max %{max}).', a),
+  816: a  => tv('js.ui.m816', 'Invalid unknown name: %{name}', a),
+  820: a  => tv('js.ui.m820', 'The transfer function must be numeric apart '
+                + 'from s \u2014 it still contains %{strays}. Write H(s) with '
+                + 'numbers everywhere else, e.g. 100/(s^2 + 10*s + 100).', a),
+  821: () => t('js.ui.m821', "The sweep range's end must be after its start."),
+  822: a  => tv('js.ui.m822', "'%{name}' was not found in the DC solution.", a),
+  823: a  => tv('js.ui.m823', "'%{name}' needs %{missing}, which was not found "
+                + 'in the DC solution.', a),
+  824: a  => tv('js.ui.m824', "'%{name}' still depends on %{strays}, which has "
+                + 'no numeric value \u2014 pin it with a condition (e.g. '
+                + '"%{example}") before plotting, or sweep it instead.', a),
+  830: a  => tv('js.ui.m830',
+                'Could not read the condition `%{line}`: %{error}', a),
+  831: a  => tv('js.ui.m831', '`%{line}` is an equation to solve rather than a '
+                + 'value to substitute, and Evaluate does not solve. Put a '
+                + 'single name on the left \u2014 `t = to` \u2014 or use the '
+                + 'Solve card.', a),
+  832: a  => tv('js.ui.m832', '`%{line}` is neither a value to substitute nor '
+                + 'a comparison. Write `t = to` to substitute, or `pr1 > 0` '
+                + 'to assume.', a),
+  833: () => t('js.ui.m833', 'Nothing left to solve for \u2014 every symbol in '
+                + 'those equations already has a value. Name an unknown, or '
+                + 'use Evaluate to compute a value instead.'),
+  840: () => t('js.ui.m840', 'This build has no schematic drawer. It needs '
+                + 'symbulator 0.5.0 or newer.'),
+  841: () => t('js.ui.m841', 'Enter a circuit first.'),
+  850: a  => tv('js.ui.m850', 'Unknown tool `%{tool}`.', a),
+  851: a  => tv('js.ui.m851', '`%{tool}` needs %{n} value: %{hint}.', a),
+  852: a  => tv('js.ui.m852', '`%{tool}` needs %{n} values: %{hint}.', a),
+  853: () => t('js.ui.m853', '`pf` needs two values: a voltage and a current, '
+                + 'as in `pf(v_1, i_r1)`.'),
+  854: a  => tv('js.ui.m854', '`pf` needs numbers, and `%{arg}` still contains '
+                + '%{unknown}. Solve the circuit in AC first, then refer to '
+                + 'its answers by name.', a),
+  860: a  => tv('js.ui.m860', 'Unknown direction `%{direction}`.', a),
+  870: a  => tv('js.ui.m870', "normalised '%{was}' to '%{now}' in %{element}", a),
+  871: a  => tv('js.ui.m871', "'%{name}' was read as an ordinary variable; "
+                + "SymPy's built-in meaning was ignored.", a),
+  872: a  => tv('js.ui.m872', '%{name} is both a definition and one of this '
+                + "circuit's own answers; the definition wins everywhere it "
+                + 'appears.', a),
+  873: a  => tv('js.ui.m873', "Source '%{name}' with a value of %{value} is "
+                + 'simulated as a step source: %{value}*u(t).', a),
+  874: a  => tv('js.ui.m874', 'Sources %{names} have constant values and are '
+                + 'simulated as step sources: %{shown}.', a),
+  875: a  => tv('js.ui.m875', 'Source %{names} took a constant s-domain '
+                + 'value. That is an impulse, not a steady level, so it '
+                + 'contributes nothing for t > 0. For a step of %{value} '
+                + 'volts (or amps) switched on at t = 0, write %{value}/s.', a),
+  876: a  => tv('js.ui.m876', 'Sources %{names} took constant s-domain '
+                + 'values. Those are impulses, not steady levels, so they '
+                + 'contribute nothing for t > 0. For a step of %{value} '
+                + 'volts (or amps) switched on at t = 0, write %{value}/s.', a),
+  877: () => t('js.ui.m877', 'A decimal or scientific-notation value (like '
+                + "0.1 or 2e3) was found in the inputs, so the answers can't "
+                + 'be exact -- switched "Rounding" from exact to approximate.'),
+};
+
+// A message from the engine, as a sentence in the reader's language.
+//
+// Three things arrive here and all three must work. A **coded** message
+// is looked up. A **plain string** is a sentence this file forwarded
+// rather than wrote -- the solver package's, which has no codes until
+// #199 -- and is its own answer. And a code this page has never seen
+// means the server is ahead of it, mid-deploy; the engine sends its own
+// English in `text` for exactly that window.
+function uiMsg(m) {
+  if (!m) return '';
+  if (typeof m === 'string') return m;
+  const f = m.code && UI_MESSAGES[m.code];
+  return f ? f(m.args || {}) : (m.text || '');
+}
+
+// What a failed response says. `err` is the coded form; `error` is the
+// English beside it, and what an older server sends on its own.
+function uiErr(data, fallback) {
+  return uiMsg(data.err) || data.error || fallback;
+}
+
 // ---- Circuit picker: built-in examples, or an opened file ----------
 // `picker` doubles as the live Input File described in "About input file
 // (.cir) format": uploading a file replaces it, "add this circuit to the
@@ -3305,7 +3423,8 @@ async function openExampleFile(name, quiet) {
     const r = await fetch('/api/examples?file=' + encodeURIComponent(name));
     const data = await r.json();
     if (!data.ok) {
-      showNote(data.error || t('js.file.openFail', 'Could not open that input file.'), true);
+      showNote(uiErr(data, t('js.file.openFail',
+        'Could not open that input file.')), true);
       return;
     }
     exported = true;
@@ -3340,7 +3459,8 @@ $('fileInput').addEventListener('change', async ev => {
     const r = await fetch('/api/upload', { method: 'POST', body: fd });
     const data = await r.json();
     if (!data.ok) {
-      showNote(data.error || t('js.file.readFail', 'Could not read that file.'), true);
+      showNote(uiErr(data, t('js.file.readFail',
+        'Could not read that file.')), true);
       return;
     }
     // An uploaded file came from disk, so it counts as exported until
@@ -3909,7 +4029,7 @@ $('downloadFileBtn').addEventListener('click', async () => {
     });
     const data = await r.json();
     if (!data.ok) {
-      showNote(data.error || t('js.file.buildFail', 'Could not build that file.'),
+      showNote(uiErr(data, t('js.file.buildFail', 'Could not build that file.')),
                true); return; }
     const blob = new Blob([data.text], { type: 'text/plain' });
     const a = document.createElement('a');
@@ -4274,7 +4394,7 @@ async function renderSolveResult(data, idx) {
     data.notes.forEach((n, i) => {
       const line = document.createElement('div');
       if (i) line.style.marginTop = '.35rem';
-      line.textContent = n;
+      line.textContent = uiMsg(n);
       box.appendChild(line);
     });
     out.appendChild(box);
@@ -4529,7 +4649,7 @@ async function solve(suffixChoices) {
         data.notes.forEach((n, i) => {
           const line = document.createElement('div');
           if (i) line.style.marginTop = '.35rem';
-          line.textContent = n;
+          line.textContent = uiMsg(n);
           box.appendChild(line);
         });
         out.appendChild(box);
@@ -4538,7 +4658,7 @@ async function solve(suffixChoices) {
       div.className = 'error';
       // Errors may be several sentences on separate lines.
       div.style.whiteSpace = 'pre-line';
-      div.textContent = data.error || t('js.wrong', 'Something went wrong.');
+      div.textContent = uiErr(data, t('js.wrong', 'Something went wrong.'));
       out.appendChild(div);
       status.textContent = t('js.noSolution', 'No solution found.');
       return;
@@ -4748,7 +4868,7 @@ async function plot() {
       const div = document.createElement('div');
       div.className = 'error';
       div.style.whiteSpace = 'pre-line';
-      div.textContent = data.error || t('js.wrong', 'Something went wrong.');
+      div.textContent = uiErr(data, t('js.wrong', 'Something went wrong.'));
       out.appendChild(div);
       status.textContent = t('js.noSolution', 'No solution found.');
       return;
@@ -4760,7 +4880,7 @@ async function plot() {
       data.notes.forEach((n, i) => {
         const line = document.createElement('div');
         if (i) line.style.marginTop = '.35rem';
-        line.textContent = n;
+        line.textContent = uiMsg(n);
         box.appendChild(line);
       });
       out.appendChild(box);
@@ -4916,8 +5036,8 @@ async function evaluate() {
     if (!data.ok) {
       const div = document.createElement('div');
       div.className = 'error';
-      div.textContent = data.error
-        || t('js.eval.fail', 'Could not evaluate that expression.');
+      div.textContent = uiErr(data,
+        t('js.eval.fail', 'Could not evaluate that expression.'));
       box.appendChild(div);
       return;
     }
@@ -4979,8 +5099,8 @@ async function solveEquations() {
     if (!data.ok) {
       const div = document.createElement('div');
       div.className = 'error';
-      div.textContent = data.error
-        || t('js.solveq.fail', 'Could not solve those equations.');
+      div.textContent = uiErr(data,
+        t('js.solveq.fail', 'Could not solve those equations.'));
       box.appendChild(div);
       return;
     }
@@ -4994,7 +5114,7 @@ async function solveEquations() {
         const d = document.createElement('div');
         d.className = 'lcd-meta';
         d.style.marginTop = '.4rem';
-        d.textContent = n;
+        d.textContent = uiMsg(n);
         box.appendChild(d);
       });
       return;
@@ -5111,7 +5231,7 @@ async function runMiniTool() {
       out.innerHTML = '';
       const box = document.createElement('div');
       box.className = 'booknote warn';
-      box.textContent = data.error || t('js.mini.fail', 'That did not work.');
+      box.textContent = uiErr(data, t('js.mini.fail', 'That did not work.'));
       out.appendChild(box);
       return;
     }
@@ -5194,7 +5314,7 @@ async function runSpice(direction) {
   try {
     const data = await callSpice(direction, from.value);
     if (!data.ok) {
-      note(data.error || t('js.spice.fail', 'The translation failed.'));
+      note(uiErr(data, t('js.spice.fail', 'The translation failed.')));
       return;
     }
     dest.value = data.output;
@@ -5233,8 +5353,8 @@ async function drawSchematic() {
       const div = document.createElement('div');
       div.className = 'error';
       div.style.whiteSpace = 'pre-line';
-      div.textContent = data.error
-        || t('js.draw.fail', 'Could not draw that circuit.');
+      div.textContent = uiErr(data,
+        t('js.draw.fail', 'Could not draw that circuit.'));
       out.appendChild(div);
       // Its own key, not js.draw.fail: the panel above shows the full
       // sentence (or the engine's own error), this is the short line

@@ -78,6 +78,9 @@ from symbulator_ui import (                                   # noqa: E402
     normalise_imaginary,
     plot_time_ui, bode_ui,
     _validate, _validate_extras, _expand_and, _clean_digits, _exc_text,
+    # #200: the validators return coded messages now, and _err is what
+    # keeps the code beside the English on the way out of this file.
+    _err,
     parse_defines, expand_defines, expand_defines_in_desc,
     define_shadow_notices,
     _ALLOWED, _ALLOWED_EQ, _ALLOWED_COND, _VARNAME,
@@ -101,9 +104,17 @@ def _call_worker(conn, fn_name, args):
 
 def _run_in_process(fn_name, args):
     """Run one symbulator_ui function in a killable child process.
-    Returns (ok, payload) where payload is the result dict's contents,
-    or an error string. Symbolic solving can run away on pathological
-    input, and only a separate process can be reliably stopped."""
+
+    Returns (ok, payload). On success `payload` is the result dict's
+    contents; **on failure it is the failure dict itself** -- not just
+    its sentence, as it was until #200. That is what lets the coded
+    message reach the page: this file lists its response fields by hand,
+    so anything it does not name is dropped, and a code named in six
+    places is a code forgotten in the seventh. `_refusal` below names it
+    once.
+
+    Symbolic solving can run away on pathological input, and only a
+    separate process can be reliably stopped."""
     parent_conn, child_conn = mp.Pipe(duplex=False)
     proc = mp.Process(target=_call_worker, args=(child_conn, fn_name, args))
     proc.start()
@@ -115,15 +126,34 @@ def _run_in_process(fn_name, args):
     else:
         proc.terminate()
         proc.join(1)
-        return False, (f"The solver took longer than {SOLVE_TIMEOUT_S:g} "
-                       "seconds and was stopped. Try a simpler circuit, or "
-                       "fewer requested variables for TR analysis.")
+        # app.py's own words, so no 8xx code: #200 covers what
+        # symbulator_ui writes. Shaped like a failure dict all the same,
+        # so _refusal has one thing to handle.
+        return False, {"error": (
+            f"The solver took longer than {SOLVE_TIMEOUT_S:g} seconds and "
+            "was stopped. Try a simpler circuit, or fewer requested "
+            "variables for TR analysis.")}
     if proc.is_alive():
         proc.kill()
 
     if not result.get("ok"):
-        return False, result.get("error", "Unknown error.")
+        result.setdefault("error", "Unknown error.")
+        return False, result
     return True, {k: v for k, v in result.items() if k != "ok"}
+
+
+def _refusal(payload, **extra):
+    """One refusal from the worker, forwarded whole.
+
+    `payload` is symbulator_ui's own failure dict, so the coded message
+    (#200) rides along without every route naming the field. `error`
+    stays the English, which is what an older page reads.
+    """
+    out = {"ok": False, "error": payload.get("error")}
+    if payload.get("err"):
+        out["err"] = payload["err"]
+    out.update(extra)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -391,7 +421,7 @@ def api_solveq():
 
     defines, define_err = parse_defines(data.get("defines") or "")
     if define_err:
-        return jsonify({"ok": False, "error": define_err}), 400
+        return jsonify(_err(define_err)), 400
     if defines:
         equations = [expand_defines(e, defines) for e in equations]
         conditions = [expand_defines(c, defines) for c in conditions]
@@ -442,7 +472,7 @@ def api_solveq():
          conditions, domain, bool(data.get('dual'))))
     elapsed = round(time.time() - t0, 2)
     if not ok:
-        return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
+        return jsonify(_refusal(payload, elapsed=elapsed)), 422
     return jsonify({"ok": True, "elapsed": elapsed, **payload})
 
 
@@ -522,7 +552,7 @@ def api_solve():
     # a bare "1k" is questioned exactly as if it had been typed inline.
     defines, define_err = parse_defines(_lines("defines"))
     if define_err:
-        return jsonify({"ok": False, "error": define_err}), 400
+        return jsonify(_err(define_err)), 400
     define_notices = []
     if defines:
         define_notices = define_shadow_notices(defines, desc)
@@ -545,7 +575,7 @@ def api_solve():
         elif tool == "port" and kind not in ("z", "y", "h", "g", "a", "b"):
             err = "Two-port kind must be one of z, y, h, g, a, b."
     if err:
-        return jsonify({"ok": False, "error": err}), 400
+        return jsonify(_err(err)), 400
 
     # ---- Ambiguity check: a bare value like "1k" could be the SI unit
     # (1'k = 1000) or number*variable (1*k). If any are present and the
@@ -644,8 +674,8 @@ def api_solve():
     if not ok:
         # The notes matter most when the solve failed: "normalised '5*i'
         # to '5j'" is often the explanation for the error underneath it.
-        return jsonify({"ok": False, "error": payload, "elapsed": elapsed,
-                        "notes": define_notices + imaginary_notes}), 422
+        return jsonify(_refusal(payload, elapsed=elapsed,
+                                notes=define_notices + imaginary_notes)), 422
 
     payload.setdefault("notes", [])
     payload["notes"] = define_notices + imaginary_notes + list(payload["notes"])
@@ -709,10 +739,10 @@ def api_schematic():
     ok, payload = _run_in_process("schematic_ui", (desc,))
     elapsed = round(time.time() - t0, 2)
     if not ok:
-        return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
+        return jsonify(_refusal(payload, elapsed=elapsed)), 422
     # _run_in_process has already unwrapped the ui dict's own "ok": on
-    # failure it hands back the message as a string, so there is nothing
-    # left to check here.
+    # failure it hands back the failure dict, which _refusal forwards
+    # above, so there is nothing left to check here.
     #
     # Enumerated by hand like the other routes -- a key added in
     # symbulator_ui reaches the offline build automatically but is
@@ -761,7 +791,7 @@ def api_plot():
 
     defines, define_err = parse_defines(_lines("defines"))
     if define_err:
-        return jsonify({"ok": False, "error": define_err}), 400
+        return jsonify(_err(define_err)), 400
     if defines:
         desc = expand_defines_in_desc(desc, defines)
         extra_equations = [expand_defines(e, defines) for e in extra_equations]
@@ -794,7 +824,7 @@ def api_plot():
     if not err and tool != "bode_tf":
         err = _validate_extras(extra_equations, extra_unknowns, extra_conditions)
     if err:
-        return jsonify({"ok": False, "error": err}), 400
+        return jsonify(_err(err)), 400
 
     if tool == "time":
         t_min, t_max, rng_err = _clean_range(data, 0.0, 1.0)
@@ -824,7 +854,7 @@ def api_plot():
     ok, payload = _run_in_process(fn_name, args)
     elapsed = round(time.time() - t0, 2)
     if not ok:
-        return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
+        return jsonify(_refusal(payload, elapsed=elapsed)), 422
     return jsonify({"ok": True, "tool": tool, "elapsed": elapsed, **payload})
 
 
@@ -843,7 +873,7 @@ def api_evaluate():
     values = data.get("values") or {}
     defines, define_err = parse_defines(data.get("defines") or "")
     if define_err:
-        return jsonify({"ok": False, "error": define_err}), 400
+        return jsonify(_err(define_err)), 400
 
     if not expr:
         return jsonify({"ok": False, "error": "Enter an expression to evaluate."}), 400
@@ -892,7 +922,7 @@ def api_evaluate():
                                                   dual))
     elapsed = round(time.time() - t0, 2)
     if not ok:
-        return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
+        return jsonify(_refusal(payload, elapsed=elapsed)), 422
     return jsonify({"ok": True, "elapsed": elapsed, **payload})
 
 
@@ -936,8 +966,7 @@ def api_minitool():
                                   (tool, clean_args, clean, digits))
     elapsed = round(time.time() - t0, 2)
     if not ok:
-        return jsonify({"ok": False, "error": payload,
-                        "elapsed": elapsed}), 422
+        return jsonify(_refusal(payload, elapsed=elapsed)), 422
     return jsonify({"ok": True, "elapsed": elapsed, **payload})
 
 

@@ -35,8 +35,214 @@ def _ok(payload):
 
 def _err(message):
     """Wrap a failure as the {"ok": False, "error": ...} dict every entry
-    point returns on failure."""
+    point returns on failure.
+
+    Since #200 `message` may be a coded message from msg() as well as a
+    bare string. A string is what this file *forwards* rather than
+    writes -- a sentence out of the solver package, which has no codes
+    until #199 -- and it keeps working untouched.
+
+    `error` is always the English either way. That is what makes a
+    partial rollout invisible: an uncoded message renders its English
+    exactly as it did before, so #199 and #200 can land in either order
+    without the page ever showing a bare number.
+    """
+    if isinstance(message, dict) and "code" in message:
+        return {"ok": False, "error": message["text"], "err": message}
     return {"ok": False, "error": message}
+
+
+# ---------------------------------------------------------------------
+# The messages, as codes (#200)
+#
+# Roberto's ruling of 31 Aug 2026, the same shape #198 proved on
+# eqsheet.py: the engine returns a code and its arguments, the interface
+# puts them into words. This is the 8xx range.
+#
+# The three rules from #198 hold here too. A code is **permanent once
+# published** -- never reused, never renumbered. **Severity is a field**,
+# so a warning and an error about one thing need one code. And **the
+# English stays here**, because it is the generation source for
+# i18n/en.json and the only thing a traceback can quote.
+#
+# What is *not* here: every message this file forwards from the solver
+# package -- `_err(_exc_text(exc))` and friends. Those words are the
+# package's, and they get codes in #199. Mixing them in would mean
+# inventing 8xx numbers for sentences that are about to acquire 1xx-6xx
+# ones.
+# ---------------------------------------------------------------------
+
+# Validation: the circuit description and the analysis
+M_NO_DESC          = 801
+M_DESC_TOO_LONG    = 802
+M_DESC_CHARS       = 803
+M_DESC_TOKEN       = 804
+M_BAD_DOMAIN       = 805
+M_BRACES_FD_ONLY   = 806
+M_AC_NEEDS_OMEGA   = 807
+M_OMEGA_CHARS      = 808
+M_VARS_LIST        = 809
+M_VAR_NAME         = 810
+# Validation: added equations, conditions, unknowns, definitions
+M_BARE_SI_SUFFIX   = 811
+M_CIRCULAR_DEFINE  = 812
+M_TOO_MANY_EXTRA   = 813
+M_EXTRA_CHARS      = 814
+M_TOO_MANY_UNKNOWN = 815
+M_UNKNOWN_NAME     = 816
+# Plotting
+M_TF_NOT_NUMERIC   = 820
+M_SWEEP_RANGE      = 821
+M_NOT_IN_DC        = 822
+M_NEEDS_MISSING    = 823
+M_STILL_DEPENDS    = 824
+# Evaluate, conditions, Solve equations
+M_BAD_CONDITION    = 830
+M_CONDITION_SOLVES = 831
+M_CONDITION_SHAPE  = 832
+M_NOTHING_TO_SOLVE = 833
+# The schematic drawer
+M_NO_DRAWER        = 840
+M_NEED_CIRCUIT     = 841
+# Mini-tools
+M_UNKNOWN_TOOL     = 850
+M_TOOL_NEEDS_1     = 851
+M_TOOL_NEEDS_N     = 852
+M_PF_TWO_VALUES    = 853
+M_PF_NEEDS_NUMBERS = 854
+# SPICE
+M_BAD_DIRECTION    = 860
+# Notes -- severity "note", which is why severity is a field and not a
+# number range: these sit beside errors in the same catalogue and the
+# same renderer.
+M_NORMALISED       = 870
+M_ORDINARY_VARIABLE = 871
+M_DEFINE_SHADOWS   = 872
+M_TR_STEP_ONE      = 873
+M_TR_STEP_MANY     = 874
+M_FD_IMPULSE_ONE   = 875
+M_FD_IMPULSE_MANY  = 876
+M_APPROX_SWITCHED  = 877
+
+CATALOGUE = {
+    M_NO_DESC:       ("error", "Please enter a circuit description."),
+    M_DESC_TOO_LONG: ("error", "Circuit description too long "
+                               "(max %{max} characters)."),
+    M_DESC_CHARS:    ("error", "Circuit description contains characters that "
+                               "aren't used in Symbulator syntax. Allowed: "
+                               "letters, digits, , : . + - * / ( ) ' ^"),
+    M_DESC_TOKEN:    ("error", "Circuit description contains an invalid token."),
+    M_BAD_DOMAIN:    ("error", "Unknown analysis type. Choose DC, AC, FD, or TR."),
+    M_BRACES_FD_ONLY: ("error",
+                       "The `{...}` shorthand is only allowed in FD. It marks "
+                       "a source value as written in the time domain, and FD "
+                       "is the one analysis that reads its sources in the "
+                       "s-domain \u2014 every other analysis already reads "
+                       "them as functions of time. Drop the braces."),
+    M_AC_NEEDS_OMEGA: ("error", "AC analysis needs an angular frequency (omega)."),
+    M_OMEGA_CHARS:   ("error", "Omega contains invalid characters."),
+    M_VARS_LIST:     ("error", "Invalid variables list."),
+    M_VAR_NAME:      ("error", "Invalid variable name: %{name}"),
+    M_BARE_SI_SUFFIX: ("error",
+                       "Added %{label} %{item} uses %{token} as a bare unit "
+                       "suffix, which isn't allowed here (unlike a circuit "
+                       "value field, an equation can't ask which meaning you "
+                       "intend). Write the SI-unit meaning explicitly with an "
+                       "apostrophe \u2014 %{si} \u2014 matching circuit "
+                       "syntax, or the variable meaning with a star "
+                       "\u2014 %{star}."),
+    M_CIRCULAR_DEFINE: ("error", "Circular definition: %{loop}"),
+    M_TOO_MANY_EXTRA: ("error", "Too many added %{label}s (max %{max})."),
+    M_EXTRA_CHARS:   ("error", "Added %{label} contains invalid characters: "
+                               "%{item}"),
+    M_TOO_MANY_UNKNOWN: ("error", "Too many added unknowns (max %{max})."),
+    M_UNKNOWN_NAME:  ("error", "Invalid unknown name: %{name}"),
+    M_TF_NOT_NUMERIC: ("error",
+                       "The transfer function must be numeric apart from s "
+                       "\u2014 it still contains %{strays}. Write H(s) with "
+                       "numbers everywhere else, e.g. 100/(s^2 + 10*s + 100)."),
+    M_SWEEP_RANGE:   ("error", "The sweep range's end must be after its start."),
+    M_NOT_IN_DC:     ("error", "'%{name}' was not found in the DC solution."),
+    M_NEEDS_MISSING: ("error", "'%{name}' needs %{missing}, which was not "
+                               "found in the DC solution."),
+    M_STILL_DEPENDS: ("error",
+                      "'%{name}' still depends on %{strays}, which has no "
+                      "numeric value \u2014 pin it with a condition (e.g. "
+                      "\"%{example}\") before plotting, or sweep it instead."),
+    M_BAD_CONDITION: ("error", "Could not read the condition `%{line}`: "
+                               "%{error}"),
+    M_CONDITION_SOLVES: ("error",
+                         "`%{line}` is an equation to solve rather than a "
+                         "value to substitute, and Evaluate does not solve. "
+                         "Put a single name on the left \u2014 `t = to` "
+                         "\u2014 or use the Solve card."),
+    M_CONDITION_SHAPE: ("error",
+                        "`%{line}` is neither a value to substitute nor a "
+                        "comparison. Write `t = to` to substitute, or "
+                        "`pr1 > 0` to assume."),
+    M_NOTHING_TO_SOLVE: ("error",
+                         "Nothing left to solve for \u2014 every symbol in "
+                         "those equations already has a value. Name an "
+                         "unknown, or use Evaluate to compute a value "
+                         "instead."),
+    M_NO_DRAWER:     ("error", "This build has no schematic drawer. It needs "
+                               "symbulator 0.5.0 or newer."),
+    M_NEED_CIRCUIT:  ("error", "Enter a circuit first."),
+    M_UNKNOWN_TOOL:  ("error", "Unknown tool `%{tool}`."),
+    M_TOOL_NEEDS_1:  ("error", "`%{tool}` needs %{n} value: %{hint}."),
+    M_TOOL_NEEDS_N:  ("error", "`%{tool}` needs %{n} values: %{hint}."),
+    M_PF_TWO_VALUES: ("error", "`pf` needs two values: a voltage and a "
+                               "current, as in `pf(v_1, i_r1)`."),
+    M_PF_NEEDS_NUMBERS: ("error",
+                         "`pf` needs numbers, and `%{arg}` still contains "
+                         "%{unknown}. Solve the circuit in AC first, then "
+                         "refer to its answers by name."),
+    M_BAD_DIRECTION: ("error", "Unknown direction `%{direction}`."),
+    M_NORMALISED:    ("note", "normalised '%{was}' to '%{now}' in %{element}"),
+    M_ORDINARY_VARIABLE: ("note",
+                          "'%{name}' was read as an ordinary variable; "
+                          "SymPy's built-in meaning was ignored."),
+    M_DEFINE_SHADOWS: ("note",
+                       "%{name} is both a definition and one of this "
+                       "circuit's own answers; the definition wins everywhere "
+                       "it appears."),
+    M_TR_STEP_ONE:   ("note", "Source '%{name}' with a value of %{value} is "
+                              "simulated as a step source: %{value}*u(t)."),
+    M_TR_STEP_MANY:  ("note", "Sources %{names} have constant values and are "
+                              "simulated as step sources: %{shown}."),
+    # Singular and plural as two codes, not one with a %{plural} slot:
+    # English glues an "s" on, and no other language has to.
+    M_FD_IMPULSE_ONE: ("note",
+                       "Source %{names} took a constant s-domain value. That "
+                       "is an impulse, not a steady level, so it contributes "
+                       "nothing for t > 0. For a step of %{value} volts (or "
+                       "amps) switched on at t = 0, write %{value}/s."),
+    M_FD_IMPULSE_MANY: ("note",
+                        "Sources %{names} took constant s-domain values. "
+                        "Those are impulses, not steady levels, so they "
+                        "contribute nothing for t > 0. For a step of "
+                        "%{value} volts (or amps) switched on at t = 0, "
+                        "write %{value}/s."),
+    M_APPROX_SWITCHED: ("note",
+                        "A decimal or scientific-notation value (like 0.1 or "
+                        "2e3) was found in the inputs, so the answers can't "
+                        "be exact -- switched \"Rounding\" from exact to "
+                        "approximate."),
+}
+
+
+def msg(code, **args):
+    """One message, as {code, args, severity, text}.
+
+    Same shape as eqsheet.py's, deliberately: the page has one renderer
+    for both, and a second shape would have meant a second one.
+    """
+    severity, template = CATALOGUE[code]
+    text = template
+    for k, v in args.items():
+        text = text.replace("%{" + k + "}", str(v))
+    return {"code": code, "args": {k: str(v) for k, v in args.items()},
+            "severity": severity, "text": text}
 
 
 MAX_DESC_LEN = 2000
@@ -103,13 +309,10 @@ def _bare_si_suffix_error(label, items):
         m = _BARE_SI_HINT.search(it)
         if m:
             tok = m.group(0)
-            return (f"Added {label} {it!r} uses {tok!r} as a bare unit "
-                     f"suffix, which isn't allowed here (unlike a circuit "
-                     f"value field, an equation can't ask which meaning "
-                     f"you intend). Write the SI-unit meaning explicitly "
-                     f"with an apostrophe -- {tok[:-1]}'{tok[-1]} -- "
-                     f"matching circuit syntax, or the variable meaning "
-                     f"with a star -- {tok[:-1]}*{tok[-1]}.")
+            return msg(M_BARE_SI_SUFFIX, label=label, item=repr(it),
+                       token=repr(tok),
+                       si=f"{tok[:-1]}'{tok[-1]}",
+                       star=f"{tok[:-1]}*{tok[-1]}")
     return None
 
 
@@ -119,38 +322,33 @@ VALID_DOMAINS = {"dc", "ac", "fd", "tr"}
 def _validate(desc: str, domain: str, omega: str, variables) -> str | None:
     """Return an error message, or None if the input looks safe and sane."""
     if not desc or not desc.strip():
-        return "Please enter a circuit description."
+        return msg(M_NO_DESC)
     if len(desc) > MAX_DESC_LEN:
-        return f"Circuit description too long (max {MAX_DESC_LEN} characters)."
+        return msg(M_DESC_TOO_LONG, max=MAX_DESC_LEN)
     if not _ALLOWED.match(desc):
-        return ("Circuit description contains characters that aren't used in "
-                "Symbulator syntax. Allowed: letters, digits, , : . + - * / ( ) ' ^")
+        return msg(M_DESC_CHARS)
     if "__" in desc:
-        return "Circuit description contains an invalid token."
+        return msg(M_DESC_TOKEN)
     if domain not in VALID_DOMAINS:
-        return "Unknown analysis type. Choose DC, AC, FD, or TR."
+        return msg(M_BAD_DOMAIN)
     # `{...}` marks a source value as written in time rather than in s.
     # That only means something in FD, which is the one analysis whose
     # sources are read in the s-domain. Anywhere else the braces would
     # reach SymPy and come back as "contains a set", which tells nobody
     # anything.
     if "{" in desc and domain != "fd":
-        return ("The `{...}` shorthand is only allowed in FD. It marks a "
-                "source value as written in the time domain, and FD is the "
-                "one analysis that reads its sources in the s-domain — "
-                "every other analysis already reads them as functions of "
-                "time. Drop the braces.")
+        return msg(M_BRACES_FD_ONLY)
     if domain == "ac":
         if not omega or not omega.strip():
-            return "AC analysis needs an angular frequency (omega)."
+            return msg(M_AC_NEEDS_OMEGA)
         if len(omega) > MAX_OMEGA_LEN or not _ALLOWED.match(omega) or "__" in omega:
-            return "Omega contains invalid characters."
+            return msg(M_OMEGA_CHARS)
     if variables:
         if not isinstance(variables, list) or len(variables) > MAX_VARIABLES:
-            return "Invalid variables list."
+            return msg(M_VARS_LIST)
         for v in variables:
             if not isinstance(v, str) or not _VARNAME.match(v):
-                return f"Invalid variable name: {v!r}"
+                return msg(M_VAR_NAME, name=repr(v))
 
     # Names whose answers would collide with a Python or SymPy name. Refused
     # rather than warned about: this is not a case where the user might have
@@ -253,7 +451,7 @@ def _defines_cycle(table):
             return None
         if state.get(name) == 1:
             loop = " -> ".join(trail[trail.index(name):])
-            return f"Circular definition: {loop}"
+            return msg(M_CIRCULAR_DEFINE, loop=loop)
         state[name] = 1
         for ident in _IDENT_RE.findall(table.get(name, "")):
             if ident in table:
@@ -370,8 +568,7 @@ def define_shadow_notices(table, desc):
         return []
     answers = set(answer_aliases(elements) or {})
     clash = [n for n in table if n in answers]
-    return [f"{n} is both a definition and one of this circuit's own answers; "
-            f"the definition wins everywhere it appears." for n in clash]
+    return [msg(M_DEFINE_SHADOWS, name=n) for n in clash]
 
 
 def _validate_extras(equations, unknowns, conditions) -> str | None:
@@ -386,20 +583,20 @@ def _validate_extras(equations, unknowns, conditions) -> str | None:
         if not items:
             continue
         if len(items) > MAX_EXTRA:
-            return f"Too many added {label}s (max {MAX_EXTRA})."
+            return msg(M_TOO_MANY_EXTRA, label=label, max=MAX_EXTRA)
         for it in items:
             if (not isinstance(it, str) or len(it) > MAX_EXTRA_LEN
                     or not rx.match(it) or "__" in it):
-                return f"Added {label} contains invalid characters: {it!r}"
+                return msg(M_EXTRA_CHARS, label=label, item=repr(it))
         bare_err = _bare_si_suffix_error(label, items)
         if bare_err:
             return bare_err
     if unknowns:
         if len(unknowns) > MAX_EXTRA:
-            return f"Too many added unknowns (max {MAX_EXTRA})."
+            return msg(M_TOO_MANY_UNKNOWN, max=MAX_EXTRA)
         for u in unknowns:
             if not isinstance(u, str) or not _VARNAME.match(u):
-                return f"Invalid unknown name: {u!r}"
+                return msg(M_UNKNOWN_NAME, name=repr(u))
     return None
 
 
@@ -733,9 +930,9 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
                             if expr.has(sp.I):
                                 entry_new = _plain_with_j(expr)
                                 if entry_new != entry:
-                                    notes.append(
-                                        f"normalised '{entry}' to "
-                                        f"'{entry_new}' in {el.name}")
+                                    notes.append(msg(
+                                        M_NORMALISED, was=entry,
+                                        now=entry_new, element=el.name))
                                     entry = entry_new
                                     changed = True
                         except Exception:
@@ -777,8 +974,8 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
                 continue
             canonical = _plain_with_j(expr)
             if canonical != original:
-                notes.append(f"normalised '{original}' to '{canonical}' "
-                             f"in {el.name}")
+                notes.append(msg(M_NORMALISED, was=original,
+                                 now=canonical, element=el.name))
                 el.fields[idx] = canonical
                 changed = True
 
@@ -846,9 +1043,7 @@ def _hijack_notes(elements, reserve_imaginary: bool = True):
                     continue
                 if name not in seen:
                     seen.add(name)
-                    notes.append(
-                        f"'{name}' was read as an ordinary variable; SymPy's "
-                        f"built-in meaning was ignored.")
+                    notes.append(msg(M_ORDINARY_VARIABLE, name=name))
     return notes
 
 
@@ -901,16 +1096,12 @@ def _impulse_notes(elements, domain: str):
         # impulse one analysis over.
         if len(culprits) == 1:
             name, value = culprits[0]
-            return [f"Source '{name}' with a value of {value} is simulated "
-                    f"as a step source: {value}*u(t)."]
+            return [msg(M_TR_STEP_ONE, name=name, value=value)]
         shown = ", ".join(f"'{n}' as {v}*u(t)" for n, v in culprits)
-        return [f"Sources {names} have constant values and are simulated as "
-                f"step sources: {shown}."]
+        return [msg(M_TR_STEP_MANY, names=names, shown=shown)]
 
-    return [f"Source{plural} {names} took a constant s-domain value. That is "
-            f"an impulse, not a steady level, so it contributes nothing for "
-            f"t > 0. For a step of {val} volts (or amps) switched on at "
-            f"t = 0, write {val}/s."]
+    code = M_FD_IMPULSE_MANY if plural else M_FD_IMPULSE_ONE
+    return [msg(code, names=names, value=val)]
 
 
 # A decimal point, or genuine scientific notation (a digit glued
@@ -944,9 +1135,7 @@ def _approx_value_notes(has_approx: bool) -> list:
     changed shape."""
     if not has_approx:
         return []
-    return ["A decimal or scientific-notation value (like 0.1 or 2e3) "
-            "was found in the inputs, so the answers can't be exact -- "
-            "switched \"Rounding\" from exact to approximate."]
+    return [msg(M_APPROX_SWITCHED)]
 
 
 def _exc_text(exc: Exception) -> str:
@@ -2594,10 +2783,7 @@ def bode_tf_ui(expr_str: str, f_min: float, f_max: float, n: int):
         parsed = _parse_with_rearrangers(expand_value_for_ui(expr_str))
         strays = sorted(str(x) for x in parsed.free_symbols if str(x) != "s")
         if strays:
-            return _err(
-                f"The transfer function must be numeric apart from s -- it "
-                f"still contains {', '.join(strays)}. Write H(s) with numbers "
-                f"everywhere else, e.g. 100/(s^2 + 10*s + 100).")
+            return _err(msg(M_TF_NOT_NUMERIC, strays=", ".join(strays)))
         s_syms = [x for x in parsed.free_symbols if str(x) == "s"]
         s_sym = s_syms[0] if s_syms else sp.Symbol("s")
         fn = sp.lambdify(s_sym, parsed, modules=["numpy"])
@@ -2629,7 +2815,7 @@ def sweep_ui(desc: str, key: str, xname: str, x_min: float, x_max: float,
         from symbulator.plotting import PlotError
 
         if x_max <= x_min:
-            return _err("The sweep range's end must be after its start.")
+            return _err(msg(M_SWEEP_RANGE))
         elements = parse_circuit(desc)
         # DC under the hood, so i/j are ordinary names here, as in tr().
         _notes = _hijack_notes(elements, reserve_imaginary=False)
@@ -2650,7 +2836,7 @@ def sweep_ui(desc: str, key: str, xname: str, x_min: float, x_max: float,
         pair = _voltage_drop_nodes(resolved, elements)
         if pair is None:
             if resolved not in got.values:
-                return _err(f"'{resolved}' was not found in the DC solution.")
+                return _err(msg(M_NOT_IN_DC, name=resolved))
             expr = got.values[resolved]
         else:
             # An element's voltage drop: subtract the node voltages it
@@ -2661,8 +2847,7 @@ def sweep_ui(desc: str, key: str, xname: str, x_min: float, x_max: float,
                 if k is None:
                     parts.append(sp.Integer(0))
                 elif k not in got.values:
-                    return _err(f"'{resolved}' needs {k}, which was not "
-                                f"found in the DC solution.")
+                    return _err(msg(M_NEEDS_MISSING, name=resolved, missing=k))
                 else:
                     parts.append(got.values[k])
             expr = sp.simplify(parts[0] - parts[1])
@@ -2670,11 +2855,9 @@ def sweep_ui(desc: str, key: str, xname: str, x_min: float, x_max: float,
         xsyms = [x for x in expr.free_symbols if str(x) == xname]
         strays = sorted(str(x) for x in expr.free_symbols if str(x) != xname)
         if strays:
-            return _err(
-                f"'{resolved}' still depends on {', '.join(strays)}, which "
-                f"has no numeric value -- pin it with a condition (e.g. "
-                f"\"{strays[0]} = 1'k\") before plotting, or sweep it "
-                f"instead.")
+            return _err(msg(M_STILL_DEPENDS, name=resolved,
+                            strays=", ".join(strays),
+                            example=f"{strays[0]} = 1'k"))
         if not xsyms:
             _notes = list(_notes) + [
                 f"'{resolved}' does not depend on '{xname}', so the line is "
@@ -2925,15 +3108,12 @@ def _evaluate_conditions(conditions, values):
         try:
             parsed = _parse_condition(line)
         except Exception as exc:                              # noqa: BLE001
-            return _err(f"Could not read the condition `{line}`: "
-                        f"{_exc_text(exc)}")
+            return _err(msg(M_BAD_CONDITION, line=line,
+                            error=_exc_text(exc)))
         if isinstance(parsed, sp.Equality):
             left = _canonical_time(parsed.lhs)
             if not isinstance(left, sp.Symbol):
-                return _err(
-                    f"`{line}` is an equation to solve rather than a value to "
-                    f"substitute, and Evaluate does not solve. Put a single "
-                    f"name on the left -- `t = to` -- or use the Solve card.")
+                return _err(msg(M_CONDITION_SOLVES, line=line))
             right = _canonical_time(parsed.rhs)
             right = right.subs(_alias_mapping(values, expr=right))
             subs_map[left] = right
@@ -2941,9 +3121,7 @@ def _evaluate_conditions(conditions, values):
         op = getattr(parsed, "rel_op", None)
         name = _ASSUMPTION_FOR.get(op)
         if name is None:
-            return _err(
-                f"`{line}` is neither a value to substitute nor a comparison. "
-                f"Write `t = to` to substitute, or `pr1 > 0` to assume.")
+            return _err(msg(M_CONDITION_SHAPE, line=line))
         side = _canonical_time(parsed.lhs - parsed.rhs)
         side = side.subs(_alias_mapping(values, expr=side))
         assumptions.append(getattr(sp.Q, name)(side))
@@ -3080,10 +3258,9 @@ def schematic_ui(desc: str):
     try:
         from symbulator.schematic import to_svg
     except ImportError:
-        return _err("This build has no schematic drawer. It needs "
-                    "symbulator 0.5.0 or newer.")
+        return _err(msg(M_NO_DRAWER))
     if not (desc or "").strip():
-        return _err("Enter a circuit first.")
+        return _err(msg(M_NEED_CIRCUIT))
     try:
         return _ok({"svg": to_svg(desc)})
     except Exception as exc:
@@ -3157,12 +3334,15 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
 
         spec = MINI_TOOLS.get(tool)
         if spec is None:
-            return _err(f"Unknown tool `{tool}`.")
+            return _err(msg(M_UNKNOWN_TOOL, tool=tool))
         args = [a for a in (args or [])]
         if len(args) < spec["args"]:
-            return _err(f"`{tool}` needs {spec['args']} "
-                        f"value{'s' if spec['args'] > 1 else ''}: "
-                        f"{spec['hint']}.")
+            # Two codes rather than one with a pluralised argument: the
+            # plural rule is the translator's, not this file's, and a
+            # language with three of them needs its own sentence anyway.
+            code = M_TOOL_NEEDS_N if spec["args"] > 1 else M_TOOL_NEEDS_1
+            return _err(msg(code, tool=tool, n=spec["args"],
+                            hint=spec["hint"]))
 
         numbers = []
         for a in args[:spec["args"]]:
@@ -3220,7 +3400,7 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
                         "magnitude": magnitude,
                         "direction": direction.strip()})
 
-        return _err(f"Unknown tool `{tool}`.")
+        return _err(msg(M_UNKNOWN_TOOL, tool=tool))
     except Exception as exc:                                  # noqa: BLE001
         return _err(_exc_text(exc))
 
@@ -3300,8 +3480,7 @@ def _power_factor(expr_str: str, values: dict, subs_map=None,
         return None
     args = _split_two_args(m.group(1))
     if not args:
-        return _err("`pf` needs two values: a voltage and a current, "
-                    "as in `pf(v_1, i_r1)`.")
+        return _err(msg(M_PF_TWO_VALUES))
 
     import sympy as sp
     from symbulator.si_prefix import safe_sympify
@@ -3314,9 +3493,8 @@ def _power_factor(expr_str: str, values: dict, subs_map=None,
         got = sp.simplify(_apply_conditions(got, subs_map, assumptions))
         if got.free_symbols:
             unknown = ", ".join(sorted(str(s) for s in got.free_symbols))
-            return _err(f"`pf` needs numbers, and `{arg.strip()}` still "
-                        f"contains {unknown}. Solve the circuit in AC "
-                        f"first, then refer to its answers by name.")
+            return _err(msg(M_PF_NEEDS_NUMBERS, arg=arg.strip(),
+                            unknown=unknown))
         numbers.append(got)
 
     text = _pf(*numbers)
@@ -3488,10 +3666,7 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
                 free |= eq.free_symbols
             wanted = sorted(free, key=str)
         if not wanted:
-            return _err(
-                "Nothing left to solve for -- every symbol in those "
-                "equations already has a value. Name an unknown, or "
-                "use Evaluate to compute a value instead.")
+            return _err(msg(M_NOTHING_TO_SOLVE))
 
         if real_only:
             # Re-declare the unknowns as real. SymPy then solves over
@@ -3612,13 +3787,13 @@ def spice_ui(direction: str, text: str):
 
         text = (text or "").strip()
         if not text:
-            return _err("Enter a circuit first.")
+            return _err(msg(M_NEED_CIRCUIT))
         if direction == "to_spice":
             out, warnings = to_spice(text)
         elif direction == "from_spice":
             out, warnings = from_spice(text)
         else:
-            return _err(f"Unknown direction `{direction}`.")
+            return _err(msg(M_BAD_DIRECTION, direction=direction))
         return _ok({"output": out, "warnings": warnings})
     except Exception as exc:  # noqa: BLE001
         return _err(_exc_text(exc))
