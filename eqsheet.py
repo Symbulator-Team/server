@@ -48,6 +48,112 @@ from sympy.parsing.sympy_parser import (
 
 TRANSFORMS = standard_transformations + (convert_xor,)
 
+# ---------------------------------------------------------------------
+# The messages, as codes (#198)
+#
+# Roberto's ruling, 31 Aug 2026: the engine returns a code and its
+# arguments, and the interface puts them into words. This is the 9xx
+# range -- the Numerical Solver's own -- and the first of the three
+# items to be built, deliberately: it is the cheapest place to find out
+# whether the scheme is right, because nothing here is published to
+# PyPI and no release train has to run before it can be undone.
+#
+# Three rules that outlive this file:
+#
+#   * **A code is permanent once published.** Never reused, never
+#     renumbered; a retired code stays retired. Same rule as the item
+#     numbers in NEXT.md, for the same reason -- someone quoting "9xx"
+#     in a bug report should mean one thing forever.
+#   * **Severity is a field, not a range.** A warning and an error about
+#     the same thing want one code, not two.
+#   * **The English stays here.** It is the generation source for
+#     i18n/en.json, it is what a traceback or a bug report can quote,
+#     and a second hand-kept copy in a JSON file is the drift the whole
+#     scheme exists to prevent. `%{name}` slots match the argument
+#     names, and are what the page's tv() fills in.
+# ---------------------------------------------------------------------
+
+M_TOO_LONG          = 901
+M_FIX_EQUATIONS     = 902
+M_NONE_SELECTED     = 903
+M_TOO_MANY_VARS     = 904
+M_UNCLASSIFIED      = 905
+M_NO_UNKNOWNS       = 906
+M_COMPILE_FAILED    = 907
+M_BAD_RANGE         = 908
+M_EMPTY_RANGE       = 909
+M_SOLVER_FAILED     = 910
+M_ONE_EQUALS        = 911
+M_UNREADABLE        = 912
+M_SOLVED            = 920
+M_SOLVED_LSQ        = 921
+M_SOLVED_BOUNDED    = 922
+M_NO_CONVERGE       = 923
+M_NO_SOLUTION_BOUND = 924
+
+CATALOGUE = {
+    M_TOO_LONG:       ("error", "that list of equations is too long"),
+    M_FIX_EQUATIONS:  ("error", "fix the list of equations first"),
+    M_NONE_SELECTED:  ("error", "no equations selected"),
+    M_TOO_MANY_VARS:  ("error", "too many variables"),
+    M_UNCLASSIFIED:   ("error", "unclassified variables: %{names}"),
+    M_NO_UNKNOWNS:    ("error", "no unknowns to solve for"),
+    M_COMPILE_FAILED: ("error", "could not compile system: %{error}"),
+    M_BAD_RANGE:      ("error", "bad range for %{name}"),
+    M_EMPTY_RANGE:    ("error", "empty range for %{name} \u2014 "
+                                "'from' must be below 'to'"),
+    M_SOLVER_FAILED:  ("error", "solver failed: %{error}"),
+    M_ONE_EQUALS:     ("error", "each equation needs exactly one '='"),
+    M_UNREADABLE:     ("error", "could not read that equation: %{error}"),
+    # The status line, one sentence apiece. It used to be assembled in
+    # the page from four pieces, three of which were untranslated
+    # English -- which is the concrete thing this item fixes.
+    M_SOLVED:         ("ok",    "solved \u2014 %{nfev} evaluations"),
+    M_SOLVED_LSQ:     ("ok",    "solved (least-squares: %{n_eq} equations, "
+                                "%{n_un} unknowns) \u2014 %{nfev} evaluations"),
+    M_SOLVED_BOUNDED: ("ok",    "solved (restricted) \u2014 %{nfev} evaluations"),
+    M_NO_CONVERGE:    ("error", "did not converge \u2014 try different guesses "
+                                "(%{nfev} evaluations)"),
+    M_NO_SOLUTION_BOUND: ("error",
+                          "no solution found under the restrictions \u2014 "
+                          "loosen them or try different guesses "
+                          "(%{nfev} evaluations)"),
+}
+
+
+def msg(code, **args):
+    """One message, as {code, args, severity, text}.
+
+    `text` is the English, rendered here rather than in the page: it is
+    what a bug report quotes and what tools/i18n.py harvests. The page
+    ignores it unless it meets a code it does not know, which is what
+    keeps an older page working against a newer server.
+    """
+    severity, template = CATALOGUE[code]
+    text = template
+    for k, v in args.items():
+        text = text.replace("%{" + k + "}", str(v))
+    return {"code": code, "args": {k: str(v) for k, v in args.items()},
+            "severity": severity, "text": text}
+
+
+def _fail(code, **args):
+    """A refusal, in the shape every caller of this module expects."""
+    return _refuse(msg(code, **args))
+
+
+def _refuse(m):
+    """The same, for a message a helper has already built.
+
+    `message` is kept beside `msg` deliberately: it is the English, and
+    it is what an older page, a traceback or a bug report can read
+    without knowing the catalogue. The page prefers `msg` and falls back
+    to it, so the two halves of a deploy can never be out of step for
+    longer than the deploy itself.
+    """
+    return {"ok": False, "msg": m, "message": m["text"]}
+
+
 # Generous ceilings, same doctrine as MAX_DESC_LEN in app.py: these
 # endpoints are public, and a runaway input should be refused before it
 # reaches the parser rather than timed out inside it.
@@ -135,15 +241,20 @@ def parse_rules(text, mode):
         if not line:
             continue
         if line.count("=") != 1:
+            m = msg(M_ONE_EQUALS)
             errors.append({"line": lineno, "text": raw.strip(),
-                           "error": "each equation needs exactly one '='"})
+                           "msg": m, "error": m["text"]})
             continue
         lhs_s, rhs_s = line.split("=")
         try:
             lhs, rhs = parse_side(lhs_s, mode), parse_side(rhs_s, mode)
         except Exception as exc:
+            # SymPy's own words ride along as an argument. They stay
+            # English in every language, which is honest: they are the
+            # parser's, not ours, and #198 does not pretend otherwise.
+            m = msg(M_UNREADABLE, error=exc)
             errors.append({"line": lineno, "text": raw.strip(),
-                           "error": str(exc)})
+                           "msg": m, "error": m["text"]})
             continue
         residual = lhs - rhs
         rules.append({
@@ -157,8 +268,7 @@ def parse_rules(text, mode):
 
 def _too_long(data):
     if len(str(data.get("text", ""))) > MAX_TEXT_LEN:
-        return {"ok": False,
-                "message": "that list of equations is too long"}
+        return _fail(M_TOO_LONG)
     return None
 
 
@@ -178,13 +288,13 @@ def api_parse(data):
 def _active_rules(data):
     rules, errors = parse_rules(data.get("text", ""), data.get("mode", "dc"))
     if errors:
-        return None, {"ok": False,
-                      "message": "fix the list of equations first",
-                      "errors": errors}
+        out = _fail(M_FIX_EQUATIONS)
+        out["errors"] = errors
+        return None, out
     selected = set(data.get("selected", []))
     active = [r for r in rules if r["line"] in selected]
     if not active:
-        return None, {"ok": False, "message": "no equations selected"}
+        return None, _fail(M_NONE_SELECTED)
     return active, None
 
 
@@ -193,10 +303,10 @@ def _check_coverage(active, knowns, unknowns):
     for r in active:
         needed |= set(r["vars"])
     if len(needed) > MAX_VARS:
-        return None, "too many variables"
+        return None, msg(M_TOO_MANY_VARS)
     missing = needed - set(knowns) - set(unknowns)
     if missing:
-        return None, "unclassified variables: " + ", ".join(sorted(missing))
+        return None, msg(M_UNCLASSIFIED, names=", ".join(sorted(missing)))
     return needed, None
 
 
@@ -227,10 +337,9 @@ def _parse_restrictions(raw):
                 lo = None if v[0] is None else float(v[0])
                 hi = None if v[1] is None else float(v[1])
             except (TypeError, ValueError):
-                return None, f"bad range for {k}"
+                return None, msg(M_BAD_RANGE, name=k)
             if lo is not None and hi is not None and not lo < hi:
-                return None, (f"empty range for {k} — "
-                              "'from' must be below 'to'")
+                return None, msg(M_EMPTY_RANGE, name=k)
             out[k] = (lo, hi)
     return out, None
 
@@ -280,11 +389,21 @@ def _finite(x):
     return x if -float("inf") < x < float("inf") else None
 
 
-def _fail_message(mode_s):
+def _status(ok, mode_s, nfev, n_eq, n_un):
+    """The whole status line, as one message.
+
+    It used to be four pieces glued together in the page, three of them
+    untranslated English (#209 found them and left them here on
+    purpose). One code, one sentence, one tv() call at the other end.
+    """
+    if not ok:
+        code = M_NO_SOLUTION_BOUND if mode_s == "bounded" else M_NO_CONVERGE
+        return msg(code, nfev=nfev)
+    if mode_s == "least-squares":
+        return msg(M_SOLVED_LSQ, nfev=nfev, n_eq=n_eq, n_un=n_un)
     if mode_s == "bounded":
-        return ("no solution found under the restrictions — "
-                "loosen them or try different guesses")
-    return "did not converge — try different guesses"
+        return msg(M_SOLVED_BOUNDED, nfev=nfev)
+    return msg(M_SOLVED, nfev=nfev)
 
 
 def solve_dc(data, active):
@@ -293,16 +412,16 @@ def solve_dc(data, active):
     knowns = {k: float(v) for k, v in data.get("knowns", {}).items()}
     guesses = {k: float(v) for k, v in data.get("guesses", {}).items()}
     # Per-unknown search restrictions (#131).
-    restrict, msg = _parse_restrictions(data.get("restrict"))
-    if msg:
-        return {"ok": False, "message": msg}
+    restrict, bad = _parse_restrictions(data.get("restrict"))
+    if bad:
+        return _refuse(bad)
 
-    needed, msg = _check_coverage(active, knowns, guesses)
-    if msg:
-        return {"ok": False, "message": msg}
+    needed, bad = _check_coverage(active, knowns, guesses)
+    if bad:
+        return _refuse(bad)
     unknowns = sorted(needed & set(guesses))
     if not unknowns:
-        return {"ok": False, "message": "no unknowns to solve for"}
+        return _fail(M_NO_UNKNOWNS)
 
     syms = [sp.Symbol(_internal_name(u)) for u in unknowns]
     subs = {sp.Symbol(_internal_name(k)): v for k, v in knowns.items()}
@@ -310,7 +429,7 @@ def solve_dc(data, active):
     try:
         fns = [sp.lambdify(syms, res, modules=["numpy"]) for res in residuals]
     except Exception as exc:
-        return {"ok": False, "message": f"could not compile system: {exc}"}
+        return _fail(M_COMPILE_FAILED, error=exc)
 
     def F(x):
         return np.array([f(*x) for f in fns], dtype=float)
@@ -319,15 +438,16 @@ def solve_dc(data, active):
     bounds = _restriction_bounds({i: restrict[u] for i, u in enumerate(unknowns)
                                   if u in restrict}, len(unknowns), np)
     out = _run_solver(F, x0, len(active), len(unknowns), bounds)
-    if isinstance(out, str):
-        return {"ok": False, "message": out}
+    if isinstance(out, dict):
+        return _refuse(out)
     x, ok, nfev, mode_s = out
 
     res_final = F(x)
+    status = _status(bool(ok), mode_s, int(nfev), len(active), len(unknowns))
     return {
         "ok": bool(ok), "mode": mode_s,
         "n_eq": len(active), "n_un": len(unknowns), "nfev": int(nfev),
-        "message": "solved" if ok else _fail_message(mode_s),
+        "msg": status, "message": status["text"],
         "solution": {u: _finite(v) for u, v in zip(unknowns, x)},
         "residuals": [{"rule": r["text"], "value": _finite(v)}
                       for r, v in zip(active, res_final)],
@@ -347,22 +467,22 @@ def solve_ac(data, active):
     unknowns_in = data.get("unknowns", {}) # name -> {domain, re, im}
     knowns = {k: as_c(v) for k, v in knowns_in.items()}
 
-    needed, msg = _check_coverage(active, knowns, unknowns_in)
-    if msg:
-        return {"ok": False, "message": msg}
+    needed, bad = _check_coverage(active, knowns, unknowns_in)
+    if bad:
+        return _refuse(bad)
     unames = sorted(needed & set(unknowns_in))
     if not unames:
-        return {"ok": False, "message": "no unknowns to solve for"}
+        return _fail(M_NO_UNKNOWNS)
 
     # Per-unknown search restrictions (#131). A restriction only means
     # something for a single real scalar, so it applies to Real only /
     # Imag only unknowns and is ignored on a Complex one (the page
     # greys it out there).
-    restrict, msg = _parse_restrictions(
+    restrict, bad = _parse_restrictions(
         {n: s.get("restrict") for n, s in unknowns_in.items()
          if s.get("domain", "complex") in ("real", "imag")})
-    if msg:
-        return {"ok": False, "message": msg}
+    if bad:
+        return _refuse(bad)
 
     # scalar layout: for each unknown, which components are free
     layout = []          # (name, domain, index into x for re, index for im)
@@ -389,7 +509,7 @@ def solve_ac(data, active):
     try:
         fns = [sp.lambdify(syms, res, modules=["numpy"]) for res in residuals]
     except Exception as exc:
-        return {"ok": False, "message": f"could not compile system: {exc}"}
+        return _fail(M_COMPILE_FAILED, error=exc)
 
     def unpack(x):
         vals = []
@@ -407,10 +527,11 @@ def solve_ac(data, active):
     n_eq_real = 2 * len(active)
     bounds = _restriction_bounds(scalar_restr, n_scalar, np)
     out = _run_solver(F, np.array(x0, dtype=float), n_eq_real, n_scalar, bounds)
-    if isinstance(out, str):
-        return {"ok": False, "message": out}
+    if isinstance(out, dict):
+        return _refuse(out)
     x, ok, nfev, mode_s = out
 
+    status = _status(bool(ok), mode_s, int(nfev), n_eq_real, n_scalar)
     zsol = unpack(x)
     res_final = np.array([f(*zsol) for f in fns], dtype=complex)
     solution = {}
@@ -425,7 +546,7 @@ def solve_ac(data, active):
     return {
         "ok": bool(ok), "mode": mode_s,
         "n_eq": n_eq_real, "n_un": n_scalar, "nfev": int(nfev),
-        "message": "solved" if ok else _fail_message(mode_s),
+        "msg": status, "message": status["text"],
         "solution": solution,
         "residuals": [{"rule": r["text"], "value": _finite(abs(v))}
                       for r, v in zip(active, res_final)],
@@ -498,5 +619,7 @@ def _run_solver(F, x0, n_eq, n_un, bounds=None):
         sol = least_squares(F, x0)
         return sol.x, sol.success, sol.nfev, "least-squares"
     except Exception as exc:
-        return f"solver failed: {exc}"
+        # A dict, not a string: the callers tell the two apart by type,
+        # and a message is a dict everywhere else in this file now.
+        return msg(M_SOLVER_FAILED, error=exc)
 

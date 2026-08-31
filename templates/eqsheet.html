@@ -31,7 +31,7 @@
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "9732c55ea8";
+window.SYMB_I18N_V = "35de665371";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -905,6 +905,53 @@ function chop(x, yardstick){
 // Relative on purpose: the page lives at /eqsheet/, and its API lives
 // under it. An absolute '/api/solve' would hit the circuit solver's own
 // route on the main app instead.
+// ---- The engine's messages, put into words (#198) -------------------
+// eqsheet.py returns {code, args, severity, text} instead of a sentence.
+// The words live here, and only here.
+//
+// Each entry is a literal t()/tv() call rather than a lookup built from
+// the code number, because tools/i18n.py harvests the English from the
+// call itself: a table of computed keys would be invisible to it, and
+// `check` refuses a variable key for exactly that reason. Verbose on
+// purpose, and checkable in exchange.
+const EQ_MESSAGES = {
+  901: () => t('js.eq.m901', 'that list of equations is too long'),
+  902: () => t('js.eq.m902', 'fix the list of equations first'),
+  903: () => t('js.eq.m903', 'no equations selected'),
+  904: () => t('js.eq.m904', 'too many variables'),
+  905: a  => tv('js.eq.m905', 'unclassified variables: %{names}', a),
+  906: () => t('js.eq.m906', 'no unknowns to solve for'),
+  907: a  => tv('js.eq.m907', 'could not compile system: %{error}', a),
+  908: a  => tv('js.eq.m908', 'bad range for %{name}', a),
+  909: a  => tv('js.eq.m909',
+                "empty range for %{name} \u2014 'from' must be below 'to'", a),
+  910: a  => tv('js.eq.m910', 'solver failed: %{error}', a),
+  911: () => t('js.eq.m911', "each equation needs exactly one '='"),
+  912: a  => tv('js.eq.m912', 'could not read that equation: %{error}', a),
+  920: a  => tv('js.eq.m920', 'solved \u2014 %{nfev} evaluations', a),
+  921: a  => tv('js.eq.m921',
+                'solved (least-squares: %{n_eq} equations, %{n_un} unknowns) '
+                + '\u2014 %{nfev} evaluations', a),
+  922: a  => tv('js.eq.m922', 'solved (restricted) \u2014 %{nfev} evaluations', a),
+  923: a  => tv('js.eq.m923',
+                'did not converge \u2014 try different guesses '
+                + '(%{nfev} evaluations)', a),
+  924: a  => tv('js.eq.m924',
+                'no solution found under the restrictions \u2014 loosen them '
+                + 'or try different guesses (%{nfev} evaluations)', a),
+};
+
+// A message from the engine, as a sentence in the reader's language.
+// An unknown code means the server is ahead of this page -- a pull that
+// landed between one request and the next. The engine sends its own
+// English in `text` for exactly that window, so the reader still gets a
+// sentence rather than a number.
+function eqMsg(m) {
+  if (!m) return '';
+  const f = m.code && EQ_MESSAGES[m.code];
+  return f ? f(m.args || {}) : (m.text || '');
+}
+
 async function post(url, body){
   const r = await fetch(url,{method:'POST',
     headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
@@ -1190,7 +1237,8 @@ async function doParse(){
   lastSol = {};   // the equations changed under any stored solution
   const d = await post('api/parse', {text: $('rules').value, mode});
   $('perr').textContent = d.errors.map(e=>tv('js.eq.lineError',
-    'line %{n}: %{msg}', {n: e.line, msg: e.error})).join('  ·  ');
+    'line %{n}: %{msg}',
+    {n: e.line, msg: eqMsg(e.msg || {text: e.error})})).join('  ·  ');
   const old = new Set(rules.map(r=>r.line));
   rules = d.rules;
   rules.forEach(r=>{ if(!old.has(r.line)) state.sel.add(r.line); });
@@ -1301,11 +1349,11 @@ async function doSolve(){
   }
   m.textContent=t('js.busy.solvingLower', 'solving…'); m.className='msg';
   const d = await post('api/solve', body);
-  if(!d.solution){ m.textContent=d.message; m.className='msg bad'; return; }
-  m.textContent = d.message
-    + (d.mode==='least-squares' ? ` (least-squares: ${d.n_eq} equations, ${d.n_un} unknowns)` : '')
-    + (d.mode==='bounded' ? ' (restricted)' : '')
-    + ` — ${d.nfev} evaluations`;
+  // One sentence, from one code. It was four pieces glued together
+  // here until #198, three of them English the dictionary never saw.
+  const line = eqMsg(d.msg || {text: d.message});
+  if(!d.solution){ m.textContent=line; m.className='msg bad'; return; }
+  m.textContent = line;
   m.className = 'msg ' + (d.ok?'ok':'bad');
 
   // The yardstick for the noise chop: the largest magnitude in each

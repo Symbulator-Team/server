@@ -630,15 +630,6 @@ NOT_FOR_READERS = {
     # Markup and layout fragments.
     "result-row", "result-math", "result-name", "msg", "msg bad", "msg ok",
     "badge", "lcd-meta", "error",
-    # The Numerical Solver's status line, which is half the engine's
-    # words. Translating these three alone would give "solved
-    # (least-squares: ...)" with an English "solved" in front of a
-    # translated tail -- worse than either end of it. They go when
-    # eqsheet.py's messages become codes, and the whole line renders in
-    # one tv() call. See NEXT.md #198; delete these three then.
-    "(least-squares: ${d.n_eq} equations, ${d.n_un} unknowns)",
-    "(restricted)",
-    "\u2014 ${d.nfev} evaluations",
 }
 
 #: A word a person would read: three or more letters, or one of the short
