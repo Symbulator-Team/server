@@ -16,6 +16,7 @@ s4,3,5
 
 analysis: dc
 note: In this problem, we use short circuits (the s element) for the first time — four of them, one for each current the problem asks about. Find i1, i2, i3 and i4, on the current through line of each short's block.
+image: https://learn.symbulator.com/assets/circuit/hk5d0113.jpg
 rounding: approx
 si: no
 units: yes
@@ -33,6 +34,7 @@ r50,3,0,50
 
 analysis: dc
 note: Find the equivalent resistance as seen by the 100 V source, and the current i. The equivalent resistance comes free here: a source sits between the two nodes, so re is already an answer.
+image: https://learn.symbulator.com/assets/circuit/as2pp0215.jpg
 rounding: exact
 si: no
 units: yes
@@ -48,6 +50,7 @@ ra,b,c,3
 
 analysis: dc
 note: In this problem, we use the Find equivalent analysis (the calculator's er script) for the first time, on a passive circuit. Find the equivalent resistance between nodes 0 and c — the lesson walks this one through step by step.
+image: https://learn.symbulator.com/assets/circuit/b11e0829.jpg
 tool: er
 n1: 0
 n2: c
@@ -64,6 +67,7 @@ r2,2,0,24
 
 analysis: dc
 note: In this problem, we find a Thévenin / Norton equivalent (the calculator's th script) for the first time. Find the equivalent seen from nodes 2 and 0: vth, ino, req and pmax all arrive together.
+image: https://learn.symbulator.com/assets/circuit/rm3pp0904.jpg
 tool: th
 n1: 2
 n2: 0
@@ -80,6 +84,7 @@ r2,2,0,6
 
 analysis: dc
 note: Find the Thévenin equivalent of the shaded network, then the current through RL for values of 2, 10 and 100 ohm. The Evaluate line answers the 2 ohm load; for the other two loads, evaluate vth/(req+10) and vth/(req+100): 0.5 A and 0.059 A.
+image: https://learn.symbulator.com/assets/circuit/b11e0906.jpg
 tool: th
 n1: 2
 n2: 0
@@ -98,6 +103,7 @@ j,2,0,560'm
 
 analysis: dc
 note: Find the Norton equivalent of the circuit left of a-b. Version 9 reports the Norton current in the direction it flows, so the sign differs from the calculator's 0.36.
+image: https://learn.symbulator.com/assets/circuit/rm3e0908.jpg
 tool: th
 n1: 2
 n2: 0
@@ -115,6 +121,7 @@ j,0,n,180'm
 
 analysis: dc
 note: The equivalent from the previous entry, with the 168 ohm load and the 180 mA source connected. Find the current through RL: the rl block reads -0.06 A, that is, 60 mA flowing from 0 to n.
+image: https://learn.symbulator.com/assets/circuit/rm3e0908.jpg
 rounding: 3
 si: no
 units: yes

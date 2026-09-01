@@ -13,6 +13,7 @@ r4,3,0,12
 
 analysis: ac
 note: In this problem, we describe a mutual inductance (the m element) for the first time. Calculate the phasor currents I1 and I2 — aa(ir2) and aa(ir4). The coils are given in jOhm, so they are r elements with imaginary values and the mutual matches. The dotted end of each coupled element is named first.
+image: https://learn.symbulator.com/assets/circuit/as7e1301.png
 omega: omega
 rounding: 4
 si: no
@@ -32,6 +33,7 @@ r4,o,0,10
 
 analysis: ac
 note: Determine the voltage Vo — aa(vo) reads 20.00 at -134.43°. Again the dotted node of each coupled element comes first.
+image: https://learn.symbulator.com/assets/circuit/as7pp1301.png
 omega: omega
 rounding: 4
 si: no
@@ -51,6 +53,7 @@ r4,3,0,5
 
 analysis: ac
 note: Calculate the mesh currents — aa(ir1) and aa(ir4). The node order matches the dots once more.
+image: https://learn.symbulator.com/assets/circuit/as7e1302.png
 omega: omega
 rounding: 4
 si: no
@@ -67,6 +70,7 @@ e2,4,0,vs2
 
 analysis: dc
 note: In this problem, we describe an ideal transformer (the t element) for the first time. Find VTh and ZEq to the right of nodes a and b, entirely symbolically. The transformer refers the source by the turns ratio and the impedance by its square, which is what an ideal one does. Everything here is a name.
+image: https://learn.symbulator.com/assets/circuit/as7f1333.png
 tool: th
 n1: 2
 n2: 0
@@ -84,6 +88,7 @@ ro,3,0,20
 
 analysis: ac
 note: Find the source current I1, the output voltage Vo, and the complex power supplied by the source (the Evaluate line, -se). One turn count is negative because the dots are of opposite polarity; which of the two you negate makes no difference.
+image: https://learn.symbulator.com/assets/circuit/as7e1308.png
 omega: omega
 rounding: 4
 si: no

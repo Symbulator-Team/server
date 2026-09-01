@@ -32,6 +32,7 @@ c,3,0,.4'u
 
 analysis: ac
 note: Find the resonance frequency of the series RLC — solve im(ze) = 0 with w > 0 and real solutions only: 50000 rad/s. For the bandwidth frequencies, solve abs(ze) = sqrt(2)*2 with w<50000 and then w>50000: 49010 and 51010 rad/s.
+image: https://learn.symbulator.com/assets/circuit/as7e1407.png
 omega: w
 rounding: 5
 si: no
@@ -53,6 +54,7 @@ c,1,0,8'u
 
 analysis: ac
 note: Find the resonance frequency of the parallel RLC: 25000 rad/s. The chapter uses im(ie) rather than im(ze) here because the calculator's numerical search could not find so sharp a peak. Version 9 solves symbolically and would manage either, but the equation says something true: at resonance the source's current is in phase with its voltage.
+image: https://learn.symbulator.com/assets/circuit/as7e1408.png
 omega: w
 rounding: 5
 si: no
@@ -75,6 +77,7 @@ r2,2,0,2
 
 analysis: ac
 note: Determine the resonant frequency of the circuit: solve im(v1) = 0 with w > 0 and real solutions only, which gives 2 rad/s.
+image: https://learn.symbulator.com/assets/circuit/as7e1409.png
 omega: w
 rounding: 5
 si: no

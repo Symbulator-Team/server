@@ -104,6 +104,7 @@ rba,nb2,na2,100+24*pi*j
 analysis: ac
 omega: omega
 note: Alexander and Sadiku's Example 12.11, the balanced wye-delta with line impedances (Lesson 9 solves it too), the sources typed the way the book prints them. One AC call: aa(iraa) reads 2.350 at -36.20 degrees, and the Evaluate line's load line voltage 169.94 at 30.81 degrees. The exemplary part is what is absent: no wye-delta transformation, no single-phase equivalent.
+image: https://learn.symbulator.com/assets/circuit/as7e1211.png
 rounding: 4
 si: no
 units: yes
@@ -123,6 +124,7 @@ tool: th
 n1: 2
 n2: 0
 note: From the teaching corpus, after AS7's Figure 13.33 (Lesson 10 has it too): everything in the description is a name. The Thevenin equivalent at the primary derives the referred-source and referred-impedance identities every machines course teaches -- vth = vs2/n and req = z2/n^2. When the answer to a symbolic question is the textbook's own theorem, the simulator has produced knowledge in the form the student is supposed to carry away.
+image: https://learn.symbulator.com/assets/circuit/as7f1333.png
 rounding: exact
 si: no
 units: yes

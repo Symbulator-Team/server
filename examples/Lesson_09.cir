@@ -16,6 +16,7 @@ rc0,cd,0,10+8j
 
 analysis: ac
 note: Calculate the line currents of the three-wire Y-Y system, and the complex power absorbed at the source and at the load; the values are RMS. The centre of both wyes can be node 0 only because the system is balanced. Complex power at the source is -2086.2 - 834.5j VA, and at the load sra0+srb0+src0 = 1390.8 + 1112.6j VA.
+image: https://learn.symbulator.com/assets/circuit/as7e1202.png
 omega: omega
 rounding: 4
 si: no
@@ -42,6 +43,7 @@ rc0,cd,0,24+19j
 
 analysis: ac
 note: Calculate the line voltages, the line currents, and the complex power at the source and at the load; RMS again. Line voltages depend on where you stand: vag-vbg is 207.8 at 60 deg at the generator, 204.6 at 60.03 at the start of the line, 198.7 at 59.71 at its end. Source complex power -1054 - 842.9j VA.
+image: https://learn.symbulator.com/assets/circuit/as7pp1202.png
 omega: omega
 rounding: 4
 si: no
@@ -62,6 +64,7 @@ rc,c,n,-10j
 
 analysis: ac
 note: Find the line currents and the total complex power absorbed by the load and by the source. Unbalanced, so the load's centre needs its own node and its voltage is not zero. Complex power is conserved: sea+seb+sec+sra+srb+src comes to nothing.
+image: https://learn.symbulator.com/assets/circuit/as7e1210.png
 omega: omega
 rounding: 4
 si: no
@@ -83,6 +86,7 @@ rc,c,n,6-8j
 
 analysis: ac
 note: Calculate the line currents and the neutral current — aa(isn) — for the unbalanced Y-load with voltages in the acb sequence. Not RMS this time. The neutral is a short circuit, and it carries a current precisely because the load is unbalanced.
+image: https://learn.symbulator.com/assets/circuit/as7f1223.png
 omega: omega
 rounding: 4
 si: no
@@ -102,6 +106,7 @@ rbc,b,c,8+4j
 
 analysis: ac
 note: Find the phase currents (irab, irbc, irca) and the line currents (the Evaluate line, -iea0, and its two siblings). The line current is root-three times the phase current and lags it by 30 degrees, which the answers show.
+image: https://learn.symbulator.com/assets/circuit/as7e1203.png
 omega: omega
 rounding: 4
 si: no
@@ -125,6 +130,7 @@ rba,nb2,na2,100+24*pi*j
 
 analysis: ac
 note: Find the line current IaA (iraa), the phase voltage VAB (the Evaluate line, vna2-vnb2) and the phase current IAC (irac). The load's three nodes are separate from the source's because of the line resistors.
+image: https://learn.symbulator.com/assets/circuit/as7e1211.png
 omega: omega
 rounding: 4
 si: no
@@ -147,6 +153,7 @@ rca,cd,ad,20-15j
 
 analysis: ac
 note: Find the load's phase currents and the line currents — the currents through the three shorts that act as the lines. A triangle of three voltage sources cannot be solved -- the third adds an unknown but no information -- so the source opposite the ground node is left out. Everything outside the delta is right; the currents inside the generator are not.
+image: https://learn.symbulator.com/assets/circuit/as7e1204.png
 omega: omega
 rounding: 4
 si: no
@@ -168,6 +175,7 @@ rca,cd,ad,8+6j
 
 analysis: ac
 note: Find the line currents, through the three shorts, taking Vab as reference. Unbalanced, so all three differ in magnitude as well as angle.
+image: https://learn.symbulator.com/assets/circuit/as7pp1209.png
 omega: omega
 rounding: 4
 si: no
@@ -189,6 +197,7 @@ rca,cd,ad,10
 
 analysis: ac
 note: Find the line currents and — on the Evaluate line — the real power absorbed by the load: 4840 W. The values are RMS.
+image: https://learn.symbulator.com/assets/circuit/as7pp1210.png
 omega: omega
 rounding: 4
 si: no
@@ -211,6 +220,7 @@ rca,cd,ad,-40j
 
 analysis: ac
 note: Find the generator current Iab, the line current IbB (irlb) and the phase current IBC (irbc). The generator current Iab cannot be had this way: it is a current inside the delta, and the two-source trick gives up exactly that. aa(-(ie0a+ieb0)/3) happens to land on the book's figure — a guess that was checked, not a method.
+image: https://learn.symbulator.com/assets/circuit/as7e1212.png
 omega: omega
 rounding: 4
 si: no
@@ -229,6 +239,7 @@ rc,c,0,40+25j
 
 analysis: ac
 note: Find the line currents, ira, irb and irc. Node 0 here is the centre of the load's wye, not a node of the source at all.
+image: https://learn.symbulator.com/assets/circuit/as7e1205.png
 omega: omega
 rounding: 4
 si: no

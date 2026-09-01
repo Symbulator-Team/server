@@ -205,3 +205,36 @@ nav.scrollHeight - nav.clientHeight   // must be 0
 
 481px is the band to watch: it is the narrowest viewport that still shows
 the *wide* labels. The fix is nearly always the wording, not the CSS.
+
+## `check_example_images.py` — the examples' pictures (#219)
+
+An entry in `examples/*.cir` may carry an `image:` line: a link to a
+picture of its circuit, shown in a card of its own when the entry is
+picked. The pictures are the **tutorial's own figures**, and they live in
+the *docs* tree (`Sym Docum/Documentation/assets/`), served from
+`learn.symbulator.com`. Nothing else joins the two trees, so nothing else
+notices when a figure is renamed or removed on the docs side.
+
+```
+py tools/check_example_images.py           # every link names a real file
+py tools/check_example_images.py --live    # ...and the live site serves it
+```
+
+The reason it exists is that this particular breakage is **invisible**.
+The app hides the picture's card when an image fails to load — deliberately,
+so that an entry without a picture, a dead link and an offline reader all
+look the same: no card, no gap, no broken-image box. That is the right
+behaviour on the page and the worst possible behaviour for a fault, because
+a missing circuit looks exactly like an entry that never had one.
+
+`build_local.py` runs the plain form on every build. It is soft on a
+missing docs tree (that tree is a neighbour, not a dependency of the offline
+build) and hard on a link it can actually check and finds broken.
+
+**`--live` is the one to run before shipping**, and it is slow on purpose.
+An early version fetched all 248 pictures eight at a time and reported 23
+dead links; every one of them served 200 when asked again on its own. It
+now retries, runs three at a time, and distinguishes an HTTP status — which
+it believes — from a transport failure, which it reports as "could not
+reach" rather than as a broken link. A check that cries wolf gets ignored,
+and then it is not a check.
