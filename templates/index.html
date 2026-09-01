@@ -590,11 +590,10 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   /* #219: an entry's own picture, at the foot of the Input File card. No
      heading -- the picture speaks for itself -- and hidden until it has
      actually loaded, so an entry without one, or one whose link fails,
-     reserves no space and shifts nothing. The rule above it separates it
-     from the format reference the way the other blocks in that card are
-     separated, and the scans carry paper-white backgrounds, so the picture
-     sits on a white mat in both themes rather than glaring out of the dark
-     one. */
+     reserves no space and shifts nothing. The rule above it sets it apart
+     from the entry picker and its note, and the scans carry paper-white
+     backgrounds, so the picture sits on a white mat in both themes rather
+     than glaring out of the dark one. */
   #entryImageBox {
     margin-top: .9rem; padding-top: .9rem; border-top: 1px solid var(--line-soft);
   }
@@ -1208,37 +1207,6 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
       <button type="button" id="newFileBtn" class="uploadlbl" data-i18n="create-new.5477">Create new</button>
     </div>
 
-    <!-- The built-in examples are a set of input files now, not one file,
-         so this opens a list of them rather than loading anything. A
-         <details> because it wants no JavaScript to open and close, and the
-         keyboard reaches it the same way it reaches every other disclosure
-         on the page. It stays visible at all times: it is the way back to
-         the set once a reader has opened one of them.
-
-         On its own line rather than in the row above, so its summary starts
-         at the left margin like every other collapsible header here. -->
-    <div style="margin-top:.9rem">
-      <details class="examples-menu" id="examplesMenu">
-        <summary class="linkish" id="openExamplesBtn" data-i18n="built-in-examples.d748">Built-in Examples</summary>
-        <div class="examples-panel">
-          <p class="examples-panel-head" data-i18n="choose-an-input-file.1d20">Choose an input file</p>
-          <ul id="examplesList"></ul>
-        </div>
-      </details>
-    </div>
-
-    <span class="examples" id="entriesRow" style="display:block;margin-top:.9rem">
-      <span id="pickerLabel" style="margin-right:.8rem" data-i18n="some-examples-you-can.c120">Some examples you can try: </span>
-      <select id="examples">
-        <option value="" data-i18n="loading.5064">— loading… —</option>
-      </select>
-      <!-- Acting on the selected entry belongs next to the list of entries,
-           not down with the save links. Both stay hidden unless an entry of
-           a writable file is selected: the examples cannot be edited. -->
-      <button type="button" id="renameEntryBtn" class="linkish" hidden data-i18n="rename.d3f4">Rename</button>
-      <button type="button" id="deleteEntryBtn" class="linkish" hidden data-i18n="delete.f6fd">Delete</button>
-    </span>
-
     <details id="fileFormatBox" style="margin-top:.9rem">
       <summary data-i18n="about-input-file-cir.5344">About input file (.cir) format</summary>
       <p style="font-size:.9rem;color:var(--muted);margin-top:.5rem" data-i18n="a-plain-text-input.ab74">
@@ -1333,11 +1301,42 @@ units: yes</pre>
       </p>
     </details>
 
+    <!-- The built-in examples are a set of input files now, not one file,
+         so this opens a list of them rather than loading anything. A
+         <details> because it wants no JavaScript to open and close, and the
+         keyboard reaches it the same way it reaches every other disclosure
+         on the page. It stays visible at all times: it is the way back to
+         the set once a reader has opened one of them.
+
+         On its own line rather than in the row above, so its summary starts
+         at the left margin like every other collapsible header here. -->
+    <div style="margin-top:.9rem">
+      <details class="examples-menu" id="examplesMenu">
+        <summary class="linkish" id="openExamplesBtn" data-i18n="built-in-examples.d748">Built-in Examples</summary>
+        <div class="examples-panel">
+          <p class="examples-panel-head" data-i18n="choose-an-input-file.1d20">Choose an input file</p>
+          <ul id="examplesList"></ul>
+        </div>
+      </details>
+    </div>
+
+    <span class="examples" id="entriesRow" style="display:block;margin-top:.9rem">
+      <span id="pickerLabel" style="margin-right:.8rem" data-i18n="some-examples-you-can.c120">Some examples you can try: </span>
+      <select id="examples">
+        <option value="" data-i18n="loading.5064">— loading… —</option>
+      </select>
+      <!-- Acting on the selected entry belongs next to the list of entries,
+           not down with the save links. Both stay hidden unless an entry of
+           a writable file is selected: the examples cannot be edited. -->
+      <button type="button" id="renameEntryBtn" class="linkish" hidden data-i18n="rename.d3f4">Rename</button>
+      <button type="button" id="deleteEntryBtn" class="linkish" hidden data-i18n="delete.f6fd">Delete</button>
+    </span>
+
     <!-- #219: a picture of this entry's circuit, when the entry names one
-         with its `image:` field. It sits at the foot of this card, below
-         the format reference, and carries no heading: the picture speaks
-         for itself, and a heading would leave a labelled hole on every
-         entry that has no image.
+         with its `image:` field. It sits at the foot of this card, under
+         the entry picker and its note, and carries no heading: the picture
+         speaks for itself, and a heading would leave a labelled hole on
+         every entry that has no image.
 
          Hidden until the image has actually loaded, and hidden again if it
          fails, so an entry with no picture, a dead link, an unreachable
@@ -2374,7 +2373,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-01 09:41 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-01 12:03 UTC</span>
 </footer>
 
 <script>
