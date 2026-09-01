@@ -587,13 +587,17 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
     padding: 1.4rem 1.5rem; margin: 0 0 1.3rem;
     box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 3px 10px rgba(16,24,40,.05);
   }
-  /* #219: the card that holds an entry's own picture. It has no heading --
-     the picture is the whole of it -- so it is hidden until the picture has
-     actually loaded: an entry without an image, or one whose link fails,
-     reserves no space and shifts nothing. The scans carry paper-white
-     backgrounds, so they sit on a white mat in both themes rather than
-     glaring out of the dark one. */
-  #imageCard { padding: .9rem; }
+  /* #219: an entry's own picture, at the foot of the Input File card. No
+     heading -- the picture speaks for itself -- and hidden until it has
+     actually loaded, so an entry without one, or one whose link fails,
+     reserves no space and shifts nothing. The rule above it separates it
+     from the format reference the way the other blocks in that card are
+     separated, and the scans carry paper-white backgrounds, so the picture
+     sits on a white mat in both themes rather than glaring out of the dark
+     one. */
+  #entryImageBox {
+    margin-top: .9rem; padding-top: .9rem; border-top: 1px solid var(--line-soft);
+  }
   #entryImage {
     display: block; width: 100%; height: auto; max-height: 60vh;
     object-fit: contain; border-radius: 8px;
@@ -1328,23 +1332,27 @@ units: yes</pre>
         and is available whenever that file has at least one entry in it.
       </p>
     </details>
-    </details>
-  </div>
 
-  <!-- #219: a picture of this entry's circuit, when the entry names one
-       with its `image:` field. No heading, by design: the picture speaks
-       for itself, and a heading would leave a labelled hole on every entry
-       that has no image. Starts hidden and is revealed only once the image
-       has loaded, so a dead link, an unreachable host or an offline reader
-       gets silence instead of a broken-image box. -->
-  <div class="card" id="imageCard" hidden>
-    <!-- No loading="lazy": the card starts hidden, and a browser does not
-         fetch a lazy image that is not being displayed, so the load event
-         that reveals the card would never fire and the picture would never
-         appear. Nothing is lost -- there is only ever one of these on the
-         page, and it is fetched only when an entry that has one is picked. -->
-    <img id="entryImage" alt="Picture of this entry's circuit"
-         decoding="async" referrerpolicy="no-referrer" data-i18n-alt="picture-of-this-entry.d4e4">
+    <!-- #219: a picture of this entry's circuit, when the entry names one
+         with its `image:` field. It sits at the foot of this card, below
+         the format reference, and carries no heading: the picture speaks
+         for itself, and a heading would leave a labelled hole on every
+         entry that has no image.
+
+         Hidden until the image has actually loaded, and hidden again if it
+         fails, so an entry with no picture, a dead link, an unreachable
+         host and an offline reader all produce the same thing -- nothing
+         at all, and no gap where something might have been. -->
+    <div id="entryImageBox" hidden>
+      <!-- No loading="lazy": this starts hidden, and a browser does not
+           fetch a lazy image that is not being displayed, so the load
+           event that reveals it would never fire and the picture would
+           never appear. Nothing is lost -- there is only ever one of these
+           on the page, fetched only when an entry that has one is picked. -->
+      <img id="entryImage" alt="Picture of this entry's circuit"
+           decoding="async" referrerpolicy="no-referrer" data-i18n-alt="picture-of-this-entry.d4e4">
+    </div>
+    </details>
   </div>
 
   <div class="card" id="inputsCard">
@@ -2366,7 +2374,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-01 08:52 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-01 09:41 UTC</span>
 </footer>
 
 <script>
@@ -3284,20 +3292,21 @@ function populatePicker(circuits, label, placeholder) {
   }
 }
 
-// #219: the entry's own picture, from its `image:` field. The card carries
-// no heading, so there is nothing to show until the picture itself is on
-// screen: the card is revealed by the image's own load event and hidden
-// again by its error event. That way an entry with no image, a link that
-// 404s, and an offline reader whose service worker answers 504 all produce
-// exactly the same thing -- no card, no gap, no broken-image box.
+// #219: the entry's own picture, from its `image:` field, shown at the foot
+// of the Input File card. It carries no heading, so there is nothing to show
+// until the picture itself is on screen: it is revealed by the image's own
+// load event and hidden again by its error event. That way an entry with no
+// image, a link that 404s, and an offline reader whose service worker
+// answers 504 all produce exactly the same thing -- nothing at all, and no
+// gap where something might have been.
 //
 // A `.cir` file is reader-supplied content, so the value is restricted to
 // the schemes an image can actually use. `javascript:` never loads in an
 // <img> in any current browser, but refusing it here means the question
 // does not have to be re-answered every time this value finds a new home.
 function showEntryImage(src) {
-  const card = $('imageCard'), img = $('entryImage');
-  card.hidden = true;
+  const box = $('entryImageBox'), img = $('entryImage');
+  box.hidden = true;
   src = (src || '').trim();
   // A relative path carries no scheme and must stay allowed: it is how an
   // image bundled beside the app is named. Anything that does carry one is
@@ -3454,8 +3463,14 @@ function autoGrowDesc() {
 // #219: the picture reveals its own card, and takes it away again if it
 // cannot be fetched. Registered once, here, rather than per load, so a
 // picture that is already in the browser cache still fires them.
-$('entryImage').addEventListener('load',  () => { $('imageCard').hidden = false; });
-$('entryImage').addEventListener('error', () => { $('imageCard').hidden = true; });
+$('entryImage').addEventListener('load',  () => {
+  $('entryImageBox').hidden = false;
+  // The picture lives inside the Input File panel, which starts folded --
+  // so a picture that loaded into a closed box would never be seen. Same
+  // reasoning as showNote()'s own line below.
+  $('fileBox').open = true;
+});
+$('entryImage').addEventListener('error', () => { $('entryImageBox').hidden = true; });
 $('desc').addEventListener('input', autoGrowDesc);
 autoGrowDesc();
 
