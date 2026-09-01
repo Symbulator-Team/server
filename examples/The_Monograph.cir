@@ -28,8 +28,8 @@ evaluate: v4/v5
 
 [One of each: the 2013 showcase]
 
-es,e,0,vs
-js,0,d,is
+es,e,0,es
+js,0,d,js
 r1,e,m,10
 r2,a,e,20
 r3,m,0,30
@@ -37,21 +37,22 @@ r4,b,m,40
 r5,n,m,50
 r6,c,d,60
 r7,n,d,70
-jd1,a,b,0.2*v_r7
-ed2,c,b,0.1*i_r5
-jd3,n,c,2*i_r1
-ed4,0,n,0.7*v_r6
+jd1,a,b,0.2vr7
+ed2,c,b,0.1ir5
+jd3,n,c,2ir1
+ed4,0,n,0.7vr6
 
 analysis: dc
-note: Composed in 2013 to show off: one dependent source of each species, woven through seven resistors. Find positive values of Vs and Is such that the VCCS delivers 80 W and the CCVS dissipates 0 W. The two power constraints are quadratic, so four solutions exist; the conditions pick the one meant: Vs = 17.614 V and Is = 0.39727 A. And ir5 comes out exactly 0 -- the constraint drove its own controlling current to zero, which is how the CCVS dissipates nothing.
-unknowns: vs, is
-equations: p_jd1 = -80
-equations: p_ed2 = 0
-conditions: is > 0
-conditions: vs > 0
-rounding: 5
+note: Composed in 2013 to show off: one dependent source of each species, woven through seven resistors. Find positive values of Es and Js such that the VCCS delivers 80 W and the CCVS dissipates 0 W. The two power constraints are quadratic, so four solutions exist; the conditions pick the one meant: Es = 17.61 V and Js = 0.3973 A. And ir5 comes out exactly 0 -- the constraint drove its own controlling current to zero, which is how the CCVS dissipates nothing.
+unknowns: es, js
+equations: pjd1 = -80
+equations: ped2 = 0
+conditions: es > 0
+conditions: js > 0
+rounding: 4
 si: no
 units: yes
+show_equations: yes
 
 
 [Prof. Boulet's switching transient (DC, t < 0)]

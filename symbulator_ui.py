@@ -1282,6 +1282,65 @@ def _natural_key(name: str):
             for part in re.split(r"(\d+)", name)]
 
 
+# What an element's *value* is measured in -- the unit an Expert Mode
+# unknown inherits when it stands for one (see `_value_units`).
+_VALUE_UNITS = {"r": "ohm", "l": "H", "c": "F", "e": "V", "j": "A",
+                "m": "H"}
+
+# Identifiers inside a value that carry no dimension of their own, so a
+# value built from the unknown and these alone still measures whatever
+# the element measures: the unit step and the impulse, their argument,
+# the Laplace variable and pi. `a*u(t)` is a volt-valued step source;
+# `gm*v_rg` is not a current -- it is a transconductance times a
+# voltage, and that second dimensional name is what says so.
+#
+# Deliberately short. Every name added here is a name that can no longer
+# block a wrong unit, so a symbol only belongs in it when it is
+# genuinely dimensionless in every value it can appear in.
+_DIMENSIONLESS = frozenset({"t", "u", "s", "pi",
+                            "diracdelta", "heaviside"})
+
+_VALUE_IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def _norm_varname(name: str) -> str:
+    """The solver's spelling-equivalence key (`engine._norm_name`):
+    `i_r1`, `ir1` and `IR1` are one name to it."""
+    return (name or "").replace("_", "").lower()
+
+
+def _value_units(elements) -> dict:
+    """Folded symbol name -> the unit it is measured in, for every free
+    symbol that *is* an element's value.
+
+    Expert Mode's unknowns are ordinary free symbols -- `vs` in
+    `es,e,0,vs`, `a` in `e,1,0,a*u(t)`, `r2` in `r2,1,0,r2` -- so there
+    is no prefix on the answer key to read a unit from, which is why
+    they were the one part of the Results with no units on them. The
+    circuit says what they measure: a voltage source's value is volts
+    whatever the reader called it.
+
+    The unknown has to be the *whole* of the value, up to things that
+    carry no dimension. `a*u(t)` is still volts; `gm*v_rg` is not amps,
+    and the presence of a second dimensional name is what says so. A
+    symbol that is the value of two elements of different kinds gets no
+    unit either -- there is no answer that is right for both."""
+    out: dict = {}
+    for el in elements:
+        unit = _VALUE_UNITS.get(el.kind)
+        raw = (getattr(el, "value", None) or "").replace("'", "")
+        if not unit or not raw.strip():
+            continue
+        names = [_norm_varname(t) for t in _VALUE_IDENT.findall(raw)]
+        for name in set(names):
+            if name in _DIMENSIONLESS:
+                continue
+            if any(o != name and o not in _DIMENSIONLESS for o in names):
+                continue
+            out[name] = unit if out.get(name, unit) == unit else ""
+    return {k: v for k, v in out.items() if v}
+
+
 _KIND_LABEL = {
     "r": "resistor", "l": "inductor", "c": "capacitor",
     "e": "voltage source", "j": "current source", "o": "op-amp",
@@ -1353,7 +1412,8 @@ _PORT_LABELS = {
 }
 
 _UNIT_LATEX = {"ohm": r"\Omega", "V": r"\mathrm{V}", "A": r"\mathrm{A}",
-               "W": r"\mathrm{W}", "VA": r"\mathrm{VA}", "S": r"\mathrm{S}"}
+               "W": r"\mathrm{W}", "VA": r"\mathrm{VA}", "S": r"\mathrm{S}",
+               "H": r"\mathrm{H}", "F": r"\mathrm{F}"}
 _UNIT_PLAIN = {"ohm": "\u03a9"}   # plain text is UTF-8, so use the real symbol
 
 
@@ -2245,13 +2305,24 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                                           "items": items})
 
             # ---- Safety net: anything solved but not claimed above ----
+            # This is where Expert Mode's own unknowns come out, and they
+            # used to come out bare: `v_r1` has a prefix to read a unit
+            # from, but `vs` -- the unknown standing for a source's value
+            # -- has none, so the whole Expert Mode block was the one
+            # place in the Results that ignored "Show units" (Roberto,
+            # 1 Sep 2026). `_value_units` reads the unit off the circuit
+            # instead of off the name; the prefix rule stays for the
+            # underscored keys it was written for.
             _EXTRA_UNITS = {"v": "V", "i": "A", "p": "W", "ap": "W",
                             "s": "VA", "z": "ohm", "r": "ohm"}
+            by_value = _value_units(elements)
             extras = []
             for key in sorted(values.keys()):
                 if key not in used:
                     prefix = key.split("_", 1)[0] if "_" in key else ""
-                    plain, latex = fmt(values[key], _EXTRA_UNITS.get(prefix, ""))
+                    unit = (_EXTRA_UNITS.get(prefix, "")
+                            or by_value.get(_norm_varname(key), ""))
+                    plain, latex = fmt(values[key], unit)
                     extras.append({"name": key, "plain": plain, "latex": latex})
 
             # ---- Flat name->expression map (for the evaluator + download).
