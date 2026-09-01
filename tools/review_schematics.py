@@ -8,6 +8,9 @@ call wrong:
 
   * an exception while drawing;
   * two labels overlapping (estimated from text metrics);
+  * a label touching a symbol's ink or a wire -- the canvas records
+    where each body actually draws (`_Canvas.ink`), so this is
+    measured against the drawing rather than guessed at;
   * a wire crossing an element body, or entering an op-amp triangle
     anywhere but its three pins -- measured by instrumenting the
     canvas, not by parsing the SVG back;
@@ -40,9 +43,18 @@ import traceback
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 SERVER = os.path.dirname(TOOLS)
-SOLVER = os.path.join(os.path.dirname(os.path.dirname(SERVER)), "solver")
+# repos/solver, the sibling of repos/server -- one dirname, not two.
+# It was two until #212. That pointed at Symbulator/solver, a path that
+# has never existed, so the harness quietly reviewed whatever pip had
+# installed and could not see an edit to schematic.py at all -- the
+# opposite of what its docstring promised. It says so now rather than
+# falling back in silence.
+SOLVER = os.path.join(os.path.dirname(SERVER), "solver")
 if os.path.isdir(os.path.join(SOLVER, "symbulator")):
     sys.path.insert(0, SOLVER)
+else:
+    print("warning: no working tree at %s; reviewing the installed "
+          "package instead" % SOLVER, file=sys.stderr)
 sys.path.insert(0, SERVER)
 
 from symbulator.schematic import to_svg          # noqa: E402
@@ -104,33 +116,93 @@ def _patched_flush(self):
                         continue
                     bad += 1
     ANALYSIS["bad"] = bad
+    # Kept for the clearance check: _flush_wires merges and empties the
+    # list, so the harness has to take its copy here.
+    ANALYSIS["wires"] = list(self.wires)
+    ANALYSIS["inks"] = list(self.inks)
     _orig_flush(self)
 
 
 sch._Canvas._flush_wires = _patched_flush
 
-# --- label-overlap estimation ---------------------------------------
+# --- label geometry --------------------------------------------------
+# A label is one <text> holding one <tspan> per run, because an element
+# name is set as R with a subscript (#212). The width is the sum of the
+# runs, the subscript's characters counted at their own size, and the
+# box reaches SUB_DROP lower when there is one.
 TEXT_RE = re.compile(
-    r'<text[^>]*x="([-\d.]+)" y="([-\d.]+)" text-anchor="(\w+)">([^<]*)</text>')
+    r'<text[^>]*x="([-\d.]+)" y="([-\d.]+)" text-anchor="(\w+)">(.*?)</text>')
+TSPAN_RE = re.compile(r'<tspan(?P<attrs>[^>]*)>(?P<txt>[^<]*)</tspan>')
 VIEWBOX_RE = re.compile(r'viewBox="([-\d.]+) ([-\d.]+) ([-\d.]+) ([-\d.]+)"')
 CHAR_W = 7.3   # rough advance width for the 13px UI font
-TEXT_H = 13.0
+# Ink extents come from schematic.py, which measured them rather than
+# assuming glyphs sit on the baseline -- the assumption that let a value
+# like `-4j` and a node called `ag` hang into a symbol unnoticed.
+TEXT_H = sch.LABEL_ASCENT
+SUB_W = CHAR_W * sch.SUB_SCALE
+SUB_DROP = sch.SUB_DY
+
+
+def _runs(inner):
+    """[(text, is_subscript)] for one <text>'s contents."""
+    out = [(m.group("txt"), 'class="sub"' in m.group("attrs"))
+           for m in TSPAN_RE.finditer(inner)]
+    return out or ([(inner, False)] if "<" not in inner else [])
 
 
 def text_boxes(svg):
     boxes = []
     for m in TEXT_RE.finditer(svg):
-        x, y, anchor, s = (float(m.group(1)), float(m.group(2)),
-                           m.group(3), m.group(4))
-        w = len(s) * CHAR_W
+        x, y, anchor = float(m.group(1)), float(m.group(2)), m.group(3)
+        runs = _runs(m.group(4))
+        w = sum(len(t) * (SUB_W if sub else CHAR_W) for t, sub in runs)
+        s = "".join(t for t, _ in runs)
         if anchor == "middle":
             x0 = x - w / 2
         elif anchor == "end":
             x0 = x - w
         else:
             x0 = x
-        boxes.append((x0, y - TEXT_H, x0 + w, y + 2, s))
+        low = y + (SUB_DROP + sch.CAP_DESCENT
+                   if any(sub for _, sub in runs) else sch.LABEL_DESCENT)
+        boxes.append((x0, y - TEXT_H, x0 + w, low, s))
     return boxes
+
+
+# How deep two rectangles may overlap before it counts. Widths here are
+# still estimated from a character count, so a fraction of a pixel is
+# noise -- but the *heights* are schematic.py's measured ink extents, so
+# this no longer has the blind spot that hid the descender bug.
+#
+# It asks "do they overlap?", not "are they GAP apart?".
+# tools/pixel_clearance.py asks the second question, of the real pixels,
+# and is the one to run after anything that moves a label.
+TOUCH = 1.0
+
+
+def _overlaps(a, b, tol):
+    return (min(a[2], b[2]) - max(a[0], b[0]) > tol
+            and min(a[3], b[3]) - max(a[1], b[1]) > tol)
+
+
+def clearance_findings(svg, inks, wires):
+    """Labels that land on a symbol's ink, or on a wire."""
+    out = []
+    for box in text_boxes(svg):
+        if not box[4].strip():
+            continue
+        for ix0, iy0, ix1, iy1 in inks:
+            if _overlaps(box, (ix0, iy0, ix1, iy1), TOUCH):
+                out.append("label %r on a symbol" % box[4])
+                break
+        else:
+            for x1, y1, x2, y2 in wires:
+                seg = (min(x1, x2) - 1, min(y1, y2) - 1,
+                       max(x1, x2) + 1, max(y1, y2) + 1)
+                if _overlaps(box, seg, TOUCH):
+                    out.append("label %r on a wire" % box[4])
+                    break
+    return out
 
 
 def overlap_count(svg):
@@ -200,7 +272,12 @@ def main():
                 w, h = float(m.group(3)), float(m.group(4))
                 novl, pairs = overlap_count(svg)
                 nbad = ANALYSIS["bad"]
+                touches = clearance_findings(svg, ANALYSIS["inks"],
+                                             ANALYSIS["wires"])
                 nhops = svg.count("A5 5 0 0")
+                if touches:
+                    issues.append("%d label clearances: %s" % (
+                        len(touches), "; ".join(touches[:6])))
                 if novl:
                     issues.append("%d label overlaps: %s" % (
                         novl, "; ".join("%r/%r" % p for p in pairs[:6])))
@@ -212,7 +289,8 @@ def main():
                     issues.append("very wide: %.0f px" % w)
                 if h > 900:
                     issues.append("very tall: %.0f px" % h)
-                score = (novl * 10 + nbad * 40 + max(nhops - 3, 0) * 3
+                score = (novl * 10 + nbad * 40 + len(touches) * 8
+                         + max(nhops - 3, 0) * 3
                          + (w > 1600) * 5 + (h > 900) * 5)
             else:
                 score = 1000

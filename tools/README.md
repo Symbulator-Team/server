@@ -14,9 +14,82 @@ output folder lists findings worst-first.
 
 A clean run ends `failed=0 with_issues=0` — the state the Aug 2026
 schematic rework left all 322 tutorial circuits in, and the bar any
-schematic change should keep. It prefers a sibling `repos/solver`
-checkout over the installed package, so it reviews the working tree.
-Run it after anything that touches `schematic.py`.
+schematic change should keep. Run it after anything that touches
+`schematic.py`.
+
+Since #212 it also checks that **no label touches a symbol or a wire**.
+`schematic.py`'s canvas records where each body puts ink (`_Canvas.ink`,
+deliberately narrower than the `obstacle` a *wire* has to clear — a
+value label sits just above its own body by design), and the harness
+compares every label box against it.
+
+That check is an *estimate*: text metrics are guessed from a character
+count, and the ink boxes come from the path geometry. It has a blind
+spot it cannot close — the stroke. `pixel_clearance.py` below is what
+closes it.
+
+**It reviews the working tree**, preferring a sibling `repos/solver`
+checkout over the installed package. That sentence was in this file
+before #212 and was not true: the path had one `os.path.dirname` too
+many and pointed at `Symbulator/solver`, which has never existed, so
+the harness silently reviewed whatever `pip` had installed and could
+not see an edit to `schematic.py` at all. It says so on stderr now if
+the checkout is ever missing, rather than falling back in silence.
+
+## `pixel_clearance.py` — the same question, asked of the pixels
+
+`review_schematics.py` measures label clearance from geometry.
+`pixel_clearance.py` measures it from the rendered picture: headless
+Chrome draws each schematic with the labels forced to pure red and
+every stroke to pure blue, and the blue mask is grown a ring at a time
+until it meets the red one.
+
+    py pixel_clearance.py                  # a five-drawing sample
+    py pixel_clearance.py --all            # every entry of every book
+    py pixel_clearance.py --all --min 3    # non-zero exit below 3px
+
+It exists because geometry got it wrong in a way geometry could not
+see. `stroke-linejoin="miter"` runs a zigzag's peak **2.2px past its
+own vertex**, so `REACH["r"]` — the path's 9px amplitude — understated
+the resistor's ink by a quarter, and labels the fast harness called
+3px clear were 1px clear on screen, which reads as touching. Every
+`REACH` entry is an ink figure now, half a stroke wider than its path
+and the resistor wider still, and `GAP` is 4px.
+
+It has earned its keep twice. The mitre above was the first. The second
+was **descenders**: labels were placed so their *baseline* sat GAP above
+a symbol, and a baseline is not an edge -- `-4j`, `1/gx` and the node
+names `ag`/`bg`/`cg` that the three-phase chapters use all hang below
+it, which left 21 of the 330 example drawings with 1-2px of air. The
+font's extents are measured now (`LABEL_ASCENT`, `LABEL_DESCENT`,
+`CAP_DESCENT` in `schematic.py`; ascent 9.75, descent 3.12, and
+capitals still drop 1.25 for Q's tail) and every placement is stated as
+ink-clears-ink.
+
+**Run it over `--all`, not a sample.** The eight hand-picked drawings
+that proved the mitre fix were all clean while 21 others were not.
+
+Three traps, all paid for once:
+
+* **Read a pixel's ink from the channel it removes from white** — red
+  ink takes the blue channel down, blue ink takes the red channel down.
+  Classifying by "are the R and B values close?" reads a faint
+  antialiased red (255,243,243) as carrying both inks, which made the
+  first version report every drawing as a collision.
+* **Prove it can fail.** Forcing `schematic.GAP` to −14 must make it
+  report; a clearance checker that cannot be made to complain is
+  measuring nothing.
+* **Say which label.** A number per drawing tells you something is
+  wrong and nothing about what; naming the nearest label turned the
+  descender hunt from a guess into a five-minute diagnosis. It also
+  reconfigures stdout to UTF-8, having once died printing a `µ` after
+  a thirty-five minute run.
+
+Needs Chrome, numpy and Pillow — none of which the package depends on,
+which is why this is separate from the fast harness. About a second per
+drawing, so `--all` is a twenty-minute run. Use `review_schematics.py`
+routinely and this after anything that changes a symbol's shape, its
+stroke width, or where a label sits.
 
 ## `verify_lesson.py` — the examples, checked against the book
 
@@ -52,3 +125,83 @@ Two categories in the output are not the same thing:
 
 A full sweep takes roughly half an hour. Run it after anything that touches
 value parsing, formatting, or the solver.
+
+## `i18n.py` — the thirteen languages (#197, #202, #203, #206)
+
+The app speaks thirteen languages by way of a **client-side dictionary applied
+in the page**, and it has to: two of the three builds are static files with
+Pyodide in the tab, so anything server-rendered would translate the hosted
+app and leave the downloaded one in English. This script is the machinery
+around that dictionary.
+
+    py tools/i18n.py scan     # how many units, and where
+    py tools/i18n.py tag      # give every unit its data-i18n key,
+                              # and regenerate i18n/en.json
+    py tools/i18n.py pack     # write the dictionaries into the templates
+    py tools/i18n.py check    # is everything in step?
+
+**`en.json` is generated, not written.** The English lives in the template
+markup and in the fallback argument of every `t()` / `tv()` call; a second
+hand-kept copy of it would only drift. The other twelve are hand-written and
+are the only files a translator edits — then `pack`, and the block between
+the `BEGIN/END i18n dictionaries` markers in each template is rewritten.
+Each page carries only the keys it asks for.
+
+A **translation unit** is the outermost element containing text whose
+descendants are all inline, so a whole paragraph is one entry and a
+translation may move the `<code>` or the `<a>` where its own word order
+wants them. Three things are never units: anything inside
+`class="notranslate"` (the wordmark, the build stamp, the syntax columns of
+the reference tables), anything spanning a `server-only` marker (the
+offline build deletes those blocks, and a dictionary copy would paint them
+back), and the regions the page's own JavaScript writes into.
+
+The **key** is a readable slug plus four hex of the English's SHA-1, so
+editing the English mints a new key and the stale translation shows up as
+an orphan in `check` instead of quietly staying on screen.
+
+What `check` catches, all of it learned the hard way:
+
+* a unit that is not tagged, or tagged with a key its English no longer
+  hashes to;
+* `en.json` disagreeing with the page, and orphans in any language;
+* a translation that drops an `id`, a `href` or a `%{slot}` the English
+  had — each of those fails silently at runtime, because dictionary values
+  are written into the page as innerHTML;
+* a translation that introduces a `<script>` or `<style>`;
+* `t(key, ...)` with a **variable** key, which `en.json` can never see, so
+  the string would fall back to English in all twelve languages with
+  nothing to say so;
+* a new element kind or two-port description in `symbulator_ui.py` that no
+  language has a word for yet.
+
+`pack` escapes `<`, `>`, `&` and `{` inside every string, so no translation
+can close the script element or grow a Jinja construct — `{#` in a template
+took every server page down on 30 Aug 2026, and twelve languages of new text
+is a lot of new opportunity.
+
+### `check` does not measure the ribbon — you have to
+
+`i18n.py check` compares keys and structure. It knows nothing about
+pixels, and the ribbon is where a translation actually breaks: `banner.css`
+caps `.subbar nav` at one line-box with `overflow: clip`, so a label too
+wide for the row does not wrap visibly and does not scroll — the overflow
+is **silently gone**, usually taking the Tutorial link with it.
+
+Ukrainian hit this on 31 Aug 2026 (#203/#206): *Локальний застосунок* is
+149px against English's 62px. It shipped past the first check because that
+check tested whether the link's right edge had passed the nav's right edge
+— and a wrapped element is not to the right, it is *below*.
+
+Measure it on the axis it fails on. For each language, at 375, 481, 520,
+768 and 1100px:
+
+```js
+nav.scrollHeight - nav.clientHeight   // must be 0
+[...nav.children].filter(e =>
+  e.getBoundingClientRect().bottom - nav.getBoundingClientRect().top
+    > nav.clientHeight + 1)           // must be empty
+```
+
+481px is the band to watch: it is the narrowest viewport that still shows
+the *wide* labels. The fix is nearly always the wording, not the CSS.

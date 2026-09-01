@@ -28,7 +28,8 @@ import os
 import re
 import time
 
-from flask import Flask, jsonify, render_template, request
+from flask import (Flask, jsonify, render_template, request,
+                   send_from_directory)
 
 from circuitbook import parse_book
 
@@ -37,7 +38,9 @@ app = Flask(__name__)
 # EqSheet, the what-if numerical solver, mounted at /eqsheet/. It is its
 # own Blueprint (its /api/solve must not collide with this file's), and
 # the "What if..." button after a solve opens it preloaded via ?import=.
-from eqsheet import bp as eqsheet_bp                          # noqa: E402
+# The Blueprint lives in eqsheet_web.py; eqsheet.py itself is Flask-free
+# so the offline builds can import it into Pyodide (#208).
+from eqsheet_web import bp as eqsheet_bp                      # noqa: E402
 app.register_blueprint(eqsheet_bp)
 
 # Uploaded circuit books are plain text; half a megabyte is far more
@@ -47,6 +50,14 @@ app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES
 
 EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                             "examples")
+#: The generated per-language dictionaries (#204). One file per language,
+#: loaded only when that language is actually used; the offline builds
+#: carry the same files beside the page instead.
+I18N_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "i18n", "dist")
+#: A language code, and nothing else: this arrives from the URL and is
+#: joined to a path. Two letters is every code the app has or plans.
+_LANG_RE = re.compile(r"^[a-z]{2}$")
 #: A file the reader may ask for by name. Kept deliberately tight: this
 #: is a name arriving from a query string and being joined to a path.
 _EXAMPLE_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,79}\.cir$")
@@ -67,6 +78,10 @@ from symbulator_ui import (                                   # noqa: E402
     normalise_imaginary,
     plot_time_ui, bode_ui,
     _validate, _validate_extras, _expand_and, _clean_digits, _exc_text,
+    _exc_msg,
+    # #200: the validators return coded messages now, and _err is what
+    # keeps the code beside the English on the way out of this file.
+    _err,
     parse_defines, expand_defines, expand_defines_in_desc,
     define_shadow_notices,
     _ALLOWED, _ALLOWED_EQ, _ALLOWED_COND, _VARNAME,
@@ -83,16 +98,26 @@ def _call_worker(conn, fn_name, args):
     try:
         conn.send(getattr(symbulator_ui, fn_name)(*args))
     except Exception as exc:  # noqa: BLE001
-        conn.send({"ok": False, "error": symbulator_ui._exc_text(exc)})
+        # _exc_msg, not _exc_text: a CircuitError carries a code since
+        # #199, and this is the pipe every solve comes back through.
+        conn.send(symbulator_ui._err(symbulator_ui._exc_msg(exc)))
     finally:
         conn.close()
 
 
 def _run_in_process(fn_name, args):
     """Run one symbulator_ui function in a killable child process.
-    Returns (ok, payload) where payload is the result dict's contents,
-    or an error string. Symbolic solving can run away on pathological
-    input, and only a separate process can be reliably stopped."""
+
+    Returns (ok, payload). On success `payload` is the result dict's
+    contents; **on failure it is the failure dict itself** -- not just
+    its sentence, as it was until #200. That is what lets the coded
+    message reach the page: this file lists its response fields by hand,
+    so anything it does not name is dropped, and a code named in six
+    places is a code forgotten in the seventh. `_refusal` below names it
+    once.
+
+    Symbolic solving can run away on pathological input, and only a
+    separate process can be reliably stopped."""
     parent_conn, child_conn = mp.Pipe(duplex=False)
     proc = mp.Process(target=_call_worker, args=(child_conn, fn_name, args))
     proc.start()
@@ -104,20 +129,115 @@ def _run_in_process(fn_name, args):
     else:
         proc.terminate()
         proc.join(1)
-        return False, (f"The solver took longer than {SOLVE_TIMEOUT_S:g} "
-                       "seconds and was stopped. Try a simpler circuit, or "
-                       "fewer requested variables for TR analysis.")
+        # app.py's own words, so no 8xx code: #200 covers what
+        # symbulator_ui writes. Shaped like a failure dict all the same,
+        # so _refusal has one thing to handle.
+        return False, {"error": (
+            f"The solver took longer than {SOLVE_TIMEOUT_S:g} seconds and "
+            "was stopped. Try a simpler circuit, or fewer requested "
+            "variables for TR analysis.")}
     if proc.is_alive():
         proc.kill()
 
     if not result.get("ok"):
-        return False, result.get("error", "Unknown error.")
+        result.setdefault("error", "Unknown error.")
+        return False, result
     return True, {k: v for k, v in result.items() if k != "ok"}
+
+
+def _refusal(payload, **extra):
+    """One refusal from the worker, forwarded whole.
+
+    `payload` is symbulator_ui's own failure dict, so the coded message
+    (#200) rides along without every route naming the field. `error`
+    stays the English, which is what an older page reads.
+    """
+    out = {"ok": False, "error": payload.get("error")}
+    if payload.get("err"):
+        out["err"] = payload["err"]
+    out.update(extra)
+    return out
 
 
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
+@app.get("/i18n/<lang>.js")
+def i18n_dict(lang):
+    """One language's dictionary, as a file.
+
+    Root-absolute on purpose: the app is served at / and the Numerical
+    Solver at /eqsheet/, so a relative path would resolve differently on
+    the two pages. The offline builds rewrite it to a relative path,
+    where there is only one page and it sits at the root.
+
+    Cached hard because the URL carries a ?v= stamp that changes with
+    the dictionaries -- see tools/i18n.py, stamp().
+    """
+    if not _LANG_RE.match(lang or ""):
+        return jsonify(error="unknown language"), 404
+    path = os.path.join(I18N_DIR, lang + ".js")
+    if not os.path.isfile(path):
+        return jsonify(error="unknown language"), 404
+    resp = send_from_directory(I18N_DIR, lang + ".js",
+                               mimetype="application/javascript")
+    resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return resp
+
+
+# --- #207: the dictionaries as files a translator can take away ------
+#
+# Server-only, deliberately. A translator works from the website: they
+# need to send a corrected file back, which needs a network anyway, so
+# there is nothing for the offline builds to carry. Shipping 817 KB of
+# source JSON in a 30 MB download for a feature its users cannot
+# complete would be paying for it twice over, and it would put install
+# and local out of step with each other, which this project does not do.
+#
+# The app links here by absolute URL, the same way it links the Tutorial
+# and the Acknowledgements: an outward link that needs the internet, kept
+# rather than hidden in the offline build.
+I18N_SRC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "i18n")
+
+
+@app.get("/i18n/<lang>.json")
+def i18n_source(lang):
+    """One language's dictionary, in the form a translator edits.
+
+    Not the same file as /i18n/<lang>.js, which is the packed form the
+    page loads: that one is escaped, stamped and machine-shaped. This is
+    the JSON under it -- one line per phrase, and the only thing anybody
+    should hand-edit.
+
+    en.json is served too, and is generated: half its keys are markup the
+    page could hand back at runtime, but the js.* half lives as literal
+    fallbacks inside t() calls and cannot be harvested in a browser at
+    all. A translator needs both halves or the template looks broken.
+    """
+    if not _LANG_RE.match(lang or ""):
+        return jsonify(error="unknown language"), 404
+    if not os.path.isfile(os.path.join(I18N_SRC_DIR, lang + ".json")):
+        return jsonify(error="unknown language"), 404
+    # No immutable caching here, unlike the packed .js: that URL carries a
+    # ?v= stamp and this one does not, and a translator coming back for a
+    # fresh copy after a release must not be served yesterday's.
+    resp = send_from_directory(I18N_SRC_DIR, lang + ".json",
+                               mimetype="application/json")
+    resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
+
+@app.get("/translate")
+def translate():
+    """The page that explains what to do with those files.
+
+    English-only on purpose: it is addressed to somebody about to
+    translate, who reads English by definition, and a version of it in
+    their own language would be written by the very machine whose work
+    they came to check."""
+    return render_template("translate.html")
+
 
 @app.get("/")
 def index():
@@ -357,7 +477,7 @@ def api_solveq():
 
     defines, define_err = parse_defines(data.get("defines") or "")
     if define_err:
-        return jsonify({"ok": False, "error": define_err}), 400
+        return jsonify(_err(define_err)), 400
     if defines:
         equations = [expand_defines(e, defines) for e in equations]
         conditions = [expand_defines(c, defines) for c in conditions]
@@ -408,7 +528,7 @@ def api_solveq():
          conditions, domain, bool(data.get('dual'))))
     elapsed = round(time.time() - t0, 2)
     if not ok:
-        return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
+        return jsonify(_refusal(payload, elapsed=elapsed)), 422
     return jsonify({"ok": True, "elapsed": elapsed, **payload})
 
 
@@ -488,7 +608,7 @@ def api_solve():
     # a bare "1k" is questioned exactly as if it had been typed inline.
     defines, define_err = parse_defines(_lines("defines"))
     if define_err:
-        return jsonify({"ok": False, "error": define_err}), 400
+        return jsonify(_err(define_err)), 400
     define_notices = []
     if defines:
         define_notices = define_shadow_notices(defines, desc)
@@ -511,7 +631,7 @@ def api_solve():
         elif tool == "port" and kind not in ("z", "y", "h", "g", "a", "b"):
             err = "Two-port kind must be one of z, y, h, g, a, b."
     if err:
-        return jsonify({"ok": False, "error": err}), 400
+        return jsonify(_err(err)), 400
 
     # ---- Ambiguity check: a bare value like "1k" could be the SI unit
     # (1'k = 1000) or number*variable (1*k). If any are present and the
@@ -540,7 +660,10 @@ def api_solve():
         elements = parse_circuit(desc, expand_si=False)
         ambiguous = ambiguous_in_elements(elements)
     except Exception as exc:  # parse errors get the same friendly text
-        return jsonify({"ok": False, "error": str(exc)[:400]}), 422
+        # _exc_msg, not str(exc): this is the parse step, run in the
+        # parent process rather than the worker, and it was the one place
+        # a CircuitError's code (#199) was still being flattened away.
+        return jsonify(_err(_exc_msg(exc))), 422
 
     if ambiguous:
         unresolved = [a for a in ambiguous if a["token"] not in choices]
@@ -610,8 +733,8 @@ def api_solve():
     if not ok:
         # The notes matter most when the solve failed: "normalised '5*i'
         # to '5j'" is often the explanation for the error underneath it.
-        return jsonify({"ok": False, "error": payload, "elapsed": elapsed,
-                        "notes": define_notices + imaginary_notes}), 422
+        return jsonify(_refusal(payload, elapsed=elapsed,
+                                notes=define_notices + imaginary_notes)), 422
 
     payload.setdefault("notes", [])
     payload["notes"] = define_notices + imaginary_notes + list(payload["notes"])
@@ -675,10 +798,10 @@ def api_schematic():
     ok, payload = _run_in_process("schematic_ui", (desc,))
     elapsed = round(time.time() - t0, 2)
     if not ok:
-        return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
+        return jsonify(_refusal(payload, elapsed=elapsed)), 422
     # _run_in_process has already unwrapped the ui dict's own "ok": on
-    # failure it hands back the message as a string, so there is nothing
-    # left to check here.
+    # failure it hands back the failure dict, which _refusal forwards
+    # above, so there is nothing left to check here.
     #
     # Enumerated by hand like the other routes -- a key added in
     # symbulator_ui reaches the offline build automatically but is
@@ -727,7 +850,7 @@ def api_plot():
 
     defines, define_err = parse_defines(_lines("defines"))
     if define_err:
-        return jsonify({"ok": False, "error": define_err}), 400
+        return jsonify(_err(define_err)), 400
     if defines:
         desc = expand_defines_in_desc(desc, defines)
         extra_equations = [expand_defines(e, defines) for e in extra_equations]
@@ -760,7 +883,7 @@ def api_plot():
     if not err and tool != "bode_tf":
         err = _validate_extras(extra_equations, extra_unknowns, extra_conditions)
     if err:
-        return jsonify({"ok": False, "error": err}), 400
+        return jsonify(_err(err)), 400
 
     if tool == "time":
         t_min, t_max, rng_err = _clean_range(data, 0.0, 1.0)
@@ -790,7 +913,7 @@ def api_plot():
     ok, payload = _run_in_process(fn_name, args)
     elapsed = round(time.time() - t0, 2)
     if not ok:
-        return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
+        return jsonify(_refusal(payload, elapsed=elapsed)), 422
     return jsonify({"ok": True, "tool": tool, "elapsed": elapsed, **payload})
 
 
@@ -809,7 +932,7 @@ def api_evaluate():
     values = data.get("values") or {}
     defines, define_err = parse_defines(data.get("defines") or "")
     if define_err:
-        return jsonify({"ok": False, "error": define_err}), 400
+        return jsonify(_err(define_err)), 400
 
     if not expr:
         return jsonify({"ok": False, "error": "Enter an expression to evaluate."}), 400
@@ -858,7 +981,7 @@ def api_evaluate():
                                                   dual))
     elapsed = round(time.time() - t0, 2)
     if not ok:
-        return jsonify({"ok": False, "error": payload, "elapsed": elapsed}), 422
+        return jsonify(_refusal(payload, elapsed=elapsed)), 422
     return jsonify({"ok": True, "elapsed": elapsed, **payload})
 
 
@@ -902,8 +1025,7 @@ def api_minitool():
                                   (tool, clean_args, clean, digits))
     elapsed = round(time.time() - t0, 2)
     if not ok:
-        return jsonify({"ok": False, "error": payload,
-                        "elapsed": elapsed}), 422
+        return jsonify(_refusal(payload, elapsed=elapsed)), 422
     return jsonify({"ok": True, "elapsed": elapsed, **payload})
 
 

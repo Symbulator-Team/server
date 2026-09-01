@@ -1,7 +1,10 @@
 flask>=3.0
-symbulator>=0.5.22
+symbulator>=0.5.25
 sympy>=1.13
-# EqSheet (/eqsheet/), the numerical what-if solver, needs these two.
-# The offline builds do not: EqSheet is server-hosted only.
+# The Numerical Solver (/eqsheet/) needs these two. The offline builds
+# need them as well since #208, but get them from vendor/ as Pyodide
+# wheels rather than from here -- this file is pip, and pip is only the
+# server. Do not delete them on the strength of that: the server still
+# imports scipy.optimize on every Solver run.
 numpy>=1.26
 scipy>=1.11
