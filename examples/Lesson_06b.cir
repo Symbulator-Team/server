@@ -11,6 +11,7 @@ r4,1,0,4
 
 analysis: dc
 note: A three-interval problem: one switch opens at t = 0 and another closes at t = 1 s. Find vc(t) and ic(t) for all t; this first interval in DC gives vc = 8 V.
+image: https://learn.symbulator.com/assets/practice/bo2s-example-5-6-14.jpg
 rounding: exact
 si: no
 units: yes
@@ -23,6 +24,7 @@ r4,1,0,4
 
 analysis: tr
 note: Second interval: vc and ic decay as e^(-t) from the 8 V initial condition.
+image: https://learn.symbulator.com/assets/practice/bo2s-example-5-6-14.jpg
 rounding: exact
 si: no
 units: yes
@@ -35,6 +37,7 @@ re,1,0,[4,6]
 
 analysis: tr
 note: Third interval, after the second switch closes. t here counts from the start of this interval, so the chapter writes the answer with (t-1) in it. The initial condition is the previous interval's voltage at t = 1.
+image: https://learn.symbulator.com/assets/practice/bo2s-example-5-6-14.jpg
 rounding: 4
 si: no
 units: yes
@@ -49,6 +52,7 @@ l,2,0,6
 
 analysis: dc
 note: Another problem whose switch moves at a time other than zero — t = 2 s. Find iL(t) and vL(t) for all t; this first interval in DC gives il = 3 A.
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-6-17.jpg
 rounding: exact
 si: no
 units: yes
@@ -61,6 +65,7 @@ l,1,0,6,3
 
 analysis: tr
 note: Second interval: il and vl decay as e^(-2t).
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-6-17.jpg
 rounding: exact
 si: no
 units: yes
@@ -73,6 +78,7 @@ l,1,0,6,.055
 
 analysis: tr
 note: Third interval, starting from the 0.055 A the second interval left at t = 2 s; the chapter writes the answers with (t-2) in them.
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-6-17.jpg
 rounding: 3
 si: no
 units: yes
@@ -86,6 +92,7 @@ c,2,0,c,0
 
 analysis: tr
 note: In this problem, we use a step source, V*u(t), for the first time. Find iR, vR, iC and vC for the series RC circuit, symbolically.
+image: https://learn.symbulator.com/assets/practice/bo2s-figure-5-19-18.jpg
 rounding: exact
 si: no
 units: yes
@@ -99,6 +106,7 @@ r,2,0,r
 
 analysis: tr
 note: The RL twin of the previous entry, with the same step source: find iR, vR, iL and vL.
+image: https://learn.symbulator.com/assets/practice/bo2s-figure-5-24-19.jpg
 rounding: exact
 si: no
 units: yes
@@ -113,6 +121,7 @@ r2,3,0,2
 
 analysis: tr
 note: A numerical step source: a plain 12 is enough, no u(t) needed. Find il, vl and v.
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-7-20.jpg
 rounding: exact
 si: no
 units: yes
@@ -126,6 +135,7 @@ r,1,0,r
 
 analysis: tr
 note: A step current source, i*u(t): find iC, iR and v — read ic, ir and v1.
+image: https://learn.symbulator.com/assets/practice/bo2s-figure-5-26-21.jpg
 rounding: exact
 si: no
 units: yes
@@ -141,6 +151,7 @@ r1,2,0,1
 
 analysis: tr
 note: An op amp with a unit-step input: find vc, ic and vo. This circuit returns, altered, in several later entries.
+image: https://learn.symbulator.com/assets/practice/bo2s-example-5-7-op-amp-22.jpg
 rounding: exact
 si: no
 units: yes
@@ -156,6 +167,7 @@ o,0,2,o
 
 analysis: tr
 note: Find vc, ic and vo for the companion op-amp circuit, also with a unit-step input.
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-8-op-amp-23.jpg
 rounding: exact
 si: no
 units: yes
@@ -169,6 +181,7 @@ c,2,0,c,0
 
 analysis: tr
 note: A source of V*u(t) - V*u(t-to), taken in two intervals. First interval: find vc, the charging curve.
+image: https://learn.symbulator.com/assets/practice/bo2s-p249-f5-28-24.jpg
 rounding: exact
 si: no
 units: yes
@@ -181,6 +194,7 @@ c,2,0,c,v-e^(-to/(c*r))*v
 
 analysis: tr
 note: Second interval, from t = to: the source is a short now, and the capacitor's initial condition is the first interval's vc at to, written out in full.
+image: https://learn.symbulator.com/assets/practice/bo2s-p249-f5-28-24.jpg
 rounding: exact
 si: no
 units: yes
@@ -194,6 +208,7 @@ r,2,0,r
 
 analysis: tr
 note: The RL version of the two-step-source problem. First interval: find il.
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-9-25.jpg
 rounding: exact
 si: no
 units: yes
@@ -206,6 +221,7 @@ r,2,0,r
 
 analysis: tr
 note: Second interval: the source is gone and the inductor starts from its t = to current; replace t with t-to to put the answer on the first interval's clock.
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-9-25.jpg
 rounding: exact
 si: no
 units: yes
@@ -221,6 +237,7 @@ j,0,2,2*ir3
 
 analysis: dc
 note: A dependent source rides along this time. First interval in DC, with the source at 2 V: vc is 2 V.
+image: https://learn.symbulator.com/assets/practice/bo2s-figure-5-36-26.jpg
 rounding: exact
 si: no
 units: yes
@@ -236,6 +253,7 @@ j,0,2,2*ir3
 
 analysis: tr
 note: Second interval in TR, with the source at -4 V: vc comes back 6e^(-t/6) - 4.
+image: https://learn.symbulator.com/assets/practice/bo2s-figure-5-36-26.jpg
 rounding: exact
 si: no
 units: yes

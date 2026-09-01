@@ -30,7 +30,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "697ba68a4e";
+window.SYMB_I18N_V = "1e5cd32f0d";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -586,6 +586,21 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
     background: var(--card); border: 1px solid var(--line); border-radius: 12px;
     padding: 1.4rem 1.5rem; margin: 0 0 1.3rem;
     box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 3px 10px rgba(16,24,40,.05);
+  }
+  /* #219: an entry's own picture, at the foot of the Input File card. No
+     heading -- the picture speaks for itself -- and hidden until it has
+     actually loaded, so an entry without one, or one whose link fails,
+     reserves no space and shifts nothing. The rule above it sets it apart
+     from the entry picker and its note, and the scans carry paper-white
+     backgrounds, so the picture sits on a white mat in both themes rather
+     than glaring out of the dark one. */
+  #entryImageBox {
+    margin-top: .9rem; padding-top: .9rem; border-top: 1px solid var(--line-soft);
+  }
+  #entryImage {
+    display: block; width: 100%; height: auto; max-height: 60vh;
+    object-fit: contain; border-radius: 8px;
+    background: #fff; border: 1px solid var(--line);
   }
   label { display: block; font-weight: 600; font-size: .9rem; margin: 0 0 .3rem; }
   .hint { font-weight: 400; color: var(--muted); }
@@ -1192,37 +1207,6 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
       <button type="button" id="newFileBtn" class="uploadlbl" data-i18n="create-new.5477">Create new</button>
     </div>
 
-    <!-- The built-in examples are a set of input files now, not one file,
-         so this opens a list of them rather than loading anything. A
-         <details> because it wants no JavaScript to open and close, and the
-         keyboard reaches it the same way it reaches every other disclosure
-         on the page. It stays visible at all times: it is the way back to
-         the set once a reader has opened one of them.
-
-         On its own line rather than in the row above, so its summary starts
-         at the left margin like every other collapsible header here. -->
-    <div style="margin-top:.9rem">
-      <details class="examples-menu" id="examplesMenu">
-        <summary class="linkish" id="openExamplesBtn" data-i18n="built-in-examples.d748">Built-in Examples</summary>
-        <div class="examples-panel">
-          <p class="examples-panel-head" data-i18n="choose-an-input-file.1d20">Choose an input file</p>
-          <ul id="examplesList"></ul>
-        </div>
-      </details>
-    </div>
-
-    <span class="examples" id="entriesRow" style="display:block;margin-top:.9rem">
-      <span id="pickerLabel" style="margin-right:.8rem" data-i18n="some-examples-you-can.c120">Some examples you can try: </span>
-      <select id="examples">
-        <option value="" data-i18n="loading.5064">— loading… —</option>
-      </select>
-      <!-- Acting on the selected entry belongs next to the list of entries,
-           not down with the save links. Both stay hidden unless an entry of
-           a writable file is selected: the examples cannot be edited. -->
-      <button type="button" id="renameEntryBtn" class="linkish" hidden data-i18n="rename.d3f4">Rename</button>
-      <button type="button" id="deleteEntryBtn" class="linkish" hidden data-i18n="delete.f6fd">Delete</button>
-    </span>
-
     <details id="fileFormatBox" style="margin-top:.9rem">
       <summary data-i18n="about-input-file-cir.5344">About input file (.cir) format</summary>
       <p style="font-size:.9rem;color:var(--muted);margin-top:.5rem" data-i18n="a-plain-text-input.ab74">
@@ -1266,7 +1250,7 @@ variables: v_2
 rounding: exact
 si: no
 units: yes</pre>
-      <p style="font-size:.88rem;color:var(--muted)" data-i18n="everything-after-the-element.e4bf">
+      <p style="font-size:.88rem;color:var(--muted)" data-i18n="everything-after-the-element.ea1d">
         Everything after the element lines is optional, and can be left out
         entirely — leaving a key out just means the app's own default
         applies, same as if you'd never touched it:
@@ -1274,7 +1258,11 @@ units: yes</pre>
         <code>variables</code>, <code>tool</code> (th/er/port) with
         <code>n1</code>/<code>n2</code>/<code>kind</code>,
         <code>note</code> (a line of your own text, shown when the entry
-        is loaded), and (if the circuit uses it) the expert-mode
+        is loaded), <code>image</code> (a link to a picture of the circuit,
+        shown above the description when the entry is loaded — a web address,
+        or a path relative to this page; a picture on your own computer
+        cannot be linked to, because the browser will not read your files
+        for a web page), and (if the circuit uses it) the expert-mode
         <code>equations</code>, <code>conditions</code> and
         <code>unknowns</code>; the Settings
         <code>rounding</code> (exact/approx/a number of significant
@@ -1312,6 +1300,57 @@ units: yes</pre>
         and is available whenever that file has at least one entry in it.
       </p>
     </details>
+
+    <!-- The built-in examples are a set of input files now, not one file,
+         so this opens a list of them rather than loading anything. A
+         <details> because it wants no JavaScript to open and close, and the
+         keyboard reaches it the same way it reaches every other disclosure
+         on the page. It stays visible at all times: it is the way back to
+         the set once a reader has opened one of them.
+
+         On its own line rather than in the row above, so its summary starts
+         at the left margin like every other collapsible header here. -->
+    <div style="margin-top:.9rem">
+      <details class="examples-menu" id="examplesMenu">
+        <summary class="linkish" id="openExamplesBtn" data-i18n="built-in-examples.d748">Built-in Examples</summary>
+        <div class="examples-panel">
+          <p class="examples-panel-head" data-i18n="choose-an-input-file.1d20">Choose an input file</p>
+          <ul id="examplesList"></ul>
+        </div>
+      </details>
+    </div>
+
+    <span class="examples" id="entriesRow" style="display:block;margin-top:.9rem">
+      <span id="pickerLabel" style="margin-right:.8rem" data-i18n="some-examples-you-can.c120">Some examples you can try: </span>
+      <select id="examples">
+        <option value="" data-i18n="loading.5064">— loading… —</option>
+      </select>
+      <!-- Acting on the selected entry belongs next to the list of entries,
+           not down with the save links. Both stay hidden unless an entry of
+           a writable file is selected: the examples cannot be edited. -->
+      <button type="button" id="renameEntryBtn" class="linkish" hidden data-i18n="rename.d3f4">Rename</button>
+      <button type="button" id="deleteEntryBtn" class="linkish" hidden data-i18n="delete.f6fd">Delete</button>
+    </span>
+
+    <!-- #219: a picture of this entry's circuit, when the entry names one
+         with its `image:` field. It sits at the foot of this card, under
+         the entry picker and its note, and carries no heading: the picture
+         speaks for itself, and a heading would leave a labelled hole on
+         every entry that has no image.
+
+         Hidden until the image has actually loaded, and hidden again if it
+         fails, so an entry with no picture, a dead link, an unreachable
+         host and an offline reader all produce the same thing -- nothing
+         at all, and no gap where something might have been. -->
+    <div id="entryImageBox" hidden>
+      <!-- No loading="lazy": this starts hidden, and a browser does not
+           fetch a lazy image that is not being displayed, so the load
+           event that reveals it would never fire and the picture would
+           never appear. Nothing is lost -- there is only ever one of these
+           on the page, fetched only when an entry that has one is picked. -->
+      <img id="entryImage" alt="Picture of this entry's circuit"
+           decoding="async" referrerpolicy="no-referrer" data-i18n-alt="picture-of-this-entry.d4e4">
+    </div>
     </details>
   </div>
 
@@ -2334,7 +2373,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-01 06:06 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-01 12:03 UTC</span>
 </footer>
 
 <script>
@@ -3252,6 +3291,32 @@ function populatePicker(circuits, label, placeholder) {
   }
 }
 
+// #219: the entry's own picture, from its `image:` field, shown at the foot
+// of the Input File card. It carries no heading, so there is nothing to show
+// until the picture itself is on screen: it is revealed by the image's own
+// load event and hidden again by its error event. That way an entry with no
+// image, a link that 404s, and an offline reader whose service worker
+// answers 504 all produce exactly the same thing -- nothing at all, and no
+// gap where something might have been.
+//
+// A `.cir` file is reader-supplied content, so the value is restricted to
+// the schemes an image can actually use. `javascript:` never loads in an
+// <img> in any current browser, but refusing it here means the question
+// does not have to be re-answered every time this value finds a new home.
+function showEntryImage(src) {
+  const box = $('entryImageBox'), img = $('entryImage');
+  box.hidden = true;
+  src = (src || '').trim();
+  // A relative path carries no scheme and must stay allowed: it is how an
+  // image bundled beside the app is named. Anything that does carry one is
+  // held to the two an <img> can actually use.
+  const scheme = (/^[a-z][a-z0-9+.-]*:/i.exec(src) || [''])[0].toLowerCase();
+  const ok = src && (scheme === '' || scheme === 'http:' || scheme === 'https:'
+                     || (scheme === 'data:' && /^data:image\//i.test(src)));
+  if (!ok) { img.removeAttribute('src'); return; }
+  img.src = src;
+}
+
 // Show (or, if `text` is falsy, clear) a small note under the circuit
 // textarea -- used for a picked circuit's own "note:" metadata and for
 // upload/parse feedback ("Loaded 3 circuits…", or a warning in red).
@@ -3370,6 +3435,7 @@ function applyCircuit(c) {
   $('solveqReal').checked = !!c.solve_real_only;
 
   showNote(c.note || '', false);
+  showEntryImage(c.image || '');
   autoGrowDesc();
   // Loading a circuit rewrites every field and fires no events doing
   // it, so nothing on screen describes these inputs any more.
@@ -3393,6 +3459,17 @@ function autoGrowDesc() {
   const max = window.innerHeight * 0.6;
   el.style.height = Math.min(el.scrollHeight + border, max) + 'px';
 }
+// #219: the picture reveals its own card, and takes it away again if it
+// cannot be fetched. Registered once, here, rather than per load, so a
+// picture that is already in the browser cache still fires them.
+$('entryImage').addEventListener('load',  () => {
+  $('entryImageBox').hidden = false;
+  // The picture lives inside the Input File panel, which starts folded --
+  // so a picture that loaded into a closed box would never be seen. Same
+  // reasoning as showNote()'s own line below.
+  $('fileBox').open = true;
+});
+$('entryImage').addEventListener('error', () => { $('entryImageBox').hidden = true; });
 $('desc').addEventListener('input', autoGrowDesc);
 autoGrowDesc();
 
@@ -4270,6 +4347,7 @@ function clearAllInputs() {
   markInputsSaved();
   $('examples').value = '';
   showNote('', false);
+  showEntryImage('');
   clearSettingsNotes();
   syncSettings();
   syncFields();

@@ -74,6 +74,12 @@ _KEYS = {
     "kind": "kind",
     "unknowns": "unknowns",
     "note": "note",
+    # #219: a link to a picture of this circuit, shown in a card of its
+    # own when the entry is picked. A URL, or a path relative to the
+    # app's own page -- never a path into the reader's filesystem: every
+    # build of this app is served over http(s) (Pyodide will not load
+    # from file://), and an http page cannot fetch a file:// subresource.
+    "image": "image",
     # The Plot card is a separate tool from the Analysis one above, so it
     # gets its own key. Older files stored the plot type in "tool:" -- see
     # applyCircuit() in the front end, which still reads that form.
@@ -271,7 +277,7 @@ def format_book(circuits: List[dict], title: str = "") -> str:
         for key, field in (("analysis", "domain"), ("omega", "omega"),
                            ("variables", "vars"), ("tool", "tool"),
                            ("n1", "n1"), ("n2", "n2"), ("kind", "kind"),
-                           ("note", "note")):
+                           ("note", "note"), ("image", "image")):
             val = c.get(field)
             if val:
                 analysis.append(f"{key}: {val}")

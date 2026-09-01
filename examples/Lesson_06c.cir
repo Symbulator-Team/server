@@ -10,6 +10,7 @@ r,1,0,r
 
 analysis: tr
 note: In this problem, we use an impulse source, i*δ(t), for the first time. Find the capacitor's voltage drop and current. The impulse survives in the capacitor's current, which is right: the charge arrives all at once.
+image: https://learn.symbulator.com/assets/practice/bo2s-figure-5-38-impulse-27.jpg
 rounding: exact
 si: no
 units: yes
@@ -66,6 +67,7 @@ l,1,0,2,0
 
 analysis: tr
 note: An exponential source, 2e^(-4t): find iL and vL.
+image: https://learn.symbulator.com/assets/practice/bo2s-example-5-12-exponential-28.jpg
 rounding: exact
 si: no
 units: yes
@@ -94,6 +96,7 @@ j,0,2,2*ir3
 
 analysis: tr
 note: An exponential source, 18e^(-t/2), on the dependent-source circuit of Figure 5.36: find the capacitor's voltage drop and the current in the 3 ohm resistor.
+image: https://learn.symbulator.com/assets/practice/bo2s-example-5-13-exponential-29.jpg
 rounding: exact
 si: no
 units: yes
@@ -125,6 +128,7 @@ r3,2,0,2
 
 analysis: dc
 note: The first second-order circuit: an inductor and a capacitor in the same network. Find i(t) and v(t) for all t; this DC interval gives vc = 2 V and il = 1 A.
+image: https://learn.symbulator.com/assets/practice/bo2s-example-6-1-30.jpg
 rounding: exact
 si: no
 units: yes
@@ -138,6 +142,7 @@ c,2,0,1/8,2
 
 analysis: tr
 note: Second interval in TR: two exponentials now. Find vc and il, built from e^(-2t) and e^(-8t).
+image: https://learn.symbulator.com/assets/practice/bo2s-example-6-1-30.jpg
 rounding: exact
 si: no
 units: yes
@@ -153,6 +158,7 @@ c,2,0,1/3
 
 analysis: dc
 note: First interval in DC: vc = 2 V and il = 0.
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-1-32.jpg
 rounding: exact
 si: no
 units: yes
@@ -167,6 +173,7 @@ c,2,0,1/3,2
 
 analysis: tr
 note: Second interval in TR: find vc and il, each a pair of exponentials.
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-1-32.jpg
 rounding: exact
 si: no
 units: yes
@@ -181,6 +188,7 @@ r2,2,0,1/6
 
 analysis: dc
 note: For t < 0 the switches split this circuit in two. The left half's DC solve gives the capacitor's initial condition, -7/50 V — solved in fractions on purpose.
+image: https://learn.symbulator.com/assets/practice/bo2s-example-6-2-33.jpg
 rounding: exact
 si: no
 units: yes
@@ -195,6 +203,7 @@ e2,4,0,3
 
 analysis: dc
 note: The right half's DC solve gives the inductor's initial condition, 1 A.
+image: https://learn.symbulator.com/assets/practice/bo2s-example-6-2-33.jpg
 rounding: exact
 si: no
 units: yes
@@ -208,6 +217,7 @@ l,1,0,1/50,1
 
 analysis: tr
 note: The TR interval, both halves joined: find vc and il — underdamped now, decaying sinusoids in cos(4t) and sin(4t). The switch on the right is simulated as a short between the two halves, which saves renaming every node.
+image: https://learn.symbulator.com/assets/practice/bo2s-example-6-2-33.jpg
 rounding: exact
 si: no
 units: yes
@@ -224,6 +234,7 @@ j,0,3,1
 
 analysis: dc
 note: First interval in DC: vc = 2 V and il = 1 A.
+image: https://learn.symbulator.com/assets/practice/bo2s-example-6-3-34.jpg
 rounding: exact
 si: no
 units: yes
@@ -238,6 +249,7 @@ r1,3,0,1
 
 analysis: tr
 note: Second interval in TR: a repeated pole this time. Find vc and il, each carrying a t·e^(-2t) term.
+image: https://learn.symbulator.com/assets/practice/bo2s-example-6-3-34.jpg
 rounding: exact
 si: no
 units: yes
