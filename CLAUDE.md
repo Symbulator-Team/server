@@ -18,29 +18,40 @@ before any of them is proposed back.
 
 ## The rules that matter
 
-**X's banner is X's own, and a merge from v9 will fight you for it.**
-Since 2 Sep 2026 the wordmark reads **Symbulator X**, not `Symbulator
-9β`, and the subtitle is *testing the limits of symbolic simulation*.
-Both live in `templates/index.html` **and** `templates/eqsheet.html`, on
-lines version 9 also owns, so `git merge v9/main` will conflict there
-whenever v9 touches its banner: **keep X's side, take v9's for
-everything else.** It is the only deliberate content difference between
-the two trees, so a conflict anywhere else in those files is a real one
-to read rather than a known collision.
+**X's banner is X's own, and it lives in exactly one file.** Since #228
+(3 Sep 2026) the wordmark's mark and the subtitle come from
+`branding.py`, not from the markup:
 
-Why it exists is worth knowing, because it is not decoration. On 2 Sep
-2026 PythonAnywhere disabled the `symbulatorx` account for content that
-"might be related to phishing activities". X was at that moment a
-byte-identical copy of `symbulator.pythonanywhere.com` under a hostname
-one letter away, on a different account — which is precisely what an
-automated scanner reads as a phishing clone. A visibly distinct banner
-is the honest fix as well as the safe one: a stranger landing on X could
-not previously tell it was not the real thing.
+    BRAND_TM  = "X"       # version 9 has "9β"
+    BRAND_SUB = "testing the limits of symbolic simulation"
+                          # version 9 leaves this empty, meaning
+                          # "use the translated subtitle in the template"
 
-The subtitle is `notranslate`. X is English-only, and marking it so is
-what keeps `python tools/i18n.py check` clean — changing a translated
-string would otherwise orphan its key in all twelve dictionaries and
-demand twelve translations this fork has a standing rule not to do.
+**On `git merge v9/main`: keep this fork's `branding.py`, and take
+version 9's side for everything else** -- including
+`templates/index.html`, `templates/eqsheet.html` and the generated
+`repos/local/index.html` / `eqsheet.html`. The two templates are now
+identical in both trees and should stay that way; the two generated
+pages differ only because they are *output* baked from this file, so
+resolve them by taking either side and re-running `python
+build_local.py`, which reproduces them.
+
+Until #228 the difference was an edit to the markup itself, which
+collided with version 9 every time it touched the banner's
+neighbourhood in a 5,000-line file, and had a silent failure mode: take
+version 9's side by reflex and X quietly becomes a byte-identical clone
+again. That is not a hypothetical -- on 2 Sep 2026 PythonAnywhere
+disabled the `symbulatorx` account for content that "might be related to
+phishing activities", X then being exactly such a clone under a hostname
+one letter away. A visibly different banner is the honest fix as much as
+the safe one.
+
+The subtitle is rendered `notranslate` when `BRAND_SUB` is set, which is
+what keeps `python tools/i18n.py check` clean: version 9's subtitle is a
+translated UI string, and giving the fork its own key would orphan that
+one in all twelve dictionaries and demand twelve translations this fork
+has a standing rule not to do. The dictionaries themselves stay
+identical to version 9's -- X simply never renders that branch.
 
 **Never deploy this to any of version 9's five sites.** Not
 `install.symbulator.com`, not `symbulator.com`, not
