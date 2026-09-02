@@ -53,6 +53,13 @@ one in all twelve dictionaries and demand twelve translations this fork
 has a standing rule not to do. The dictionaries themselves stay
 identical to version 9's -- X simply never renders that branch.
 
+**The footer still says "Symbulator 9 version …", and that is fine.**
+The build stamp's format is shared with version 9 and written by
+`build_local.py`, so X's own footer names version 9. Roberto, 3 Sep 2026:
+whoever works on X can change it when they are next changing something
+there — it is not worth a commit of its own. So notice it, leave it, and
+do not open an item for it.
+
 **Never deploy this to any of version 9's five sites.** Not
 `install.symbulator.com`, not `symbulator.com`, not
 `learn.symbulator.com`, not `symbulator.pythonanywhere.com`. Some
