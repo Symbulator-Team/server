@@ -493,6 +493,7 @@
  "short-circuit.3cd3": "court-circuit",
  "show-ac-answers-as.f2a8": "Afficher les réponses alternatives en phaseurs polaires <span class=\"hint\">— 3 + 4j devient 5∠53.13° ; la puissance moyenne reste réelle</span>",
  "show-equations-adds-an.b3d5": "Afficher les équations <span class=\"hint\">— ajoute une carte Équations listant le système assemblé par le solveur</span>",
+ "show-image-if-available.53ba": "Afficher l'image (si disponible)",
  "show-units-in-answers.89ab": "Afficher les unités dans les réponses <span class=\"hint\">— V, A, W, VA, Ω</span>",
  "si-prefixes-apply-to.6c04": "Les préfixes SI ne s'appliquent qu'aux réponses numériques ; une réponse symbolique telle que <code>x·vin/(r1 + x)</code> est laissée telle quelle. Une valeur préfixée est un décimal, donc les préfixes SI et <em>exact</em> ne peuvent pas s'appliquer ensemble.",
  "si-prefixes.ab67": "Préfixes SI",

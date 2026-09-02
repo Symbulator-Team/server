@@ -493,6 +493,7 @@
  "short-circuit.3cd3": "短絡",
  "show-ac-answers-as.f2a8": "交流の答えを極形式のフェーザで表示 <span class=\"hint\">— 3 + 4j は 5∠53.13° になります。平均電力は実数のままです</span>",
  "show-equations-adds-an.b3d5": "方程式を表示 <span class=\"hint\">— ソルバーが組み立てた方程式系を並べる「方程式」カードを追加します</span>",
+ "show-image-if-available.53ba": "画像を表示（ある場合）",
  "show-units-in-answers.89ab": "答えに単位を表示 <span class=\"hint\">— V、A、W、VA、Ω</span>",
  "si-prefixes-apply-to.6c04": "SI 接頭辞が付くのは数値の答えだけです。<code>x·vin/(r1 + x)</code> のような記号の答えはそのまま残ります。接頭辞の付いた値は小数なので、SI 接頭辞と<em>正確</em>を同時に適用することはできません。",
  "si-prefixes.ab67": "SI 接頭辞",

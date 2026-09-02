@@ -493,6 +493,7 @@
  "short-circuit.3cd3": "hubung singkat",
  "show-ac-answers-as.f2a8": "Tampilkan jawaban AC sebagai fasor polar <span class=\"hint\">— 3 + 4j menjadi 5∠53.13°; daya rata-rata tetap real</span>",
  "show-equations-adds-an.b3d5": "Tampilkan persamaan <span class=\"hint\">— menambahkan kartu Persamaan yang mendaftar sistem yang disusun pemecah</span>",
+ "show-image-if-available.53ba": "Tampilkan gambar (jika tersedia)",
  "show-units-in-answers.89ab": "Tampilkan satuan pada jawaban <span class=\"hint\">— V, A, W, VA, Ω</span>",
  "si-prefixes-apply-to.6c04": "Awalan SI hanya berlaku untuk jawaban numerik; jawaban simbolik seperti <code>x·vin/(r1 + x)</code> dibiarkan apa adanya. Nilai berawalan adalah bilangan desimal, jadi awalan SI dan <em>eksak</em> tidak dapat berlaku bersamaan.",
  "si-prefixes.ab67": "Awalan SI",

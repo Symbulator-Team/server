@@ -493,6 +493,7 @@
  "short-circuit.3cd3": "Kurzschluss",
  "show-ac-answers-as.f2a8": "Wechselstromantworten als Polarzeiger anzeigen <span class=\"hint\">— 3 + 4j wird zu 5∠53.13°; die Wirkleistung bleibt reell</span>",
  "show-equations-adds-an.b3d5": "Gleichungen anzeigen <span class=\"hint\">— fügt eine Karte „Gleichungen“ hinzu, die das vom Löser aufgestellte System auflistet</span>",
+ "show-image-if-available.53ba": "Bild anzeigen (falls vorhanden)",
  "show-units-in-answers.89ab": "Einheiten in den Antworten anzeigen <span class=\"hint\">— V, A, W, VA, Ω</span>",
  "si-prefixes-apply-to.6c04": "SI-Präfixe gelten nur für numerische Antworten; eine symbolische Antwort wie <code>x·vin/(r1 + x)</code> bleibt, wie sie ist. Ein Wert mit Präfix ist eine Dezimalzahl, daher können SI-Präfixe und <em>exakt</em> nicht beide gelten.",
  "si-prefixes.ab67": "SI-Präfixe",
