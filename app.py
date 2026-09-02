@@ -43,6 +43,45 @@ app = Flask(__name__)
 from eqsheet_web import bp as eqsheet_bp                      # noqa: E402
 app.register_blueprint(eqsheet_bp)
 
+# #227: who may put this page in a frame.
+#
+# The documentation's split view (#224) shows the tutorial beside the
+# live app, which means learn.symbulator.com legitimately frames this
+# host. Anyone else doing it is either clickjacking or passing this off
+# as their own, and until now nothing said so: the app sent no framing
+# header at all, so every origin on the internet was allowed.
+#
+# That silence stopped being academic on 2 Sep 2026, when PythonAnywhere
+# disabled the separate `symbulatorx` account for content that "might be
+# related to phishing activities" -- a fork whose pages were byte-identical
+# to this one under a near-identical hostname. Nothing about *this* site
+# was in that notice, but a page that anybody may frame is exactly what an
+# automated scanner reads as a phishing surface, and saying who may frame
+# it is both the honest answer and a real defence.
+#
+# frame-ancestors only. A full Content-Security-Policy would have to
+# account for the inline styles and scripts this template is built from,
+# the KaTeX and MathJax CDNs and Google Fonts, and getting one of those
+# wrong breaks the page for everyone; this directive touches nothing but
+# framing.
+#
+# And *only* this header. The obvious instinct is to send X-Frame-Options
+# beside it for older browsers, but there is no safe value to send: it has
+# no syntax for "me and one other origin", `ALLOW-FROM` was removed from
+# every current browser, and `SAMEORIGIN` would forbid the split view --
+# the one framing this exists to permit. A browser too old for
+# frame-ancestors is a browser too old to run Symbulator's front end
+# anyway.
+FRAME_ANCESTORS = "'self' https://learn.symbulator.com"
+
+
+@app.after_request
+def _frame_policy(resp):
+    resp.headers.setdefault("Content-Security-Policy",
+                            f"frame-ancestors {FRAME_ANCESTORS}")
+    return resp
+
+
 # Uploaded circuit books are plain text; half a megabyte is far more
 # than any realistic file and keeps a hostile upload from filling RAM.
 MAX_UPLOAD_BYTES = 512 * 1024
