@@ -30,7 +30,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "1e5cd32f0d";
+window.SYMB_I18N_V = "01d3af5a88";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -1332,6 +1332,27 @@ units: yes</pre>
       <button type="button" id="deleteEntryBtn" class="linkish" hidden data-i18n="delete.f6fd">Delete</button>
     </span>
 
+    <!-- #225: whether to show the picture at all. A standing preference,
+         not a property of an entry: it says how this reader likes to work,
+         so it is remembered across entries and across sessions in
+         localStorage, beside the theme and the language, and never written
+         into a `.cir` file.
+
+         Checked by default, so nothing changes for anyone who does not go
+         looking for it. Unchecked, the picture is not merely hidden -- the
+         <img> is given no src, so nothing is requested. That is the point
+         for a reader on a metered connection, and it is why this cannot be
+         done in CSS.
+
+         Above the picture rather than below it, so the control comes before
+         the thing it controls; and outside entryImageBox, which is hidden
+         whenever there is no picture -- a checkbox that vanished with the
+         image could never be used to bring one back. -->
+    <label class="checkline" id="showImageLine" style="margin-top:.9rem">
+      <input type="checkbox" id="showEntryImageOpt" checked>
+      <span data-i18n="show-image-if-available.53ba">Show image (if available)</span>
+    </label>
+
     <!-- #219: a picture of this entry's circuit, when the entry names one
          with its `image:` field. It sits at the foot of this card, under
          the entry picker and its note, and carries no heading: the picture
@@ -2373,7 +2394,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-01 12:03 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-02 12:57 UTC</span>
 </footer>
 
 <script>
@@ -3303,10 +3324,34 @@ function populatePicker(circuits, label, placeholder) {
 // the schemes an image can actually use. `javascript:` never loads in an
 // <img> in any current browser, but refusing it here means the question
 // does not have to be re-answered every time this value finds a new home.
+// #225: the picture the current entry named, remembered so that ticking
+// the box can put it back without re-picking the entry. The entry itself
+// is not always to hand -- a reader can be looking at inputs they have
+// edited away from it -- so the src is kept rather than looked up.
+let entryImageSrc = '';
+
+// #225: "Show image (if available)". A standing preference in its own
+// localStorage key, beside symbulator-theme and symbulator-lang, and
+// deliberately not part of the saved workspace: it says how this reader
+// likes to work, not what this circuit is. Default on, so the box only
+// ever has to be found by someone who wants pictures off.
+const SHOW_IMAGE_KEY = 'symbulator-show-image';
+
+function wantsEntryImage() {
+  const box = $('showEntryImageOpt');
+  return box ? box.checked : true;
+}
+
 function showEntryImage(src) {
+  if (arguments.length) entryImageSrc = (src || '').trim();
   const box = $('entryImageBox'), img = $('entryImage');
   box.hidden = true;
-  src = (src || '').trim();
+  // Unticked: drop the src as well as hiding the box, so no request is
+  // made and any picture already fetched stops being referenced. Hiding
+  // alone would still have loaded it, which is the one thing the reader
+  // asked not to happen.
+  if (!wantsEntryImage()) { img.removeAttribute('src'); return; }
+  src = entryImageSrc;
   // A relative path carries no scheme and must stay allowed: it is how an
   // image bundled beside the app is named. Anything that does carry one is
   // held to the two an <img> can actually use.
@@ -3316,6 +3361,24 @@ function showEntryImage(src) {
   if (!ok) { img.removeAttribute('src'); return; }
   img.src = src;
 }
+
+// Read the preference before the first entry is applied, so a reader who
+// turned pictures off never sees one fetched on the way past.
+(function initShowEntryImage() {
+  const box = $('showEntryImageOpt');
+  if (!box) return;
+  let saved = null;
+  try { saved = localStorage.getItem(SHOW_IMAGE_KEY); } catch (e) {}
+  if (saved === 'no') box.checked = false;
+  box.addEventListener('change', () => {
+    try {
+      localStorage.setItem(SHOW_IMAGE_KEY, box.checked ? 'yes' : 'no');
+    } catch (e) {}
+    // No argument: re-apply to whatever the current entry named, so the
+    // picture appears or disappears at once instead of at the next pick.
+    showEntryImage();
+  });
+}());
 
 // Show (or, if `text` is falsy, clear) a small note under the circuit
 // textarea -- used for a picked circuit's own "note:" metadata and for

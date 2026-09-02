@@ -493,6 +493,7 @@
  "short-circuit.3cd3": "mallongcirkvito",
  "show-ac-answers-as.f2a8": "Montri la alternajn respondojn kiel polusajn fazorojn <span class=\"hint\">— 3 + 4j fariĝas 5∠53.13°; la meza potenco restas reala</span>",
  "show-equations-adds-an.b3d5": "Montri la ekvaciojn <span class=\"hint\">— aldonas karton „Ekvacioj“ listigantan la sistemon kiun la solvilo kunmetis</span>",
+ "show-image-if-available.53ba": "Montri bildon (se disponebla)",
  "show-units-in-answers.89ab": "Montri unuojn en la respondoj <span class=\"hint\">— V, A, W, VA, Ω</span>",
  "si-prefixes-apply-to.6c04": "SI-prefiksoj validas nur por nombraj respondoj; simbola respondo kiel <code>x·vin/(r1 + x)</code> restas tia, kia ĝi estas. Valoro kun prefikso estas dekumaĵo, do SI-prefiksoj kaj <em>ekzakte</em> ne povas validi samtempe.",
  "si-prefixes.ab67": "SI-prefiksoj",

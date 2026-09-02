@@ -493,6 +493,7 @@
  "short-circuit.3cd3": "短路",
  "show-ac-answers-as.f2a8": "以极坐标相量显示交流答案 <span class=\"hint\">— 3 + 4j 变成 5∠53.13°；平均功率仍为实数</span>",
  "show-equations-adds-an.b3d5": "显示方程 <span class=\"hint\">— 增加一张“方程”卡片，列出求解器所建立的方程组</span>",
+ "show-image-if-available.53ba": "显示图片（如有）",
  "show-units-in-answers.89ab": "在答案中显示单位 <span class=\"hint\">— V、A、W、VA、Ω</span>",
  "si-prefixes-apply-to.6c04": "SI 前缀只作用于数值答案；像 <code>x·vin/(r1 + x)</code> 这样的符号答案会原样保留。带前缀的值是小数，所以 SI 前缀与<em>精确</em>不能同时生效。",
  "si-prefixes.ab67": "SI 前缀",
