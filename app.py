@@ -54,7 +54,8 @@ import branding                                              # noqa: E402
 def _brand():
     return {"brand_tm": branding.BRAND_TM,
             "brand_sub": branding.BRAND_SUB,
-            "brand_tm_color": getattr(branding, "BRAND_TM_COLOR", "")}
+            "brand_tm_color": getattr(branding, "BRAND_TM_COLOR", ""),
+            "brand_beta": getattr(branding, "BRAND_BETA", "")}
 
 
 # #227: who may put this page in a frame.

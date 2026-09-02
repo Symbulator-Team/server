@@ -467,6 +467,17 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
     font-family: Georgia, "Times New Roman", "Nimbus Roman", serif;
     font-style: italic; font-size: 0.92em; letter-spacing: 0;
   }
+  /* The beta mark, set shorter than the numeral it follows (Roberto,
+     3 Sep 2026: about 80% of its height). Georgia's beta has a long
+     descender and an ascender taller than the digits, so at the numeral's
+     own size it is the tallest thing in the lockup -- which is the wrong
+     emphasis for a temporary mark. Inherits everything else, so it stays
+     the same colour, face and slant.
+
+     Both consumers that draw a beta carry the span: the app's wordmark and
+     the landing page's. #137 removes the mark when 9 leaves beta, and this
+     rule goes with it. */
+  .brand-name .tm .beta { font-size: 0.8em; }
   .brand-sub {
     margin: 0.4rem 0 0; font-family: var(--banner-sans);
     font-size: 1rem; line-height: 1.55; color: #b7c3d6;
@@ -513,7 +524,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   @media (max-width: 480px) {
     .brand-sub { display: none; }
   }
-  /* ==== END banner.css ====================================== */
+/* ==== END banner.css ====================================== */
 
   /* The language menu (#197). Deliberately NOT in banner.css: that file
      is the lockup the five sites share, and only this app speaks nine
@@ -1074,7 +1085,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
         <!-- The β is temporary (Roberto, 28 Aug 2026): version 9 is in
              beta, and the numeral says so until it is not. Banner
              wordmark only -- nowhere else. -->
-        <h1 class="brand-name notranslate">Symbulator <span class="tm"{% if brand_tm_color %} style="color: {{ brand_tm_color }}"{% endif %}>{{ brand_tm }}</span></h1>
+        <h1 class="brand-name notranslate">Symbulator <span class="tm"{% if brand_tm_color %} style="color: {{ brand_tm_color }}"{% endif %}>{{ brand_tm }}{% if brand_beta %}<span class="beta">{{ brand_beta }}</span>{% endif %}</span></h1>
         <!-- #228: the subtitle. Empty brand_sub means version 9, whose
              subtitle is a translated UI string and must stay one; a fork
              sets brand_sub and gets its own untranslated tagline. Both
@@ -2411,7 +2422,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-02 14:18 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-02 14:23 UTC</span>
 </footer>
 
 <script>

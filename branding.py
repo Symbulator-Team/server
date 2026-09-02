@@ -36,7 +36,15 @@ resolve.
 #: What follows the wordmark: version 9 shows "9" with the beta mark
 #: (#137 tracks removing the beta when 9 leaves beta), version X shows
 #: "X". Never translated -- it is part of the name.
-BRAND_TM = "9β"
+BRAND_TM = "9"
+
+#: The beta mark that follows it, drawn at 80% of the numeral's height
+#: by `banner.css`. Its own value rather than part of BRAND_TM because
+#: it is a separate glyph with its own styling, and because #137
+#: removes it when version 9 leaves beta -- at which point this becomes
+#: "" and the markup disappears with it. A fork not in beta leaves it
+#: empty.
+BRAND_BETA = "β"
 
 #: An optional colour for that mark, as a CSS colour.
 #:
