@@ -12,7 +12,7 @@ before any of them is proposed back.
 |  | version 9 (canonical) | version X (this) |
 |---|---|---|
 | GitHub | `Symbulator` | `Symbulator-Team` |
-| PythonAnywhere | `symbulator.pythonanywhere.com` | **none — the SymbulatorX account was shut down by PythonAnywhere, 2 Sep 2026.** X is source only until it has a new home; `symbulatorx.pythonanywhere.com` is a 404 |
+| PythonAnywhere | `symbulator.pythonanywhere.com` | `symbulatorx.pythonanywhere.com` — disabled 2 Sep 2026 for looking like a phishing clone of version 9, **restored on appeal 3 Sep 2026**. Its distinct banner is the remediation; see the branding rule below |
 | landing + docs | symbulator.com, learn.symbulator.com | **none — version 9's alone** |
 | offline builds | install.symbulator.com, symbulator.com/9/local.zip | **none** |
 
