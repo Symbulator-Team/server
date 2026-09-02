@@ -573,6 +573,7 @@
  "t-o-o-l.491f": "<span class=\"bracket\">[</span> W E R K Z E U G E <span class=\"bracket\">]</span>",
  "tera.a383": "Tera, ×10<sup>12</sup>",
  "th-venin-norton.6c1b": "Thévenin / Norton",
+ "the-best-portable-symbolic.4e2c": "der beste tragbare symbolische Simulator linearer Schaltungen",
  "the-first-letter-of.80e2": "Der erste Buchstabe des Elementnamens bestimmt seinen Typ. Elementbuchstaben, Elementnamen und Knotennamen unterscheiden <strong>nicht</strong> zwischen Groß- und Kleinschreibung: <code>R1</code> und <code>r1</code> sind derselbe Widerstand, und Knoten <code>A</code> ist Knoten <code>a</code>.",
  "the-reverse-r-r.13fb": "Das Umgekehrte. <code>r1*r2 + r1*r3</code> &rarr; <code>r1*(r2 + r3)</code>",
  "the-solver-opens-in.487d": "Der Löser öffnet sich in einem neuen Tab, vorgeladen mit den Gleichungen und Ergebnissen dieser Lösung. Von dort aus:",

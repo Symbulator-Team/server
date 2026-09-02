@@ -573,6 +573,7 @@
  "t-o-o-l.491f": "<span class=\"bracket\">[</span> टू ल <span class=\"bracket\">]</span>",
  "tera.a383": "टेरा, ×10<sup>12</sup>",
  "th-venin-norton.6c1b": "Thévenin / Norton",
+ "the-best-portable-symbolic.4e2c": "रैखिक परिपथों का सर्वश्रेष्ठ सुवाह्य प्रतीकात्मक सिम्युलेटर",
  "the-first-letter-of.80e2": "किसी एलिमेंट के नाम का पहला अक्षर उसका प्रकार तय करता है। एलिमेंट के अक्षर, एलिमेंट के नाम और नोड के नाम छोटे-बड़े अक्षरों में <strong>भेद नहीं</strong> करते: <code>R1</code> और <code>r1</code> एक ही रेज़िस्टर हैं, और नोड <code>A</code> ही नोड <code>a</code> है।",
  "the-reverse-r-r.13fb": "इसका उलटा। <code>r1*r2 + r1*r3</code> &rarr; <code>r1*(r2 + r3)</code>",
  "the-solver-opens-in.487d": "सॉल्वर एक नए टैब में खुलता है, जिसमें इस हल के समीकरण और परिणाम पहले से भरे होते हैं। वहाँ से:",

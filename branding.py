@@ -1,0 +1,54 @@
+"""#228: the handful of strings that make this build *this* build.
+
+Version 9 and version X are the same application. They are meant to stay
+the same application -- X exists to try things that may later cross back
+to 9, and it does that by merging `v9/main` regularly. Everything else in
+this repository is therefore identical between the two trees, on purpose.
+
+The banner is the one exception, and it has to be. On 2 Sep 2026
+PythonAnywhere disabled the `symbulatorx` account for content that "might
+be related to phishing activities": X was serving pages byte-identical to
+`symbulator.pythonanywhere.com` under a hostname one letter away, from a
+second account, which is exactly what an automated scanner reads as a
+phishing clone. It was also, quite fairly, indistinguishable to a human.
+So X must *look* different, and this file is where that difference is
+allowed to live.
+
+**It is the only file the two trees are expected to disagree about.**
+Putting the difference here rather than in the template is the whole
+point: a fork that edits `templates/index.html` collides with version 9
+every time version 9 touches the banner's neighbourhood in a 5,000-line
+file, and the resolution is by hand, every time, with a silent failure
+mode -- take version 9's side by reflex and X quietly becomes a clone
+again, which is the thing that got the account disabled. Two constants in
+a file version 9 changes about once a year collide almost never, and when
+they do the conflict is two lines and obviously about branding.
+
+So: **do not move these strings back into the markup**, and when merging
+`v9/main` into a fork, keep the fork's copy of this file.
+
+Read at request time by the context processor in `app.py`, and at build
+time by `build_local.py`, which bakes the values into the offline page --
+that page has no Jinja, and the build refuses to emit a `{{ ` it did not
+resolve.
+"""
+
+#: What follows the wordmark: version 9 shows "9" with the beta mark
+#: (#137 tracks removing the beta when 9 leaves beta), version X shows
+#: "X". Never translated -- it is part of the name.
+BRAND_TM = "X"
+
+#: The line under the wordmark.
+#:
+#: Empty here on purpose, and that is meaningful rather than missing:
+#: empty means "use the translated subtitle in the template", which is
+#: what version 9 wants -- its subtitle is a real UI string with a
+#: translation in each of the twelve languages, and turning it into a
+#: constant would throw those away.
+#:
+#: A fork sets it to its own tagline, and the template then renders that
+#: instead, marked `notranslate`. That suits a fork that is English-only
+#: by standing rule, and it keeps the fork's tagline out of the i18n
+#: dictionaries entirely -- changing a translated string would orphan its
+#: key in all twelve and demand twelve translations.
+BRAND_SUB = "testing the limits of symbolic simulation"

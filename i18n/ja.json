@@ -573,6 +573,7 @@
  "t-o-o-l.491f": "<span class=\"bracket\">[</span> ツ ー ル <span class=\"bracket\">]</span>",
  "tera.a383": "テラ、×10<sup>12</sup>",
  "th-venin-norton.6c1b": "Thévenin / Norton",
+ "the-best-portable-symbolic.4e2c": "最良の携帯型・線形回路の記号シミュレーター",
  "the-first-letter-of.80e2": "素子名の最初の文字がその種類を決めます。素子の文字、素子名、節点名は大文字小文字を<strong>区別しません</strong>：<code>R1</code> と <code>r1</code> は同じ抵抗、節点 <code>A</code> は節点 <code>a</code> です。",
  "the-reverse-r-r.13fb": "その逆です。<code>r1*r2 + r1*r3</code> &rarr; <code>r1*(r2 + r3)</code>",
  "the-solver-opens-in.487d": "ソルバーは新しいタブで開き、この求解の方程式と結果があらかじめ読み込まれています。そこから：",

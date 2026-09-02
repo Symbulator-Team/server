@@ -573,6 +573,7 @@
  "t-o-o-l.491f": "<span class=\"bracket\">[</span> З А С О Б И <span class=\"bracket\">]</span>",
  "tera.a383": "тера, ×10<sup>12</sup>",
  "th-venin-norton.6c1b": "Тевенін / Нортон",
+ "the-best-portable-symbolic.4e2c": "Найкращий портативний символьний симулятор лінійних схем",
  "the-first-letter-of.80e2": "Перша літера назви елемента задає його тип. Літери елементів, назви елементів і назви вузлів <strong>нечутливі до регістру</strong>: <code>R1</code> і <code>r1</code> — той самий резистор, а вузол <code>A</code> — це вузол <code>a</code>.",
  "the-reverse-r-r.13fb": "Навпаки. <code>r1*r2 + r1*r3</code> &rarr; <code>r1*(r2 + r3)</code>",
  "the-solver-opens-in.487d": "Розв'язувач відкривається в новій вкладці, вже заповнений рівняннями й результатами цього розв'язку. Звідти можна:",

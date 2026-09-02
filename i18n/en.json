@@ -573,6 +573,7 @@
  "t-o-o-l.491f": "<span class=\"bracket\">[</span> T O O L S <span class=\"bracket\">]</span>",
  "tera.a383": "tera, ×10<sup>12</sup>",
  "th-venin-norton.6c1b": "Thévenin / Norton",
+ "the-best-portable-symbolic.4e2c": "the best portable symbolic simulator of linear circuits",
  "the-first-letter-of.80e2": "The first letter of an element's name selects its type. Element letters, element names and node names are <strong>not</strong> case-sensitive: <code>R1</code> and <code>r1</code> are the same resistor, and node <code>A</code> is node <code>a</code>.",
  "the-reverse-r-r.13fb": "The reverse. <code>r1*r2 + r1*r3</code> &rarr; <code>r1*(r2 + r3)</code>",
  "the-solver-opens-in.487d": "The solver opens in a new tab, preloaded with this solve&#8217;s equations and results. From there:",

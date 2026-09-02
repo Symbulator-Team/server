@@ -573,6 +573,7 @@
  "t-o-o-l.491f": "<span class=\"bracket\">[</span> স র ঞ্জা ম <span class=\"bracket\">]</span>",
  "tera.a383": "টেরা, ×10<sup>12</sup>",
  "th-venin-norton.6c1b": "Thévenin / Norton",
+ "the-best-portable-symbolic.4e2c": "রৈখিক সার্কিটের সেরা বহনযোগ্য প্রতীকী সিমুলেটর",
  "the-first-letter-of.80e2": "একটি এলিমেন্টের নামের প্রথম অক্ষরই তার ধরন ঠিক করে। এলিমেন্টের অক্ষর, এলিমেন্টের নাম ও নোডের নাম ছোট-বড় হাতের অক্ষরে <strong>তফাত করে না</strong>: <code>R1</code> আর <code>r1</code> একই রেজিস্টর, আর নোড <code>A</code>-ই নোড <code>a</code>।",
  "the-reverse-r-r.13fb": "এর উল্টোটা। <code>r1*r2 + r1*r3</code> &rarr; <code>r1*(r2 + r3)</code>",
  "the-solver-opens-in.487d": "সলভারটি একটি নতুন ট্যাবে খোলে, এই সমাধানের সমীকরণ ও ফলাফল আগে থেকেই ভরা অবস্থায়। সেখান থেকে:",
