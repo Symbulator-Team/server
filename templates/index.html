@@ -1074,8 +1074,25 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
         <!-- The β is temporary (Roberto, 28 Aug 2026): version 9 is in
              beta, and the numeral says so until it is not. Banner
              wordmark only -- nowhere else. -->
-        <h1 class="brand-name notranslate">Symbulator <span class="tm">9β</span></h1>
+        <h1 class="brand-name notranslate">Symbulator <span class="tm">{{ brand_tm }}</span></h1>
+        <!-- #228: the subtitle. Empty brand_sub means version 9, whose
+             subtitle is a translated UI string and must stay one; a fork
+             sets brand_sub and gets its own untranslated tagline. Both
+             spellings live here so the i18n tagger still sees version 9's
+             English literal and keys it exactly as before.
+
+             An HTML comment, not a Jinja one. The offline build strips
+             the Jinja it knows about, but a Jinja *comment* sailed
+             straight through into the page as visible text the first
+             time this was written -- the sanity check banned only a
+             stray expression. It now bans Jinja statements and comments
+             too, which is why this note cannot spell either of them
+             out. -->
+{% if brand_sub %}
+        <p class="brand-sub notranslate">{{ brand_sub }}</p>
+{% else %}
         <p class="brand-sub" data-i18n="the-best-portable-symbolic.4e2c">the best portable symbolic simulator of linear circuits</p>
+{% endif %}
         <!-- server-only: the property mark (#135). Roberto's brief:
              the hosted app and PythonAnywhere say where you are, the
              downloaded local build stays unmarked -- which the
@@ -2394,7 +2411,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-02 12:57 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-02 14:07 UTC</span>
 </footer>
 
 <script>

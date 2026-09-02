@@ -43,6 +43,18 @@ app = Flask(__name__)
 from eqsheet_web import bp as eqsheet_bp                      # noqa: E402
 app.register_blueprint(eqsheet_bp)
 
+# #228: the banner strings a fork is allowed to differ on. Both pages
+# want them -- index.html and eqsheet.html carry the same lockup -- and a
+# context processor reaches the Blueprint's templates as well as this
+# file's, so neither render call has to remember to pass them.
+import branding                                              # noqa: E402
+
+
+@app.context_processor
+def _brand():
+    return {"brand_tm": branding.BRAND_TM, "brand_sub": branding.BRAND_SUB}
+
+
 # #227: who may put this page in a frame.
 #
 # The documentation's split view (#224) shows the tutorial beside the
