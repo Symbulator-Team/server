@@ -591,7 +591,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
         <!-- The β is temporary (Roberto, 28 Aug 2026): version 9 is in
              beta, and the numeral says so until it is not. Banner
              wordmark only -- nowhere else. -->
-        <h1 class="brand-name notranslate">Symbulator <span class="tm">{{ brand_tm }}</span></h1>
+        <h1 class="brand-name notranslate">Symbulator <span class="tm"{% if brand_tm_color %} style="color: {{ brand_tm_color }}"{% endif %}>{{ brand_tm }}</span></h1>
         <!-- #228: the subtitle. Empty brand_sub means version 9, whose
              subtitle is a translated UI string and must stay one; a fork
              sets brand_sub and gets its own untranslated tagline. Both

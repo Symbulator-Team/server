@@ -38,6 +38,18 @@ resolve.
 #: "X". Never translated -- it is part of the name.
 BRAND_TM = "9β"
 
+#: An optional colour for that mark, as a CSS colour.
+#:
+#: Empty for version 9, which takes the sky blue `banner.css` gives every
+#: property. A fork may set one -- version X uses the gold #d9a521 -- and
+#: it is rendered as an inline style on the mark alone.
+#:
+#: Inline, and declared here, precisely so that `banner.css` stays the
+#: one shared source of the lockup that all five sites are guarded
+#: against. A fork that edited the stylesheet would be back to the
+#: problem #228 exists to solve, one file further down.
+BRAND_TM_COLOR = ""
+
 #: The line under the wordmark.
 #:
 #: Empty here on purpose, and that is meaningful rather than missing:
