@@ -38,6 +38,26 @@ resolve.
 #: "X". Never translated -- it is part of the name.
 BRAND_TM = "X"
 
+#: The beta mark that follows it, drawn at 80% of the numeral's height
+#: by `banner.css`. Its own value rather than part of BRAND_TM because
+#: it is a separate glyph with its own styling, and because #137
+#: removes it when version 9 leaves beta -- at which point this becomes
+#: "" and the markup disappears with it. A fork not in beta leaves it
+#: empty.
+BRAND_BETA = ""
+
+#: An optional colour for that mark, as a CSS colour.
+#:
+#: Empty for version 9, which takes the sky blue `banner.css` gives every
+#: property. A fork may set one -- version X uses the gold #d9a521 -- and
+#: it is rendered as an inline style on the mark alone.
+#:
+#: Inline, and declared here, precisely so that `banner.css` stays the
+#: one shared source of the lockup that all five sites are guarded
+#: against. A fork that edited the stylesheet would be back to the
+#: problem #228 exists to solve, one file further down.
+BRAND_TM_COLOR = "#d9a521"
+
 #: The line under the wordmark.
 #:
 #: Empty here on purpose, and that is meaningful rather than missing:
@@ -51,4 +71,5 @@ BRAND_TM = "X"
 #: by standing rule, and it keeps the fork's tagline out of the i18n
 #: dictionaries entirely -- changing a translated string would orphan its
 #: key in all twelve and demand twelve translations.
-BRAND_SUB = "testing the limits of symbolic simulation"
+BRAND_SUB = ("an experimental fork of Symbulator 9 — "
+             "testing the limits of symbolic simulation")
