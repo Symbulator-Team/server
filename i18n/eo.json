@@ -573,7 +573,6 @@
  "t-o-o-l.491f": "<span class=\"bracket\">[</span> I L O J <span class=\"bracket\">]</span>",
  "tera.a383": "tera, ×10<sup>12</sup>",
  "th-venin-norton.6c1b": "Thévenin / Norton",
- "the-best-portable-symbolic.4e2c": "la plej bona portebla simbola simulilo de linearaj cirkvitoj",
  "the-first-letter-of.80e2": "La unua litero de la nomo de elemento difinas ĝian specon. Elementaj literoj, elementaj nomoj kaj nodaj nomoj <strong>ne</strong> distingas majusklojn de minuskloj: <code>R1</code> kaj <code>r1</code> estas la sama rezistilo, kaj la nodo <code>A</code> estas la nodo <code>a</code>.",
  "the-reverse-r-r.13fb": "La malo. <code>r1*r2 + r1*r3</code> &rarr; <code>r1*(r2 + r3)</code>",
  "the-solver-opens-in.487d": "La solvilo malfermiĝas en nova langeto, antaŭŝargita per la ekvacioj kaj rezultoj de ĉi tiu solvo. De tie:",

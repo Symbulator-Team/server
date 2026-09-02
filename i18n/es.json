@@ -573,7 +573,6 @@
  "t-o-o-l.491f": "<span class=\"bracket\">[</span> H E R R A M I E N T A S <span class=\"bracket\">]</span>",
  "tera.a383": "tera, ×10<sup>12</sup>",
  "th-venin-norton.6c1b": "Thévenin / Norton",
- "the-best-portable-symbolic.4e2c": "el mejor simulador simbólico portátil de circuitos lineales",
  "the-first-letter-of.80e2": "La primera letra del nombre de un elemento determina su tipo. Las letras de elemento, los nombres de elemento y los nombres de nodo <strong>no</strong> distinguen mayúsculas de minúsculas: <code>R1</code> y <code>r1</code> son el mismo resistor, y el nodo <code>A</code> es el nodo <code>a</code>.",
  "the-reverse-r-r.13fb": "Lo inverso. <code>r1*r2 + r1*r3</code> &rarr; <code>r1*(r2 + r3)</code>",
  "the-solver-opens-in.487d": "El solucionador se abre en una pestaña nueva, precargado con las ecuaciones y los resultados de esta solución. Desde ahí:",

@@ -573,7 +573,6 @@
  "t-o-o-l.491f": "<span class=\"bracket\">[</span> 도 구 <span class=\"bracket\">]</span>",
  "tera.a383": "테라, ×10<sup>12</sup>",
  "th-venin-norton.6c1b": "Thévenin / Norton",
- "the-best-portable-symbolic.4e2c": "가장 뛰어난 휴대용 선형 회로 기호 시뮬레이터",
  "the-first-letter-of.80e2": "소자 이름의 첫 글자가 그 종류를 정합니다. 소자 문자, 소자 이름, 노드 이름은 대소문자를 <strong>가리지 않습니다</strong>: <code>R1</code>과 <code>r1</code>은 같은 저항이고, 노드 <code>A</code>는 노드 <code>a</code>입니다.",
  "the-reverse-r-r.13fb": "그 반대입니다. <code>r1*r2 + r1*r3</code> &rarr; <code>r1*(r2 + r3)</code>",
  "the-solver-opens-in.487d": "풀이기는 새 탭에서 열리며, 이번 풀이의 방정식과 결과가 미리 실려 있습니다. 거기에서:",

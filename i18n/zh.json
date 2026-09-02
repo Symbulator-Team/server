@@ -573,7 +573,6 @@
  "t-o-o-l.491f": "<span class=\"bracket\">[</span> 工 具 <span class=\"bracket\">]</span>",
  "tera.a383": "太，×10<sup>12</sup>",
  "th-venin-norton.6c1b": "Thévenin / Norton",
- "the-best-portable-symbolic.4e2c": "最好的便携式线性电路符号仿真器",
  "the-first-letter-of.80e2": "元件名称的第一个字母决定它的类型。元件字母、元件名称和节点名称<strong>不</strong>区分大小写：<code>R1</code> 和 <code>r1</code> 是同一个电阻，节点 <code>A</code> 就是节点 <code>a</code>。",
  "the-reverse-r-r.13fb": "反过来。<code>r1*r2 + r1*r3</code> &rarr; <code>r1*(r2 + r3)</code>",
  "the-solver-opens-in.487d": "求解器会在新标签页中打开，并预先载入本次求解的方程和结果。从那里你可以：",

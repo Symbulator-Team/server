@@ -18,6 +18,30 @@ before any of them is proposed back.
 
 ## The rules that matter
 
+**X's banner is X's own, and a merge from v9 will fight you for it.**
+Since 2 Sep 2026 the wordmark reads **Symbulator X**, not `Symbulator
+9β`, and the subtitle is *testing the limits of symbolic simulation*.
+Both live in `templates/index.html` **and** `templates/eqsheet.html`, on
+lines version 9 also owns, so `git merge v9/main` will conflict there
+whenever v9 touches its banner: **keep X's side, take v9's for
+everything else.** It is the only deliberate content difference between
+the two trees, so a conflict anywhere else in those files is a real one
+to read rather than a known collision.
+
+Why it exists is worth knowing, because it is not decoration. On 2 Sep
+2026 PythonAnywhere disabled the `symbulatorx` account for content that
+"might be related to phishing activities". X was at that moment a
+byte-identical copy of `symbulator.pythonanywhere.com` under a hostname
+one letter away, on a different account — which is precisely what an
+automated scanner reads as a phishing clone. A visibly distinct banner
+is the honest fix as well as the safe one: a stranger landing on X could
+not previously tell it was not the real thing.
+
+The subtitle is `notranslate`. X is English-only, and marking it so is
+what keeps `python tools/i18n.py check` clean — changing a translated
+string would otherwise orphan its key in all twelve dictionaries and
+demand twelve translations this fork has a standing rule not to do.
+
 **Never deploy this to any of version 9's five sites.** Not
 `install.symbulator.com`, not `symbulator.com`, not
 `learn.symbulator.com`, not `symbulator.pythonanywhere.com`. Some

@@ -573,7 +573,6 @@
  "t-o-o-l.491f": "<span class=\"bracket\">[</span> P E R K A K A S <span class=\"bracket\">]</span>",
  "tera.a383": "tera, ×10<sup>12</sup>",
  "th-venin-norton.6c1b": "Thévenin / Norton",
- "the-best-portable-symbolic.4e2c": "simulator simbolik rangkaian linear portabel terbaik",
  "the-first-letter-of.80e2": "Huruf pertama nama sebuah elemen menentukan jenisnya. Huruf elemen, nama elemen dan nama simpul <strong>tidak</strong> membedakan huruf besar-kecil: <code>R1</code> dan <code>r1</code> adalah resistor yang sama, dan simpul <code>A</code> adalah simpul <code>a</code>.",
  "the-reverse-r-r.13fb": "Kebalikannya. <code>r1*r2 + r1*r3</code> &rarr; <code>r1*(r2 + r3)</code>",
  "the-solver-opens-in.487d": "Pemecah terbuka di tab baru, sudah dimuati persamaan dan hasil penyelesaian ini. Dari sana:",
