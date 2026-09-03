@@ -30,7 +30,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "c632ea45de";
+window.SYMB_I18N_V = "e0a027d3cb";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -1405,6 +1405,10 @@ units: yes</pre>
          for a reader on a metered connection, and it is why this cannot be
          done in CSS.
 
+         #244: it read "Show image (if available)" until #242 made the
+         control appear only for an entry that has one. The caveat was
+         describing a case that can no longer be on screen.
+
          Above the picture rather than below it, so the control comes before
          the thing it controls; and outside entryImageBox, which is hidden
          whenever there is no picture -- a checkbox that vanished with the
@@ -1412,7 +1416,7 @@ units: yes</pre>
     <label class="checkline" id="showImageLine" hidden
            style="margin-top:.9rem">
       <input type="checkbox" id="showEntryImageOpt" checked>
-      <span data-i18n="show-image-if-available.53ba">Show image (if available)</span>
+      <span data-i18n="show-image.d241">Show image</span>
     </label>
 
     <!-- #219: a picture of this entry's circuit, when the entry names one
@@ -2456,7 +2460,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-03 02:28 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-03 02:42 UTC</span>
 </footer>
 
 <script>

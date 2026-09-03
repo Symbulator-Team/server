@@ -495,7 +495,7 @@
  "short-circuit.3cd3": "short circuit",
  "show-ac-answers-as.f2a8": "Show AC answers as polar phasors <span class=\"hint\">— 3 + 4j becomes 5∠53.13°; average power stays real</span>",
  "show-equations-adds-an.b3d5": "Show equations <span class=\"hint\">— adds an Equations card listing the system the solver assembled</span>",
- "show-image-if-available.53ba": "Show image (if available)",
+ "show-image.d241": "Show image",
  "show-units-in-answers.89ab": "Show units in answers <span class=\"hint\">— V, A, W, VA, Ω</span>",
  "si-prefixes-apply-to.6c04": "SI prefixes apply to numeric answers only; a symbolic answer such as <code>x·vin/(r1 + x)</code> is left as it is. A prefixed value is a decimal, so SI prefixes and <em>exact</em> can't both apply.",
  "si-prefixes.ab67": "SI prefixes",

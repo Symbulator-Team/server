@@ -495,7 +495,7 @@
  "short-circuit.3cd3": "curto-circuito",
  "show-ac-answers-as.f2a8": "Mostrar as respostas de CA como fasores polares <span class=\"hint\">— 3 + 4j vira 5∠53.13°; a potência média continua real</span>",
  "show-equations-adds-an.b3d5": "Mostrar equações <span class=\"hint\">— acrescenta um cartão Equações listando o sistema que o solucionador montou</span>",
- "show-image-if-available.53ba": "Mostrar imagem (se disponível)",
+ "show-image.d241": "Mostrar imagem",
  "show-units-in-answers.89ab": "Mostrar unidades nas respostas <span class=\"hint\">— V, A, W, VA, Ω</span>",
  "si-prefixes-apply-to.6c04": "Os prefixos SI valem só para respostas numéricas; uma resposta simbólica como <code>x·vin/(r1 + x)</code> fica como está. Um valor com prefixo é um decimal, então prefixos SI e <em>exato</em> não podem valer ao mesmo tempo.",
  "si-prefixes.ab67": "Prefixos SI",
