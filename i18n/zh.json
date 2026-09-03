@@ -8,7 +8,7 @@
  "a-value-can-be.5443": "值可以是数字、符号（<code>r_load</code>、<code>vin</code>）或表达式 — 而引用另一个答案的表达式，例如 <code>2*v_2</code>，就构成一个受控（相关）源。",
  "a-word-about-your.697c": "关于你的设置",
  "aa-amplitude-and-angle.65ae": "aa — 幅值与相角",
- "about-input-file-cir.5344": "关于输入文件（.cir）格式",
+ "about-input-file-cir.e152": "<span class=\"lbl-full\">关于输入文件（.cir）格式</span><span class=\"lbl-short\">关于输入文件（.cir）格式</span>",
  "about-real-solutions.e0d4": "关于“实数解”",
  "about-symbulator.9ed9": "关于 Symbulator",
  "about-symbulator.cd7b": "关于 Symbulator 9",

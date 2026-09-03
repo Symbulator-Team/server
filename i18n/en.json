@@ -8,7 +8,7 @@
  "a-value-can-be.5443": "A value can be a number, a symbol (<code>r_load</code>, <code>vin</code>) or an expression — and an expression referring to another answer, like <code>2*v_2</code>, makes a dependent (controlled) source.",
  "a-word-about-your.697c": "A word about your settings",
  "aa-amplitude-and-angle.65ae": "aa — amplitude and angle",
- "about-input-file-cir.5344": "About input file (.cir) format",
+ "about-input-file-cir.e152": "<span class=\"lbl-full\">About input file (.cir) format</span><span class=\"lbl-short\">About the .cir format</span>",
  "about-real-solutions.e0d4": "About &#8216;real solutions&#8217;",
  "about-symbulator.9ed9": "About Symbulator",
  "about-symbulator.cd7b": "About Symbulator 9",

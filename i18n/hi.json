@@ -8,7 +8,7 @@
  "a-value-can-be.5443": "मान एक संख्या, एक प्रतीक (<code>r_load</code>, <code>vin</code>) या एक व्यंजक हो सकता है — और जो व्यंजक किसी दूसरे उत्तर को संदर्भित करे, जैसे <code>2*v_2</code>, वह एक आश्रित (नियंत्रित) स्रोत बनाता है।",
  "a-word-about-your.697c": "आपकी सेटिंग्स के बारे में एक बात",
  "aa-amplitude-and-angle.65ae": "aa — आयाम और कोण",
- "about-input-file-cir.5344": "इनपुट फ़ाइल (.cir) प्रारूप के बारे में",
+ "about-input-file-cir.e152": "<span class=\"lbl-full\">इनपुट फ़ाइल (.cir) प्रारूप के बारे में</span><span class=\"lbl-short\">इनपुट फ़ाइल (.cir) प्रारूप के बारे में</span>",
  "about-real-solutions.e0d4": "“वास्तविक हल” के बारे में",
  "about-symbulator.9ed9": "Symbulator के बारे में",
  "about-symbulator.cd7b": "Symbulator 9 के बारे में",

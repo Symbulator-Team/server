@@ -8,7 +8,7 @@
  "a-value-can-be.5443": "값은 수, 기호(<code>r_load</code>, <code>vin</code>), 또는 식일 수 있습니다 — 그리고 <code>2*v_2</code>처럼 다른 답을 참조하는 식을 쓰면 종속(제어) 전원이 됩니다.",
  "a-word-about-your.697c": "설정에 관한 한마디",
  "aa-amplitude-and-angle.65ae": "aa — 크기와 위상각",
- "about-input-file-cir.5344": "입력 파일(.cir) 형식에 대하여",
+ "about-input-file-cir.e152": "<span class=\"lbl-full\">입력 파일(.cir) 형식에 대하여</span><span class=\"lbl-short\">입력 파일(.cir) 형식에 대하여</span>",
  "about-real-solutions.e0d4": "‘실수해만’에 대하여",
  "about-symbulator.9ed9": "Symbulator 소개",
  "about-symbulator.cd7b": "Symbulator 9 소개",

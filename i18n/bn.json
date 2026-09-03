@@ -8,7 +8,7 @@
  "a-value-can-be.5443": "মান হতে পারে একটি সংখ্যা, একটি প্রতীক (<code>r_load</code>, <code>vin</code>), বা একটি রাশিমালা — এবং যে রাশিমালা অন্য কোনো উত্তরকে নির্দেশ করে, যেমন <code>2*v_2</code>, তা একটি নির্ভরশীল (নিয়ন্ত্রিত) উৎস তৈরি করে।",
  "a-word-about-your.697c": "আপনার সেটিংস সম্পর্কে দু-কথা",
  "aa-amplitude-and-angle.65ae": "aa — বিস্তার এবং কোণ",
- "about-input-file-cir.5344": "ইনপুট ফাইল (.cir) ফরম্যাট সম্পর্কে",
+ "about-input-file-cir.e152": "<span class=\"lbl-full\">ইনপুট ফাইল (.cir) ফরম্যাট সম্পর্কে</span><span class=\"lbl-short\">.cir ফরম্যাট</span>",
  "about-real-solutions.e0d4": "“বাস্তব সমাধান” সম্পর্কে",
  "about-symbulator.9ed9": "Symbulator সম্পর্কে",
  "about-symbulator.cd7b": "Symbulator 9 সম্পর্কে",

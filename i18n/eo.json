@@ -8,7 +8,7 @@
  "a-value-can-be.5443": "Valoro povas esti nombro, simbolo (<code>r_load</code>, <code>vin</code>) aŭ esprimo — kaj esprimo kiu referencas alian respondon, kiel <code>2*v_2</code>, faras dependan (regatan) fonton.",
  "a-word-about-your.697c": "Vorto pri viaj agordoj",
  "aa-amplitude-and-angle.65ae": "aa — amplitudo kaj angulo",
- "about-input-file-cir.5344": "Pri la formo de la eniga dosiero (.cir)",
+ "about-input-file-cir.e152": "<span class=\"lbl-full\">Pri la formo de la eniga dosiero (.cir)</span><span class=\"lbl-short\">La formo .cir</span>",
  "about-real-solutions.e0d4": "Pri „realaj solvoj“",
  "about-symbulator.9ed9": "Pri Symbulator",
  "about-symbulator.cd7b": "Pri Symbulator 9",
