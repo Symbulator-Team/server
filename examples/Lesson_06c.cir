@@ -57,6 +57,11 @@ note: Example 5.7's circuit with a ramp input, t: find vc and ic.
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_o
+plotmin: 0
+plotmax: 2
+plotpoints: 300
 
 
 [Bo2's Example 5.12 (Exponential)]
@@ -71,6 +76,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-example-5-12-exponentia
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 5
+plotpoints: 300
 
 
 [Bo2's p265 (Exponential, the repeated pole)]
@@ -84,6 +94,11 @@ note: Find iL and vL again. The same circuit as the previous entry with the sour
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 2
+plotpoints: 300
 
 
 [Bo2's Example 5.13 (Exponential)]
@@ -100,6 +115,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-example-5-13-exponentia
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_3
+plotmin: 0
+plotmax: 50
+plotpoints: 300
 
 
 [Bo2's Drill Exercise 5.16 (Exponential)]
@@ -115,6 +135,11 @@ note: Example 5.7's circuit driven at its own pole, 2e^(-4t): find vc and ic —
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_o
+plotmin: 0
+plotmax: 2
+plotpoints: 300
 
 
 [Bo2's Example 6.1 (DC, second order)]
@@ -146,6 +171,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-example-6-1-30.jpg
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 1
+plotpoints: 300
 
 
 [Bo2's Drill Exercise 6.1 (DC)]
@@ -177,6 +207,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-1-32.j
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 2
+plotpoints: 300
 
 
 [Bo2's Example 6.2 (DC, the left half)]
@@ -221,6 +256,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-example-6-2-33.jpg
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 5
+plotpoints: 300
 
 
 [Bo2's Example 6.3 (DC)]
@@ -253,3 +293,8 @@ image: https://learn.symbulator.com/assets/practice/bo2s-example-6-3-34.jpg
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 5
+plotpoints: 300

@@ -30,7 +30,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "567ef71462";
+window.SYMB_I18N_V = "4cf6da3b41";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -1361,7 +1361,7 @@ variables: v_2
 rounding: exact
 si: no
 units: yes</pre>
-      <p style="font-size:.88rem;color:var(--muted)" data-i18n="everything-after-the-element.4f05">
+      <p style="font-size:.88rem;color:var(--muted)" data-i18n="everything-after-the-element.afbf">
         Everything after the element lines is optional, and can be left out
         entirely — leaving a key out just means the app's own default
         applies, same as if you'd never touched it:
@@ -1388,8 +1388,9 @@ units: yes</pre>
         <code>evaluate_conditions</code>, the standalone equation solver's
         <code>solve_equations</code> / <code>solve_conditions</code> /
         <code>solve_unknowns</code> / <code>solve_real_only</code>, and the
-        plot tool's <code>plottool</code> (time/bode) /
-        <code>plotkey</code> / <code>plotmin</code> /
+        plot tool's <code>plottool</code> (sweep/bode/bode_tf/plot_time) /
+        <code>plotkey</code> / <code>plotx</code> (the variable on the
+        x-axis) / <code>plotmin</code> /
         <code>plotmax</code> / <code>plotpoints</code>.
       </p>
       <p style="font-size:.88rem;color:var(--muted)" data-i18n="when-the-app-writes.39e9">
@@ -2513,7 +2514,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-03 10:04 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-03 12:22 UTC</span>
 </footer>
 
 <script>
@@ -3619,8 +3620,12 @@ function applyCircuit(c) {
   // in "tool:" instead, so that form is still understood: if tool names a
   // plot, it belongs to the Plot card and the Analysis card falls back to
   // a plain solve.
-  const legacyPlotTool = PLOT_TOOLS.has(c.tool);
-  const plotTool = c.plottool || (legacyPlotTool ? c.tool : '');
+  // `time` is the API's name for the time plot, and what two shipped
+  // books said until #251; the menu's value is plot_time, and a select
+  // handed a value it has no option for selects nothing.
+  const plotName = v => v === 'time' ? 'plot_time' : v;
+  const legacyPlotTool = PLOT_TOOLS.has(plotName(c.tool));
+  const plotTool = plotName(c.plottool || (legacyPlotTool ? c.tool : ''));
   // A file stores one tool name; the interface now spreads it over two
   // menus. Anything that is not a plain solve selects "Find equivalent"
   // and sets the second menu to the stored name, so files written before
@@ -4231,7 +4236,14 @@ function inputsSnapshot() {
   // The Plot card and the Analysis tool are independent, and a circuit may
   // legitimately have both -- a two-port analysis and a plot, say. They get
   // separate keys so saving one cannot silently drop the other.
-  const hasPlot = $('plotKey').value.trim() !== '';
+  //
+  // #250: the card counts as in use when *any* of its fields holds
+  // something, not only the variable. A Bode plot's frequencies typed
+  // before its variable used to be left out of the entry and came back
+  // blank. The point count is a field too, but 300 is what a fresh page
+  // shows, so it counts only once it has been changed.
+  const hasPlot = ['plotKey', 'plotX', 'plotMin', 'plotMax']
+    .some(id => $(id).value.trim() !== '') || String($('plotN').value) !== '300';
   const expert = expertFields();
   return {
     desc: desc,

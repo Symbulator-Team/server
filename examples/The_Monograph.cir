@@ -87,6 +87,11 @@ note: The t > 0 half: the DC source gone, the waveform source connected, the cap
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_a
+plotmin: 0
+plotmax: 10
+plotpoints: 300
 
 
 [Three-phase wye-delta with line impedances]
@@ -143,6 +148,11 @@ note: Composed for the monograph: two identical coupled coils, each closed on it
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l1
+plotmin: 0
+plotmax: 5
+plotpoints: 300
 
 
 [Two op-amps, all symbols]

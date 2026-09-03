@@ -455,54 +455,19 @@ def api_export():
     so the user can download it and open it again later (or keep
     building it up). Nothing is stored on the server -- the list of
     circuits comes in whole with every call."""
-    from circuitbook import (format_book, MAX_CIRCUITS, MAX_NAME_LEN,
-                             MAX_TITLE_LEN)
+    from circuitbook import format_book, clean_circuits, MAX_TITLE_LEN
 
     data = request.get_json(silent=True) or {}
     raw_circuits = data.get("circuits")
     if not isinstance(raw_circuits, list) or not raw_circuits:
         return jsonify({"ok": False, "error": "Nothing to save yet."}), 400
 
-    circuits = []
-    for raw in raw_circuits[:MAX_CIRCUITS]:
-        if not isinstance(raw, dict):
-            continue
-        circuit = {"name": str(raw.get("name") or "Circuit")[:MAX_NAME_LEN],
-                   "desc": str(raw.get("desc") or "")[:MAX_DESC_LEN]}
-        for field in ("domain", "omega", "vars", "tool", "n1", "n2", "kind",
-                      "unknowns", "plottool", "plotkey", "plotx",
-                      "plotmin", "plotmax", "plotpoints", "rounding", "evaluate",
-                      "solve_unknowns"):
-            val = raw.get(field)
-            if val:
-                circuit[field] = str(val)[:MAX_EXTRA_LEN]
-        # Settings booleans -- always carried over (even when False), since
-        # a saved circuit always has *some* Settings state, unlike the
-        # "if present" fields above. "units" defaults to True (unlike the
-        # other three): a circuit dict that never touched Settings at all
-        # (e.g. parsed straight from a supplied example, which doesn't spell out
-        # every default) means "show units", same as a fresh page load --
-        # bool(None) would wrongly read that silence as "off".
-        for field in ("si", "rms", "solve_real_only"):
-            circuit[field] = bool(raw.get(field))
-        circuit["units"] = bool(raw.get("units", True))
-        # #237: `note` is repeatable now -- one paragraph per line --
-        # so it belongs with the lists. Left among the scalars above
-        # it would have been str()-ed into the literal "['a', 'b']".
-        # This file lists its fields by hand, which is exactly the
-        # trap CLAUDE.md warns about: a field changed in one place
-        # and forgotten here reaches the offline build and not this
-        # one.
-        for field in ("equations", "conditions", "solve_equations",
-                      "solve_conditions", "note"):
-            items = raw.get(field)
-            if isinstance(items, list):
-                items = [str(x).strip()[:MAX_EXTRA_LEN] for x in items if str(x).strip()]
-                if items:
-                    circuit[field] = items[:MAX_EXTRA]
-        if circuit["desc"].strip():
-            circuits.append(circuit)
-
+    # #250: the field list lives in circuitbook, next to the parser's own
+    # tables, and the offline bridge calls the same function. This used to
+    # be a hand-kept copy here and another in bridge.py, and the two had
+    # drifted apart in different directions.
+    circuits = clean_circuits(raw_circuits, desc_len=MAX_DESC_LEN,
+                              extra_len=MAX_EXTRA_LEN, max_items=MAX_EXTRA)
     if not circuits:
         return jsonify({"ok": False, "error": "Nothing to save yet."}), 400
     title = str(data.get("title") or "")[:MAX_TITLE_LEN]

@@ -164,6 +164,61 @@ MAX_CIRCUITS = 200
 MAX_NAME_LEN = 80
 MAX_TITLE_LEN = 120
 
+# Every JSON field an entry may carry, derived from the two tables above
+# rather than listed a second time: whatever parse_book can read, an
+# export can write. Until #250 (3 Sep 2026) both export paths -- app.py's
+# /api/export and the offline bridge's export_book -- kept their own
+# hand-written copy of this list, and each had drifted a different way:
+# the server dropped `defines` and `evaluate_conditions`, the offline
+# build dropped `plotx` and `defines`, and neither carried `polar` or
+# `show_equations`. Nothing showed inside a session, because the entries
+# live in the browser; the values went missing only in a downloaded
+# file, which is the one place a reader expects them to be safe.
+LIST_FIELDS = tuple(dict.fromkeys(_MULTI.values()))
+BOOL_FIELDS = tuple(sorted(_BOOL_FIELDS))
+SCALAR_FIELDS = tuple(f for f in dict.fromkeys(_KEYS.values())
+                      if f not in _BOOL_FIELDS)
+
+
+def clean_circuits(raw_circuits, *, desc_len=None, extra_len=None,
+                   max_items=None) -> List[dict]:
+    """Turn the browser's live list of entries -- whatever JSON it sent --
+    into circuit dicts format_book can write. The one function behind
+    both export paths (see the note above LIST_FIELDS for why it is one).
+
+    Scalars are kept when non-empty, booleans always (a saved circuit
+    always has *some* Settings state), lists when they have items.
+    `units` alone defaults to True when absent: an entry that never
+    touched Settings -- one parsed from an older file, say -- means
+    "show units", the same as a fresh page, and bool(None) would read
+    that silence as "off". The length caps are the caller's: the server
+    applies its request limits, the offline build has none to apply."""
+    def cut(s: str, n) -> str:
+        return s if n is None else s[:n]
+
+    circuits: List[dict] = []
+    for raw in list(raw_circuits or [])[:MAX_CIRCUITS]:
+        if not isinstance(raw, dict):
+            continue
+        circuit = {"name": cut(str(raw.get("name") or "Circuit"), MAX_NAME_LEN),
+                   "desc": cut(str(raw.get("desc") or ""), desc_len)}
+        for field in SCALAR_FIELDS:
+            val = raw.get(field)
+            if val:
+                circuit[field] = cut(str(val), extra_len)
+        for field in BOOL_FIELDS:
+            circuit[field] = bool(raw.get(field, field == "units"))
+        for field in LIST_FIELDS:
+            items = raw.get(field)
+            if isinstance(items, list):
+                items = [cut(str(x).strip(), extra_len)
+                         for x in items if str(x).strip()]
+                if items:
+                    circuit[field] = items if max_items is None else items[:max_items]
+        if circuit["desc"].strip():
+            circuits.append(circuit)
+    return circuits
+
 
 def _truthy(val: str) -> bool:
     """Read a hand-typeable "yes"/"no"-style value as a bool."""

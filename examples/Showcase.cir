@@ -101,6 +101,11 @@ rounding: approx
 analysis: ac
 note: An AC (phasor) solve: a series RLC at 1000 rad/s. The answers are complex; tick 'Show AC answers as polar phasors' in Settings to read them as amplitude and angle.
 omega: 1000
+plottool: bode
+plotkey: i_l1
+plotmin: 10
+plotmax: 10000
+plotpoints: 300
 
 
 [RC step response (TR)]
@@ -113,6 +118,11 @@ rounding: approx
 analysis: tr
 note: A transient analysis: the classic RC charging curve. The limited-results box asks for just v_2, which comes back 5 - 5e^(-1000t).
 variables: v_2
+plottool: plot_time
+plotkey: v_2
+plotmin: 0
+plotmax: 0.005
+plotpoints: 300
 
 
 [RL discharge, I0 = 3A (TR)]
@@ -124,6 +134,11 @@ rounding: approx
 analysis: tr
 note: A transient with an initial condition: the inductor starts at 3 A (the fifth field of its description) and discharges through the resistor. i_l1 decays exponentially.
 variables: i_l1
+plottool: plot_time
+plotkey: i_l1
+plotmin: 0
+plotmax: 0.01
+plotpoints: 300
 
 
 [Fully symbolic divider (DC)]

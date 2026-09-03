@@ -114,6 +114,12 @@ si: no
 units: yes
 evaluate: vo
 evaluate_conditions: vs = 2
+plottool: sweep
+plotkey: v_o
+plotx: vs
+plotmin: 0
+plotmax: 10
+plotpoints: 300
 
 
 [AS2's Practice Problem 5.3 (Inverting)]
@@ -308,6 +314,12 @@ image: https://learn.symbulator.com/assets/practice/as2s-figure-5-17-voltage-fol
 rounding: exact
 si: no
 units: yes
+plottool: sweep
+plotkey: v_o
+plotx: vi
+plotmin: 0
+plotmax: 10
+plotpoints: 300
 
 
 [TR5's Figure 4-32 (Voltage Follower, the source alone)]

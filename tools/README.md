@@ -238,3 +238,61 @@ now retries, runs three at a time, and distinguishes an HTTP status — which
 it believes — from a transport failure, which it reports as "could not
 reach" rather than as a broken link. A check that cries wolf gets ignored,
 and then it is not a check.
+
+
+## `check_export_fields.py` — an entry survives the file (#250)
+
+    python tools/check_export_fields.py
+
+Every entry the app saves goes from `inputsSnapshot()` in the template,
+through one of two exports (`app.py`'s `/api/export`, or `export_book` in
+the offline bridge), into `circuitbook.format_book`, and back out through
+`circuitbook.parse_book`. Until #250 each export kept its own list of the
+fields to carry across, and the two had drifted apart in different
+directions — the server dropped `defines` and `evaluate_conditions`, the
+offline build dropped `plotx` and `defines`, and neither carried `polar`
+or `show_equations`. Nothing showed inside a session, because the entries
+live in the browser; the values went missing only in a downloaded file.
+
+There is one list now, derived from the parser's own tables, and one
+sanitiser (`circuitbook.clean_circuits`) behind both exports. This script
+proves it from three directions: a circuit with every field set must make
+the write–parse–clean–write round trip with every value intact and the
+file text stable byte for byte; every key `inputsSnapshot()` returns must
+be one the format knows; and both exports must still call the shared
+function. It exits 1 naming the field on the first failure.
+
+`build_local.py` runs it on every build, hard. To watch it go red, delete
+`"plotx"` from `circuitbook._KEYS`, or add `bogus: 1,` to
+`inputsSnapshot()` — it was proved that way, four sabotages, before it was
+trusted.
+
+
+## `check_example_plots.py` — every example's plot, run (#255)
+
+    py tools/check_example_plots.py            # every book
+    py tools/check_example_plots.py Lesson_11  # one book
+
+Since #255, 67 of the 330 built-in entries carry a plot — a time plot, a
+Bode plot, a Bode plot of a typed H(s), or a DC sweep — in the same
+`plottool` / `plotkey` / `plotx` / `plotmin` / `plotmax` / `plotpoints`
+keys the app saves. Each was sized from the entry's own answer when it
+was written, but a plot is only proved by running it, and nothing else
+here does: `verify_lesson.py` posts the solve, not the plot, and the
+schematic harnesses draw the circuit.
+
+This script calls, for every entry with a `plottool:`, the same ui
+function the app's endpoint calls (`plot_time_ui`, `bode_ui`,
+`bode_tf_ui`, `sweep_ui`) with the entry's own key, range and point
+count, its Expert Mode extras, and its Define lines expanded first. It
+fails on a `plottool` the menu does not offer (`time` shipped in two
+entries for a day; the menu's value is `plot_time`), a plot the engine
+refuses (quoting the engine's reason), samples that are not finite, a
+flat trace — a horizontal line is a wrong key or a wrong range — or a
+range that does not run low to high. Every failure is listed, so a book
+can be fixed in one pass.
+
+Not wired into `build_local.py`: it solves 67 circuits and takes a minute
+or two. Run it after touching a book, the plot tools or
+`symbulator_ui.py`. It was proved red three ways on Lesson 11 before it
+was trusted: a wrong key, `time`, and an inverted range.

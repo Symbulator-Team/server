@@ -265,6 +265,12 @@ image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-3-4-casc
 rounding: exact
 si: no
 units: yes
+plottool: sweep
+plotkey: v_o
+plotx: vs
+plotmin: 0
+plotmax: 10
+plotpoints: 300
 
 
 [AS2's Example 5.9 (Cascade)]
@@ -341,6 +347,12 @@ image: https://learn.symbulator.com/assets/practice/tr5s-example-4-16-cascade-44
 rounding: exact
 si: no
 units: yes
+plottool: sweep
+plotkey: v_o
+plotx: v1
+plotmin: 0
+plotmax: 10
+plotpoints: 300
 
 
 [TR5's Exercise 4-14 (Cascade)]

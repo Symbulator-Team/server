@@ -16,6 +16,11 @@ units: yes
 solve_equations: x = vc
 solve_equations: t = 2
 solve_unknowns: x, t
+plottool: plot_time
+plotkey: v_1
+plotmin: 0
+plotmax: 5
+plotpoints: 300
 
 
 [Bo2's Example 5.1 (DC, for the initial condition)]
@@ -104,6 +109,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-p224-5-2-4.jpg
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_3
+plotmin: 0
+plotmax: 5
+plotpoints: 300
 
 
 [Bo2's Drill Exercise 5.2 (DC)]
@@ -135,6 +145,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-2-5.jp
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_2
+plotmin: 0
+plotmax: 1
+plotpoints: 300
 
 
 [Bo2's Figure 5.10a]
@@ -206,6 +221,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-3-9.jp
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 2
+plotpoints: 300
 
 
 [Bo2's p230 (Dependent source)]
@@ -250,6 +270,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-4-depe
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 5
+plotpoints: 300
 
 
 [Bo2's Example 5.5 (Op Amp, DC)]
@@ -281,6 +306,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-example-5-5-op-amp-12.j
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_o
+plotmin: 0
+plotmax: 2
+plotpoints: 300
 
 
 [Bo2's Drill Exercise 5.5 (Op Amp, DC)]
@@ -312,3 +342,8 @@ image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-5-op-a
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_o
+plotmin: 0
+plotmax: 2
+plotpoints: 300
