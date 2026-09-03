@@ -24,6 +24,18 @@ again, which is the thing that got the account disabled. Two constants in
 a file version 9 changes about once a year collide almost never, and when
 they do the conflict is two lines and obviously about branding.
 
+**The footer is not one of these, and that is Roberto's ruling of 4 Sep
+2026.** The page foot reads "Symbulator 9 version <stamp>" in a fork
+too, and stays that way: version 9 and X are the same application, so
+the version the footer names is the version of the code, not of the
+site serving it. It was queried the day X was merged up to #255 and
+answered *leave it at 9 until there is any substantial difference in X*.
+So the list below is the whole list -- a fifth value is a change to make
+when X stops being version 9 with a different banner, and not before.
+The footer also lives in the shared template, where a fork's edit would
+collide on every build (the stamp is rewritten each time), which is the
+second reason not to.
+
 So: **do not move these strings back into the markup**, and when merging
 `v9/main` into a fork, keep the fork's copy of this file.
 

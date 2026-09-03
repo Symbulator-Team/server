@@ -37,7 +37,15 @@ that tab rather than a file you edit here).
 To deploy a change:
 
 1. Push the change to this repo first (`main` branch).
-2. In a PythonAnywhere Bash console for the `Symbulator` account:
+2. In a PythonAnywhere Bash console for the `Symbulator` account, `cd`
+   to the clone. **The name below is unverified**: `/home/symbulator/
+   symbulator_web` was tried on 4 Sep 2026 and does not exist, and
+   `~/server` (the natural guess, since the repository is named `server`
+   on GitHub) has been wrong for the X account. The sibling account
+   `symbulatorx` uses `symbulator_web`; this one apparently does not.
+   Find it rather than guess:
+
+       ls ~ && find ~ -maxdepth 3 -name app.py -not -path "*/site-packages/*" 2>/dev/null
 
        cd ~/symbulator_web
        source ~/.virtualenvs/symbulator-venv/bin/activate
