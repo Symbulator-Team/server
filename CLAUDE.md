@@ -84,7 +84,13 @@ X3…**, which can never collide.
 PythonAnywhere account `SymbulatorX`, a clone of this repository at
 `~/symbulator_web`, Python **3.12**, virtualenv `symbulator-venv`:
 
-    cd ~/symbulator_web && source ~/.virtualenvs/symbulator-venv/bin/activate && git pull
+    cd /home/symbulatorx/symbulator_web && source ~/.virtualenvs/symbulator-venv/bin/activate && git pull
+
+The full path, all lowercase, verified 4 Sep 2026. Version 9's account
+is capital-S `/home/Symbulator/symbulator_web`, so never copy one
+account's path to the other: Linux is case-sensitive and the wrong case
+fails with `No such file or directory`, which reads like a wrong
+directory *name* and has sent five sessions guessing.
 
 then **Reload** on the Web tab. Check `/healthz`: it reports the build the
 running process started with *and* the build on disk, so a pull without a
