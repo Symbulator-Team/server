@@ -45,7 +45,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 SERVER = HERE.parent
 EXAMPLES = SERVER / "examples"
-DOCS = SERVER.parent.parent.parent / "Documentation"
+DOCS = SERVER.parent.parent.parent.parent / "Documentation"
 SIZES = DOCS / "tools" / "figure_sizes.json"
 
 #: The app's body text, in px -- what the lettering inside a scan should
@@ -68,7 +68,8 @@ def measurements() -> dict:
         raise SystemExit(
             f"image_caps.py: {SIZES} is missing. The lettering sizes are "
             "measured on the docs side by tools/measure_figures.py; this "
-            "needs 'Documentation' beside 'Symbulator'.")
+            "needs 'Documentation' beside 'Application', with this app "
+            "under 'Application/vX'.")
     return json.loads(SIZES.read_text(encoding="utf-8"))["measured"]
 
 

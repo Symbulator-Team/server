@@ -42,7 +42,7 @@ EXAMPLES = SERVER / "examples"
 # The docs tree, which must sit beside the app tree. `build.py` on the
 # docs side reaches across the same way to copy banner.css, and fails
 # with the same kind of message when the layout is not what it expects.
-DOCS = SERVER.parent.parent.parent / "Documentation"
+DOCS = SERVER.parent.parent.parent.parent / "Documentation"
 
 BASE = "https://learn.symbulator.com/"
 # #235: an `image:` value may carry a width cap -- `<url> [200px]`.
@@ -98,8 +98,9 @@ def main() -> int:
     if not DOCS.is_dir():
         print(f"\ncheck_example_images.py: cannot find the docs tree at {DOCS}.\n"
               "  The examples' pictures are the tutorial's own figures, which\n"
-              "  live in that tree; this check needs 'Documentation' to sit beside\n"
-              "  'Symbulator'. Restore the layout, or run this where it does.",
+              "  live in that tree; this check needs 'Documentation' to sit\n"
+              "  beside 'Application', with this app under 'Application/vX'.\n"
+              "  Restore the layout, or run this where it does.",
               file=sys.stderr)
         return 1
 
