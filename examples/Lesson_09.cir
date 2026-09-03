@@ -86,7 +86,7 @@ rc,c,n,6-8j
 
 analysis: ac
 note: Calculate the line currents and the neutral current — aa(isn) — for the unbalanced Y-load with voltages in the acb sequence. Not RMS this time. The neutral is a short circuit, and it carries a current precisely because the load is unbalanced.
-image: https://learn.symbulator.com/assets/circuit/as7f1223.png
+image: https://learn.symbulator.com/assets/circuit/as7f1223.png [494px]
 omega: omega
 rounding: 4
 si: no
@@ -175,7 +175,7 @@ rca,cd,ad,8+6j
 
 analysis: ac
 note: Find the line currents, through the three shorts, taking Vab as reference. Unbalanced, so all three differ in magnitude as well as angle.
-image: https://learn.symbulator.com/assets/circuit/as7pp1209.png
+image: https://learn.symbulator.com/assets/circuit/as7pp1209.png [419px]
 omega: omega
 rounding: 4
 si: no

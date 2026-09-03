@@ -10,7 +10,7 @@ r3,2,3,30
 
 analysis: dc
 note: In this problem, we find a two-port equivalent for the first time. Determine the z parameters of the T network between nodes 1 and 3: z11 = 60, z12 = z21 = 40, z22 = 70.
-image: https://learn.symbulator.com/assets/circuit/as7e1901.png
+image: https://learn.symbulator.com/assets/circuit/as7e1901.png [349px]
 tool: port
 n1: 1
 n2: 3
@@ -45,7 +45,7 @@ r3,2,0,8
 
 analysis: dc
 note: Obtain the y parameters between nodes 1 and 2: 3/4, -1/2, -1/2 and 5/8.
-image: https://learn.symbulator.com/assets/circuit/as7e1903.png
+image: https://learn.symbulator.com/assets/circuit/as7e1903.png [371px]
 tool: port
 n1: 1
 n2: 2
@@ -64,7 +64,7 @@ j,2,3,2*ir1
 
 analysis: dc
 note: Determine the y parameters of the two-port with a dependent source inside. A two-port equivalent works perfectly well around a controlled source.
-image: https://learn.symbulator.com/assets/circuit/as7e1904.png
+image: https://learn.symbulator.com/assets/circuit/as7e1904.png [420px]
 tool: port
 n1: 1
 n2: 3
@@ -82,7 +82,7 @@ r3,2,3,3
 
 analysis: dc
 note: Find the hybrid (h) parameters between nodes 1 and 3: 4, 2/3, -2/3 and 1/9.
-image: https://learn.symbulator.com/assets/circuit/as7e1905.png
+image: https://learn.symbulator.com/assets/circuit/as7e1905.png [374px]
 tool: port
 n1: 1
 n2: 3
@@ -100,7 +100,7 @@ h,2,3,[1000,-2,10,2e-4]
 
 analysis: dc
 note: Find the Thévenin equivalent at the output port of a circuit built around an h-parameter two-port. The parameters ride in the description's fourth term, so they reach the equivalent tool like any other value and the answers come straight back as numbers: vth = -29.69 V, req = 51.46 ohm. (Leave the fourth term off and the same run answers with formulas in the four parameters instead.)
-image: https://learn.symbulator.com/assets/circuit/as7e1906.png
+image: https://learn.symbulator.com/assets/circuit/as7e1906.png [469px]
 tool: th
 n1: 3
 n2: 0
@@ -117,7 +117,7 @@ c,2,3,1
 
 analysis: fd
 note: Find the g parameters as functions of s — the same two-port equivalent, run in FD.
-image: https://learn.symbulator.com/assets/circuit/as7e1907.png
+image: https://learn.symbulator.com/assets/circuit/as7e1907.png [383px]
 tool: port
 n1: 1
 n2: 3
@@ -136,7 +136,7 @@ r2,3,0,1
 
 analysis: fd
 note: Determine the g parameters of the ladder network in the s domain.
-image: https://learn.symbulator.com/assets/circuit/as7pp1907.png
+image: https://learn.symbulator.com/assets/circuit/as7pp1907.png [460px]
 tool: port
 n1: 1
 n2: 3
@@ -154,7 +154,7 @@ e,2,3,3*ir1
 
 analysis: dc
 note: Find the transmission (a) parameters of the two-port with the dependent source: 1.765, 15.29, 0.0588 and 1.176.
-image: https://learn.symbulator.com/assets/circuit/as7e1908.png
+image: https://learn.symbulator.com/assets/circuit/as7e1908.png [401px]
 tool: port
 n1: 1
 n2: 3

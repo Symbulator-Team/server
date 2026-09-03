@@ -71,7 +71,7 @@ l2,2,0,4
 
 analysis: dc
 note: The source drops from 12 V at t = 0. Find i2(t) for t >= 0; this DC interval gives il1 = 2 A and il2 = 0.
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-5-36.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-5-36.jpg [406px]
 rounding: exact
 si: no
 units: yes
@@ -86,7 +86,7 @@ l2,2,0,4,0
 
 analysis: tr
 note: Second interval in TR: il2 comes back (12/11)(e^(-3t) - e^(-t/4)).
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-5-36.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-5-36.jpg [406px]
 rounding: exact
 si: no
 units: yes
@@ -104,7 +104,7 @@ o,0,2,o
 
 analysis: dc
 note: Two capacitors around an op amp. Find vo(t) for t >= 0; this DC interval gives vca = 0 and vcb = 4 V.
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-6-op-amp-37.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-6-op-amp-37.jpg [568px]
 rounding: exact
 si: no
 units: yes
@@ -121,7 +121,7 @@ o,0,2,o
 
 analysis: tr
 note: Second interval in TR: vo comes back (-4t-4)e^(-t).
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-6-op-amp-37.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-6-op-amp-37.jpg [568px]
 rounding: exact
 si: no
 units: yes
@@ -136,7 +136,7 @@ c,3,0,1/50,0
 
 analysis: tr
 note: In this problem, we use the Plot card for the first time: find v(t) and i(t) for the series RLC, then plot each between 0 and 1.5 s. The Plot card takes an answer's name rather than an expression, so v_c. Plot i_l the same way for the current.
-image: https://learn.symbulator.com/assets/practice/bo2s-example-6-5-plot-38.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-example-6-5-plot-38.jpg [549px]
 rounding: exact
 si: no
 units: yes
@@ -269,7 +269,7 @@ l,1,0,1,0
 
 analysis: tr
 note: An exponential source, 2e^(-2t), on a second-order circuit: find i(t) — read il.
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-11-p307-43.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-11-p307-43.jpg [531px]
 rounding: exact
 si: no
 units: yes
@@ -319,7 +319,7 @@ c,2,0,1,0
 
 analysis: tr
 note: Expert Mode in TR: the step value a is the unknown, and the known answer 1-e^(-t/2) = vc is the extra equation. Find vr, ic and the source's value, which is 1 V. Everything typed into Expert Mode in version 9 is read in the time domain, so the answer you know goes in as you would write it on paper.
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-4-5-expert-45.png
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-4-5-expert-45.png [383px]
 unknowns: a
 equations: 1-e^(-t/2) = vc
 rounding: exact

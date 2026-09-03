@@ -10,7 +10,7 @@ r2,c,0,r2
 
 analysis: dc
 note: The first purely symbolic problem: find expressions for the current i, the voltage drop across r2, the power consumed by r2 and the power delivered by the source. Symbolic all through: every answer is a formula — the voltage divider you would have written by hand.
-image: https://learn.symbulator.com/assets/circuit/as5f0229.png
+image: https://learn.symbulator.com/assets/circuit/as5f0229.png [541px]
 rounding: exact
 si: no
 units: yes
@@ -26,7 +26,7 @@ r3,3,0,6'k
 
 analysis: dc
 note: A numerical-from-symbolic problem: the source E and the resistor R1 are unknown, but the problem says the source sees 12 kohm and that I3 is 6 mA. Find E and R1. Solve the circuit first, then use the Solve equations card.
-image: https://learn.symbulator.com/assets/circuit/b11e0506.jpg
+image: https://learn.symbulator.com/assets/circuit/b11e0506.jpg [420px]
 rounding: exact
 si: no
 units: yes
@@ -44,7 +44,7 @@ r3,3,0,6'k
 
 analysis: dc
 note: In this problem, we use Expert Mode for the first time: the same problem as the previous entry, with the two facts handed over before solving, so the whole circuit comes back numerical.
-image: https://learn.symbulator.com/assets/circuit/b11e0506.jpg
+image: https://learn.symbulator.com/assets/circuit/b11e0506.jpg [420px]
 unknowns: e, r1
 equations: re = 12'k
 equations: ir3 = 6'm
@@ -63,7 +63,7 @@ evx,2,0,vx
 
 analysis: dc
 note: Find ix and vx. ra is never needed: the circuit's structure answers both questions without it.
-image: https://learn.symbulator.com/assets/practice/hk5s-figure-1-24a-solve-1.jpg
+image: https://learn.symbulator.com/assets/practice/hk5s-figure-1-24a-solve-1.jpg [533px]
 rounding: exact
 si: no
 units: yes
@@ -80,7 +80,7 @@ r3,1,0,r3
 
 analysis: dc
 note: Three unknown element values and three known branch currents make this a perfect candidate for Expert Mode. Find E and the source current Is; the solver also fills in r2 and r3 on the way.
-image: https://learn.symbulator.com/assets/practice/b11s-example-6-19-expert-2.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-6-19-expert-2.jpg [607px]
 unknowns: e, r2, r3
 equations: ir1 = 8'm
 equations: ir2 = 10'm
