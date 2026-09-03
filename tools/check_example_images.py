@@ -4,7 +4,7 @@
 An entry in `examples/*.cir` may carry an `image:` line naming a picture
 of its circuit. Those pictures are **not** in this repository: they are
 the tutorial's own figures, served from `learn.symbulator.com`, and they
-live in the *docs* tree at `Sym Docum/Documentation/assets/`.
+live in the *docs* tree at `Documentation/assets/`.
 
 That crossing is the whole reason this script exists. Nothing else
 connects the two: a figure renamed, re-slugified or deleted on the docs
@@ -98,7 +98,7 @@ def main() -> int:
     if not DOCS.is_dir():
         print(f"\ncheck_example_images.py: cannot find the docs tree at {DOCS}.\n"
               "  The examples' pictures are the tutorial's own figures, which\n"
-              "  live in that tree; this check needs 'Sym Docum' to sit beside\n"
+              "  live in that tree; this check needs 'Documentation' to sit beside\n"
               "  'Symbulator'. Restore the layout, or run this where it does.",
               file=sys.stderr)
         return 1

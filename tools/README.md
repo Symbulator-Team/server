@@ -211,7 +211,7 @@ the *wide* labels. The fix is nearly always the wording, not the CSS.
 An entry in `examples/*.cir` may carry an `image:` line: a link to a
 picture of its circuit, shown in a card of its own when the entry is
 picked. The pictures are the **tutorial's own figures**, and they live in
-the *docs* tree (`Sym Docum/Documentation/assets/`), served from
+the *docs* tree (`Documentation/assets/`), served from
 `learn.symbulator.com`. Nothing else joins the two trees, so nothing else
 notices when a figure is renamed or removed on the docs side.
 
