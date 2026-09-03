@@ -45,7 +45,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 SERVER = HERE.parent
 EXAMPLES = SERVER / "examples"
-DOCS = SERVER.parent.parent.parent / "Sym Docum" / "Documentation"
+DOCS = SERVER.parent.parent.parent / "Documentation"
 SIZES = DOCS / "tools" / "figure_sizes.json"
 
 #: The app's body text, in px -- what the lettering inside a scan should

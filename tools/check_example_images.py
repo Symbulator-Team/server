@@ -42,7 +42,7 @@ EXAMPLES = SERVER / "examples"
 # The docs tree, which must sit beside the app tree. `build.py` on the
 # docs side reaches across the same way to copy banner.css, and fails
 # with the same kind of message when the layout is not what it expects.
-DOCS = SERVER.parent.parent.parent / "Sym Docum" / "Documentation"
+DOCS = SERVER.parent.parent.parent / "Documentation"
 
 BASE = "https://learn.symbulator.com/"
 # #235: an `image:` value may carry a width cap -- `<url> [200px]`.
