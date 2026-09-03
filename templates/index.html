@@ -2513,7 +2513,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-03 04:23 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-03 11:40 UTC</span>
 </footer>
 
 <script>
@@ -4231,7 +4231,14 @@ function inputsSnapshot() {
   // The Plot card and the Analysis tool are independent, and a circuit may
   // legitimately have both -- a two-port analysis and a plot, say. They get
   // separate keys so saving one cannot silently drop the other.
-  const hasPlot = $('plotKey').value.trim() !== '';
+  //
+  // #250: the card counts as in use when *any* of its fields holds
+  // something, not only the variable. A Bode plot's frequencies typed
+  // before its variable used to be left out of the entry and came back
+  // blank. The point count is a field too, but 300 is what a fresh page
+  // shows, so it counts only once it has been changed.
+  const hasPlot = ['plotKey', 'plotX', 'plotMin', 'plotMax']
+    .some(id => $(id).value.trim() !== '') || String($('plotN').value) !== '300';
   const expert = expertFields();
   return {
     desc: desc,

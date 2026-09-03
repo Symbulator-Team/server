@@ -238,3 +238,31 @@ now retries, runs three at a time, and distinguishes an HTTP status — which
 it believes — from a transport failure, which it reports as "could not
 reach" rather than as a broken link. A check that cries wolf gets ignored,
 and then it is not a check.
+
+
+## `check_export_fields.py` — an entry survives the file (#250)
+
+    python tools/check_export_fields.py
+
+Every entry the app saves goes from `inputsSnapshot()` in the template,
+through one of two exports (`app.py`'s `/api/export`, or `export_book` in
+the offline bridge), into `circuitbook.format_book`, and back out through
+`circuitbook.parse_book`. Until #250 each export kept its own list of the
+fields to carry across, and the two had drifted apart in different
+directions — the server dropped `defines` and `evaluate_conditions`, the
+offline build dropped `plotx` and `defines`, and neither carried `polar`
+or `show_equations`. Nothing showed inside a session, because the entries
+live in the browser; the values went missing only in a downloaded file.
+
+There is one list now, derived from the parser's own tables, and one
+sanitiser (`circuitbook.clean_circuits`) behind both exports. This script
+proves it from three directions: a circuit with every field set must make
+the write–parse–clean–write round trip with every value intact and the
+file text stable byte for byte; every key `inputsSnapshot()` returns must
+be one the format knows; and both exports must still call the shared
+function. It exits 1 naming the field on the first failure.
+
+`build_local.py` runs it on every build, hard. To watch it go red, delete
+`"plotx"` from `circuitbook._KEYS`, or add `bogus: 1,` to
+`inputsSnapshot()` — it was proved that way, four sabotages, before it was
+trusted.
