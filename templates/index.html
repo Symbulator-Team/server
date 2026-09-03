@@ -2442,7 +2442,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-03 01:17 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-03 02:02 UTC</span>
 </footer>
 
 <script>
@@ -2654,6 +2654,7 @@ function refreshDynamic() {
   // called outright: on the server there is no such function and nothing
   // for it to do.
   if (typeof syncOfflineBars === 'function') { syncOfflineBars(); }
+  syncPicker();
   syncFields();
   syncPlotFields();
   syncSettings();
@@ -4238,16 +4239,51 @@ function refreshEntryLinks() {
 
 // Adopt `file` as the open input file. Null means none is open, which
 // happens only if the supplied set cannot be reached.
+// #240: the picker's label and placeholder in the current language.
+// Factored out of showFile so a language change can rebuild them without
+// re-opening the file -- see syncPicker below.
+function pickerStrings(file, count) {
+  return [
+    file ? [t('js.picker.entriesIn', 'Entries in '),
+            (file.title || file.name), ': ']
+         : t('js.picker.noFile', 'No input file open: '),
+    count ? t('js.picker.choose', '— choose an entry —')
+          : (file ? t('js.picker.empty', '— no entries yet —')
+                  : t('js.picker.nothing', '— none —'))];
+}
+
+// #240 (Roberto, 3 Sep 2026): these two strings are written by the app,
+// not carried on a data-i18n element, so applyLang cannot reach them --
+// it repaints tagged markup, and this markup was built by
+// populatePicker at the moment a file was opened. So the entries label
+// stayed in whatever language was current *then*: switch to English with
+// a book open and the picker still read "Entradas en", alone on an
+// otherwise English page.
+//
+// refreshDynamic is the right home -- "everything on screen that the app
+// itself wrote, redrawn in the new language" -- and the picker had
+// simply been left out of it.
+//
+// The selection is captured and restored because populatePicker rebuilds
+// every <option>, which would otherwise drop the reader back to the
+// placeholder on a language change. lastPickerValue is deliberately not
+// touched: nothing has been picked, so the change handler's idea of what
+// is current must not move.
+function syncPicker() {
+  const sel = $('examples');
+  if (!sel) return;
+  const keep = sel.value;
+  const entries = (openFile && openFile.entries) || [];
+  const [label, placeholder] = pickerStrings(openFile, entries.length);
+  populatePicker(entries, label, placeholder);
+  sel.value = keep;
+}
+
 function showFile(file) {
   openFile = file;
   const entries = file ? file.entries : [];
-  const label = file ? [t('js.picker.entriesIn', 'Entries in '),
-                        (file.title || file.name), ': ']
-                     : t('js.picker.noFile', 'No input file open: ');
-  populatePicker(entries, label,
-                 entries.length ? t('js.picker.choose', '— choose an entry —')
-                                : (file ? t('js.picker.empty', '— no entries yet —')
-                                        : t('js.picker.nothing', '— none —')));
+  const [label, placeholder] = pickerStrings(file, entries.length);
+  populatePicker(entries, label, placeholder);
   $('downloadFileBtn').disabled = !(file && file.entries.length);
   refreshEntryLinks();
   persistState();
