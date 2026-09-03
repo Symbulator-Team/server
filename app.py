@@ -470,7 +470,7 @@ def api_export():
         circuit = {"name": str(raw.get("name") or "Circuit")[:MAX_NAME_LEN],
                    "desc": str(raw.get("desc") or "")[:MAX_DESC_LEN]}
         for field in ("domain", "omega", "vars", "tool", "n1", "n2", "kind",
-                      "unknowns", "note", "plottool", "plotkey", "plotx",
+                      "unknowns", "plottool", "plotkey", "plotx",
                       "plotmin", "plotmax", "plotpoints", "rounding", "evaluate",
                       "solve_unknowns"):
             val = raw.get(field)
@@ -486,7 +486,15 @@ def api_export():
         for field in ("si", "rms", "solve_real_only"):
             circuit[field] = bool(raw.get(field))
         circuit["units"] = bool(raw.get("units", True))
-        for field in ("equations", "conditions", "solve_equations", "solve_conditions"):
+        # #237: `note` is repeatable now -- one paragraph per line --
+        # so it belongs with the lists. Left among the scalars above
+        # it would have been str()-ed into the literal "['a', 'b']".
+        # This file lists its fields by hand, which is exactly the
+        # trap CLAUDE.md warns about: a field changed in one place
+        # and forgotten here reaches the offline build and not this
+        # one.
+        for field in ("equations", "conditions", "solve_equations",
+                      "solve_conditions", "note"):
             items = raw.get(field)
             if isinstance(items, list):
                 items = [str(x).strip()[:MAX_EXTRA_LEN] for x in items if str(x).strip()]

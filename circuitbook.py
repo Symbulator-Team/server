@@ -73,7 +73,6 @@ _KEYS = {
     "n2": "n2",
     "kind": "kind",
     "unknowns": "unknowns",
-    "note": "note",
     # #219: a link to a picture of this circuit, shown in a card of its
     # own when the entry is picked. A URL, or a path relative to the
     # app's own page -- never a path into the reader's filesystem: every
@@ -122,6 +121,15 @@ _KEYS = {
 # and kept as a circuit line rather than quietly dropped.
 _MULTI = {"equations": "equations",
           "conditions": "conditions",
+          # #237 (Roberto, 3 Sep 2026): a note may run to more
+          # than one paragraph, written one `note:` line each.
+          # Repeatable rather than escaped, because the format
+          # already has this idiom and a `.cir` line cannot hold
+          # a newline. The front end renders one <p> per entry.
+          # Before this a second `note:` silently replaced the
+          # first, which is the behaviour #238 now warns about
+          # for every key that is still single-valued.
+          "note": "note",
           # The Define field: `name = expression` shorthands, expanded
           # into every input before anything is parsed. Repeatable, one
           # definition per line, so plural like the rest of this group.
@@ -140,6 +148,14 @@ _MULTI = {"equations": "equations",
 _BOOL_FIELDS = {"si", "units", "rms", "polar", "solve_real_only",
                 "show_equations"}
 _TRUE_WORDS = {"yes", "true", "1", "on"}
+
+#: #235: an `image:` value may end with a width cap -- `<url> [200px]`.
+#: One spelling only, and whitespace before the bracket so a URL that
+#: contains brackets cannot be read as one. Mirrored in the front
+#: end's IMAGE_CAP_RE; the two must agree.
+_IMAGE_CAP_RE = re.compile(r"^(\S+)\s+\[(\d+)px\]$", re.I)
+#: Something bracket-shaped at the end that the rule above rejected.
+_IMAGE_CAP_BAD_RE = re.compile(r"\s\[[^\]]*\]$")
 
 _SECTION_RE = re.compile(r"^\[(?P<name>.+)\]\s*$")
 _KEY_RE = re.compile(r"^(?P<key>[A-Za-z][A-Za-z0-9_]*)\s*:\s*(?P<val>.*)$")
@@ -222,6 +238,24 @@ def parse_book(text: str) -> Tuple[List[dict], List[str], str]:
                 continue
             if key in _KEYS:
                 field = _KEYS[key]
+                # #238 (Roberto, 3 Sep 2026): only the keys in _MULTI above
+                # may appear twice. Every other one used to keep the last
+                # value silently, so a duplicated `omega:` or `rounding:`
+                # threw the first away without a word -- and a second
+                # `note:` lost a whole paragraph, which is what led here.
+                if field in current:
+                    warnings.append(
+                        f"Line {lineno}: '{key}' is given more than once; "
+                        f"only the last value is used.")
+                # #235: a width cap that does not parse is a typo, and the
+                # picture would quietly appear uncapped. Say so here, where
+                # the file's other warnings already reach the reader.
+                if (field == "image" and _IMAGE_CAP_BAD_RE.search(val)
+                        and not _IMAGE_CAP_RE.match(val)):
+                    warnings.append(
+                        f"Line {lineno}: '{val.rsplit(' ', 1)[-1]}' is not a "
+                        f"width cap; write it as [200px]. The picture is "
+                        f"shown at full width.")
                 current[field] = _truthy(val) if field in _BOOL_FIELDS else val
                 continue
             # An unknown key: could be a typo, or could be a circuit
@@ -277,10 +311,14 @@ def format_book(circuits: List[dict], title: str = "") -> str:
         for key, field in (("analysis", "domain"), ("omega", "omega"),
                            ("variables", "vars"), ("tool", "tool"),
                            ("n1", "n1"), ("n2", "n2"), ("kind", "kind"),
-                           ("note", "note"), ("image", "image")):
+                           ("image", "image")):
             val = c.get(field)
             if val:
                 analysis.append(f"{key}: {val}")
+        # #237: one `note:` line per paragraph, so a book that is
+        # downloaded and re-opened reads exactly as it did.
+        for val in c.get("note", []) or []:
+            analysis.append(f"note: {val}")
         val = c.get("unknowns")
         if val:
             analysis.append(f"unknowns: {val}")
