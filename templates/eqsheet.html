@@ -576,6 +576,10 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
        Prefix -- were cut off with no way to reach them. The tables scroll
        sideways themselves instead (#126). */
     #vtab,#rtab{display:block;overflow-x:auto}
+    /* The display above beats [hidden] { display: none } (#249), so
+       #rtab's hidden attribute did nothing and a blank sheet showed an
+       empty EQUATION/VARIABLES header. */
+    #vtab[hidden],#rtab[hidden]{display:none}
     /* 16px is the size below which iOS Safari zooms the whole page when a
        field is focused; matching it stops the viewport jumping on every
        tap into a Value box. The classed rows (.val, .pre) are named too,
