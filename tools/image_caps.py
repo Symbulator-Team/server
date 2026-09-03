@@ -7,7 +7,7 @@ eyeballed 299 times.
 **The rule is not ours.** The documentation already solves this problem:
 `build.py`'s `figure_size_mm()` (#153) renders every figure at the width
 that puts *the lettering inside the scan* at the size of the body text,
-using measurements from `Sym Docum/Documentation/tools/figure_sizes.json`
+using measurements from `Documentation/tools/figure_sizes.json`
 written by `measure_figures.py`. The app was the one surface that never
 got it, which is why a simple divider and a dense op-amp network were
 both stretched to the full card:
@@ -68,7 +68,7 @@ def measurements() -> dict:
         raise SystemExit(
             f"image_caps.py: {SIZES} is missing. The lettering sizes are "
             "measured on the docs side by tools/measure_figures.py; this "
-            "needs 'Sym Docum' beside 'Symbulator'.")
+            "needs 'Documentation' beside 'Symbulator'.")
     return json.loads(SIZES.read_text(encoding="utf-8"))["measured"]
 
 
