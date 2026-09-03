@@ -266,3 +266,33 @@ function. It exits 1 naming the field on the first failure.
 `"plotx"` from `circuitbook._KEYS`, or add `bogus: 1,` to
 `inputsSnapshot()` — it was proved that way, four sabotages, before it was
 trusted.
+
+
+## `check_example_plots.py` — every example's plot, run (#251)
+
+    py tools/check_example_plots.py            # every book
+    py tools/check_example_plots.py Lesson_11  # one book
+
+Since #251, 67 of the 330 built-in entries carry a plot — a time plot, a
+Bode plot, a Bode plot of a typed H(s), or a DC sweep — in the same
+`plottool` / `plotkey` / `plotx` / `plotmin` / `plotmax` / `plotpoints`
+keys the app saves. Each was sized from the entry's own answer when it
+was written, but a plot is only proved by running it, and nothing else
+here does: `verify_lesson.py` posts the solve, not the plot, and the
+schematic harnesses draw the circuit.
+
+This script calls, for every entry with a `plottool:`, the same ui
+function the app's endpoint calls (`plot_time_ui`, `bode_ui`,
+`bode_tf_ui`, `sweep_ui`) with the entry's own key, range and point
+count, its Expert Mode extras, and its Define lines expanded first. It
+fails on a `plottool` the menu does not offer (`time` shipped in two
+entries for a day; the menu's value is `plot_time`), a plot the engine
+refuses (quoting the engine's reason), samples that are not finite, a
+flat trace — a horizontal line is a wrong key or a wrong range — or a
+range that does not run low to high. Every failure is listed, so a book
+can be fixed in one pass.
+
+Not wired into `build_local.py`: it solves 67 circuits and takes a minute
+or two. Run it after touching a book, the plot tools or
+`symbulator_ui.py`. It was proved red three ways on Lesson 11 before it
+was trusted: a wrong key, `time`, and an inverted range.

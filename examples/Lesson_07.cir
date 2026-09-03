@@ -17,6 +17,11 @@ si: no
 units: yes
 rms: no
 polar: yes
+plottool: bode
+plotkey: v_2
+plotmin: 0.01
+plotmax: 10
+plotpoints: 300
 
 
 [AS7's Practice Problem 9.9]
@@ -74,6 +79,11 @@ si: no
 units: yes
 rms: no
 polar: yes
+plottool: bode
+plotkey: i_l
+plotmin: 0.1
+plotmax: 1000
+plotpoints: 300
 
 
 [AS7's Problem 9.39]
@@ -135,6 +145,11 @@ si: no
 units: yes
 rms: no
 polar: yes
+plottool: bode
+plotkey: i_l1
+plotmin: 0.01
+plotmax: 10
+plotpoints: 300
 
 
 [AS7's Practice Problem 10.1 (Dependent source)]
@@ -155,6 +170,11 @@ si: no
 units: yes
 rms: no
 polar: yes
+plottool: bode
+plotkey: i_l
+plotmin: 0.01
+plotmax: 10
+plotpoints: 300
 
 
 [AS7's Example 10.13 (Dependent source)]

@@ -29,6 +29,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-4-35.j
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 2
+plotpoints: 300
 
 
 [Bo2's Drill Exercise 6.4 (TR, 1/2 H instead)]
@@ -43,6 +48,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-4-35.j
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 2
+plotpoints: 300
 
 
 [Bo2's Drill Exercise 6.4 (FD, solving for the inductor)]
@@ -90,6 +100,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-5-36.j
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l1
+plotmin: 0
+plotmax: 20
+plotpoints: 300
 
 
 [Bo2's Drill Exercise 6.6 (Op Amp, DC)]
@@ -125,6 +140,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-6-op-a
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_o
+plotmin: 0
+plotmax: 5
+plotpoints: 300
 
 
 [Bo2's Example 6.5 (Plot)]
@@ -140,7 +160,7 @@ image: https://learn.symbulator.com/assets/practice/bo2s-example-6-5-plot-38.jpg
 rounding: exact
 si: no
 units: yes
-plottool: time
+plottool: plot_time
 plotkey: v_c
 plotmin: 0
 plotmax: 1.5
@@ -159,6 +179,11 @@ note: The same series RLC with vs = 3 V, R = 5, L = 1/2 and C = 1/8: find v(t) a
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 1
+plotpoints: 300
 
 
 [Bo2's Drill Exercise 6.8 (Ramp)]
@@ -173,6 +198,11 @@ note: The circuit of the previous entry with a ramp source, 3t: find vc.
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 5
+plotpoints: 300
 
 
 [Bo2's Example 6.6 (Plot, DC)]
@@ -204,7 +234,7 @@ image: https://learn.symbulator.com/assets/practice/bo2s-example-6-6-plot-40.jpg
 rounding: approx
 si: no
 units: yes
-plottool: time
+plottool: plot_time
 plotkey: v_l
 plotmin: 0
 plotmax: 0.005
@@ -224,6 +254,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-9-41.j
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 5
+plotpoints: 300
 
 
 [Bo2's Figure 6.23 (Op Amp)]
@@ -241,6 +276,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-figure-6-23-op-amp-42.j
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_o
+plotmin: 0
+plotmax: 10
+plotpoints: 300
 
 
 [Bo2's Drill Exercise 6.10 (Op Amp)]
@@ -257,6 +297,11 @@ note: The circuit above with ca changed to 25/16 F and a 3 V step: find vo(t).
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_o
+plotmin: 0
+plotmax: 20
+plotpoints: 300
 
 
 [Bo2's Drill Exercise 6.11 (p307)]
@@ -273,6 +318,11 @@ image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-6-11-p30
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 20
+plotpoints: 300
 
 
 [A more complex problem (DC)]
@@ -309,6 +359,11 @@ variables: v1, v2
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_1
+plotmin: 0
+plotmax: 10
+plotpoints: 300
 
 
 [Bo2's Drill Exercise 4.5 (Expert)]
@@ -325,6 +380,11 @@ equations: 1-e^(-t/2) = vc
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_c
+plotmin: 0
+plotmax: 10
+plotpoints: 300
 
 
 [Bo2's Drill Exercise 4.13 (Expert)]
@@ -341,6 +401,11 @@ equations: vr = e^(-t)
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: v_r
+plotmin: 0
+plotmax: 5
+plotpoints: 300
 
 
 [Bo2's 164 (Expert)]
@@ -357,3 +422,8 @@ equations: 1-e^(-2*t) = il
 rounding: exact
 si: no
 units: yes
+plottool: plot_time
+plotkey: i_l
+plotmin: 0
+plotmax: 5
+plotpoints: 300

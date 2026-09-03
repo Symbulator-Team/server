@@ -43,6 +43,11 @@ solve_equations: im(ze) = 0
 solve_unknowns: w
 solve_conditions: w>0
 solve_real_only: yes
+plottool: bode
+plotkey: i_l
+plotmin: 100
+plotmax: 100000
+plotpoints: 300
 
 
 [AS7's Example 14.8 (parallel resonance)]
@@ -65,6 +70,11 @@ solve_equations: im(ie) = 0
 solve_unknowns: w
 solve_conditions: w>0
 solve_real_only: yes
+plottool: bode
+plotkey: i_l
+plotmin: 10
+plotmax: 100000
+plotpoints: 300
 
 
 [AS7's Example 14.9 (resonance from a node voltage)]
@@ -88,3 +98,8 @@ solve_equations: im(v1) = 0
 solve_unknowns: w
 solve_conditions: w>0
 solve_real_only: yes
+plottool: bode
+plotkey: i_l
+plotmin: 0.01
+plotmax: 10
+plotpoints: 300

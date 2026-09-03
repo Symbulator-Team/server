@@ -703,6 +703,12 @@ image: https://learn.symbulator.com/assets/practice/tr5s-example-4-4-37.jpg [455
 rounding: 5
 si: no
 units: yes
+plottool: sweep
+plotkey: v_o
+plotx: vs
+plotmin: 0
+plotmax: 10
+plotpoints: 300
 
 
 [TR5's Figure 4-4]
