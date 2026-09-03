@@ -608,9 +608,22 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   #entryImageBox {
     margin-top: .9rem; padding-top: .9rem; border-top: 1px solid var(--line-soft);
   }
+  /* #241 (Roberto, 3 Sep 2026): centred, with a white mat around it.
+     The mat matters more since #239 -- a capped picture no longer fills
+     the card, so without it a small scan sat hard against the card's own
+     background with nothing separating the two.
+
+     --entry-frame is read back by showEntryImage: the cap in a .cir line
+     describes *the picture*, and box-sizing is border-box everywhere
+     here, so the frame has to be added to max-width or every capped
+     picture would come out that much narrower than the width #239
+     computed for it. One value, declared once, used from both sides. */
   #entryImage {
+    --entry-frame: 7px;
     display: block; width: 100%; height: auto; max-height: 60vh;
+    margin-inline: auto;
     object-fit: contain; border-radius: 8px;
+    padding: var(--entry-frame);
     background: #fff; border: 1px solid var(--line);
   }
   label { display: block; font-weight: 600; font-size: .9rem; margin: 0 0 .3rem; }
@@ -2442,7 +2455,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-03 02:02 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-03 02:19 UTC</span>
 </footer>
 
 <script>
@@ -3413,6 +3426,16 @@ function splitImageSpec(spec) {
            malformed: bad };
 }
 
+// #241: how much wider than the picture the framed element is -- the
+// mat on both sides plus both borders. Measured from the element so the
+// stylesheet stays the single source of the number.
+function frameAllowance(img) {
+  const cs = getComputedStyle(img);
+  const px = v => parseFloat(v) || 0;
+  return px(cs.paddingLeft) + px(cs.paddingRight)
+       + px(cs.borderLeftWidth) + px(cs.borderRightWidth);
+}
+
 function showEntryImage(src) {
   if (arguments.length) entryImageSrc = (src || '').trim();
   const box = $('entryImageBox'), img = $('entryImage');
@@ -3426,7 +3449,12 @@ function showEntryImage(src) {
   src = spec.src;
   // A cap of 0 clears any cap a previous entry set -- the element is
   // reused, so this has to be assigned either way.
-  img.style.maxWidth = spec.cap ? spec.cap + 'px' : '';
+  //
+  // #241: box-sizing is border-box, so max-width would otherwise include
+  // the white mat and the picture would render narrower than the cap
+  // asked for. The frame is read from the stylesheet rather than
+  // repeated here, so the two cannot drift.
+  img.style.maxWidth = spec.cap ? (spec.cap + frameAllowance(img)) + 'px' : '';
   // A relative path carries no scheme and must stay allowed: it is how an
   // image bundled beside the app is named. Anything that does carry one is
   // held to the two an <img> can actually use.
