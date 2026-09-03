@@ -30,7 +30,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "6a9778f160";
+window.SYMB_I18N_V = "567ef71462";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -1267,12 +1267,12 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   <!-- server-only: this notice only makes sense when the page has no
        working backend to call -- the offline build always has its own
        engine on board, so build_local.py strips this block entirely. -->
-  <div class="hostnotice" id="hostNotice" role="status" data-i18n="this-copy-of-the.9ca1">
+  <div class="hostnotice" id="hostNotice" role="status" data-i18n="this-copy-of-the.6df3">
     <span aria-hidden="true">🧭</span>
     <span>This copy of the page can't reach a maths engine, so the
       calculator can't run from here. You can still use Symbulator by
       running it entirely inside your own browser instead — see
-      “<a href="#runLocallyCard">Run Symbulator 9 locally</a>” near the
+      “<a href="#runLocallyCard">Run locally</a>” near the
       bottom of this page, or go straight to
       <a href="https://install.symbulator.com" target="_blank"
          rel="noopener">install.symbulator.com</a>.</span>
@@ -1493,7 +1493,7 @@ units: yes</pre>
     <summary class="results-h section-toggle" style="margin-top:0" data-i18n="circuit-description.38e9">Circuit Description</summary>
 
     <details id="syntaxBox">
-      <summary data-i18n="circuit-syntax-reference.17ef">Circuit syntax reference</summary>
+      <summary data-i18n="circuit-syntax-referencecirc.1322"><span class="lbl-full">Circuit syntax reference</span><span class="lbl-short">Circuit syntax</span></summary>
 
       <p class="hint" style="margin:.6rem 0 0" data-i18n="one-element-per-line.7c7f">
         One element per line (or separated by <code>:</code>), fields
@@ -2134,7 +2134,7 @@ units: yes</pre>
 
   <div class="card" id="plotCard">
     <details id="plotBox">
-      <summary class="results-h section-toggle" data-i18n="plotting-tools.3626">Plotting Tools</summary>
+      <summary class="results-h section-toggle" data-i18n="plotting-toolsplotting.19f1"><span class="lbl-full">Plotting Tools</span><span class="lbl-short">Plotting</span></summary>
       <div class="row">
         <div>
           <label for="plotTool" data-i18n="plot-type.409e">Plot type</label>
@@ -2206,7 +2206,7 @@ units: yes</pre>
         numerical solver.
       </p>
       <details style="margin:0 0 .9rem">
-        <summary data-i18n="what-you-can-do.a50f">What you can do with it</summary>
+        <summary data-i18n="what-you-can-do.cbc5"><span class="lbl-full">What you can do with it</span><span class="lbl-short">What it does</span></summary>
         <p class="hint" style="margin:.4rem 0 .3rem" data-i18n="the-solver-opens-in.487d">
           The solver opens in a new tab, preloaded with this
           solve&#8217;s equations and results. From there:
@@ -2281,7 +2281,7 @@ units: yes</pre>
        everything between these two markers. -->
   <div class="card">
     <details id="runLocallyCard">
-      <summary data-i18n="run-symbulator-locally.0a3e">Run Symbulator 9 locally</summary>
+      <summary data-i18n="run-locally.dd36">Run locally</summary>
       <p style="font-size:.92rem;margin-top:.7rem" data-i18n="this-online-version-of.83ca">
         This <strong>online version</strong> of Symbulator 9 is hosted
         remotely and needs an internet connection every time you use it.
@@ -2507,7 +2507,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-03 03:55 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-03 04:10 UTC</span>
 </footer>
 
 <script>
@@ -6264,7 +6264,7 @@ $('langSel').addEventListener('change', ev => {
   });
 });
 </script>
-  <!-- server-only: this opens the "Run Symbulator 9 locally" card when
+  <!-- server-only: this opens the "Run locally" card when
        the ribbon's "Local App" link, or the host notice, points at it.
        Both of those are themselves server-only, so the handler goes with
        them -- in the offline build there is no such card to open. It is a
@@ -6275,7 +6275,7 @@ $('langSel').addEventListener('change', ev => {
 // shut, so "Local App" in the ribbon landed the reader on a collapsed
 // one-line summary with the explanation still folded away. Open it. Any
 // in-page link pointing at a <details> gets this, which also covers the
-// host notice's "Run Symbulator 9 locally" link -- same card, same intent.
+// host notice's "Run locally" link -- same card, same intent.
 (function () {
   function openTarget(hash) {
     if (!hash || hash.length < 2) { return; }
