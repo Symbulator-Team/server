@@ -30,7 +30,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "9501b1ad2c";
+window.SYMB_I18N_V = "6a9778f160";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -930,19 +930,37 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
      not something worth a wrapped row. Below the phone breakpoint each
      button hugs its own label instead, with a tighter gap and padding.
 
-     The short spelling is second, and only for Create new -- the same
-     two-span idea banner.css uses in the ribbon, kept local because that
-     rule is scoped to .subbar. Upload and Download are short enough in
-     English to stand as they are.
+     The short spelling is second -- the same two-span idea banner.css
+     uses in the ribbon, kept local because that rule is scoped to
+     .subbar.
+
+     #246 put the pair on all three buttons. English repeats itself on
+     Upload and Download on purpose: those words already fit at 375px, so
+     there is nothing to gain by shortening them, and a language that
+     needs no short form is best served by being given its own word
+     twice rather than an abbreviation nobody asked for. German,
+     Japanese and Ukrainian are the three that did need one -- their
+     Upload and Download are Herunterladen and the like -- and the pair
+     is what lets each language decide for itself.
 
      480px matches every other place this page abbreviates: the ribbon,
      the property mark and the subtitle all switch there. */
-  .btn-row .lbl-short { display: none; }
+  /* #247: the pair is not the button row's own -- any label that needs a
+     phone-width spelling uses it. Same 480px switch as the ribbon, the
+     property mark and the subtitle. */
+  .lbl-short { display: none; }
   @media (max-width: 480px) {
     .btn-row { gap: .45rem; }
     .btn-row .uploadlbl { min-width: 0; padding-inline: .7rem; }
-    .btn-row .lbl-full { display: none; }
-    .btn-row .lbl-short { display: inline; }
+    .lbl-full { display: none; }
+    .lbl-short { display: inline; }
+  }
+  /* One tier tighter for the smallest screens still in use -- a 320px
+     phone leaves the card 238px, where even English's own three words
+     were 4px over once the gaps counted. */
+  @media (max-width: 360px) {
+    .btn-row { gap: .3rem; }
+    .btn-row .uploadlbl { padding-inline: .5rem; }
   }
 
   .dl-row label { font-weight: 400; font-size: .92rem; display: flex;
@@ -1282,15 +1300,20 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
          Download writes it back out, Create new starts an empty one. -->
     <div class="btn-row" id="uploadRow" style="margin-top:.9rem">
       <button type="button" id="uploadBtn" class="uploadlbl"
-        title="Upload an input file of circuit entries" data-i18n-title="upload-an-input-file.b4e3" data-i18n="upload.8bdf">Upload</button>
+        title="Upload an input file of circuit entries" data-i18n-title="upload-an-input-file.b4e3" data-i18n="uploadupload.29bf"><span class="lbl-full">Upload</span><span class="lbl-short">Upload</span></button>
       <input type="file" id="fileInput" accept=".cir" hidden>
       <button type="button" id="downloadFileBtn" class="uploadlbl" disabled
-        title="Download the input file as it now stands" data-i18n-title="download-the-input-file.ae7b" data-i18n="download.a479">Download</button>
+        title="Download the input file as it now stands" data-i18n-title="download-the-input-file.ae7b" data-i18n="downloaddownload.18ca"><span class="lbl-full">Download</span><span class="lbl-short">Download</span></button>
       <button type="button" id="newFileBtn" class="uploadlbl" data-i18n="create-newnew.7d24"><span class="lbl-full">Create new</span><span class="lbl-short">New</span></button>
     </div>
 
     <details id="fileFormatBox" style="margin-top:.9rem">
-      <summary data-i18n="about-input-file-cir.5344">About input file (.cir) format</summary>
+      <!-- #247: this one wrapped to two lines in eight of the
+           thirteen languages at 375px -- English is among the few
+           it fits, which is why it went unnoticed until a German
+           screenshot. The other two summaries in this card fit
+           everywhere and are left alone. -->
+      <summary data-i18n="about-input-file-cir.e152"><span class="lbl-full">About input file (.cir) format</span><span class="lbl-short">About the .cir format</span></summary>
       <p style="font-size:.9rem;color:var(--muted);margin-top:.5rem" data-i18n="a-plain-text-input.ab74">
         A plain text input file holds as many <em>entries</em> as you like. An
         entry is one set of inputs to be solved together: a circuit, the
@@ -2484,7 +2507,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-03 03:18 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-03 03:52 UTC</span>
 </footer>
 
 <script>
