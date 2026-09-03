@@ -11,7 +11,7 @@ r3,2,3,5j
 
 analysis: ac
 note: Find the load impedance that maximises the average power drawn from the circuit, and that maximum power. The load that draws the most power is the conjugate of zeq. Version 9 has no separate apmax: in AC, pmax is already the average maximum power.
-image: https://learn.symbulator.com/assets/circuit/as7e1105.png
+image: https://learn.symbulator.com/assets/circuit/as7e1105.png [477px]
 omega: omega
 tool: th
 n1: 3
@@ -32,7 +32,7 @@ r3,2,0,4
 
 analysis: ac
 note: Find the power factor of the circuit as seen by the source, and the average power the source delivers — the Evaluate line, -pe: 125.4 W. The values are RMS, so the RMS setting is on. The power factor comes from the pf mini-tool, given ve and -ie: 0.97342 leading. The minus sign matters -- ie is the current into the source, and without it the tool says lagging.
-image: https://learn.symbulator.com/assets/circuit/as7e1110.png
+image: https://learn.symbulator.com/assets/circuit/as7e1110.png [509px]
 omega: omega
 rounding: 5
 si: no
@@ -70,7 +70,7 @@ r4,3,0,-6j
 
 analysis: ac
 note: Find the power factor of the circuit as seen by the source, and the average power it supplies — the Evaluate line, -pe: 2007.1 W. pf with ve and -ie reads 0.93595 lagging.
-image: https://learn.symbulator.com/assets/circuit/as7pp1110.png
+image: https://learn.symbulator.com/assets/circuit/as7pp1110.png [494px]
 omega: omega
 rounding: 5
 si: no
@@ -89,7 +89,7 @@ rl2,3,0,.1+1j
 
 analysis: ac
 note: A power transmission system, modelled as line, load and return path in series: find the average power absorbed by the load — the rl block's power consumed line, 573.2 W.
-image: https://learn.symbulator.com/assets/circuit/as7p1197.png
+image: https://learn.symbulator.com/assets/circuit/as7p1197.png [508px]
 omega: omega
 rounding: 5
 si: no
@@ -107,7 +107,7 @@ r3,1,0,60
 
 analysis: ac
 note: Parts (a) and (b): find the total complex power delivered (the Evaluate line, -se) and the power factor. pf with ve and -ie reads 0.99805 leading, which is what makes part (c) come out the way it does.
-image: https://learn.symbulator.com/assets/circuit/as7p1175.png
+image: https://learn.symbulator.com/assets/circuit/as7p1175.png [490px]
 omega: omega
 rounding: 5
 si: no
@@ -127,7 +127,7 @@ c,1,0,x
 
 analysis: ac
 note: Part (c): solve im(se) = 0 for the parallel capacitance x, at 50 Hz. The answer comes back negative. No positive capacitance can work: part (b) showed the load is already leading, so a capacitor pushes it further the wrong way. Probably why the textbook gives no number here.
-image: https://learn.symbulator.com/assets/circuit/as7p1175.png
+image: https://learn.symbulator.com/assets/circuit/as7p1175.png [490px]
 omega: 2*pi*50
 rounding: 5
 si: no
@@ -149,7 +149,7 @@ l,1,0,x
 
 analysis: ac
 note: The same solve with an inductor in place of the capacitor: x = 1.5987 H. Positive, and putting it back in as the inductor's value brings the power factor to 1.
-image: https://learn.symbulator.com/assets/circuit/as7p1175.png
+image: https://learn.symbulator.com/assets/circuit/as7p1175.png [490px]
 omega: 2*pi*50
 rounding: 5
 si: no

@@ -45,7 +45,19 @@ EXAMPLES = SERVER / "examples"
 DOCS = SERVER.parent.parent.parent / "Sym Docum" / "Documentation"
 
 BASE = "https://learn.symbulator.com/"
-IMAGE_RE = re.compile(r"^image:\s*(?P<url>\S+)\s*$")
+# #235: an `image:` value may carry a width cap -- `<url> [200px]`.
+# The old pattern was anchored straight after the URL, so a line with
+# a cap stopped matching *entirely* and that picture silently dropped
+# out of this check. Not an error, just quietly unguarded -- the same
+# shape as #230. The cap is optional here and ignored: this checks
+# that the file exists, and how wide it is drawn does not affect that.
+IMAGE_RE = re.compile(r"^image:\s*(?P<url>\S+)(?:\s+\[\d+px\])?\s*$",
+                      re.I)
+
+
+#: Marks a line the pattern above could not read, so it travels
+#: through the same list and is reported rather than dropped.
+UNPARSED = "unreadable image line: "
 
 
 def collect() -> list[tuple[str, str, str]]:
@@ -62,6 +74,13 @@ def collect() -> list[tuple[str, str, str]]:
             m = IMAGE_RE.match(line)
             if m:
                 found.append((path.name, entry, m.group("url")))
+            elif line.strip().lower().startswith("image:"):
+                # An image line this cannot read is reported, not skipped.
+                # Skipping is how the width cap would have blinded the
+                # check in the first place, and how #230's regex went
+                # years without matching anything: a guard that quietly
+                # ignores what it does not understand guards nothing.
+                found.append((path.name, entry, UNPARSED + line.strip()))
     return found
 
 
@@ -88,6 +107,13 @@ def main() -> int:
 
     # 1. Every link must name a file that exists in the docs tree.
     for name, entry, url in links:
+        if url.startswith(UNPARSED):
+            print(f"  {name}: '{entry}' -- {url[len(UNPARSED):]}\n"
+                  f"      this image: line cannot be read. A width cap "
+                  f"is written as [200px], after a space.",
+                  file=sys.stderr)
+            problems += 1
+            continue
         if not url.startswith(BASE + "assets/"):
             print(f"  {name}: '{entry}' -- {url}\n"
                   f"      not a {BASE}assets/ link", file=sys.stderr)

@@ -50,7 +50,7 @@ o,0,a,o
 
 analysis: dc
 note: Find vo and io: -8 V, and 4.8 mA flowing into the op amp.
-image: https://learn.symbulator.com/assets/practice/as2s-example-5-6-adder-or-summing-29.jpg
+image: https://learn.symbulator.com/assets/practice/as2s-example-5-6-adder-or-summing-29.jpg [543px]
 rounding: 3
 si: no
 units: yes
@@ -106,7 +106,7 @@ o,6,5,o
 
 analysis: dc
 note: Find vo: 3*v2 - 4*v1.
-image: https://learn.symbulator.com/assets/practice/tr5s-exercise-4-13-difference-or-differential-33.jpg
+image: https://learn.symbulator.com/assets/practice/tr5s-exercise-4-13-difference-or-differential-33.jpg [503px]
 rounding: exact
 si: no
 units: yes
@@ -222,7 +222,7 @@ r5,o,0,10'k
 
 analysis: dc
 note: The instrumentation amplifier, three op amps: find io, which is ir5 — 2 microamps, from the 10 mV difference between the inputs.
-image: https://learn.symbulator.com/assets/practice/as2s-practice-problem-5-8-instrumentation-36.jpg
+image: https://learn.symbulator.com/assets/practice/as2s-practice-problem-5-8-instrumentation-36.jpg [618px]
 rounding: 3
 si: no
 units: yes
@@ -279,7 +279,7 @@ r3,2,0,3'k
 
 analysis: dc
 note: Find vo and io — read vo and iro: 0.35 V and 25 microamps.
-image: https://learn.symbulator.com/assets/practice/as2s-example-5-9-cascade-41.jpg
+image: https://learn.symbulator.com/assets/practice/as2s-example-5-9-cascade-41.jpg [487px]
 rounding: 3
 si: no
 units: yes
@@ -295,7 +295,7 @@ r6,3,o,6'k
 
 analysis: dc
 note: Find vo and io — read vo and iro: 10 V and 1 mA.
-image: https://learn.symbulator.com/assets/practice/as2s-practice-problem-5-9-cascade-42.jpg
+image: https://learn.symbulator.com/assets/practice/as2s-practice-problem-5-9-cascade-42.jpg [438px]
 rounding: exact
 si: no
 units: yes
@@ -316,7 +316,7 @@ o3,0,6,o
 
 analysis: dc
 note: With v1 = 2 V and v2 = 1.5 V, find vo: 9 V.
-image: https://learn.symbulator.com/assets/practice/as2s-practice-problem-5-10-cascade-43.jpg
+image: https://learn.symbulator.com/assets/practice/as2s-practice-problem-5-10-cascade-43.jpg [607px]
 rounding: approx
 si: no
 units: yes
@@ -417,7 +417,7 @@ r3,d,e,r3
 
 analysis: dc
 note: Derive vo in terms of v1 and v2. The output is between nodes b and e, so the Evaluate line asks for vb-ve: -((r1+r2+r3)/r2)*(v1-v2).
-image: https://learn.symbulator.com/assets/practice/tr5s-example-4-18-multiple-49.jpg
+image: https://learn.symbulator.com/assets/practice/tr5s-example-4-18-multiple-49.jpg [410px]
 rounding: exact
 si: no
 units: yes

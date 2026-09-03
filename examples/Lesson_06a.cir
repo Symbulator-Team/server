@@ -27,7 +27,7 @@ r,2,0,r
 
 analysis: dc
 note: The DC half of a two-interval problem: for t < 0 the circuit has long settled, so a DC solve gives the capacitor's voltage — the initial condition the next entry needs.
-image: https://learn.symbulator.com/assets/practice/bo2s-example-5-1-2.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-example-5-1-2.jpg [472px]
 rounding: exact
 si: no
 units: yes
@@ -40,7 +40,7 @@ r,2,0,r
 
 analysis: tr
 note: The TR half: the capacitor carries the initial condition found in DC, and vc decays as e^(-t/(c*r)) times r*v/(r+r1).
-image: https://learn.symbulator.com/assets/practice/bo2s-example-5-1-2.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-example-5-1-2.jpg [472px]
 rounding: exact
 si: no
 units: yes
@@ -144,7 +144,7 @@ r,1,0,r
 
 analysis: tr
 note: In this problem, we describe an inductor (the l element) for the first time. Given iL(0) = il0, find vL(t), iL(t) and vR(t), symbolically.
-image: https://learn.symbulator.com/assets/practice/bo2s-figure-5-10a-7.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-figure-5-10a-7.jpg [459px]
 rounding: exact
 si: no
 units: yes
@@ -159,7 +159,7 @@ r2,2,0,r
 
 analysis: dc
 note: First interval of the RL problem, in DC: find il, the inductor's initial condition — v/r1.
-image: https://learn.symbulator.com/assets/practice/bo2s-example-5-3-8.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-example-5-3-8.jpg [467px]
 rounding: exact
 si: no
 units: yes
@@ -172,7 +172,7 @@ r2,2,0,r
 
 analysis: tr
 note: Second interval in TR: il decays as e^(-r*t/l) times v/r1.
-image: https://learn.symbulator.com/assets/practice/bo2s-example-5-3-8.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-example-5-3-8.jpg [467px]
 rounding: exact
 si: no
 units: yes
@@ -187,7 +187,7 @@ r12,2,0,12
 
 analysis: dc
 note: Find iL(t), vL(t) and i(t) for all t; this first interval in DC gives the initial condition, 2 A. The chapter asks for ir1 here; this circuit's resistors are r4 and r12, and the 2 A it prints is ir4.
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-3-9.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-3-9.jpg [530px]
 rounding: exact
 si: no
 units: yes
@@ -202,7 +202,7 @@ r12,2,0,12
 
 analysis: tr
 note: Second interval in TR with the source at zero: il, vl and ir4 all decay as e^(-3t).
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-3-9.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-3-9.jpg [530px]
 rounding: exact
 si: no
 units: yes
@@ -216,7 +216,7 @@ l,v,0,l,5
 
 analysis: tr
 note: A transient with a dependent source in it: given iL(0) = 5 A, find iL(t). It decays as 5e^(-r*t/(3*l)).
-image: https://learn.symbulator.com/assets/practice/bo2s-p230-dependent-source-10.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-p230-dependent-source-10.jpg [388px]
 rounding: exact
 si: no
 units: yes
@@ -232,7 +232,7 @@ ed,3,0,3*vr8
 
 analysis: dc
 note: First interval in DC: find il and vl. The initial condition is 2 A.
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-4-dependent-source-11.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-4-dependent-source-11.jpg [587px]
 rounding: exact
 si: no
 units: yes
@@ -246,7 +246,7 @@ ed,3,0,3*vr8
 
 analysis: tr
 note: Second interval in TR: il and vl come back 2e^(-2t) and -64e^(-2t).
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-4-dependent-source-11.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-4-dependent-source-11.jpg [587px]
 rounding: exact
 si: no
 units: yes
@@ -262,7 +262,7 @@ o,0,1,o
 
 analysis: dc
 note: An op amp joins the transient problems. First interval in DC: find vc, ic and vo — the capacitor sits at 10 V.
-image: https://learn.symbulator.com/assets/practice/bo2s-example-5-5-op-amp-12.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-example-5-5-op-amp-12.jpg [519px]
 rounding: exact
 si: no
 units: yes
@@ -277,7 +277,7 @@ o,0,1,o
 
 analysis: tr
 note: Second interval in TR: vc, ic and vo all decay as e^(-4t).
-image: https://learn.symbulator.com/assets/practice/bo2s-example-5-5-op-amp-12.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-example-5-5-op-amp-12.jpg [519px]
 rounding: exact
 si: no
 units: yes
@@ -293,7 +293,7 @@ r2,1,0,2
 
 analysis: dc
 note: First interval in DC: find vc, ic and vo — 10 V, 0 and 14 V.
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-5-op-amp-13.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-5-op-amp-13.jpg [484px]
 rounding: exact
 si: no
 units: yes
@@ -308,7 +308,7 @@ r2,1,0,2
 
 analysis: tr
 note: Second interval in TR: 10e^(-4t), -2e^(-4t) and 10e^(-4t).
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-5-op-amp-13.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-5-5-op-amp-13.jpg [484px]
 rounding: exact
 si: no
 units: yes

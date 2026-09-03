@@ -9,7 +9,7 @@ r1,1,0,20'k
 
 analysis: dc
 note: In this problem, we use a current source (the j element) for the first time. Find the current through and the voltage drop across R1.
-image: https://learn.symbulator.com/assets/circuit/b11e0801.jpg
+image: https://learn.symbulator.com/assets/circuit/b11e0801.jpg [427px]
 rounding: 3
 si: yes
 units: yes
@@ -26,7 +26,7 @@ j32,3,2,3
 
 analysis: dc
 note: In this problem, we describe conductances for the first time: each siemens value enters as a resistor of 1 over that value. Find the voltage at each node.
-image: https://learn.symbulator.com/assets/circuit/bo2e0202.jpg
+image: https://learn.symbulator.com/assets/circuit/bo2e0202.jpg [441px]
 rounding: 3
 si: no
 units: yes
@@ -58,7 +58,7 @@ re,1,0,[10'k,22'k]
 
 analysis: dc
 note: A partial reduction: R1 stays on its own because we need its current, while R2 and R3 fold into one equivalent with the [,] shorthand.
-image: https://learn.symbulator.com/assets/practice/b11s-example-6-22-hidden-source-17.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-6-22-hidden-source-17.jpg [568px]
 rounding: exact
 si: no
 units: yes
@@ -72,7 +72,7 @@ r1,1,0,4
 
 analysis: dc
 note: Find Vs, I1 and I2 — read v1, ie and ir1.
-image: https://learn.symbulator.com/assets/practice/b11s-example-8-2-1.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-8-2-1.jpg [419px]
 rounding: exact
 si: no
 units: yes
@@ -88,7 +88,7 @@ j8,2,0,8
 
 analysis: dc
 note: Find the current through each resistor.
-image: https://learn.symbulator.com/assets/practice/b11s-example-8-15-2.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-8-15-2.jpg [587px]
 rounding: 3
 si: no
 units: yes
@@ -122,7 +122,7 @@ j03,0,3,2
 
 analysis: dc
 note: Another circuit given in siemens: find the voltage at each node.
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-2-2-conductances-4.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-2-2-conductances-4.jpg [453px]
 rounding: 3
 si: no
 units: yes
@@ -140,7 +140,7 @@ rx,3,4,rx
 
 analysis: dc
 note: Find ix and vx. The resistor rx is unknown, but ir2 is known to be 4 A, so Expert Mode solves the circuit whole; read ir1 and vrx.
-image: https://learn.symbulator.com/assets/practice/hk5s-figure-1-24b-expert-5.jpg
+image: https://learn.symbulator.com/assets/practice/hk5s-figure-1-24b-expert-5.jpg [383px]
 unknowns: rx
 equations: ir2 = 4
 rounding: exact
@@ -161,7 +161,7 @@ r30,3,0,1/5
 
 analysis: dc
 note: Find the voltage at each node.
-image: https://learn.symbulator.com/assets/practice/hk5s-example-2-2-conductances-6.jpg
+image: https://learn.symbulator.com/assets/practice/hk5s-example-2-2-conductances-6.jpg [358px]
 rounding: exact
 si: no
 units: yes
@@ -176,7 +176,7 @@ r2,0,2,2
 
 analysis: dc
 note: Find the current I2.
-image: https://learn.symbulator.com/assets/practice/b11s-example-8-5-7.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-8-5-7.jpg [451px]
 rounding: 3
 si: no
 units: yes
@@ -193,7 +193,7 @@ r13,1,3,1/2
 
 analysis: dc
 note: Find the voltage at each node, and — on the Evaluate line — the current through the voltage source.
-image: https://learn.symbulator.com/assets/practice/bo2s-example-2-5-conductances-8.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-example-2-5-conductances-8.jpg [451px]
 rounding: 3
 si: no
 units: yes
@@ -211,7 +211,7 @@ j2,2,0,4
 
 analysis: dc
 note: Find V1 and V2.
-image: https://learn.symbulator.com/assets/practice/b11s-example-8-22-9.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-8-22-9.jpg [518px]
 rounding: 4
 si: no
 units: yes
@@ -226,7 +226,7 @@ j,0,1,1
 
 analysis: dc
 note: Find V1, I1 and I2.
-image: https://learn.symbulator.com/assets/practice/b11s-example-8-19-10.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-8-19-10.jpg [390px]
 rounding: 3
 si: no
 units: yes
@@ -243,7 +243,7 @@ e2,0,3,12
 
 analysis: dc
 note: Find I2 and I3.
-image: https://learn.symbulator.com/assets/practice/b11s-example-8-14-11.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-8-14-11.jpg [550px]
 rounding: 3
 si: no
 units: yes
@@ -259,7 +259,7 @@ r3,2,0,10
 
 analysis: dc
 note: Find V1, V2, I1, I2 and I3.
-image: https://learn.symbulator.com/assets/practice/b11s-example-8-20-12.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-8-20-12.jpg [503px]
 rounding: 4
 si: no
 units: yes
@@ -311,7 +311,7 @@ e2,b,2,8
 
 analysis: dc
 note: Find the currents through R2 and R3.
-image: https://learn.symbulator.com/assets/practice/rm3s-example-8-13-14.jpg
+image: https://learn.symbulator.com/assets/practice/rm3s-example-8-13-14.jpg [489px]
 rounding: 3
 si: no
 units: yes
@@ -326,7 +326,7 @@ e,2,0,20
 
 analysis: dc
 note: A hidden-source problem: the 'hanging' 20 V node becomes a hidden 20 V source. Find Vs and I1.
-image: https://learn.symbulator.com/assets/practice/b11s-example-6-3-hidden-source-15.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-6-3-hidden-source-15.jpg [503px]
 rounding: exact
 si: no
 units: yes
@@ -343,7 +343,7 @@ j,0,3,ix
 
 analysis: dc
 note: Find ix and vx. The current source's value ix is the unknown, and ir8 = 5 A is the fact Expert Mode is given; read ix and v3.
-image: https://learn.symbulator.com/assets/practice/hk5s-figure-1-24c-expert-16.jpg
+image: https://learn.symbulator.com/assets/practice/hk5s-figure-1-24c-expert-16.jpg [542px]
 unknowns: ix
 equations: ir8 = 5
 rounding: exact
@@ -360,7 +360,7 @@ r3,1,0,22'k
 
 analysis: dc
 note: No source is drawn, yet the circuit carries current: a hidden current source supplies the given 12 mA. Find I1.
-image: https://learn.symbulator.com/assets/practice/b11s-example-6-22-hidden-source-17.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-6-22-hidden-source-17.jpg [568px]
 rounding: 4
 si: yes
 units: yes
@@ -375,7 +375,7 @@ r3,1,0,1
 
 analysis: dc
 note: A hidden source and Expert Mode together: the source current is1 is unknown and ir2 = 2 mA is known. Find Is, I1 and I3.
-image: https://learn.symbulator.com/assets/practice/b11s-example-6-21-hidden-source-expert-18.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-6-21-hidden-source-expert-18.jpg [518px]
 unknowns: is1
 equations: ir2 = 2'm
 rounding: 3
@@ -392,7 +392,7 @@ r2,1,0,5
 
 analysis: dc
 note: In this problem, we use a dependent source for the first time: the current source jd depends on the node voltage v1, written directly as its value, 4*v1. Find I1, I2 and v.
-image: https://learn.symbulator.com/assets/practice/bo2s-example-1-9-19.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-example-1-9-19.jpg [496px]
 rounding: exact
 si: no
 units: yes
@@ -407,7 +407,7 @@ r8,o,0,8
 
 analysis: dc
 note: Find vo and io; the dependent current source's value reads iro/4.
-image: https://learn.symbulator.com/assets/practice/as2s-practice-problem-2-7-20.jpg
+image: https://learn.symbulator.com/assets/practice/as2s-practice-problem-2-7-20.jpg [474px]
 rounding: exact
 si: no
 units: yes
@@ -422,7 +422,7 @@ ra,0,3,15
 
 analysis: dc
 note: In this problem, we use a dependent voltage source for the first time: ed's value is 2*vra. Find the power delivered by each source and the power consumed by the two resistors. Three answers here: evaluate -pei, then -ped, then pr1+pra.
-image: https://learn.symbulator.com/assets/practice/hk5s-example-1-3-21.jpg
+image: https://learn.symbulator.com/assets/practice/hk5s-example-1-3-21.jpg [496px]
 rounding: exact
 si: no
 units: yes
@@ -438,7 +438,7 @@ ro,1,2,5
 
 analysis: dc
 note: Find vx and vo — read vx and vro.
-image: https://learn.symbulator.com/assets/practice/as2s-practice-problem-p2-6-22.jpg
+image: https://learn.symbulator.com/assets/practice/as2s-practice-problem-p2-6-22.jpg [365px]
 rounding: exact
 si: no
 units: yes
@@ -453,7 +453,7 @@ r2,3,0,1/5
 
 analysis: dc
 note: Find v1, v2 and i — read as vr1, vr2 and ir1; the dependent source's value is 4*ir1.
-image: https://learn.symbulator.com/assets/practice/bo2s-example-1-10-23.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-example-1-10-23.jpg [508px]
 rounding: exact
 si: no
 units: yes
@@ -469,7 +469,7 @@ ro,o,0,6
 
 analysis: dc
 note: Find vo and i — read vo and iri.
-image: https://learn.symbulator.com/assets/practice/as2s-example-2-6-24.jpg
+image: https://learn.symbulator.com/assets/practice/as2s-example-2-6-24.jpg [389px]
 rounding: exact
 si: no
 units: yes
@@ -485,7 +485,7 @@ ed,3,0,4*vx
 
 analysis: dc
 note: Find the power absorbed by each of the five elements.
-image: https://learn.symbulator.com/assets/practice/hk5s-drill-problem-1-11-25.jpg
+image: https://learn.symbulator.com/assets/practice/hk5s-drill-problem-1-11-25.jpg [409px]
 rounding: 4
 si: no
 units: yes
@@ -502,7 +502,7 @@ ed,c,0,4*iro
 
 analysis: dc
 note: Find Io.
-image: https://learn.symbulator.com/assets/practice/as2s-example-3-6-26.jpg
+image: https://learn.symbulator.com/assets/practice/as2s-example-3-6-26.jpg [447px]
 rounding: 3
 si: no
 units: yes
@@ -519,7 +519,7 @@ ed,2,3,ir1/2
 
 analysis: dc
 note: Find i, v and id — read ir1, vr3 and ied. The book's tip about the 4 V drop in the 2 ohm resistor is superfluous: every element value is known.
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-1-12-27.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-1-12-27.jpg [549px]
 rounding: exact
 si: no
 units: yes
@@ -536,7 +536,7 @@ r4b,2,0,4
 
 analysis: dc
 note: Find the voltage at each node.
-image: https://learn.symbulator.com/assets/practice/as2s-example-3-2-28.jpg
+image: https://learn.symbulator.com/assets/practice/as2s-example-3-2-28.jpg [518px]
 rounding: 3
 si: no
 units: yes
@@ -574,7 +574,7 @@ r4,3,0,1
 
 analysis: dc
 note: Values given in siemens: find the voltage at each node.
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-2-6-30.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-2-6-30.jpg [498px]
 rounding: exact
 si: no
 units: yes
@@ -645,7 +645,7 @@ r4,1,2,4
 
 analysis: dc
 note: Find i, v, is and vs. One unknown value (vs) and one known fact (vr4 = 4) make this a job for Expert Mode; evaluate -ies for is.
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-1-10-34.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-1-10-34.jpg [450px]
 unknowns: vs
 equations: vr4 = 4
 rounding: exact
@@ -666,7 +666,7 @@ j,4,0,vr10/15
 
 analysis: dc
 note: Find i, v and vd — read ir2, vr10 and vj. The book's tip that the 6 ohm resistor drops 1.5 V is superfluous: all element values are known.
-image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-1-11-35.jpg
+image: https://learn.symbulator.com/assets/practice/bo2s-drill-exercise-1-11-35.jpg [581px]
 rounding: 3
 si: no
 units: yes
@@ -682,7 +682,7 @@ ro,o,0,500
 
 analysis: dc
 note: The first of the fully symbolic dependent-source problems: find vo and io in terms of the source current is1. The answers come back as formulas, 1000*is1 and 2*is1.
-image: https://learn.symbulator.com/assets/practice/tr5s-exercise-4-2-36.jpg
+image: https://learn.symbulator.com/assets/practice/tr5s-exercise-4-2-36.jpg [461px]
 rounding: exact
 si: no
 units: yes
@@ -699,7 +699,7 @@ j,0,o,100'm*vr2
 
 analysis: dc
 note: Find vo and the equivalent resistance Rin in terms of vs. Five significant digits, so re reads 10952 as the chapter prints it. vo then shows 0.90413 rather than the chapter's .904 -- the same number, one place further on.
-image: https://learn.symbulator.com/assets/practice/tr5s-example-4-4-37.jpg
+image: https://learn.symbulator.com/assets/practice/tr5s-example-4-4-37.jpg [455px]
 rounding: 5
 si: no
 units: yes
@@ -716,7 +716,7 @@ ro,o,0,500
 
 analysis: dc
 note: Find the voltage drop, current and power of the 500 ohm resistor in terms of is1, and — on the Evaluate line — the ratio of that power to the power the independent source delivers: 4320.
-image: https://learn.symbulator.com/assets/practice/tr5s-figure-4-4-38.jpg
+image: https://learn.symbulator.com/assets/practice/tr5s-figure-4-4-38.jpg [587px]
 rounding: exact
 si: no
 units: yes
@@ -734,7 +734,7 @@ rl,o,0,rl
 
 analysis: dc
 note: A fully symbolic amplifier model: find vo. The answer matches the textbook's formula term for term.
-image: https://learn.symbulator.com/assets/practice/tr5s-example-4-1-symbolic-39.jpg
+image: https://learn.symbulator.com/assets/practice/tr5s-example-4-1-symbolic-39.jpg [545px]
 rounding: exact
 si: no
 units: yes
@@ -766,7 +766,7 @@ rl,b,0,rl
 
 analysis: dc
 note: Find Rin, the resistance seen by the current source: read rji. The answer is re1*(β+1), matching the textbook.
-image: https://learn.symbulator.com/assets/practice/tr5-example-4-7-symbolic-45.jpg
+image: https://learn.symbulator.com/assets/practice/tr5-example-4-7-symbolic-45.jpg [360px]
 rounding: exact
 si: no
 units: yes
@@ -783,7 +783,7 @@ rl,o,0,1/gl
 
 analysis: dc
 note: All resistors given as conductances, and a μ constant in the dependent source: find vo in terms of the circuit's values.
-image: https://learn.symbulator.com/assets/practice/tr5s-exercise-4-3-symbolic-47.jpg
+image: https://learn.symbulator.com/assets/practice/tr5s-exercise-4-3-symbolic-47.jpg [439px]
 rounding: exact
 si: no
 units: yes
@@ -800,7 +800,7 @@ j,c,e,β*irb
 
 analysis: dc
 note: The transistor bias model, fully symbolic: find iB.
-image: https://learn.symbulator.com/assets/practice/tr5s-example-4-5-symbolic-50.jpg
+image: https://learn.symbulator.com/assets/practice/tr5s-example-4-5-symbolic-50.jpg [533px]
 rounding: exact
 si: no
 units: yes

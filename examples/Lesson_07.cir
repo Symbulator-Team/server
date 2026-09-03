@@ -10,7 +10,7 @@ c,2,0,.1
 
 analysis: ac
 note: In this problem, we run an AC (phasor) analysis for the first time: find v(t) and i(t). The first AC problem. The source is the phasor of 10 cos(4t), and the capacitor is in farads, which is why the frequency is needed. Read ir1 and vc with the aa mini-tool, then convert back to sinusoids by hand.
-image: https://learn.symbulator.com/assets/circuit/as7e0909.png
+image: https://learn.symbulator.com/assets/circuit/as7e0909.png [517px]
 omega: 4
 rounding: 4
 si: no
@@ -27,7 +27,7 @@ l,2,0,.2
 
 analysis: ac
 note: Find v(t) and i(t) — read ir1 and vl. The source is written in polar form, which version 9 reads as typed.
-image: https://learn.symbulator.com/assets/circuit/as7pp0909.png
+image: https://learn.symbulator.com/assets/circuit/as7pp0909.png [580px]
 omega: 10
 rounding: 4
 si: no
@@ -46,7 +46,7 @@ r2,4,0,8
 
 analysis: ac
 note: Find the input impedance of the circuit at ω = 50 rad/s. A passive network, so the Resistance / impedance equivalent between nodes 1 and 0 does it: zeq = 3.22 - 11.07j ohm.
-image: https://learn.symbulator.com/assets/circuit/as7e0910.png
+image: https://learn.symbulator.com/assets/circuit/as7e0910.png [423px]
 omega: 50
 tool: er
 n1: 1
@@ -67,7 +67,7 @@ l,3,0,20'm
 
 analysis: ac
 note: Find the steady-state current i when vs = 50 cos(200t) V: aa(ir) gives 4.789 A at -16.7°.
-image: https://learn.symbulator.com/assets/circuit/as7p0935.png
+image: https://learn.symbulator.com/assets/circuit/as7p0935.png [397px]
 omega: 200
 rounding: 4
 si: no
@@ -83,7 +83,7 @@ r1,1,0,4+20j+[16,-14j+25j]
 
 analysis: ac
 note: Find the equivalent impedance, and from it the current I. Every value is already an impedance, so the frequency is asked for but never used. The bracket shorthand does the parallel reduction inside the value.
-image: https://learn.symbulator.com/assets/circuit/as7p0939.png
+image: https://learn.symbulator.com/assets/circuit/as7p0939.png [529px]
 omega: 1
 rounding: 4
 si: no
@@ -105,7 +105,7 @@ r14,1,4,-4j
 
 analysis: ac
 note: Find the equivalent impedance between nodes 1 and 0: 0.3794 + 1.46j ohm. Eight impedances and no source, so this is the equivalent-impedance tool rather than a solve.
-image: https://learn.symbulator.com/assets/circuit/as7p0973.png
+image: https://learn.symbulator.com/assets/circuit/as7p0973.png [530px]
 omega: 1
 tool: er
 n1: 1
@@ -208,7 +208,7 @@ l,2,0,5'm
 
 analysis: ac
 note: Find the C that makes the net impedance purely resistive at 2 kHz: solve im(zeq) = 0 for c, which gives 1.235 µF — not the book's answer. The omega box takes an expression, so the frequency in hertz can be converted in place. Real solutions only, or the answer carries an im(c) term.
-image: https://learn.symbulator.com/assets/circuit/as7p0989.png
+image: https://learn.symbulator.com/assets/circuit/as7p0989.png [286px]
 omega: 2*pi*2e3
 tool: er
 n1: 1
@@ -231,7 +231,7 @@ l,2,0,5'm
 
 analysis: ac
 note: The same solve at 2000 rad/s gives c = 25 — the book's 25 µF. The capacitance is declared as c'u, so the answer comes out in microfarads. Roberto's reading is that the book asked for 2 kHz when it meant 2000 rad/s.
-image: https://learn.symbulator.com/assets/circuit/as7p0989.png
+image: https://learn.symbulator.com/assets/circuit/as7p0989.png [286px]
 omega: 2000
 tool: er
 n1: 1
@@ -255,7 +255,7 @@ o,0,2,o
 
 analysis: ac
 note: Find Vo/Vs symbolically: -c*omega*r*j. The omega box takes a name as readily as a number, so the answer comes back as a function of it.
-image: https://learn.symbulator.com/assets/circuit/as7p1069.png
+image: https://learn.symbulator.com/assets/circuit/as7p1069.png [468px]
 omega: omega
 rounding: exact
 si: no
@@ -277,7 +277,7 @@ r2,3,o,r2
 
 analysis: ac
 note: Compute the closed-loop gain Vo/Vs with every value a symbol. Everything symbolic including the frequency -- about the limit of what is worth solving this way.
-image: https://learn.symbulator.com/assets/circuit/as7pr1077.png
+image: https://learn.symbulator.com/assets/circuit/as7pr1077.png [586px]
 omega: omega
 rounding: exact
 si: no

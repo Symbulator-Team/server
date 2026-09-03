@@ -27,7 +27,7 @@ r2,3,0,15
 
 analysis: dc
 note: Find the current, voltage drop and power consumed in each resistor, and the power delivered by each voltage source; then check that all the powers add up to zero. The 30 V source consumes 60 W rather than delivering it, which is why -pe2 comes out negative.
-image: https://learn.symbulator.com/assets/practice/hk5s-figure-1-26-1.jpg
+image: https://learn.symbulator.com/assets/practice/hk5s-figure-1-26-1.jpg [278px]
 rounding: 3
 si: yes
 units: yes
@@ -44,7 +44,7 @@ r3,4,0,4
 
 analysis: dc
 note: Find the current I and the voltage drop across the 7 ohm resistor.
-image: https://learn.symbulator.com/assets/practice/b11s-example-5-20-2.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-5-20-2.jpg [550px]
 rounding: 3
 si: yes
 units: yes
@@ -59,7 +59,7 @@ r3,1,0,1.2'k
 
 analysis: dc
 note: In this problem, we solve a purely parallel circuit for the first time. Find the total resistance, the source current, and the current in each of the three resistors.
-image: https://learn.symbulator.com/assets/practice/b11s-example-6-13-3.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-6-13-3.jpg [533px]
 rounding: 3
 si: yes
 units: yes
@@ -75,7 +75,7 @@ r4,1,0,8.2'k
 
 analysis: dc
 note: Find the source current Is, the current I4 through the 8.2 kohm resistor, and the voltage V2.
-image: https://learn.symbulator.com/assets/practice/b11s-example-7-2-4.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-7-2-4.jpg [550px]
 rounding: 3
 si: yes
 units: yes
@@ -111,7 +111,7 @@ r6,4,0,2
 
 analysis: dc
 note: Find the current through and the voltage drop across the 2 ohm resistor at the far end of this ladder network.
-image: https://learn.symbulator.com/assets/practice/b11s-figure-7-32-6.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-figure-7-32-6.jpg [587px]
 rounding: 3
 si: yes
 units: yes
@@ -200,7 +200,7 @@ r2,a,2,5
 
 analysis: dc
 note: In this problem, we use three voltage sources at once for the first time. Find the current through each resistor.
-image: https://learn.symbulator.com/assets/practice/b11s-example-8-10-11.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-8-10-11.jpg [607px]
 rounding: 3
 si: yes
 units: yes
@@ -217,7 +217,7 @@ r5,2,0,12
 
 analysis: dc
 note: Find the source current Is, the currents I2 and I4, and the voltage drops V1 and V5.
-image: https://learn.symbulator.com/assets/practice/b11s-example-7-6-12.jpg
+image: https://learn.symbulator.com/assets/practice/b11s-example-7-6-12.jpg [607px]
 rounding: 3
 si: yes
 units: yes
@@ -326,7 +326,7 @@ e2,2,0,-10
 
 analysis: dc
 note: Another hidden-source circuit, with supplies of -2 V and -10 V. Find the total circuit resistance, and the indicated currents and voltages. Also evaluate va-vb, which is -0.8 V.
-image: https://learn.symbulator.com/assets/practice/rm3s-figure-7-16-hidden-source-18.jpg
+image: https://learn.symbulator.com/assets/practice/rm3s-figure-7-16-hidden-source-18.jpg [342px]
 rounding: 3
 si: yes
 units: yes

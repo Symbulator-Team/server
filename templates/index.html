@@ -30,7 +30,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "01d3af5a88";
+window.SYMB_I18N_V = "c632ea45de";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -1034,6 +1034,23 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
     background: var(--note-bg); border-left: 3px solid var(--note-line);
     padding: .4rem .7rem; border-radius: 0 6px 6px 0;
   }
+  /* #236 (Roberto, 3 Sep 2026): the entry's own note carries the problem
+     statement -- the instructions -- and was set at .84rem in --muted:
+     two separate ways of saying "this matters less" on the one thing
+     that matters most. It reads at body size in body ink now.
+
+     Only the entry's note. The same .booknote class also carries the
+     transient chatter ("reading file...", "Could not upload that
+     file."), which is genuinely incidental and stays small. The box and
+     its left rule are kept on both -- that is what marks the text as
+     belonging to the entry rather than to the page. */
+  .booknote.entry {
+    font-size: 1rem; color: var(--ink); padding: .6rem .8rem;
+  }
+  /* #237: one paragraph per `note:` line. Margins between them only, so
+     a single-paragraph note sits exactly where it always did. */
+  .booknote.entry p { margin: 0; }
+  .booknote.entry p + p { margin-top: .55rem; }
   .booknote.warn { background: var(--warn-bg); border-left-color: #e2c88f; }
   .hostnotice { display: none; align-items: flex-start; gap: .6rem;
     background: var(--warn-bg); border: 1px solid var(--disamb-border);
@@ -1133,7 +1150,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
            ribbon stays one line on any screen. -->
       <a href="#runLocallyCard" data-i18n="local-appapp.bf2d"><span class="subbar-lbl">Local App</span><span class="subbar-lbl-short">App</span></a>
       <!-- /server-only -->
-      <a href="https://learn.symbulator.com" data-i18n="tutorialtutorial.a8da"><span class="subbar-lbl">Tutorial</span><span class="subbar-lbl-short">Tutorial</span></a>
+      <a href="https://learn.symbulator.com" data-i18n="documentationdocs.2612"><span class="subbar-lbl">Documentation</span><span class="subbar-lbl-short">Docs</span></a>
     </nav>
     <span class="subbar-spacer"></span>
     <!-- Clear all inputs lived beside the [ I N P U T S ] heading until
@@ -1278,19 +1295,22 @@ variables: v_2
 rounding: exact
 si: no
 units: yes</pre>
-      <p style="font-size:.88rem;color:var(--muted)" data-i18n="everything-after-the-element.ea1d">
+      <p style="font-size:.88rem;color:var(--muted)" data-i18n="everything-after-the-element.4f05">
         Everything after the element lines is optional, and can be left out
         entirely — leaving a key out just means the app's own default
         applies, same as if you'd never touched it:
         <code>analysis</code> (dc/ac/fd/tr), <code>omega</code>,
         <code>variables</code>, <code>tool</code> (th/er/port) with
         <code>n1</code>/<code>n2</code>/<code>kind</code>,
-        <code>note</code> (a line of your own text, shown when the entry
-        is loaded), <code>image</code> (a link to a picture of the circuit,
+        <code>note</code> (text of your own, shown when the entry is
+        loaded — repeat the line for a second paragraph),
+        <code>image</code> (a link to a picture of the circuit,
         shown above the description when the entry is loaded — a web address,
         or a path relative to this page; a picture on your own computer
         cannot be linked to, because the browser will not read your files
-        for a web page), and (if the circuit uses it) the expert-mode
+        for a web page, and you may cap how wide it is drawn by writing
+        <code>[400px]</code> after the link), and (if the circuit uses it)
+        the expert-mode
         <code>equations</code>, <code>conditions</code> and
         <code>unknowns</code>; the Settings
         <code>rounding</code> (exact/approx/a number of significant
@@ -2422,7 +2442,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-02 14:29 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-03 01:17 UTC</span>
 </footer>
 
 <script>
@@ -3370,6 +3390,28 @@ function wantsEntryImage() {
   return box ? box.checked : true;
 }
 
+// #235 (Roberto, 3 Sep 2026): an entry may cap how wide its picture is
+// drawn -- `image: <url> [200px]`. The syntax is strict on purpose, one
+// spelling only, with whitespace before the bracket so a URL that
+// contains one cannot be mistaken for a cap. Anything bracket-shaped
+// that does not parse leaves the picture at full width and says so,
+// rather than failing silently: #219's rule is that an image *problem*
+// produces silence, but a malformed instruction is a typo, and a typo
+// nobody is told about is the bug this project keeps rediscovering.
+const IMAGE_CAP_RE = /^(\S+)\s+\[(\d+)px\]$/i;
+
+function splitImageSpec(spec) {
+  spec = (spec || '').trim();
+  if (!spec) return { src: '', cap: 0 };
+  const m = IMAGE_CAP_RE.exec(spec);
+  if (m) return { src: m[1], cap: parseInt(m[2], 10) };
+  // No cap, or one that did not parse. Only complain when something
+  // bracket-shaped was clearly meant as one.
+  const bad = /\s\[[^\]]*\]$/.test(spec);
+  return { src: bad ? spec.replace(/\s\[[^\]]*\]$/, '') : spec, cap: 0,
+           malformed: bad };
+}
+
 function showEntryImage(src) {
   if (arguments.length) entryImageSrc = (src || '').trim();
   const box = $('entryImageBox'), img = $('entryImage');
@@ -3379,7 +3421,11 @@ function showEntryImage(src) {
   // alone would still have loaded it, which is the one thing the reader
   // asked not to happen.
   if (!wantsEntryImage()) { img.removeAttribute('src'); return; }
-  src = entryImageSrc;
+  const spec = splitImageSpec(entryImageSrc);
+  src = spec.src;
+  // A cap of 0 clears any cap a previous entry set -- the element is
+  // reused, so this has to be assigned either way.
+  img.style.maxWidth = spec.cap ? spec.cap + 'px' : '';
   // A relative path carries no scheme and must stay allowed: it is how an
   // image bundled beside the app is named. Anything that does carry one is
   // held to the two an <img> can actually use.
@@ -3414,15 +3460,32 @@ function showEntryImage(src) {
 function showNote(text, isWarning) {
   const old = document.getElementById('bookNote');
   if (old) old.remove();
-  if (!text) return;
+  if (!text || (Array.isArray(text) && !text.some(t => String(t).trim()))) return;
   const div = document.createElement('div');
   div.id = 'bookNote';
-  div.className = 'booknote' + (isWarning ? ' warn' : '');
+  // #236/#237: an array marks this as an entry's own note rather than a
+  // passing message -- body size, body ink, one <p> per paragraph.
+  // Everything else keeps the small muted treatment.
+  const paras = Array.isArray(text) ? text.filter(t => String(t).trim()) : null;
+  div.className = 'booknote' + (isWarning ? ' warn' : '')
+                             + (paras ? ' entry' : '');
   // Announced rather than only appearing: this is the only feedback that a
   // save, rename or delete happened, and it is easy to miss.
   div.setAttribute('role', isWarning ? 'alert' : 'status');
   div.setAttribute('aria-live', isWarning ? 'assertive' : 'polite');
-  div.textContent = text;
+  // textContent throughout, never innerHTML: a .cir file can arrive from
+  // a stranger and a note is its text verbatim. Paragraphs are separate
+  // elements rather than markup inside a string, so this stays exactly
+  // as safe as the single-string version it replaces.
+  if (paras) {
+    paras.forEach(t => {
+      const el = document.createElement('p');
+      el.textContent = t;
+      div.appendChild(el);
+    });
+  } else {
+    div.textContent = text;
+  }
   // Under the "Entries in" dropdown, so what it says sits beside the list
   // it talks about -- a loaded file's note names the entries above it.
   $('entriesRow').insertAdjacentElement('afterend', div);
