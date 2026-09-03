@@ -1117,6 +1117,12 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
     font-weight: 400; font-size: .92rem; cursor: pointer; padding: .35rem 0; }
   label.checkline > input { margin-top: .2rem; flex: none; }
   label.checkline input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
+  /* Third time (#249): the display above beats the browser's own
+     [hidden] { display: none }, so #242's `line.hidden = true` set the
+     attribute and the tick went on rendering anyway -- an empty
+     "Show image" on every entry that has no picture. See the same note
+     on .solution-pick. */
+  label.checkline[hidden] { display: none; }
   @media (max-width: 520px) {
     /* 16px is the size below which iOS Safari zooms the whole page when a
        field is focused; matching it stops the viewport jumping on every
@@ -2507,7 +2513,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-03 04:10 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-03 04:23 UTC</span>
 </footer>
 
 <script>
