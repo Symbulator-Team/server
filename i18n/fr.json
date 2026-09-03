@@ -46,7 +46,7 @@
  "collect-vo-v.ff97": "<code>collect(vo, v1)</code>",
  "conditions-one-per-line.690b": "Conditions <span class=\"hint\">— une par ligne ou séparées par <code>and</code>, p. ex. <code>pr1 > 0 and v1 = 12</code> ; utilisez <code>>=</code> et <code>&lt;=</code>, pas <code>=></code> ni <code>=&lt;</code></span>",
  "conditions-one-per-line.bc4e": "Conditions <span class=\"hint\">— une par ligne ou séparées par <code>and</code>, p. ex. <code>t = to</code>, qui substitue une valeur avant d'évaluer, comme le fait le <code>|</code> de la calculatrice ; <code>pr1 &gt; 0</code> pose une hypothèse. Utilisez <code>&gt;=</code> et <code>&lt;=</code>, pas <code>=&gt;</code> ni <code>=&lt;</code></span>",
- "create-new.5477": "Créer",
+ "create-newnew.7d24": "<span class=\"lbl-full\">Créer</span><span class=\"lbl-short\">Créer</span>",
  "current-source.25a7": "source de courant",
  "dc-direct-current.81ea": "DC — courant continu",
  "dc-realdc.addd": "<span class=\"subbar-lbl\">DC · réel</span><span class=\"subbar-lbl-short\">DC</span>",
