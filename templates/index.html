@@ -30,7 +30,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "e0a027d3cb";
+window.SYMB_I18N_V = "9501b1ad2c";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -921,6 +921,30 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
      new 7px wider than its two neighbours. */
   .btn-row .uploadlbl { min-width: 8.6rem; text-align: center; margin: 0; }
 
+  /* #245 (Roberto, 3 Sep 2026): on a phone the three buttons wrapped.
+     Three at 8.6rem plus two gaps is 413px, and the card is ~340px wide
+     at 375px -- so Create new dropped onto a line of its own.
+
+     Two changes, and the order matters. The equal-width rule goes first:
+     it exists so the trio reads as a set, and that is a desktop luxury,
+     not something worth a wrapped row. Below the phone breakpoint each
+     button hugs its own label instead, with a tighter gap and padding.
+
+     The short spelling is second, and only for Create new -- the same
+     two-span idea banner.css uses in the ribbon, kept local because that
+     rule is scoped to .subbar. Upload and Download are short enough in
+     English to stand as they are.
+
+     480px matches every other place this page abbreviates: the ribbon,
+     the property mark and the subtitle all switch there. */
+  .btn-row .lbl-short { display: none; }
+  @media (max-width: 480px) {
+    .btn-row { gap: .45rem; }
+    .btn-row .uploadlbl { min-width: 0; padding-inline: .7rem; }
+    .btn-row .lbl-full { display: none; }
+    .btn-row .lbl-short { display: inline; }
+  }
+
   .dl-row label { font-weight: 400; font-size: .92rem; display: flex;
                   align-items: center; gap: .45rem; margin: 0; cursor: pointer; }
   .dl-row input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); }
@@ -1262,7 +1286,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
       <input type="file" id="fileInput" accept=".cir" hidden>
       <button type="button" id="downloadFileBtn" class="uploadlbl" disabled
         title="Download the input file as it now stands" data-i18n-title="download-the-input-file.ae7b" data-i18n="download.a479">Download</button>
-      <button type="button" id="newFileBtn" class="uploadlbl" data-i18n="create-new.5477">Create new</button>
+      <button type="button" id="newFileBtn" class="uploadlbl" data-i18n="create-newnew.7d24"><span class="lbl-full">Create new</span><span class="lbl-short">New</span></button>
     </div>
 
     <details id="fileFormatBox" style="margin-top:.9rem">
@@ -2460,7 +2484,7 @@ units: yes</pre>
   <a href="https://github.com/Symbulator" target="_blank" rel="noopener">GitHub</a> ·
   <a href="https://pypi.org/project/symbulator/" target="_blank" rel="noopener">PyPI</a></span><br>
   <span data-i18n="free-and-open-source.dd6c">Free and open-source software under the MIT licence · results are symbolic, powered by SymPy</span><br>
-  <span class="notranslate">Symbulator 9 version 2026-09-03 02:42 UTC</span>
+  <span class="notranslate">Symbulator 9 version 2026-09-03 03:15 UTC</span>
 </footer>
 
 <script>
