@@ -186,7 +186,7 @@ def main() -> int:
                       "  They exist locally, so this is a deploy that has not "
                       "happened:\n"
                       "  run `py Deploy\\deploy_symbulator.py learn` from "
-                      r"C:\Users\perez\Claude Code" ".", file=sys.stderr)
+                      r"C:\Users\perez\Claude Symbulator" ".", file=sys.stderr)
                 return 1
             print(f"\ncheck_example_images.py: {len(unreachable)} link(s) could "
                   "not be reached\n"
