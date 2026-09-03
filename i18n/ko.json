@@ -495,7 +495,7 @@
  "short-circuit.3cd3": "단락",
  "show-ac-answers-as.f2a8": "교류 답을 극형식 페이저로 표시 <span class=\"hint\">— 3 + 4j는 5∠53.13°가 됩니다. 평균 전력은 실수 그대로입니다</span>",
  "show-equations-adds-an.b3d5": "방정식 보이기 <span class=\"hint\">— 풀이기가 세운 연립방정식을 나열하는 ‘방정식’ 카드를 더합니다</span>",
- "show-image-if-available.53ba": "이미지 표시 (있는 경우)",
+ "show-image.d241": "이미지 표시",
  "show-units-in-answers.89ab": "답에 단위 표시 <span class=\"hint\">— V, A, W, VA, Ω</span>",
  "si-prefixes-apply-to.6c04": "SI 접두어는 수치 답에만 적용됩니다. <code>x·vin/(r1 + x)</code> 같은 기호 답은 그대로 둡니다. 접두어가 붙은 값은 소수이므로 SI 접두어와 <em>정확</em>을 함께 적용할 수는 없습니다.",
  "si-prefixes.ab67": "SI 접두어",

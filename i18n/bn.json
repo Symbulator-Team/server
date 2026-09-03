@@ -495,7 +495,7 @@
  "short-circuit.3cd3": "শর্ট সার্কিট",
  "show-ac-answers-as.f2a8": "AC উত্তর পোলার ফেজর হিসেবে দেখান <span class=\"hint\">— 3 + 4j হয়ে যায় 5∠53.13°; গড় পাওয়ার বাস্তবই থাকে</span>",
  "show-equations-adds-an.b3d5": "সমীকরণ দেখান <span class=\"hint\">— একটি “সমীকরণ” কার্ড যোগ করে যা সলভারের তৈরি নিকাশটি তালিকাভুক্ত করে</span>",
- "show-image-if-available.53ba": "ছবি দেখান (যদি থাকে)",
+ "show-image.d241": "ছবি দেখান",
  "show-units-in-answers.89ab": "উত্তরে একক দেখান <span class=\"hint\">— V, A, W, VA, Ω</span>",
  "si-prefixes-apply-to.6c04": "SI প্রত্যয় কেবল সাংখ্যিক উত্তরে বসে; <code>x·vin/(r1 + x)</code>-এর মতো প্রতীকী উত্তর যেমন আছে তেমনই থাকে। প্রত্যয়যুক্ত মান দশমিক, তাই SI প্রত্যয় ও <em>যথাযথ</em> একসঙ্গে প্রযোজ্য হতে পারে না।",
  "si-prefixes.ab67": "SI প্রত্যয়",

@@ -495,7 +495,7 @@
  "short-circuit.3cd3": "cortocircuito",
  "show-ac-answers-as.f2a8": "Mostrar las respuestas de AC como fasores polares <span class=\"hint\">— 3 + 4j se vuelve 5∠53.13°; la potencia promedio se mantiene real</span>",
  "show-equations-adds-an.b3d5": "Mostrar ecuaciones <span class=\"hint\">— agrega una tarjeta de Ecuaciones con el sistema que armó el solucionador</span>",
- "show-image-if-available.53ba": "Mostrar imagen (si está disponible)",
+ "show-image.d241": "Mostrar imagen",
  "show-units-in-answers.89ab": "Mostrar unidades en las respuestas <span class=\"hint\">— V, A, W, VA, Ω</span>",
  "si-prefixes-apply-to.6c04": "Los prefijos SI se aplican solo a respuestas numéricas; una respuesta simbólica como <code>x·vin/(r1 + x)</code> se deja tal cual. Un valor con prefijo es un decimal, así que los prefijos SI y <em>exacto</em> no pueden aplicarse a la vez.",
  "si-prefixes.ab67": "Prefijos SI",
