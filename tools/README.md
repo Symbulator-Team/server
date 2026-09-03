@@ -268,12 +268,12 @@ function. It exits 1 naming the field on the first failure.
 trusted.
 
 
-## `check_example_plots.py` — every example's plot, run (#251)
+## `check_example_plots.py` — every example's plot, run (#255)
 
     py tools/check_example_plots.py            # every book
     py tools/check_example_plots.py Lesson_11  # one book
 
-Since #251, 67 of the 330 built-in entries carry a plot — a time plot, a
+Since #255, 67 of the 330 built-in entries carry a plot — a time plot, a
 Bode plot, a Bode plot of a typed H(s), or a DC sweep — in the same
 `plottool` / `plotkey` / `plotx` / `plotmin` / `plotmax` / `plotpoints`
 keys the app saves. Each was sized from the entry's own answer when it

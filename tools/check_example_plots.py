@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Run every built-in example's plot, the way the Plot card would.
 
-#251 (3 Sep 2026). Since the plot keys became part of an entry, 67 of the
-330 built-in entries carry a plot: a time plot, a Bode plot, a Bode plot
+#255 (3 Sep 2026; renumbered from #251 on 4 Sep, a docs session having
+taken #251-#254 the same evening). Since the plot keys became part of
+an entry, 67 of the 330 built-in entries carry a plot: a time plot, a Bode plot, a Bode plot
 of a typed H(s), or a DC sweep. Each was sized from the entry's own
 answer when it was written, but a plot is only proved by running it, and
 nothing else in the project does -- `verify_lesson.py` posts the solve,
