@@ -43,7 +43,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "33880693cb";
+window.SYMB_I18N_V = "14031c3b8f";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -2190,6 +2190,7 @@ units: yes</pre>
         x-axis) / <code>plotmin</code> /
         <code>plotmax</code> / <code>plotpoints</code>.
       </p>
+      <p style="font-size:.88rem;color:var(--muted)" data-i18n="for-the-two-port.ffe1">For the two-port tool, a port whose lower terminal is not ground is written as a pair, <code>[top,bottom]</code>, in its node field (and in <code>n1</code>/<code>n2</code> here); a side of the circuit that has no path to node 0 is measured against a reference of its own, and the answers say which.</p>
       <p style="font-size:.88rem;color:var(--muted)" data-i18n="when-the-app-writes.39e9">
         When the app writes a file it puts the keys in the order shown
         above — element lines, then the analysis type and Expert Mode,
@@ -2534,11 +2535,11 @@ units: yes</pre>
 
     <div class="row">
       <div id="n1Field">
-        <label for="n1" data-i18n="node-port-terminal.b40e">Node 1 <span class="hint">(port terminal)</span></label>
+        <label for="n1" data-i18n="node-port-terminal-or.f852">Node 1 <span class="hint">(port terminal, or [top,bottom])</span></label>
         <input type="text" id="n1" placeholder="2">
       </div>
       <div id="n2Field">
-        <label for="n2" data-i18n="node-port-terminal-ground.5710">Node 2 <span class="hint">(port terminal / ground)</span></label>
+        <label for="n2" data-i18n="node-port-terminal-ground.5301">Node 2 <span class="hint">(port terminal / ground, or [top,bottom])</span></label>
         <input type="text" id="n2" placeholder="0">
       </div>
     </div>
@@ -3348,7 +3349,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-06 10:47 UTC</span><br>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-06 21:37 UTC</span><br>
   <span class="notranslate" style="white-space:nowrap"><a href="https://symbulator.com" target="_blank" rel="noopener">symbulator.com</a> ·</span>
   <span data-i18n="free-and-open-source.d231">Free and open-source under the MIT licence · Runs on Python+SymPy</span>
 </footer>
@@ -4094,6 +4095,9 @@ const UI_MESSAGES = {
   220: a  => tv('js.pkg.m220', "The node terms of '%{name}' must be two "
                 + 'node names, or two bracketed pairs [top,bottom] with '
                 + 'two entries each.', a),
+  221: a  => tv('js.pkg.m221', "Node(s) %{nodes} have no path to node 0 "
+                + '(they lie behind a port), so their voltages are '
+                + 'measured against %{ref}, taken as 0.', a),
   301: a  => tv('js.pkg.m301',
                 "No stamping rule implemented for element kind '%{kind}'.", a),
   302: a  => tv('js.pkg.m302', "Unknown two-port kind '%{kind}'.", a),
