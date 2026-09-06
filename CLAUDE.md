@@ -184,5 +184,18 @@ published solver. So `Symbulator-Team/solver` — the fork of the solver —
     pip install -e ../solver        # or wherever your checkout is
 
 Do that before concluding a solver change did nothing. Do not publish a
-second package to PyPI as a first move; see that repository's own
-`CLAUDE.md`.
+second package to PyPI; Roberto declined one on 6 Sep 2026 — see that
+repository's own `CLAUDE.md`.
+
+**Since X1 (6 Sep 2026) that install is the arrangement, not an
+option.** X's solver is versioned `0.5.26+x1` — a PEP 440 local label
+that satisfies the pin, cannot reach PyPI, and shows in `/healthz` as
+`"solver": "0.5.26+x1"`, which is how to tell an X site from one still
+on version 9's package. On this machine the environment is
+`Application\vX\.venv` (never the shared Python, which version 9's dev
+server uses), and the dev server is the `symbulatorx-server` entry in
+the project's `.claude/launch.json` on port **5001**. On the
+`symbulatorx` PythonAnywhere account the checkout is a sibling clone at
+`/home/symbulatorx/solver`, installed editable into `symbulator-venv`;
+after that a solver change reaches the site by `git pull` there plus a
+reload, no `pip`. The commands are in `../local/NEXT_X.md`.
