@@ -95,4 +95,21 @@ si: no
 units: yes
 rms: yes
 polar: yes
+
+
+[AS7's Example 13.11 (autotransformer)]
+
+e,1,0,(120∠30°)
+t,1,2,80,80+120
+rl,2,0,8+6j
+
+analysis: ac
+note: Refer to the autotransformer circuit. Calculate I1, I2 and Io if ZL = 8 + j6 Ω, and the complex power supplied to the load. There is no autotransformer element; the same t element does it, with the 80 turns of the lower winding and the 80 + 120 of the whole. I1 is it1, the current entering the transformer at node 1 (75.00 at -6.87°); I2 is the opposite of it2 (30.00 at -6.87°); Io is the opposite of their sum, aa(-it1-it2), 45.00 at 173.13°.
+image: https://learn.symbulator.com/assets/circuit/as7e1311.png
+omega: omega
+rounding: 4
+si: no
+units: yes
+rms: yes
+polar: yes
 evaluate: -se

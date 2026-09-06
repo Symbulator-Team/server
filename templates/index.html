@@ -43,7 +43,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "c70828a4d0";
+window.SYMB_I18N_V = "3a0d35fd33";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -2327,14 +2327,14 @@ units: yes</pre>
         <tr><td>c</td><td data-i18n="capacitor.dfc9">capacitor</td><td class="notranslate">name,n1,n2,value[,initial voltage]</td></tr>
         <tr><td>l</td><td data-i18n="inductor.d93e">inductor</td><td class="notranslate">name,n1,n2,value[,initial current]</td></tr>
         <tr><td>m</td><td data-i18n="mutual-inductance.aa2d">mutual inductance</td><td class="notranslate">name,L1,L2,M</td></tr>
-        <tr><td>t</td><td data-i18n="ideal-transformer.c164">ideal transformer</td><td class="notranslate">name,n1,n2,N1,N2</td></tr>
+        <tr><td>t</td><td data-i18n="ideal-transformer.c164">ideal transformer</td><td class="notranslate">name,n1,n2,N1,N2<br>name,n1,n2,[N1,N2]<br>name,[tl,bl],[tr,br],[N1,N2]</td></tr>
         <tr><td>o</td><td data-i18n="ideal-op-amp.5f2e">ideal op-amp</td><td class="notranslate">name,n+,n−,n_out</td></tr>
-        <tr><td>z</td><td data-i18n="z-parameters-impedance-two.4802">z-parameters (impedance) two-port block</td><td class="notranslate">name,n1,n2</td></tr>
-        <tr><td>y</td><td data-i18n="y-parameters-admittance-two.6867">y-parameters (admittance) two-port block</td><td class="notranslate">name,n1,n2</td></tr>
-        <tr><td>h</td><td data-i18n="h-parameters-hybrid-two.5e2a">h-parameters (hybrid) two-port block</td><td class="notranslate">name,n1,n2</td></tr>
-        <tr><td>g</td><td data-i18n="g-parameters-inverse-hybrid.a8e8">g-parameters (inverse hybrid) two-port block</td><td class="notranslate">name,n1,n2</td></tr>
-        <tr><td>a</td><td data-i18n="a-parameters-abcd-transmissi.f948">a-parameters (ABCD / transmission) two-port block</td><td class="notranslate">name,n1,n2</td></tr>
-        <tr><td>b</td><td data-i18n="b-parameters-inverse-transmi.2aa5">b-parameters (inverse transmission) two-port block</td><td class="notranslate">name,n1,n2</td></tr>
+        <tr><td>z</td><td data-i18n="z-parameters-impedance-two.4802">z-parameters (impedance) two-port block</td><td class="notranslate">name,n1,n2<br>name,n1,n2,[p11,p12,p21,p22]<br>name,[tl,bl],[tr,br]<br>name,[tl,bl],[tr,br],[p11,p12,p21,p22]</td></tr>
+        <tr><td>y</td><td data-i18n="y-parameters-admittance-two.6867">y-parameters (admittance) two-port block</td><td class="notranslate">name,n1,n2<br>name,[tl,bl],[tr,br]</td></tr>
+        <tr><td>h</td><td data-i18n="h-parameters-hybrid-two.5e2a">h-parameters (hybrid) two-port block</td><td class="notranslate">name,n1,n2<br>name,[tl,bl],[tr,br]</td></tr>
+        <tr><td>g</td><td data-i18n="g-parameters-inverse-hybrid.a8e8">g-parameters (inverse hybrid) two-port block</td><td class="notranslate">name,n1,n2<br>name,[tl,bl],[tr,br]</td></tr>
+        <tr><td>a</td><td data-i18n="a-parameters-abcd-transmissi.f948">a-parameters (ABCD / transmission) two-port block</td><td class="notranslate">name,n1,n2<br>name,[tl,bl],[tr,br]</td></tr>
+        <tr><td>b</td><td data-i18n="b-parameters-inverse-transmi.2aa5">b-parameters (inverse transmission) two-port block</td><td class="notranslate">name,n1,n2<br>name,[tl,bl],[tr,br]</td></tr>
       </table>
       <p class="hint" data-i18n="a-value-can-be.5443">
         A value can be a number, a symbol (<code>r_load</code>,
@@ -4084,6 +4084,16 @@ const UI_MESSAGES = {
   217: a  => tv('js.pkg.m217', 'Node(s) %{nodes} have no path to the '
                 + 'reference node 0; that part of the circuit is floating '
                 + 'and its voltages are undefined.', a),
+  218: a  => tv('js.pkg.m218', "A port of '%{name}' has the same node at "
+                + 'both of its terminals. Each port of a transformer or '
+                + 'two-port must join two different nodes.', a),
+  219: a  => tv('js.pkg.m219', "Your description of transformer '%{name}' "
+                + 'has %{got} terms. Write it as name,n1,n2,N1,N2 or '
+                + 'name,n1,n2,[N1,N2] with both lower terminals on ground, '
+                + 'or name,[tl,bl],[tr,br],[N1,N2] with all four nodes.', a),
+  220: a  => tv('js.pkg.m220', "The node terms of '%{name}' must be two "
+                + 'node names, or two bracketed pairs [top,bottom] with '
+                + 'two entries each.', a),
   301: a  => tv('js.pkg.m301',
                 "No stamping rule implemented for element kind '%{kind}'.", a),
   302: a  => tv('js.pkg.m302', "Unknown two-port kind '%{kind}'.", a),
@@ -4141,6 +4151,9 @@ const UI_MESSAGES = {
   601: () => t('js.pkg.m601', 'The SPICE netlist is empty.'),
   602: a  => tv('js.pkg.m602', 'No translatable elements found in the SPICE '
                 + 'netlist. %{warnings}', a),
+  701: a  => tv('js.pkg.m701', "'%{name}' names four nodes. The schematic "
+                + 'drawer draws a transformer or two-port only in its '
+                + 'two-node form for now; the circuit still solves.', a),
   801: () => t('js.ui.m801', 'Please enter a circuit description.'),
   802: a  => tv('js.ui.m802',
                 'Circuit description too long (max %{max} characters).', a),
