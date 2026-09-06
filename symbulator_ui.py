@@ -930,7 +930,7 @@ def _infinity_pair(expr):
     The Results card has always printed a plain ∞ for oo, -oo and zoo
     alike (see `fmt`/`fmt0`); Evaluate and Solve handed the value to
     SymPy's own printers, which write complex infinity as `zoo` in text
-    and as ∞ with a tilde in LaTeX. Roberto, 7 Sep 2026: the same sign
+    and as ∞ with a tilde in LaTeX. Roberto, 5 Sep 2026: the same sign
     in every result field. The tilde is SymPy's mark for an infinity of
     undefined direction -- a nonzero quantity over zero -- and the
     distinction is not one a circuit answer needs."""
