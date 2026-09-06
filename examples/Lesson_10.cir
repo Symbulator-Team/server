@@ -157,9 +157,169 @@ rl,3,5,100
 r5,5,0,7
 
 analysis: dc
-note: Both windings between live nodes: the 100 ohm load sits across the secondary and node 5 is tied to ground through 7 ohm. it2 = 5/202, it4 = -5/202, it3 = -5/101, it5 = 5/101, and ir5 = 0: the secondary's current circulates through the load alone. The resistor is not useless, though -- an ideal transformer conducts nothing from one winding to the other, so without it the secondary side has no reference at all. Delete r5 and Symbulator stops: nodes 3 and 5 have no path to the reference node 0.
+note: Both windings between live nodes: the 100 ohm load sits across the secondary and node 5 is tied to ground through 7 ohm. it2 = 5/202, it4 = -5/202, it3 = -5/101, it5 = 5/101, and ir5 = 0: the secondary's current circulates through the load alone. The resistor is what gives the secondary side a reference -- an ideal transformer conducts nothing from one winding to the other. Delete r5 and Symbulator still solves, taking node 5 as that side's own reference and saying so in a note; the currents and v3 - v5 come out the same.
 image: https://learn.symbulator.com/assets/circuit/sym_t_live_pairs.png
 rounding: 4
 si: no
 units: yes
 evaluate: -se
+
+
+[NR11's 60 V source and coupled 2 H and 8 H coils (DC, t < 0)]
+
+e,1,0,60
+r9,1,a,9
+r3,a,2,3
+l1,2,0,2
+l2,3,4,8
+r2,3,5,2
+r10,5,4,10
+m,l1,l2,2
+
+analysis: dc
+note: Nilsson & Riedel (11th ed.): the switch has been at a for a long time and moves to b at t = 0. Find i1 and i2 for t > 0. Before the switch, in DC, the source drives i1 = 60/12 = 5 A through the 9 and 3 ohm and the 2 H coil; the 8 H side carries nothing. Both dots are at the coils' top ends, so each coil's first node is its top.
+note: The secondary has no path to node 0 -- a coupling conducts nothing across -- so Symbulator takes node 4 as that side's reference and says so in a note.
+image: https://learn.symbulator.com/assets/circuit/sym_nr11_coupled_60v.png
+rounding: exact
+si: no
+units: yes
+
+
+[NR11's 60 V source and coupled 2 H and 8 H coils (TR, t > 0)]
+
+r3,0,2,3
+l1,2,0,2,5
+l2,3,4,8,0
+r2,3,5,2
+r10,5,4,10
+m,l1,l2,2
+
+analysis: tr
+note: After the switch, the 3 ohm and the 2 H coil are shorted through b and the 5 A decays, coupled by 2 H into the 8 H coil and its 12 ohm. il1 = (5/2)(e^(-t) + e^(-3t)) A and il2 = (5/4)(e^(-t) - e^(-3t)) A: two modes, at 1 and 3 per second, il1 starting from 5 A and il2 from 0. The initial current of l1 is the DC entry's answer.
+image: https://learn.symbulator.com/assets/circuit/sym_nr11_coupled_60v.png
+rounding: exact
+si: no
+units: yes
+plottool: plot_time
+plotkey: i_l1
+plotmin: 0
+plotmax: 5
+plotpoints: 300
+
+
+[NR11's two switches and coupled 3 H and 15 H coils (DC, t < 0)]
+
+e,a,0,20
+r10,a,c,10
+l2,d,c,15
+
+analysis: dc
+note: Nilsson & Riedel (11th ed.): switch 1 has been open and switch 2 at a for a long time; at t = 0 switch 1 closes and switch 2 moves to b. Find i1 for t > 0. Before the switch there is no primary current at all, and the 20 V drives 2 A through the 10 ohm and down through the 15 H coil, whose dot is at its bottom: its first node is d, the bottom, so the current from d to c reads -2 A.
+image: https://learn.symbulator.com/assets/circuit/sym_nr11_coupled_two_switches.png
+rounding: exact
+si: no
+units: yes
+
+
+[NR11's two switches and coupled 3 H and 15 H coils (TR, t > 0)]
+
+e1,1,0,24
+r120,1,2,120
+l1,2,0,3,0
+l2,d,c,15,-2
+r360,c,d,360
+m,l1,l2,3
+
+analysis: tr
+vars: il1
+note: After the switches, the 24 V drives the 3 H primary through 120 ohm from rest, while the 15 H secondary, starting at 2 A, decays through 360 ohm; the coupling is 3 H with the dots at opposite ends, so the secondary is written bottom node first. i1 = 1/5 - (31/20) e^(-20t) + (27/20) e^(-60t) A: it starts from 0, settles at 24/120 = 0.2 A, and the two modes are at 20 and 60 per second.
+image: https://learn.symbulator.com/assets/circuit/sym_nr11_coupled_two_switches.png
+rounding: exact
+si: no
+units: yes
+plottool: plot_time
+plotkey: i_l1
+plotmin: 0
+plotmax: 0.3
+plotpoints: 300
+
+
+[NR11's 90 V source and coupled 3 H and 2 H coils (DC, t < 0)]
+
+e,1,0,90
+r5,1,t,5
+l1,t,m,3
+l2,m,0,2
+r10,m,0,10
+m,l1,l2,1
+
+analysis: dc
+note: Nilsson & Riedel (11th ed.): the switch has been at a for a long time and moves to b at t = 0. Find io for t > 0. Before the switch both coils are shorts in DC, the 2 H shorting the 10 ohm, so the source drives io = 90/5 = 18 A through the 3 H and on through the 2 H, and the 10 ohm carries nothing.
+image: https://learn.symbulator.com/assets/circuit/sym_nr11_coupled_90v.png
+rounding: exact
+si: no
+units: yes
+
+
+[NR11's 90 V source and coupled 3 H and 2 H coils (TR, t > 0)]
+
+r20,t,0,20
+l1,t,m,3,18
+l2,m,0,2,18
+r10,m,0,10
+m,l1,l2,1
+
+analysis: tr
+vars: il1
+note: After the switch the source is gone and everything decays through the 20 ohm and the 10 ohm; both dots are at the coils' upper ends. io = il1 = 12 e^(-2t) + 6 e^(-20t) A, from 18 A to zero with modes at 2 and 20 per second.
+image: https://learn.symbulator.com/assets/circuit/sym_nr11_coupled_90v.png
+rounding: exact
+si: no
+units: yes
+plottool: plot_time
+plotkey: i_l1
+plotmin: 0
+plotmax: 2.5
+plotpoints: 300
+
+
+[NR11's capacitor shorted by a switch and coupled 0.8 H and 1.6 H coils (DC, t < 0)]
+
+e,1,0,48
+r4,1,3,4
+l1,3,0,0.8
+l2,4,5,1.6
+r20,4,5,20
+m,l1,l2,0.8
+
+analysis: dc
+note: Nilsson & Riedel (11th ed.): the switch across the 10 mF capacitor has been closed for a long time and opens at t = 0. Find vo, across the 20 ohm on the secondary, for t > 0. Before the switch the capacitor is shorted, so it is left out of the DC picture: the 48 V drives 12 A through the 4 ohm and the 0.8 H coil, and the secondary carries nothing.
+image: https://learn.symbulator.com/assets/circuit/sym_nr11_coupled_capacitor.png
+rounding: exact
+si: no
+units: yes
+
+
+[NR11's capacitor shorted by a switch and coupled 0.8 H and 1.6 H coils (TR, t > 0)]
+
+e,1,0,48
+c,1,2,10'm,0
+r4,2,3,4
+l1,3,0,0.8,12
+l2,4,5,1.6,0
+r20,4,5,20
+m,l1,l2,0.8
+
+analysis: tr
+vars: v4, v5, il1
+note: After the switch opens the capacitor enters the primary loop, uncharged, with the coil carrying its 12 A; the coupling is 0.8 H with both dots at the top. The Evaluate line reads vo = v4 - v5 = e^(-5t)(60 cos 10t - 120 sin 10t) - 60 e^(-25t) V: a damped oscillation at 10 rad/s on the primary's series RLC, plus the secondary's own mode at 25 per second, starting from 0 and returning to 0.
+image: https://learn.symbulator.com/assets/circuit/sym_nr11_coupled_capacitor.png
+rounding: 4
+si: no
+units: yes
+evaluate: v4-v5
+plottool: plot_time
+plotkey: v_4
+plotmin: 0
+plotmax: 1
+plotpoints: 300

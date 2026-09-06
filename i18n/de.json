@@ -319,7 +319,7 @@
  "js.pkg.m218": "Ein Tor von '%{name}' hat an beiden Klemmen denselben Knoten. Jedes Tor eines Transformators oder Zweitors muss zwei verschiedene Knoten verbinden.",
  "js.pkg.m219": "Ihre Beschreibung des Transformators '%{name}' hat %{got} Terme. Schreiben Sie ihn als name,n1,n2,N1,N2 oder name,n1,n2,[N1,N2] mit beiden unteren Klemmen an Masse, oder als name,[tl,bl],[tr,br],[N1,N2] mit allen vier Knoten.",
  "js.pkg.m220": "Die Knotenterme von '%{name}' müssen zwei Knotennamen sein oder zwei Paare in eckigen Klammern [oben,unten] mit je zwei Einträgen.",
- "js.pkg.m221": "Knoten %{nodes} haben keinen Pfad zum Knoten 0 (sie liegen hinter einem Tor); ihre Spannungen werden daher gegen %{ref} gemessen, der als 0 gilt.",
+ "js.pkg.m221": "Knoten %{nodes} haben keinen Pfad zum Knoten 0 (sie liegen hinter einem Tor oder einer Kopplung); ihre Spannungen werden daher gegen %{ref} gemessen, der als 0 gilt.",
  "js.pkg.m301": "Keine Stempelregel für den Elementtyp '%{kind}'.",
  "js.pkg.m302": "Unbekannter Zweitor-Typ '%{kind}'.",
  "js.pkg.m303": "Die Gleichung '%{equation}' widerspricht der beschriebenen Schaltung.",
