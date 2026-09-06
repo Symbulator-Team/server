@@ -3349,7 +3349,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-06 21:50 UTC</span><br>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-06 21:59 UTC</span><br>
   <span class="notranslate" style="white-space:nowrap"><a href="https://symbulator.com" target="_blank" rel="noopener">symbulator.com</a> ·</span>
   <span data-i18n="free-and-open-source.d231">Free and open-source under the MIT licence · Runs on Python+SymPy</span>
 </footer>
@@ -6875,9 +6875,12 @@ async function drawSchematic() {
   btn.disabled = true;
   status.textContent = t('js.busy.drawing', 'drawing…');
   try {
+    // #320: the port tool's [top,bottom] pairs name the drawing's ground
+    // when the network has none of its own
+    const _v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
     const r = await fetch('/api/schematic', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ desc: desc })
+      body: JSON.stringify({ desc: desc, tool: _v('tool'), n1: _v('n1'), n2: _v('n2') })
     });
     const data = await r.json();
     out.innerHTML = '';

@@ -347,6 +347,44 @@ def _port_refs() -> tuple:
     return _PORT_REFS.get()
 
 
+def ground_references(desc: str, refs) -> str:
+    """The description with each of `refs` renamed to node 0, for the
+    drawer (#320). A network with no ground draws with the tool's own
+    reference as its rail -- which is the picture the figures in Lesson
+    13 show, and their captions say so. Rebuilt from the typed fields,
+    so values and names come through as written; only a node-position
+    field, bare or inside a `[top,bottom]` pair, is renamed."""
+    refs = [r for r in (refs or ()) if r and r != "0"]
+    if not refs:
+        return desc
+    from symbulator.elements import (parse_circuit, PORT_KINDS,
+                                     _IDENTIFIER_FIELD_IDX, local_references)
+    elements = parse_circuit(desc, expand_si=False, references=refs)
+    # one reference per island, the one the solver itself picks: both
+    # bottoms of a ladder lie in one island, and grounding both would
+    # short the resistor between them
+    refs = list(local_references(elements, preferred=refs))
+    if not refs:
+        return desc
+    out = []
+    for el in elements:
+        fields = list(getattr(el, "raw_fields", None) or el.fields)
+        idx = (0, 1) if el.kind in PORT_KINDS else _IDENTIFIER_FIELD_IDX.get(el.kind, ())
+        if el.kind == "m":
+            idx = ()
+        for i in idx:
+            if i >= len(fields):
+                continue
+            f = fields[i].strip()
+            if f.startswith("[") and f.endswith("]"):
+                parts = [x.strip() for x in f[1:-1].split(",")]
+                fields[i] = "[" + ",".join("0" if x in refs else x for x in parts) + "]"
+            elif f in refs:
+                fields[i] = "0"
+        out.append(",".join([el.name] + fields))
+    return "\n".join(out)
+
+
 def msg(code, **args):
     """One message, as {code, args, severity, text}.
 
@@ -3560,7 +3598,7 @@ def _conditions_hold(sol, conditions, values, wanted) -> bool:
     return True
 
 
-def schematic_ui(desc: str):
+def schematic_ui(desc: str, tool: str = "", n1: str = "", n2: str = ""):
     """Draw a circuit description as an SVG. Returns {"ok": True, "svg":
     ...} or {"ok": False, "error": message}.
 
@@ -3581,6 +3619,10 @@ def schematic_ui(desc: str):
     if not (desc or "").strip():
         return _err(msg(M_NEED_CIRCUIT))
     try:
+        # the two-port tool's references become the drawing's ground
+        # (#320): a groundless network draws around the reference the
+        # tool takes rather than refusing
+        desc = ground_references(desc, port_references(tool, n1, n2))
         return _ok({"svg": to_svg(desc)})
     except Exception as exc:
         return _err(_exc_msg(exc))
