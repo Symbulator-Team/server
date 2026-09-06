@@ -112,4 +112,54 @@ si: no
 units: yes
 rms: yes
 polar: yes
+
+
+[The autotransformer as one tapped winding]
+
+e,1,0,(120∠30°)
+t,[1,0],[2,1],[80,120]
+rl,2,0,8+6j
+
+analysis: ac
+note: The same autotransformer described as what it is, one winding with a tap: the lower section, 80 turns, from the tap (node 1) to ground, and the upper section, 120 turns, from the top (node 2) down to the tap. The second winding's bottom is the first winding's top, which is what the four-terminal form is for. In this problem, we describe a transformer with all four terminals for the first time. it1 is the total entering the transformer at node 1, the source current I1, 75.00 at -6.87°; I2 is the opposite of it2, 30.00 at -6.87°. The same answers as the two-node description.
+image: https://learn.symbulator.com/assets/circuit/sym_auto_tapped.png
+omega: omega
+rounding: 4
+si: no
+units: yes
+rms: yes
+polar: yes
+
+
+[A transformer whose primary is not grounded]
+
+e,1,0,10
+r1,1,2,1
+t,[2,3],[4,0],[2,1]
+r3,3,0,3
+rl,4,0,8
+
+analysis: dc
+note: The primary sits between nodes 2 and 3, neither of them ground, so it is written as the pair [2,3]; the secondary's bottom is ground, [4,0]. The 8 ohm load reflects to the primary as 32 ohm, in series with 1 + 3, so the primary current is 5/18 A: it2 = 5/18 entering at node 2, it3 = -5/18 leaving at node 3, and it4 = -5/9 on the secondary, doubled by the 2:1 ratio and negative because it leaves the transformer into the load. irl = 5/9 A.
+image: https://learn.symbulator.com/assets/circuit/sym_t_live_primary.png
+rounding: 4
+si: no
+units: yes
+
+
+[Both windings between live nodes, and why a side needs a ground]
+
+e,1,0,10
+r0,1,2,1
+t,[2,4],[3,5],[2,1]
+r4,4,0,3
+rl,3,5,100
+r5,5,0,7
+
+analysis: dc
+note: Both windings between live nodes: the 100 ohm load sits across the secondary and node 5 is tied to ground through 7 ohm. it2 = 5/202, it4 = -5/202, it3 = -5/101, it5 = 5/101, and ir5 = 0: the secondary's current circulates through the load alone. The resistor is not useless, though -- an ideal transformer conducts nothing from one winding to the other, so without it the secondary side has no reference at all. Delete r5 and Symbulator stops: nodes 3 and 5 have no path to the reference node 0.
+image: https://learn.symbulator.com/assets/circuit/sym_t_live_pairs.png
+rounding: 4
+si: no
+units: yes
 evaluate: -se
