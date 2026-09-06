@@ -608,7 +608,7 @@ def expand_defines_in_desc(desc, table):
     if not desc or not table:
         return desc
     from symbulator.elements import (parse_circuit, _IDENTIFIER_FIELD_IDX,
-                                     TWO_PORT_KINDS)
+                                     TWO_PORT_KINDS, PORT_KINDS)
     try:
         elements = parse_circuit(desc, expand_si=False)
     except Exception:
@@ -993,7 +993,7 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
     hasn't been updated to pass it keeps today's behaviour."""
     import sympy as sp
     from symbulator.elements import (parse_circuit, _IDENTIFIER_FIELD_IDX,
-                                     TWO_PORT_KINDS)
+                                     TWO_PORT_KINDS, PORT_KINDS)
     from symbulator.si_prefix import safe_sympify, expand_shorthand
 
     if domain != "ac":
@@ -1021,13 +1021,10 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
             # the parallel-combination function and collapse the four
             # entries into one number. Normalise each entry on its own
             # and reassemble in the bracket notation the user types.
-            # It is the last field, after two nodes or four (X2).
-            if el.kind in TWO_PORT_KINDS and idx == el.param_idx:
-                from symbulator.elements import two_port_param_texts
-                try:
-                    entries = two_port_param_texts(el)
-                except Exception:
-                    continue
+            # A transformer's bracketed turns (#314) are the same shape.
+            if el.kind in PORT_KINDS and idx == 2:
+                from symbulator.elements import _pair_entries
+                entries = _pair_entries(el.fields[idx])
                 if not entries:
                     continue
                 new_entries = []
@@ -1750,10 +1747,7 @@ def banned_name_errors(elements) -> list:
             out.append(msg(M_BAD_ELEMENT_NAME, name=el.name,
                            produces=produces, owner=owner,
                            suggestion=f"{el.name}1"))
-        for idx in _IDENTIFIER_FIELD_IDX.get(el.kind, ()):
-            if idx >= len(el.fields):
-                continue
-            node = el.fields[idx]
+        for node in el.nodes:            # a pair field holds two (#314)
             banned_nodes = banned_node_names()
             if node in banned_nodes and node not in seen:
                 seen.add(node)
@@ -1823,21 +1817,30 @@ def answer_aliases(elements) -> dict:
 
     Built from the circuit's own nodes and elements, so it contains exactly
     the names that could denote an answer here and nothing else."""
-    from symbulator.elements import _IDENTIFIER_FIELD_IDX
-
     nodes, named = set(), []
     for el in elements:
-        named.append((el.name, el.kind))
-        for idx in _IDENTIFIER_FIELD_IDX.get(el.kind, ()):
-            if idx < len(el.fields):
-                nodes.add(el.fields[idx])
+        named.append(el)
+        nodes.update(el.nodes)
 
     alias = {}
     for node in nodes:
         for q in _NODE_QUANTITIES:
             alias[f"{q}{node}"] = f"{q}_{node}"
-    for name, kind in named:
-        targets = [name] + [name + sfx for sfx in _PORT_SUFFIXES.get(kind, ())]
+    for el in named:
+        name, kind = el.name, el.kind
+        # A port element's currents are named for its own terminal
+        # nodes, i_<name><node> (#314) -- so the suffixes are those
+        # nodes, not the literal "2"/"3" of the probe circuit the table
+        # above was measured on, which only ever covered a circuit whose
+        # port nodes happened to be called 2 and 3.
+        if kind in _PORT_SUFFIXES:
+            suffixes = []
+            for node in el.nodes:
+                if node != "0" and node not in suffixes:
+                    suffixes.append(node)
+        else:
+            suffixes = ()
+        targets = [name] + [name + sfx for sfx in suffixes]
         for q in _QUANTITIES_BY_KIND.get(kind, _DEFAULT_QUANTITIES):
             for target in targets:
                 alias[f"{q}{target}"] = f"{q}_{target}"
@@ -2350,8 +2353,17 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                 # into the block). They used to fall through to the
                 # catch-all section and show under "Expert mode unknowns",
                 # which they are not -- Roberto, 29 Aug 2026 (#168).
-                if el.kind in _TP_KINDS:
-                    for node in (el.n1, el.n2):
+                # The transformer too (#314): its primary current used to
+                # fall through to the extras, and it had no secondary.
+                # Every distinct terminal node, in the order written --
+                # top-left, bottom-left, top-right, bottom-right -- each
+                # carrying the current entering the element there.
+                if el.kind in _TP_KINDS or el.kind == "t":
+                    seen_nodes = []
+                    for node in el.nodes:
+                        if node != "0" and node not in seen_nodes:
+                            seen_nodes.append(node)
+                    for node in seen_nodes:
                         key = f"i_{el.name}{node}"
                         if key in values:
                             plain, latex = fmt(values[key], "A")

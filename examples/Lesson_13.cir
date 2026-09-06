@@ -191,3 +191,34 @@ note: Find Gv, Gi, Gp and Zin again. The second gain example, restored to the ch
 rounding: 4
 si: no
 units: yes
+
+
+[An h-parameter model with a resistor under its common terminal]
+
+e,1,0,0.01
+rs,1,2,1000
+h,[2,3],[4,3],[1000,2.5e-4,100,25e-6]
+re,3,0,100
+rc,4,0,2000
+
+analysis: dc
+note: A transistor stage by its hybrid parameters (hie 1 k, hre 2.5e-4, hfe 100, hoe 25 uS), driven by 10 mV through 1 k and loaded by 2 k, with a 100 ohm resistor under its common terminal. In this problem, we describe a two-port with all four terminals for the first time: each port is a pair, and both pairs share node 3. v4 = -0.1645 V, a gain of -16.45; the currents into the block are ih2 = 0.8657 uA, ih4 = 82.25 uA and ih3 = -83.12 uA at the common terminal, the sum of the other two leaving. With the common terminal grounded instead (h,2,4,[...], no re) the gain is -97.56: emitter degeneration costs a factor of six.
+image: https://learn.symbulator.com/assets/circuit/sym_h_common_terminal.png
+rounding: 4
+si: no
+units: yes
+
+
+[A z-block with its second port lifted off ground]
+
+e,1,0,10
+z,[1,0],[2,3],[100,10,20,50]
+rl,2,0,200
+r3,3,0,20
+
+analysis: dc
+note: Port 1 is the pair [1,0], grounded as before; port 2 is the pair [2,3], its lower terminal reaching ground through 20 ohm. iz1 = 27/268, iz2 = -1/134 and iz3 = 1/134: the second port's current leaves the block at node 2, goes down through the load to ground and comes back up through the 20 ohm resistor into node 3, which sits below ground at v3 = -10/67 V.
+image: https://learn.symbulator.com/assets/circuit/sym_z_lifted_port.png
+rounding: 4
+si: no
+units: yes
