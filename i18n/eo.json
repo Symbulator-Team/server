@@ -319,7 +319,7 @@
  "js.pkg.m218": "Pordo de '%{name}' havas la saman nodon ĉe ambaŭ siaj terminaloj. Ĉiu pordo de transformilo aŭ dupordo devas kunigi du malsamajn nodojn.",
  "js.pkg.m219": "Via priskribo de la transformilo '%{name}' havas %{got} terminojn. Skribu ĝin kiel name,n1,n2,N1,N2 aŭ name,n1,n2,[N1,N2] kun ambaŭ malsupraj terminaloj al tero, aŭ name,[tl,bl],[tr,br],[N1,N2] kun ĉiuj kvar nodoj.",
  "js.pkg.m220": "La nodaj terminoj de '%{name}' devas esti du nodnomoj, aŭ du krampitaj paroj [supra,malsupra] kun po du eroj.",
- "js.pkg.m221": "Nodoj %{nodes} havas neniun vojon al nodo 0 (ili kuŝas malantaŭ pordo), do iliaj tensioj mezuriĝas kontraŭ %{ref}, prenita kiel 0.",
+ "js.pkg.m221": "Nodoj %{nodes} havas neniun vojon al nodo 0 (ili kuŝas malantaŭ pordo aŭ kuplo), do iliaj tensioj mezuriĝas kontraŭ %{ref}, prenita kiel 0.",
  "js.pkg.m301": "Neniu stampa regulo por elementspeco '%{kind}'.",
  "js.pkg.m302": "Nekonata speco de kvarpoluso '%{kind}'.",
  "js.pkg.m303": "La ekvacio '%{equation}' kontraŭdiras la cirkviton kiel priskribitan.",

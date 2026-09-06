@@ -319,7 +319,7 @@
  "js.pkg.m218": "Sebuah port pada '%{name}' memiliki simpul yang sama di kedua terminalnya. Setiap port transformator atau dua-port harus menghubungkan dua simpul yang berbeda.",
  "js.pkg.m219": "Deskripsi transformator '%{name}' memiliki %{got} suku. Tuliskan sebagai name,n1,n2,N1,N2 atau name,n1,n2,[N1,N2] dengan kedua terminal bawah ke tanah, atau name,[tl,bl],[tr,br],[N1,N2] dengan keempat simpul.",
  "js.pkg.m220": "Suku simpul pada '%{name}' harus berupa dua nama simpul, atau dua pasangan dalam kurung siku [atas,bawah] dengan dua entri masing-masing.",
- "js.pkg.m221": "Simpul %{nodes} tidak punya jalur ke simpul 0 (berada di balik sebuah port), sehingga tegangannya diukur terhadap %{ref}, yang dianggap 0.",
+ "js.pkg.m221": "Simpul %{nodes} tidak punya jalur ke simpul 0 (berada di balik sebuah port atau kopling), sehingga tegangannya diukur terhadap %{ref}, yang dianggap 0.",
  "js.pkg.m301": "Tidak ada aturan penyusunan untuk elemen tipe '%{kind}'.",
  "js.pkg.m302": "Jenis dwikutub tidak dikenal '%{kind}'.",
  "js.pkg.m303": "Persamaan '%{equation}' bertentangan dengan rangkaian seperti yang dijelaskan.",

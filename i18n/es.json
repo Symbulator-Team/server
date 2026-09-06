@@ -319,7 +319,7 @@
  "js.pkg.m218": "Un puerto de '%{name}' tiene el mismo nodo en sus dos terminales. Cada puerto de un transformador o de un bipuerto debe unir dos nodos distintos.",
  "js.pkg.m219": "Tu descripción del transformador '%{name}' tiene %{got} términos. Escríbelo como name,n1,n2,N1,N2 o name,n1,n2,[N1,N2] con ambos terminales inferiores a tierra, o name,[tl,bl],[tr,br],[N1,N2] con los cuatro nodos.",
  "js.pkg.m220": "Los términos de nodo de '%{name}' deben ser dos nombres de nodo, o dos pares entre corchetes [superior,inferior] con dos entradas cada uno.",
- "js.pkg.m221": "Los nodos %{nodes} no tienen camino al nodo 0 (están detrás de un puerto), así que sus tensiones se miden contra %{ref}, tomado como 0.",
+ "js.pkg.m221": "Los nodos %{nodes} no tienen camino al nodo 0 (están detrás de un puerto o de un acoplamiento), así que sus tensiones se miden contra %{ref}, tomado como 0.",
  "js.pkg.m301": "No hay regla de estampado para elementos de tipo '%{kind}'.",
  "js.pkg.m302": "Tipo de cuadripolo desconocido '%{kind}'.",
  "js.pkg.m303": "La ecuación '%{equation}' contradice el circuito tal como está descrito.",
