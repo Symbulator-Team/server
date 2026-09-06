@@ -2327,14 +2327,14 @@ units: yes</pre>
         <tr><td>c</td><td data-i18n="capacitor.dfc9">capacitor</td><td class="notranslate">name,n1,n2,value[,initial voltage]</td></tr>
         <tr><td>l</td><td data-i18n="inductor.d93e">inductor</td><td class="notranslate">name,n1,n2,value[,initial current]</td></tr>
         <tr><td>m</td><td data-i18n="mutual-inductance.aa2d">mutual inductance</td><td class="notranslate">name,L1,L2,M</td></tr>
-        <tr><td>t</td><td data-i18n="ideal-transformer.c164">ideal transformer</td><td class="notranslate">name,n1,n2,N1,N2</td></tr>
+        <tr><td>t</td><td data-i18n="ideal-transformer.c164">ideal transformer</td><td class="notranslate">name,n1,n2,N1,N2<br>name,n1,n2,n1b,n2b,N1,N2</td></tr>
         <tr><td>o</td><td data-i18n="ideal-op-amp.5f2e">ideal op-amp</td><td class="notranslate">name,n+,n−,n_out</td></tr>
-        <tr><td>z</td><td data-i18n="z-parameters-impedance-two.4802">z-parameters (impedance) two-port block</td><td class="notranslate">name,n1,n2</td></tr>
-        <tr><td>y</td><td data-i18n="y-parameters-admittance-two.6867">y-parameters (admittance) two-port block</td><td class="notranslate">name,n1,n2</td></tr>
-        <tr><td>h</td><td data-i18n="h-parameters-hybrid-two.5e2a">h-parameters (hybrid) two-port block</td><td class="notranslate">name,n1,n2</td></tr>
-        <tr><td>g</td><td data-i18n="g-parameters-inverse-hybrid.a8e8">g-parameters (inverse hybrid) two-port block</td><td class="notranslate">name,n1,n2</td></tr>
-        <tr><td>a</td><td data-i18n="a-parameters-abcd-transmissi.f948">a-parameters (ABCD / transmission) two-port block</td><td class="notranslate">name,n1,n2</td></tr>
-        <tr><td>b</td><td data-i18n="b-parameters-inverse-transmi.2aa5">b-parameters (inverse transmission) two-port block</td><td class="notranslate">name,n1,n2</td></tr>
+        <tr><td>z</td><td data-i18n="z-parameters-impedance-two.4802">z-parameters (impedance) two-port block</td><td class="notranslate">name,n1,n2[,[p11,p12,p21,p22]]<br>name,n1,n2,n1b,n2b[,[p11,p12,p21,p22]]</td></tr>
+        <tr><td>y</td><td data-i18n="y-parameters-admittance-two.6867">y-parameters (admittance) two-port block</td><td class="notranslate">name,n1,n2[,params]<br>name,n1,n2,n1b,n2b[,params]</td></tr>
+        <tr><td>h</td><td data-i18n="h-parameters-hybrid-two.5e2a">h-parameters (hybrid) two-port block</td><td class="notranslate">name,n1,n2[,params]<br>name,n1,n2,n1b,n2b[,params]</td></tr>
+        <tr><td>g</td><td data-i18n="g-parameters-inverse-hybrid.a8e8">g-parameters (inverse hybrid) two-port block</td><td class="notranslate">name,n1,n2[,params]<br>name,n1,n2,n1b,n2b[,params]</td></tr>
+        <tr><td>a</td><td data-i18n="a-parameters-abcd-transmissi.f948">a-parameters (ABCD / transmission) two-port block</td><td class="notranslate">name,n1,n2[,params]<br>name,n1,n2,n1b,n2b[,params]</td></tr>
+        <tr><td>b</td><td data-i18n="b-parameters-inverse-transmi.2aa5">b-parameters (inverse transmission) two-port block</td><td class="notranslate">name,n1,n2[,params]<br>name,n1,n2,n1b,n2b[,params]</td></tr>
       </table>
       <p class="hint" data-i18n="a-value-can-be.5443">
         A value can be a number, a symbol (<code>r_load</code>,

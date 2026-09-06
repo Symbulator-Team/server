@@ -623,13 +623,15 @@ def expand_defines_in_desc(desc, table):
     # otherwise, so a description that never mentions parameters is
     # echoed exactly as typed.
     for el in elements:
-        if el.kind in TWO_PORT_KINDS and len(el.fields) == 2:
+        if el.kind in TWO_PORT_KINDS and el.param_idx is None:
             names = [f"{el.name}{ij}" for ij in ("11", "12", "21", "22")]
             if any(n in table for n in names):
                 el.fields.append("[" + ",".join(names) + "]")
                 changed = True
     for el in elements:
-        ident = _IDENTIFIER_FIELD_IDX.get(el.kind, ())
+        # By element, not by kind: a four-node transformer or two-port
+        # (X2) has nodes in fields the kind table calls values.
+        ident = el.node_idx
         for idx in range(len(el.fields)):
             if idx in ident:
                 continue
@@ -1011,7 +1013,7 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
     notes, changed = [], False
     for el in elements:
         for idx in range(len(el.fields)):
-            if idx in _IDENTIFIER_FIELD_IDX.get(el.kind, ()):
+            if idx in el.node_idx:
                 continue                      # a node or element reference
             original = el.fields[idx]
             # A two-port's parameter term (#163) is a LIST, not a value:
@@ -1019,7 +1021,8 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
             # the parallel-combination function and collapse the four
             # entries into one number. Normalise each entry on its own
             # and reassemble in the bracket notation the user types.
-            if idx == 2 and el.kind in TWO_PORT_KINDS:
+            # It is the last field, after two nodes or four (X2).
+            if el.kind in TWO_PORT_KINDS and idx == el.param_idx:
                 from symbulator.elements import two_port_param_texts
                 try:
                     entries = two_port_param_texts(el)
@@ -1110,7 +1113,9 @@ def _complex_value_error(elements, domain: str):
     if domain == "ac":
         return None
     for el in elements:
-        for idx in (2, 3):
+        # A four-node transformer's turns are its last two fields (X2).
+        value_idx = (4, 5) if (el.kind == "t" and el.four_node) else (2, 3)
+        for idx in value_idx:
             if idx >= len(el.fields) or el.kind not in ("r", "l", "c", "e", "j", "m", "t"):
                 continue
             try:
