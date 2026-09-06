@@ -628,6 +628,9 @@ NOT_FOR_READERS = {
     "least-squares", "bounded", "plot", "schematic",
     # The mathematics, which is never translated.
     "time (s)", "dB", "v_2", "100/(s^2 + 10*s + 100)", "circuits.cir",
+    # #292: the equivalent circuit the load button writes -- element
+    # lines in Symbulator's own notation, the calculator's eqcir.
+    "jN,0,n,iNo", "rL,n,0,load",
     # Markup and layout fragments.
     "result-row", "result-math", "result-name", "msg", "msg bad", "msg ok",
     "badge", "lcd-meta", "error",
@@ -638,9 +641,12 @@ NOT_FOR_READERS = {
 _PROSE_WORD = re.compile(r"\b[A-Za-z]{3,}\b|\b(?:vs|of|to|in|is|no|by|at|on)\b",
                          re.IGNORECASE)
 
-#: Not prose: selectors, CSS, URLs, single identifiers, pure punctuation.
+#: Not prose: selectors, CSS, URLs, single identifiers, pure punctuation,
+#: and TeX handed to MathJax (#280 put \displaystyle at the head of every
+#: typeset result, and "displaystyle" is three letters or more).
 _NOT_PROSE = re.compile(
     r"^(?:[.#][\w-]+)$"
+    r"|^\\\\\("
     r"|^[a-z-]+\s*:\s*[^;]*;?$"
     r"|^https?://"
     r"|^[\w.$-]+$"

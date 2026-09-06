@@ -304,7 +304,7 @@ def index():
 # The build stamp shown in the page footer, read out of the template the
 # same way a reader would read it off the page.
 _BUILD_RE = re.compile(
-    r"Symbulator 9 version (\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC)")
+    r"Release (\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC)")
 _TEMPLATE = os.path.join(app.root_path, "templates", "index.html")
 
 
@@ -776,6 +776,9 @@ def api_solve():
                     "approx_forced": payload.get("approx_forced", False),
                     "nodes": payload["nodes"],
                     "elements": payload["elements"], "extras": payload["extras"],
+                    # #292: the th tool's answers for a load on the port,
+                    # shown only when the reader has said there is one.
+                    "load_extras": payload.get("load_extras") or [],
                     "values": payload["values"],
                     # Every root of the system, each formatted the same way
                     # as the fields above -- which mirror the first of them.
