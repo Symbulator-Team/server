@@ -629,9 +629,7 @@ def expand_defines_in_desc(desc, table):
                 el.fields.append("[" + ",".join(names) + "]")
                 changed = True
     for el in elements:
-        # By element, not by kind: a four-node transformer or two-port
-        # (X2) has nodes in fields the kind table calls values.
-        ident = el.node_idx
+        ident = _IDENTIFIER_FIELD_IDX.get(el.kind, ())
         for idx in range(len(el.fields)):
             if idx in ident:
                 continue
@@ -1013,7 +1011,7 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
     notes, changed = [], False
     for el in elements:
         for idx in range(len(el.fields)):
-            if idx in el.node_idx:
+            if idx in _IDENTIFIER_FIELD_IDX.get(el.kind, ()):
                 continue                      # a node or element reference
             original = el.fields[idx]
             # A two-port's parameter term (#163) is a LIST, not a value:
@@ -1110,9 +1108,7 @@ def _complex_value_error(elements, domain: str):
     if domain == "ac":
         return None
     for el in elements:
-        # A four-node transformer's turns are its last two fields (X2).
-        value_idx = (4, 5) if (el.kind == "t" and el.four_node) else (2, 3)
-        for idx in value_idx:
+        for idx in (2, 3):
             if idx >= len(el.fields) or el.kind not in ("r", "l", "c", "e", "j", "m", "t"):
                 continue
             try:
