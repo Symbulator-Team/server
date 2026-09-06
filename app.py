@@ -126,6 +126,7 @@ SOLVE_TIMEOUT_S = float(os.environ.get("SYMBULATOR_TIMEOUT", "25"))
 # browser build loads into Pyodide unchanged. This file is only the web
 # server around it: validation is re-used from there, and the actual
 # solving runs in a killable child process.
+import symbulator_ui as ui
 from symbulator_ui import (                                   # noqa: E402
     solve_ui, evaluate_ui, solveq_ui, mini_tool_ui, MINI_TOOLS,
     spice_ui,
@@ -572,6 +573,10 @@ def too_large(_exc):
 
 _VALID_TOOLS = {"solve", "th", "er", "port"}
 _NODE_RE = re.compile(r"^[A-Za-z0-9_]{1,20}$")
+# A port of the two-port tool: one node, or a [top,bottom] pair for a
+# port whose lower terminal is not ground (#320).
+_PORT_RE = re.compile(r"^(\[\s*[A-Za-z0-9_]{1,20}\s*,\s*[A-Za-z0-9_]{1,20}\s*\]"
+                      r"|[A-Za-z0-9_]{1,20})$")
 
 
 @app.post("/api/solve")
@@ -644,6 +649,7 @@ def api_solve():
         extra_conditions = [expand_defines(c, defines) for c in extra_conditions]
         extra_unknowns = [expand_defines(u, defines) for u in extra_unknowns]
 
+    ui.set_port_references(tool, n1, n2)          # #320, for the pre-parses
     err = _validate(desc, domain, omega, variables)
     if not err:
         err = _validate_extras(extra_equations, extra_unknowns, extra_conditions)
@@ -653,7 +659,8 @@ def api_solve():
         if domain not in ("dc", "ac", "fd"):
             err = ("Thevenin / impedance / two-port tools work in DC, AC "
                    "or FD -- not in the time domain.")
-        elif not (_NODE_RE.match(n1) and _NODE_RE.match(n2)):
+        elif not ((_PORT_RE if tool == "port" else _NODE_RE).match(n1)
+                  and (_PORT_RE if tool == "port" else _NODE_RE).match(n2)):
             err = "Give the two port nodes (n1 and n2) for this tool."
         elif tool == "port" and kind not in ("z", "y", "h", "g", "a", "b"):
             err = "Two-port kind must be one of z, y, h, g, a, b."
@@ -684,7 +691,7 @@ def api_solve():
         # rebuilt from below -- it gets expanded to a real number the
         # normal way when solve_ui parses `desc` again for the actual
         # solve.
-        elements = parse_circuit(desc, expand_si=False)
+        elements = parse_circuit(desc, expand_si=False, references=ui.port_references(tool, n1, n2))
         ambiguous = ambiguous_in_elements(elements)
     except Exception as exc:  # parse errors get the same friendly text
         # _exc_msg, not str(exc): this is the parse step, run in the

@@ -222,3 +222,127 @@ image: https://learn.symbulator.com/assets/circuit/sym_z_lifted_port.png
 rounding: 4
 si: no
 units: yes
+
+
+[AS7's Problem 19.2]
+
+r1,a,b,1
+r2,b,c,1
+r3,c,d,1
+r4,d,e,1
+r5,f,g,1
+r6,g,h,1
+r7,h,i,1
+r8,i,j,1
+r9,b,g,1
+r10,c,h,1
+r11,d,i,1
+
+analysis: dc
+tool: port
+kind: z
+n1: [a,f]
+n2: [e,j]
+note: Find the z parameters of the ladder. Neither port has a grounded terminal -- the lower rail carries resistors too -- so each port is written as a pair, [a,f] and [e,j], in the node boxes. z11 = z22 = 41/15 = 2.733 ohm and z12 = z21 = 1/15 = 0.06667 ohm. Grounding both bottoms instead shorts out the lower rail and gives a different circuit's answer, 11/5 and 3/5.
+note: The network has no node 0 at all; the tool takes each port's lower terminal as its reference for the measurement, which is what the definition of the parameters does.
+image: https://learn.symbulator.com/assets/circuit/sym_as7_p1902.png
+rounding: 4
+si: no
+units: yes
+
+
+[AS7's Problem 19.19]
+
+r1,a,x,1
+r2,f,y,1
+c,x,y,1
+l,x,y,1
+
+analysis: fd
+tool: port
+kind: y
+n1: [a,f]
+n2: [x,y]
+note: Find the y parameters in s. Port 2 is the pair of junctions, port 1 the pair of outer ends, and neither is grounded. y11 = 1/2 S, y12 = y21 = -1/2 S and y22 = s + 1/2 + 1/s S -- the capacitor and inductor in parallel, plus the two ohms in series through the shorted port 1.
+image: https://learn.symbulator.com/assets/circuit/sym_as7_p1919.png
+rounding: exact
+si: no
+units: yes
+
+
+[AS7's Problem 19.70]
+
+za,[p,0],[q,m],[25,20,5,10]
+zb,[p,0],[m,n],[50,25,25,30]
+
+analysis: dc
+tool: port
+kind: g
+n1: p
+n2: [q,n]
+note: Two z-parameter blocks in a parallel-series connection: the inputs share the pair [p,0], block A's lower output terminal m is block B's upper one, and the output port is q to n. Find the g parameters: g11 = 0.06 S, g12 = -1.3, g21 = 0.7 and g22 = 23.5 ohm, which is the sum of the two blocks' own g matrices, as the parallel-series rule says.
+note: The output side has no path to node 0 -- a block conducts nothing across its ports -- so the tool takes n as that side's reference. Solve the same description with a source at p and the answers say so in a note.
+image: https://learn.symbulator.com/assets/circuit/sym_as7_p1970.png
+rounding: 4
+si: no
+units: yes
+
+
+[AS7's Problem 19.17]
+
+r8,a,c,8
+r12,f,d,12
+r4,a,d,4
+r16,f,c,16
+
+analysis: dc
+tool: port
+kind: z
+n1: [a,f]
+n2: [c,d]
+note: A lattice: 8 ohm across the top, 12 across the bottom, 4 and 16 on the diagonals. Both ports float, so they are the pairs [a,f] and [c,d]. z11 = 48/5 = 9.6 ohm (the two paths from a to f, 24 and 16, in parallel), z22 = 42/5 = 8.4 ohm, z12 = z21 = -4/5 = -0.8 ohm. Ask for y instead and the four are 0.105 S, 0.01 S, 0.01 S and 0.12 S -- the inverse of the z matrix, as they must be.
+image: https://learn.symbulator.com/assets/circuit/sym_as7_p1917.png
+rounding: 4
+si: no
+units: yes
+
+
+[AS7's Problem 19.63]
+
+r4,a,b,4
+t,[a,b],[c,d],[1,3]
+r9,c,d,9
+
+analysis: dc
+tool: port
+kind: z
+n1: [a,b]
+n2: [c,d]
+note: An ideal 1:3 transformer with 4 ohm across its primary and 9 ohm across its secondary; the ports are the two windings' own terminal pairs, neither grounded. z11 = 4/5 = 0.8 ohm (4 in parallel with the 9 referred to the primary, 9/9 = 1), z22 = 36/5 = 7.2 ohm (9 in parallel with 4 referred to the secondary, 36), and z12 = z21 = 12/5 = 2.4 ohm.
+note: Each side is an island of its own -- a transformer conducts nothing across -- so the tool takes b and d as the two references.
+image: https://learn.symbulator.com/assets/circuit/sym_as7_p1963.png
+rounding: 4
+si: no
+units: yes
+
+
+[AS7's Problem 19.71]
+
+r8,t1,j,8
+r10,j,p,10
+r4,t1,p,4
+r5,p,q,5
+r2,q,r,2
+r6,j,t2,6
+t,[p,r],[t2,b2],[1,2]
+
+analysis: dc
+tool: port
+kind: z
+n1: [t1,q]
+n2: [t2,b2]
+note: The network of Figure 19.118 as read from the drawing: the upper-left terminal t1 feeds the 8 ohm and, through the 4 ohm, the node p where the 10 ohm, the 5 ohm and the primary's top meet; the lower-left terminal is q, the foot of the 5 ohm, which reaches the primary's bottom r through the 2 ohm; the 1:2 secondary runs from the upper-right terminal t2, beyond the 6 ohm, to the lower-right terminal b2. z11 = 91/11 = 8.273 ohm, z12 = z21 = 10 ohm, z22 = 28 ohm.
+image: https://learn.symbulator.com/assets/circuit/sym_as7_p1971.png
+rounding: 4
+si: no
+units: yes

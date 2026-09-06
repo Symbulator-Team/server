@@ -303,6 +303,50 @@ CATALOGUE = {
 }
 
 
+
+# --- #320: the two-port tool's references, for every pre-parse --------
+#
+# A port written as a [top,bottom] pair may sit on a side of the circuit
+# that has no node 0 at all (a ladder with resistors in both rails). The
+# package's `port()` holds each port's bottom at 0 for its own solve;
+# but this file parses the description several times *before* that --
+# for the alias rewrite, the hijack scan, the complex-value guard -- and
+# each of those would refuse the groundless network first. So the
+# bottoms are published here, per request, and every pre-parse passes
+# them on. A ContextVar rather than a global: Flask serves requests on
+# threads, and the offline build is single-threaded either way.
+import contextvars as _contextvars
+_PORT_REFS = _contextvars.ContextVar("symbulator_port_refs", default=())
+
+
+def port_references(tool, n1, n2) -> tuple:
+    """The bottoms of the two-port tool's ports that are not ground:
+    the references its pre-parses must honour (#320). Empty for every
+    other tool and for the plain solve."""
+    if tool != "port":
+        return ()
+    from symbulator.equiv import _port_pair
+    refs = []
+    for n in (n1 or "", n2 or ""):
+        try:
+            _top, bottom = _port_pair(n)
+        except ValueError:
+            continue
+        if bottom != "0" and bottom not in refs:
+            refs.append(bottom)
+    return tuple(refs)
+
+
+def set_port_references(tool, n1, n2):
+    """Publish `port_references(...)` for the current request; returns
+    the token for `_PORT_REFS.reset()`."""
+    return _PORT_REFS.set(port_references(tool, n1, n2))
+
+
+def _port_refs() -> tuple:
+    return _PORT_REFS.get()
+
+
 def msg(code, **args):
     """One message, as {code, args, severity, text}.
 
@@ -447,7 +491,7 @@ def _validate(desc: str, domain: str, omega: str, variables) -> str | None:
     # report and the real parser will say so.
     try:
         from symbulator.elements import parse_circuit
-        banned = banned_name_errors(parse_circuit(desc, expand_si=False))
+        banned = banned_name_errors(parse_circuit(desc, expand_si=False, references=_port_refs()))
     except Exception:
         banned = []
     if banned:
@@ -610,7 +654,7 @@ def expand_defines_in_desc(desc, table):
     from symbulator.elements import (parse_circuit, _IDENTIFIER_FIELD_IDX,
                                      TWO_PORT_KINDS, PORT_KINDS)
     try:
-        elements = parse_circuit(desc, expand_si=False)
+        elements = parse_circuit(desc, expand_si=False, references=_port_refs())
     except Exception:
         # Not parseable yet. Leave it be and let the real validation say so
         # -- expanding blind would have to treat names and nodes as values.
@@ -652,7 +696,7 @@ def define_shadow_notices(table, desc):
         return []
     from symbulator.elements import parse_circuit
     try:
-        elements = parse_circuit(desc, expand_si=False)
+        elements = parse_circuit(desc, expand_si=False, references=_port_refs())
     except Exception:
         return []
     answers = set(answer_aliases(elements) or {})
@@ -1014,7 +1058,7 @@ def normalise_imaginary(desc: str, domain: str = "ac"):
         # safe_sympify to parse them), so a circuit like "e1,1,0,10+5*i"
         # next to "r1,1,2,4.7'k" doesn't lose the resistor's SI notation
         # just because the source needed its imaginary unit normalised.
-        elements = parse_circuit(desc, expand_si=False)
+        elements = parse_circuit(desc, expand_si=False, references=_port_refs())
     except Exception:
         return desc, []
 
@@ -1984,7 +2028,7 @@ def prepare_inputs(desc: str, extra_equations=None, extra_unknowns=None,
     from symbulator.elements import parse_circuit, _IDENTIFIER_FIELD_IDX
 
     try:
-        elements = parse_circuit(desc, expand_si=False)
+        elements = parse_circuit(desc, expand_si=False, references=_port_refs())
     except Exception:
         # Not parseable yet -- leave everything alone and let the real
         # validation report it.
@@ -2031,6 +2075,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
     answers), or {"ok": False, "error": message} on failure. Every value
     in the payload is a plain string, so it can cross a subprocess pipe
     (as app.py does) or a Pyodide/JS boundary unchanged."""
+    _refs_token = set_port_references(tool, n1, n2)      # #320
     try:
         import sympy as sp
         from symbulator import ex, tr, th, er, port
@@ -2099,7 +2144,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         # Complex values are meaningful only in AC; catch them before
         # solving so the message names the element rather than surfacing
         # as a strange answer.
-        _guard_elements = parse_circuit(desc)
+        _guard_elements = parse_circuit(desc, references=_port_refs())
         _bad = _complex_value_error(_guard_elements, domain)
         if _bad:
             return _err(_bad)
@@ -2242,8 +2287,14 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
         # call it directly.
         if domain == "tr":
             res = tr(desc, **kwargs)
+            # #322: an island behind a port got a reference of its own;
+            # the engine says which, in the shape the page renders
+            _notes += list(getattr(res, 'notes', []) or [])
         else:
             res = ex(desc, domain, **kwargs)
+            # #322: an island behind a port got a reference of its own;
+            # the engine says which, in the shape the page renders
+            _notes += list(getattr(res, 'notes', []) or [])
         values = res.values
         # 0.4.6 exposes every root; older solvers have only the one.
         solutions = list(getattr(res, "solutions", None) or [values])
@@ -2302,7 +2353,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             def fmt(expr, unit=""):                        # noqa: F811
                 return _dualise(_fmt_once, sp, expr, unit, digits, si, polar)
 
-        elements = parse_circuit(desc)
+        elements = parse_circuit(desc, references=_port_refs())
         # Formatting one solution. An expert-mode equation on a power is
         # quadratic in its unknown, so a circuit can have more than one
         # answer -- both real, both satisfying every constraint. Rather than
@@ -2908,7 +2959,7 @@ def plot_time_ui(desc: str, key: str, t_min: float, t_max: float, n: int,
         from symbulator.elements import parse_circuit
         from symbulator.plotting import time_samples, PlotError
 
-        elements = parse_circuit(desc)
+        elements = parse_circuit(desc, references=_port_refs())
         # Plot vs time runs tr() under the hood, which is never AC.
         _notes = _hijack_notes(elements, reserve_imaginary=False)
 
@@ -2967,7 +3018,7 @@ def bode_ui(desc: str, key: str, f_min: float, f_max: float, n: int,
         from symbulator.elements import parse_circuit
         from symbulator.plotting import bode_samples, PlotError
 
-        elements = parse_circuit(desc)
+        elements = parse_circuit(desc, references=_port_refs())
         # Bode plot runs fd() under the hood, which is never AC.
         _notes = _hijack_notes(elements, reserve_imaginary=False)
 
@@ -3079,7 +3130,7 @@ def sweep_ui(desc: str, key: str, xname: str, x_min: float, x_max: float,
 
         if x_max <= x_min:
             return _err(msg(M_SWEEP_RANGE))
-        elements = parse_circuit(desc)
+        elements = parse_circuit(desc, references=_port_refs())
         # DC under the hood, so i/j are ordinary names here, as in tr().
         _notes = _hijack_notes(elements, reserve_imaginary=False)
 
