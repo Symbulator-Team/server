@@ -258,6 +258,10 @@ def main():
         for idx, c in enumerate(circuits):
             total += 1
             name, desc, anchor = c["name"], c["desc"], "c%d" % idx
+            # the tool's references are the drawing's ground (#320)
+            from symbulator_ui import port_references, ground_references
+            desc = ground_references(desc, port_references(
+                c.get("tool"), c.get("n1"), c.get("n2")))
             issues = []
             try:
                 svg = to_svg(desc)

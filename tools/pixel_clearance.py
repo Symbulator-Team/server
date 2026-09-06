@@ -57,6 +57,7 @@ sys.path.insert(0, SERVER)
 
 from symbulator.schematic import to_svg            # noqa: E402
 from circuitbook import parse_book                 # noqa: E402
+from symbulator_ui import port_references, ground_references   # noqa: E402  (#320)
 
 EXAMPLES = os.path.join(SERVER, "examples")
 SCALE = 4          # device pixels per SVG px
@@ -169,7 +170,12 @@ def entries(all_books):
     for book in sorted(f for f in os.listdir(EXAMPLES) if f.endswith(".cir")):
         with io.open(os.path.join(EXAMPLES, book), encoding="utf-8") as f:
             circuits, _warnings, _title = parse_book(f.read())
-        out += [("%s / %s" % (book, c["name"]), c["desc"]) for c in circuits]
+        # an entry for the two-port tool with floating ports draws around
+        # the tool's own reference, as the app draws it (#320)
+        out += [("%s / %s" % (book, c["name"]),
+                 ground_references(c["desc"], port_references(
+                     c.get("tool"), c.get("n1"), c.get("n2"))))
+                for c in circuits]
     return out
 
 

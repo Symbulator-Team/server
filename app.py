@@ -831,8 +831,12 @@ def api_schematic():
     desc = str(data.get("desc") or "")
     if len(desc) > MAX_DESC_LEN:
         return jsonify({"ok": False, "error": "That circuit description is too long."}), 400
+    # the port tool's [top,bottom] pairs, so a groundless network draws (#320)
+    tool = str(data.get("tool") or "").strip().lower()[:8]
+    n1 = str(data.get("n1") or "").strip()[:48]
+    n2 = str(data.get("n2") or "").strip()[:48]
     t0 = time.time()
-    ok, payload = _run_in_process("schematic_ui", (desc,))
+    ok, payload = _run_in_process("schematic_ui", (desc, tool, n1, n2))
     elapsed = round(time.time() - t0, 2)
     if not ok:
         return jsonify(_refusal(payload, elapsed=elapsed)), 422
