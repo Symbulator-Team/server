@@ -714,14 +714,22 @@ def _round_expr(expr, digits: int):
     are left as they are -- a node sitting at exactly 36 V should read
     "36", not "36.00", even when four digits were asked for. Everything
     else (rationals, floats, and the numeric coefficients inside a
-    symbolic expression) goes through sympy's N()."""
+    symbolic expression) is rounded in decimal, ties away from zero,
+    by the package's `round_sig` (#318).
+
+    Until 6 Sep 2026 this was `sp.N(expr, digits)`, which evaluates at
+    a *binary* working precision of about `digits` digits and can land
+    the last decimal digit either side: the wye-delta line current's
+    angle, -36.20493 degrees, printed as -36.21, and twelve of the
+    tutorial's rounded answers were off by one in the last digit
+    (AS7 12.12's `i_rlc` also lost a digit). Measured over all 2,269
+    rounded numeric answers in the built-in examples; the write-up is
+    #318 in repos/local/NEXT.md."""
     if not digits:
         return expr
-    import sympy as sp
+    from symbulator._display import round_sig
     try:
-        if expr.is_Integer:
-            return expr
-        return sp.N(expr, digits)
+        return round_sig(expr, digits)
     except Exception:
         return expr
 
@@ -892,7 +900,9 @@ def _polar_format(expr, digits: int, unit: str, si: bool = False):
         "180(-1.249...)" with a stray pi in it. A phasor angle in degrees
         is a measurement rather than a closed form -- the same trade the
         SI-prefix setting makes, and what version 7's `aa` does."""
-        return sp.N(x, digits) if digits else sp.N(x)
+        # Decimal rounding, not `sp.N(x, digits)` (#318).
+        from symbulator._display import round_sig
+        return round_sig(sp.N(x), digits) if digits else sp.N(x)
 
     try:
         z = sp.N(sp.simplify(expr))
@@ -3609,7 +3619,10 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
             numbers.append(got)
 
         def rounded(x):
-            return sp.N(x, digits + 2) if digits else sp.N(x)
+            # Two digits more than the Results card, as it always was;
+            # decimal rounding rather than sp.N's binary one (#318).
+            from symbulator._display import round_sig
+            return round_sig(sp.N(x), digits + 2) if digits else sp.N(x)
 
         if tool == "aa":
             # Amplitude and angle, the way version 7 printed it:
