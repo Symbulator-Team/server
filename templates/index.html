@@ -10,7 +10,7 @@
 // saved Dark Mode preference takes effect before first paint -- otherwise
 // the page would flash light, then flip to dark, on every reload.
 (function () {
-  // #311 (Roberto, 7 Sep 2026): framed -- the right pane of the split view
+  // #311 (Roberto, 5 Sep 2026): framed -- the right pane of the split view
   // -- the page drops its wordmark band, which the shell's own bar already
   // provides, and keeps the ribbon for its controls. Detected the way the
   // docs page detects it (#224): by being framed at all, not by a flag a
@@ -1349,7 +1349,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
     outline: 2px solid var(--sky, #8ec7f5); outline-offset: 6px;
   }
   .subbar .palette-wrap option { color: #1c2330; background: #fff; }
-  /* #309 (Roberto, 7 Sep 2026: "Feel free to hide the theme button in
+  /* #309 (Roberto, 5 Sep 2026: "Feel free to hide the theme button in
      mobile"): below the phone breakpoint the swatch gives its width to
      the nav, whose one-line rule was dropping the Docs link in six
      languages once Collapse (#308) joined the row. The colour theme
@@ -2012,7 +2012,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
          do -- their two-word forms are half again the width of "Clear
          inputs" and at 375px they had no slack at all. Abbreviating here
          is what lets the dot beside it survive at every width. -->
-    <!-- #308 (Roberto, 7 Sep 2026): fold every card shut in one click.
+    <!-- #308 (Roberto, 5 Sep 2026): fold every card shut in one click.
          Same shape as Clear inputs -- a button that acts on the page,
          dressed as a ribbon link, two spellings for the two widths -- and
          its own dot after it, so the two read as one group of page
@@ -2549,7 +2549,7 @@ units: yes</pre>
          equivalent circuit for a load. The tick is that question -- it
          adds the three load answers under the four in Results -- and the
          button is the circuit. Saved with the entry as `with_load`
-         (Roberto, 7 Sep 2026), so a built-in problem about a load opens
+         (Roberto, 5 Sep 2026), so a built-in problem about a load opens
          ticked. Shown for Thévenin / Norton only. -->
     <div class="row">
       <div id="loadField">
@@ -2735,7 +2735,7 @@ units: yes</pre>
       </div>
       <!-- #292/#299/#300: the calculator's eqcir, as a button. Shown under
            the Thévenin / Norton answers when the load question is ticked
-           (#300, Roberto, 7 Sep 2026: "under the results of the Thevenin
+           (#300, Roberto, 5 Sep 2026: "under the results of the Thevenin
            equivalent at the end of the card"); disabled until a Thévenin
            run has been made and again the moment an input changes (#299),
            since it writes ino and req. paintFreshness('solve') keeps the
@@ -2766,7 +2766,7 @@ units: yes</pre>
     </details>
   </div>
 
-  <!-- #291 (Roberto, 7 Sep 2026): active before any solve, because
+  <!-- #291 (Roberto, 5 Sep 2026): active before any solve, because
        pr(...) reduces resistors with no circuit at all. The field, the
        button and the Conditions box start live; with nothing solved the
        evaluator is sent an empty set of answers and works on what is
@@ -3348,7 +3348,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-06 03:01 UTC</span><br>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-06 03:04 UTC</span><br>
   <span class="notranslate" style="white-space:nowrap"><a href="https://symbulator.com" target="_blank" rel="noopener">symbulator.com</a> ·</span>
   <span data-i18n="free-and-open-source.d231">Free and open-source under the MIT licence · Runs on Python+SymPy</span>
 </footer>
@@ -7226,7 +7226,7 @@ function setDarkTheme(nextDark) {
 }
 themeToggleBtn.addEventListener('click', () => { setDarkTheme(!isDarkTheme()); });
 
-// #312 (Roberto, 7 Sep 2026): inside the split view there were two sun-
+// #312 (Roberto, 5 Sep 2026): inside the split view there were two sun-
 // and-moon buttons, the shell's and this one. Framed, this one is hidden
 // (the rule beside #311's) and the shell's drives both panes: it posts
 // { from: 'symbulator-split', type: 'theme', dark } on every click and
