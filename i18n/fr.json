@@ -337,7 +337,6 @@
  "js.pkg.m502": "La tension à vide est %{vth}, mais le courant de court-circuit n'a pas pu être trouvé, ni directement ni comme limite d'une résistance tendant vers zéro : %{reason}",
  "js.pkg.m601": "La netlist SPICE est vide.",
  "js.pkg.m602": "Aucun élément traduisible trouvé dans la netlist SPICE. %{warnings}",
- "js.pkg.m701": "'%{name}' nomme quatre nœuds. Pour l'instant, le traceur de schémas ne dessine un transformateur ou un quadripôle que sous sa forme à deux nœuds ; le circuit se résout quand même.",
  "js.plot.bode": "Diagramme de Bode",
  "js.plot.bodeTf": "Diagramme de Bode de H(s)",
  "js.plot.degrees": "degrés",

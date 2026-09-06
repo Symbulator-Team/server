@@ -337,7 +337,6 @@
  "js.pkg.m502": "The open-circuit voltage is %{vth}, but the short-circuit current could not be found, either directly or as the limit of a vanishing resistance: %{reason}",
  "js.pkg.m601": "The SPICE netlist is empty.",
  "js.pkg.m602": "No translatable elements found in the SPICE netlist. %{warnings}",
- "js.pkg.m701": "'%{name}' names four nodes. The schematic drawer draws a transformer or two-port only in its two-node form for now; the circuit still solves.",
  "js.plot.bode": "Bode plot",
  "js.plot.bodeTf": "Bode plot of H(s)",
  "js.plot.degrees": "degrees",

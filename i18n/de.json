@@ -337,7 +337,6 @@
  "js.pkg.m502": "Die Leerlaufspannung ist %{vth}, aber der Kurzschlussstrom war weder direkt noch als Grenzwert eines verschwindenden Widerstands zu finden: %{reason}",
  "js.pkg.m601": "Die SPICE-Netzliste ist leer.",
  "js.pkg.m602": "Keine übersetzbaren Elemente in der SPICE-Netzliste gefunden. %{warnings}",
- "js.pkg.m701": "'%{name}' nennt vier Knoten. Der Schaltplanzeichner zeichnet einen Transformator oder ein Zweitor vorerst nur in der Zwei-Knoten-Form; die Schaltung wird trotzdem gelöst.",
  "js.plot.bode": "Bode-Diagramm",
  "js.plot.bodeTf": "Bode-Diagramm von H(s)",
  "js.plot.degrees": "Grad",

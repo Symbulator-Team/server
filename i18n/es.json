@@ -337,7 +337,6 @@
  "js.pkg.m502": "La tensión de circuito abierto es %{vth}, pero no se pudo hallar la corriente de cortocircuito, ni directamente ni como límite de una resistencia que tiende a cero: %{reason}",
  "js.pkg.m601": "La lista de red SPICE está vacía.",
  "js.pkg.m602": "No se encontraron elementos traducibles en la lista de red SPICE. %{warnings}",
- "js.pkg.m701": "'%{name}' nombra cuatro nodos. Por ahora el dibujante de esquemas dibuja un transformador o un bipuerto solo en su forma de dos nodos; el circuito se resuelve igualmente.",
  "js.plot.bode": "Diagrama de Bode",
  "js.plot.bodeTf": "Diagrama de Bode de H(s)",
  "js.plot.degrees": "grados",

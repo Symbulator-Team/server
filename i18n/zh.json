@@ -337,7 +337,6 @@
  "js.pkg.m502": "开路电压是 %{vth}，但短路电流无法求得，直接求不出，作为电阻趋于零的极限也求不出：%{reason}",
  "js.pkg.m601": "SPICE 网表为空。",
  "js.pkg.m602": "在 SPICE 网表中没有找到可翻译的元件。%{warnings}",
- "js.pkg.m701": "'%{name}' 给出了四个节点。目前电路图绘制器只能绘制两节点形式的变压器或二端口网络；电路仍可求解。",
  "js.plot.bode": "伯德图",
  "js.plot.bodeTf": "H(s) 的伯德图",
  "js.plot.degrees": "度",

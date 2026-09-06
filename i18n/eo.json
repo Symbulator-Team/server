@@ -337,7 +337,6 @@
  "js.pkg.m502": "La malferma tensio estas %{vth}, sed la mallongiga kurento ne troveblis, nek rekte nek kiel limeso de malaperanta rezistanco: %{reason}",
  "js.pkg.m601": "La SPICE-reta listo estas malplena.",
  "js.pkg.m602": "Neniuj tradukeblaj elementoj troviĝis en la SPICE-reta listo. %{warnings}",
- "js.pkg.m701": "'%{name}' nomas kvar nodojn. La skema desegnilo nuntempe desegnas transformilon aŭ dupordon nur en ĝia dunoda formo; la cirkvito tamen solviĝas.",
  "js.plot.bode": "Bode-diagramo",
  "js.plot.bodeTf": "Bode-diagramo de H(s)",
  "js.plot.degrees": "gradoj",

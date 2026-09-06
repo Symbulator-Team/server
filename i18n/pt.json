@@ -337,7 +337,6 @@
  "js.pkg.m502": "A tensão de circuito aberto é %{vth}, mas a corrente de curto-circuito não pôde ser encontrada, nem diretamente nem como limite de uma resistência que tende a zero: %{reason}",
  "js.pkg.m601": "A netlist SPICE está vazia.",
  "js.pkg.m602": "Nenhum elemento traduzível encontrado na netlist SPICE. %{warnings}",
- "js.pkg.m701": "'%{name}' nomeia quatro nós. Por enquanto, o desenhador de esquemas desenha um transformador ou um quadripolo apenas na sua forma de dois nós; o circuito é resolvido na mesma.",
  "js.plot.bode": "Diagrama de Bode",
  "js.plot.bodeTf": "Diagrama de Bode de H(s)",
  "js.plot.degrees": "graus",

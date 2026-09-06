@@ -337,7 +337,6 @@
  "js.pkg.m502": "Tegangan rangkaian terbuka adalah %{vth}, tetapi arus hubung singkat tidak dapat ditemukan, baik langsung maupun sebagai limit resistansi yang menuju nol: %{reason}",
  "js.pkg.m601": "Daftar jaringan SPICE kosong.",
  "js.pkg.m602": "Tidak ditemukan elemen yang bisa diterjemahkan dalam daftar jaringan SPICE. %{warnings}",
- "js.pkg.m701": "'%{name}' menyebut empat simpul. Untuk saat ini penggambar skema hanya menggambar transformator atau dua-port dalam bentuk dua simpul; rangkaian tetap diselesaikan.",
  "js.plot.bode": "Diagram Bode",
  "js.plot.bodeTf": "Diagram Bode H(s)",
  "js.plot.degrees": "derajat",
