@@ -3,8 +3,12 @@
 
 Roberto's brief of 6 Sep 2026: a reader picks a theme, and the sun-and-moon
 toggle switches light and dark *within* it. Navy is the default and is the
-page exactly as it was; the other twelve are the palettes he approved on
-the rendered sheet kept in Notes/themes_2026-09-06/.
+page exactly as it was; the others are the palettes he approved on the
+rendered sheets kept in Notes/themes_2026-09-06/ (the original thirteen,
+one of which -- Walnut -- was dropped by #307) and Notes/themes_2026-09-07/
+(#326: Bayerische, the BMW M stripe, and Macaw, from his own photograph
+of a scarlet macaw; each was drawn twice there, with the two accents it
+could take, and he chose the red button and the gold one).
 
 Each theme is twenty-two values -- five for the banner, seven for the
 results panel, ten per mode for the page -- and everything else the two
@@ -53,6 +57,16 @@ TABLE = [
      "#102338 #0d1e30 #081525 #173352 #8ecbff #4a7098 #6fb8f0",
      "#f4f6fa #ffffff #1c2330 #5b6472 #2f5fa8 #ffffff #e2e5ea #fbfcfd #cfd6df #1f4a86",
      "#12161d #1b212c #e4e8ee #97a3b6 #5b96e0 #0d1420 #2b3341 #11161e #38424f #4a86d0"),
+    ("bayerische", "Bayerische",
+     "#16588e #1d68a4 #81c4ff #b3d3ee #dceafc",
+     "#0b2f4d #08243a #04121f #14456e #a8d8ff #4f7ea6 #ff5a63",
+     "#f4f7fb #ffffff #12222f #5a6b7a #cf1f2a #ffffff #dfe6ee #fbfcfe #cbd7e3 #a9151f",
+     "#0f1720 #17212c #e2e9f1 #93a4b6 #ff5a63 #0f1720 #263443 #0d151d #35455a #ff7f86"),
+    ("macaw", "Macaw",
+     "#14418f #1b4d9f #ffc61e #c3d1ec #e4ebf9",
+     "#0f2c58 #0a2245 #050f20 #1a4a86 #ffd75e #5f7ba8 #ff6a4d",
+     "#fbf7f0 #ffffff #22201c #6d6a63 #e8a90c #22201c #e6ded1 #fefcf8 #d8cdba #c78c00",
+     "#12161f #1a1f2b #e9e6df #9ba1ad #ffc61e #12161f #28303f #0f131b #37415a #ffd75e"),
     ("violet", "Violet",
      "#363a80 #42478f #b9bdff #bfc1e6 #e0e1f8",
      "#1b1d44 #14163a #0a0b22 #2b2e60 #c6c5ff #6b6ca8 #a3a1ff",
@@ -98,7 +112,7 @@ TABLE = [
      "#14301f #0f2418 #061209 #1f4430 #b8ecb8 #5a8a66 #8fd49a",
      "#f3f7f3 #fffefc #172519 #566b5a #2c6e42 #ffffff #dbe6dc #fbfdfb #c6d8c9 #215532",
      "#0f1712 #16221a #e4eee5 #92ab97 #6cc488 #0f1712 #26362b #0c130e #33473a #8ad8a1"),
-    ("turquoise", "Turquoise",
+    ("turquoise", "Aqua",
      "#0f4a58 #175a69 #7fe3d6 #a9d3cf #d6f1ec",
      "#0b2f36 #08252b #041418 #164048 #8ef0e2 #3f8a84 #5fd6c8",
      "#f4f8f5 #fffefb #14302e #56706c #0f8a82 #ffffff #dbe8e3 #fbfdfb #c4d9d3 #0b6d67",
