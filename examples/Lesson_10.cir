@@ -323,3 +323,69 @@ plotkey: v_4
 plotmin: 0
 plotmax: 1
 plotpoints: 300
+
+
+[NR12's Problem 7.68]
+
+e,1,0,200
+r50,1,2,50
+l1,2,3,4,0
+l2,0,3,8,0
+m,l1,l2,5
+
+analysis: tr
+vars: il1, v2, v3
+note: Nilsson & Riedel (12th ed.), Problem 7.68: no energy stored when the switch closes at t = 0. Find i, v1 and v2 for t > 0. The 4 H coil's dot is at its left end, node 2, and the 8 H coil's at its bottom, node 0, so the 8 H is written bottom node first; the current enters one dot and leaves through the other, and the pair is 4 + 8 - 10 = 2 H. i = il1 = 4(1 - e^(-25t)) A, v1 = v2 - v3 = -100 e^(-25t) V and v2 = v3 = 300 e^(-25t) V: v1 runs against the rise because the 5 H coupling outweighs the 4 H, and the two still add to 200 - 50 i.
+image: https://learn.symbulator.com/assets/circuit/sym_nr12_p0768.png
+rounding: exact
+si: no
+units: yes
+evaluate: v2-v3
+plottool: plot_time
+plotkey: i_l1
+plotmin: 0
+plotmax: 0.2
+plotpoints: 300
+
+
+[NR12's Problem 7.70]
+
+e,1,0,10
+r250,1,a,250
+l1,a,0,0.5,0
+l2,0,a,0.25,0
+m,l1,l2,0.25
+
+analysis: tr
+note: Nilsson & Riedel (12th ed.), Problem 7.70: no energy stored when the switch closes. Find io, vo, i1 and i2 for t > 0. The 0.5 H coil's dot is at its top and the 0.25 H coil's at its bottom, so the second is written bottom node first: the parallel pair opposes and reduces to (0.125 - 0.0625)/(0.75 + 0.5) = 0.05 H, tau = 0.2 ms. io = ir250 = 0.04(1 - e^(-5000t)) A, vo = va = 10 e^(-5000t) V, i1 = il1 = 0.016(1 - e^(-5000t)) A and i2, downward, is -il2 = 0.024(1 - e^(-5000t)) A.
+image: https://learn.symbulator.com/assets/circuit/sym_nr12_p0770.png
+rounding: exact
+si: no
+units: yes
+evaluate: -il2
+plottool: plot_time
+plotkey: i_r250
+plotmin: 0
+plotmax: 0.001
+plotpoints: 300
+
+
+[NR12's Problem 7.71]
+
+e,1,0,15
+r75,1,a,75
+l1,a,0,8'm,0
+l2,a,0,20'm,0
+m,l1,l2,10'm
+
+analysis: tr
+note: Nilsson & Riedel (12th ed.), Problem 7.71: no energy stored when the switch closes. Find io, vo, i1 and i2 for t > 0. Both dots are at the top, so both coils are written top node first: the parallel pair aids and reduces to (160 - 100)/(28 - 20) = 7.5 mH, tau = 0.1 ms. io = ir75 = 0.2(1 - e^(-10000t)) A, vo = va = 15 e^(-10000t) V, i1 = il1 = 0.25(1 - e^(-10000t)) A and i2 = il2 = -0.05(1 - e^(-10000t)) A -- backwards, because with both coils shorts at the end the split is set by the flux linkages, and 0.25 - 0.05 is the 0.2 A the 75 ohm allows.
+image: https://learn.symbulator.com/assets/circuit/sym_nr12_p0771.png
+rounding: exact
+si: no
+units: yes
+plottool: plot_time
+plotkey: i_r75
+plotmin: 0
+plotmax: 0.0005
+plotpoints: 300
