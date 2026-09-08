@@ -4303,6 +4303,22 @@ def byhand_ui(desc: str, domain: str, omega: str, method: str,
     except Exception:                        # noqa: BLE001
         route = None
 
+    def _line_part(name, system):
+        """One sentence of the line above the equations, or None.
+
+        By name and through `getattr`, for the same reason the import
+        above is guarded: the server takes `symbulator` from PyPI, so a
+        site can be running a release that predates #335. A missing
+        sentence costs the reader a sentence; an AttributeError costs
+        them the card."""
+        fn = getattr(byhand, name, None)
+        if fn is None:
+            return None
+        try:
+            return fn(system)
+        except Exception:                    # noqa: BLE001
+            return None
+
     def _tex(obj):
         """LaTeX for one line, falling back to its plain text -- the same
         rule the Equations card uses (#176): a fallback that reads as
@@ -4370,7 +4386,8 @@ def byhand_ui(desc: str, domain: str, omega: str, method: str,
                     "rows": [], "bridge": [], "unknowns": [], "loops": {},
                     "notes": [], "verdict": "unsupported", "message": None,
                     "answers": [], "checks": [], "checked": 0,
-                    "differing": [], "svg": ""}
+                    "differing": [], "svg": "",
+                    "lead": None, "technique": None}
         verdict = byhand.compare(system, classic.values)
         answers = [{"name": name, "value": _shown(value),
                     "latex": _tex(sp.Eq(sp.Symbol(name), value,
@@ -4387,6 +4404,11 @@ def byhand_ui(desc: str, domain: str, omega: str, method: str,
             svg = ""                         # a picture is never a failure
         return {
             "supported": True, "reason": None,
+            # #335: the first and third sentences of the line above the
+            # equations. Per method, so both follow the picker; the
+            # middle sentence (`route`) compares the two and does not.
+            "lead": _line_part("lead", system),
+            "technique": _line_part("technique", system),
             "rows": [_row(r) for r in system.rows],
             "bridge": [_row(r) for r in system.bridge],
             "unknowns": [str(u) for u in system.unknowns],

@@ -43,7 +43,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "e56702e94a";
+window.SYMB_I18N_V = "ba2e958338";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -3285,11 +3285,15 @@ units: yes</pre>
        version 9's to translate. -->
   <div class="card inactive" id="byhandCard">
     <details id="byhandBox">
-      <summary class="results-h section-toggle" data-i18n="by-hand-equations.d143">By-Hand Equations</summary>
-      <p class="hint" style="margin:0 0 .9rem" data-i18n="the-same-circuit-written.cf47">
+      <!-- #336, Roberto 8 Sep 2026: the Experimental mark belongs on the
+           heading, where it is read before the card is opened, not at
+           the end of a paragraph inside it. The parenthetical form is
+           the app's own -- the schematic button already says
+           "(beta)". -->
+      <summary class="results-h section-toggle" data-i18n="by-hand-equations-experiment.eccd">By-Hand Equations <span class="hint" style="font-weight:400">(experimental)</span></summary>
+      <p class="hint" style="margin:0 0 .9rem" data-i18n="the-same-circuit-written.db7a">
         The same circuit, written out the way it is taught in class —
         and then checked against the answers above.
-        <strong>Experimental.</strong>
       </p>
       <details style="margin:0 0 .9rem">
         <summary data-i18n="what-this-is-for.a5dd">What this is for</summary>
@@ -3323,9 +3327,16 @@ units: yes</pre>
       <div class="row" id="byhandMethodRow" hidden>
         <div>
           <label for="byhandMethod" data-i18n="method.8830">Method</label>
+          <!-- #335, Roberto 8 Sep 2026: remove the "(with supermeshes)"
+               or "(with supernodes)" reference if it was not used in
+               that instance. The parenthetical was on both options on
+               every circuit, so it said nothing about the circuit in
+               hand. `byhandLabelMethods` rewrites these two labels after
+               each run from what the two systems actually contain; the
+               plain forms below are what a page shows before any run. -->
           <select id="byhandMethod">
-            <option value="nodal" data-i18n="nodal-analysis-with-supernod.cb6c">Nodal analysis (with supernodes)</option>
-            <option value="mesh" data-i18n="mesh-analysis-with-supermesh.16a4">Mesh analysis (with supermeshes)</option>
+            <option value="nodal" data-i18n="nodal-analysis.e83a">Nodal analysis</option>
+            <option value="mesh" data-i18n="mesh-analysis.3267">Mesh analysis</option>
           </select>
         </div>
       </div>
@@ -4638,14 +4649,25 @@ const UI_MESSAGES = {
   717: () => t('js.ui.m717', 'The by-hand system solved, but it produced '
                + 'none of the quantities the classic solve reports, so '
                + 'there was nothing to check it against.'),
-  718: a => tv('js.ui.m718', 'Mesh analysis writes %{mesh} equations for '
-               + 'this circuit and nodal writes %{nodal}. Mesh is the '
-               + 'shorter route here.', a),
-  719: a => tv('js.ui.m719', 'Nodal analysis writes %{nodal} equations for '
-               + 'this circuit and mesh writes %{mesh}. Nodal is the '
-               + 'shorter route here.', a),
-  720: a => tv('js.ui.m720', 'Nodal and mesh each write %{n} equations for '
-               + 'this circuit, so neither is shorter.', a),
+  // #335: reworded to carry no noun the number has to agree with.
+  // "writes %{mesh} equations" read "writes 1 equations" in 53 of the
+  // book's 210 eligible circuits, and no plural rule spanning thirteen
+  // languages was going to be the fix.
+  718: a => tv('js.ui.m718', 'Mesh is the shorter route here: mesh needs '
+               + '%{mesh}, nodal %{nodal}.', a),
+  719: a => tv('js.ui.m719', 'Nodal is the shorter route here: nodal needs '
+               + '%{nodal}, mesh %{mesh}.', a),
+  720: a => tv('js.ui.m720', 'Nodal and mesh each need %{n} here, so '
+               + 'neither is shorter.', a),
+  741: () => t('js.ui.m741',
+               'The equations below were generated using nodal analysis.'),
+  742: () => t('js.ui.m742',
+               'The equations below were generated using mesh analysis.'),
+  743: () => t('js.ui.m743', 'One of them is written at a supernode.'),
+  744: a => tv('js.ui.m744', '%{n} of them are written at supernodes.', a),
+  745: () => t('js.ui.m745', 'One of them is written round a supermesh.'),
+  746: a => tv('js.ui.m746',
+               '%{n} of them are written round supermeshes.', a),
   721: () => t('js.ui.m721',
                'Mesh analysis is not offered for this circuit.'),
   722: () => t('js.ui.m722',
@@ -6365,6 +6387,27 @@ function byhandVerdict(data) {
   return box;
 }
 
+function byhandLabelMethods(data) {
+  // The two option labels, written from what this run actually needed
+  // (#335). A system with no voltage source between two non-reference
+  // nodes has no supernode in it, and saying "(with supernodes)" there
+  // describes the method rather than the circuit -- which is the whole
+  // complaint. `technique` is the engine's own sentence for that fact,
+  // so a non-null one is the test; the count it carries belongs in the
+  // line under the verdict, not in a menu.
+  const methods = data.methods || {};
+  const label = (which, plain, marked) => {
+    const opt = document.querySelector(
+      '#byhandMethod option[value="' + which + '"]');
+    if (!opt) return;
+    opt.textContent = (methods[which] || {}).technique ? marked : plain;
+  };
+  label('nodal', t('js.bh.nodal', 'Nodal analysis'),
+        t('js.bh.nodalSuper', 'Nodal analysis (with supernodes)'));
+  label('mesh', t('js.bh.mesh', 'Mesh analysis'),
+        t('js.bh.meshSuper', 'Mesh analysis (with supermeshes)'));
+}
+
 function renderByHand(data, method) {
   // `data` carries both methods (#331); `method` says which to paint.
   const one = (data.methods || {})[method] || {};
@@ -6383,17 +6426,27 @@ function renderByHand(data, method) {
   // answers" should say whether they did before it shows the working.
   out.appendChild(byhandVerdict(one));
 
-  // #329: which method is the shorter route for *this* circuit, or that
-  // the other one is not offered. Roberto asked how a reader is meant to
-  // know which to reach for; counting the equations is what a first
-  // course teaches, and the other system is built (never solved) to say
-  // so. Shown even on a refusal -- that is exactly when it helps most.
-  const route = uiMsg(data.route);
-  if (route) {
+  // The line under the verdict, in up to three sentences (#329, #335):
+  //
+  //   1. which method wrote the equations below -- per shown method, so
+  //      it follows the picker, and absent when this one was refused;
+  //   2. how the two methods compare, or that the other is not offered
+  //      (#329: counting the equations is what a first course teaches);
+  //   3. whether this system needed a supernode or a supermesh, and how
+  //      many -- absent when it needed none.
+  //
+  // Roberto, 8 Sep 2026: when only one method works, the line was
+  // mentioning the one that does not. Sentence 1 is what fixes that,
+  // and it is why the refusal now reads as the second half of
+  // "The equations below were generated using mesh analysis. Nodal
+  // analysis is not offered for this circuit."
+  const sentences = [uiMsg(one.lead), uiMsg(data.route),
+                     uiMsg(one.technique)].filter(Boolean);
+  if (sentences.length) {
     const line = document.createElement('div');
     line.className = 'hint';
     line.style.margin = '.5rem 0 0';
-    line.textContent = route;
+    line.textContent = sentences.join(' ');
     out.appendChild(line);
   }
   if (!one.supported) return;
@@ -6479,8 +6532,12 @@ function renderByHand(data, method) {
   // is where the reader sees their own I1 and I2 turn into Symbulator's
   // i_r3, and it is also what the comparison above was run through.
   lines(method === 'mesh'
-        ? t('js.bh.cap.backMesh',
-            'Back to the branch currents Symbulator reports')
+        // Roberto, 8 Sep 2026: the caption used to end "...Symbulator
+        // reports", which reads as a claim about the mesh currents
+        // above it -- and Symbulator reports nothing in terms of I1 and
+        // I2. The branch currents are the subject; whose they are does
+        // not need saying twice.
+        ? t('js.bh.cap.backMesh', 'Back to the branch currents')
         : t('js.bh.cap.backNodal', 'Backing out the branch currents'),
         one.bridge);
 
@@ -6552,6 +6609,7 @@ async function runByHand() {
     // Both methods came back. Show the shorter one -- mesh when they
     // are level -- and offer the picker only when there is a choice.
     lastByHand = data;
+    byhandLabelMethods(data);
     $('byhandMethod').value = data.default || 'nodal';
     $('byhandMethodRow').hidden = !data.both;
     renderByHand(data, $('byhandMethod').value);
