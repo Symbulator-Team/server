@@ -43,7 +43,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "9fc53b3930";
+window.SYMB_I18N_V = "d47155bacb";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -241,68 +241,135 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
     --note-bg: #2a2630;
     --note-line: #743842;
   }
-  /* Macaw */
+  /* Ara macao */
   html[data-palette="macaw"] {
-    --navy: #14418f;
-    --navy-2: #1b4d9f;
+    --navy: #bb1f14;
+    --navy-2: #cb2419;
     --sky: #ffc61e;
-    --banner-sub: #c3d1ec;
-    --banner-link: #e4ebf9;
-    --lcd-top: #0f2c58;
-    --lcd-bg: #0a2245;
-    --lcd-border: #050f20;
-    --lcd-line: #1a4a86;
+    --banner-sub: #f6cdc6;
+    --banner-link: #ffe4de;
+    --lcd-top: #16309b;
+    --lcd-bg: #0f2585;
+    --lcd-border: #060f3d;
+    --lcd-line: #2447c4;
     --lcd-ink: #ffd75e;
-    --lcd-dim: #5f7ba8;
-    --lcd-name: #ff6a4d;
-    --lcd-scroll: #5f747a;
-    --lcd-glow: rgba(255,106,77,0.1);
-    --bg: #fbf7f0;
+    --lcd-dim: #7f93da;
+    --lcd-name: #ff7a63;
+    --lcd-scroll: #6672a5;
+    --lcd-glow: rgba(255,122,99,0.1);
+    --accent-text: #c62a1c;
+    --bg: #fbf7f4;
     --card: #ffffff;
-    --ink: #22201c;
-    --muted: #6d6a63;
-    --accent: #e8a90c;
-    --accent-ink: #22201c;
-    --accent-open: #ca940e;
-    --accent-hover: #c78c00;
-    --line: #e6ded1;
-    --line-soft: #f0eae0;
-    --placeholder: #ada9a2;
-    --focus-line: #e8a90c;
-    --focus-ring: 0 0 0 3px rgba(232,169,12,0.18);
-    --btn-disabled: #b4b0aa;
-    --solve-shadow-rgb: 199,140,0;
-    --field-bg: #fefcf8;
+    --ink: #241a17;
+    --muted: #6f6058;
+    --accent: #1b46c8;
+    --accent-ink: #ffffff;
+    --accent-open: #ae281b;
+    --accent-hover: #123aa8;
+    --line: #ece0da;
+    --line-soft: #f4ece7;
+    --placeholder: #aea49e;
+    --focus-line: #1b46c8;
+    --focus-ring: 0 0 0 3px rgba(27,70,200,0.18);
+    --btn-disabled: #b5aca6;
+    --solve-shadow-rgb: 18,58,168;
+    --field-bg: #fefcfa;
     --field-bg-focus: #ffffff;
-    --field-border: #d8cdba;
-    --field-border-hover: #a1998b;
-    --code-bg: #f1ede6;
-    --note-bg: #fdf8ec;
-    --note-line: #f6dd9e;
+    --field-border: #ddcbc2;
+    --field-border-hover: #a6968f;
+    --code-bg: #f5eeeb;
+    --note-bg: #edf0fb;
+    --note-line: #a4b5e9;
   }
   html[data-palette="macaw"][data-theme="dark"] {
-    --bg: #12161f;
-    --card: #1a1f2b;
-    --ink: #e9e6df;
-    --muted: #9ba1ad;
-    --accent: #ffc61e;
-    --accent-ink: #12161f;
-    --accent-open: #ddad20;
-    --accent-hover: #ffd75e;
-    --line: #28303f;
-    --line-soft: #1d232f;
-    --placeholder: #5d626d;
-    --focus-line: #ffc61e;
-    --focus-ring: 0 0 0 3px rgba(255,198,30,0.18);
-    --btn-disabled: #565c66;
-    --solve-shadow-rgb: 255,215,94;
-    --field-bg: #0f131b;
-    --field-bg-focus: #1a1f2b;
-    --field-border: #37415a;
-    --field-border-hover: #6c7282;
-    --code-bg: #222836;
-    --note-bg: #2c2c2a;
-    --note-line: #766226;
+    --accent-text: #ff7a63;
+    --bg: #16110f;
+    --card: #1f1815;
+    --ink: #f0e7e1;
+    --muted: #b09a92;
+    --accent: #6f9dff;
+    --accent-ink: #16110f;
+    --accent-open: #dd6b57;
+    --accent-hover: #9dbcff;
+    --line: #3a2b26;
+    --line-soft: #281e1a;
+    --placeholder: #6b5c57;
+    --focus-line: #6f9dff;
+    --focus-ring: 0 0 0 3px rgba(111,157,255,0.18);
+    --btn-disabled: #635650;
+    --solve-shadow-rgb: 157,188,255;
+    --field-bg: #120d0b;
+    --field-bg-focus: #1f1815;
+    --field-border: #4b3831;
+    --field-border-hover: #7c6c66;
+    --code-bg: #2e221e;
+    --note-bg: #252328;
+    --note-line: #3f4d73;
+  }
+  /* Ara ararauna */
+  html[data-palette="ararauna"] {
+    --navy: #0a536f;
+    --navy-2: #0d6486;
+    --sky: #ffb31a;
+    --banner-sub: #a9dcef;
+    --banner-link: #cfeaf6;
+    --lcd-top: #0d3f6b;
+    --lcd-bg: #0a3054;
+    --lcd-border: #04182b;
+    --lcd-line: #145181;
+    --lcd-ink: #ffc55e;
+    --lcd-dim: #5f8bb0;
+    --lcd-name: #7fd0ea;
+    --lcd-scroll: #5a7476;
+    --lcd-glow: rgba(127,208,234,0.1);
+    --accent-text: #0d5c85;
+    --bg: #fbf8f0;
+    --card: #ffffff;
+    --ink: #1e2528;
+    --muted: #5f6b70;
+    --accent: #f2a30c;
+    --accent-ink: #1e2528;
+    --accent-open: #105477;
+    --accent-hover: #d18f00;
+    --line: #e6e0d2;
+    --line-soft: #f0ece1;
+    --placeholder: #a5aaaa;
+    --focus-line: #f2a30c;
+    --focus-ring: 0 0 0 3px rgba(242,163,12,0.18);
+    --btn-disabled: #adb2b0;
+    --solve-shadow-rgb: 209,143,0;
+    --field-bg: #fefdf9;
+    --field-bg-focus: #ffffff;
+    --field-border: #d9d2c0;
+    --field-border-hover: #a19e92;
+    --code-bg: #f1eee6;
+    --note-bg: #fef8ec;
+    --note-line: #fada9e;
+  }
+  html[data-palette="ararauna"][data-theme="dark"] {
+    --accent-text: #7fd0ea;
+    --bg: #101619;
+    --card: #182024;
+    --ink: #e9eef0;
+    --muted: #93a3ab;
+    --accent: #ffb31a;
+    --accent-ink: #101619;
+    --accent-open: #70b6cc;
+    --accent-hover: #ffc857;
+    --line: #26333a;
+    --line-soft: #1b242a;
+    --placeholder: #586469;
+    --focus-line: #ffb31a;
+    --focus-ring: 0 0 0 3px rgba(255,179,26,0.18);
+    --btn-disabled: #525c62;
+    --solve-shadow-rgb: 255,200,87;
+    --field-bg: #0d1416;
+    --field-bg-focus: #182024;
+    --field-border: #35454e;
+    --field-border-hover: #6b787f;
+    --code-bg: #202a30;
+    --note-bg: #2a2c23;
+    --note-line: #745b20;
   }
   /* Violet */
   html[data-palette="violet"] {
@@ -1513,7 +1580,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   a.toplinks.plain { font-weight: 400; }
   a.toplinks:hover { color: #b8ddff; }
   main { padding: 2rem 0 3rem; }
-  main a, footer a { color: var(--accent); text-underline-offset: 2px;
+  main a, footer a { color: var(--accent-text, var(--accent)); text-underline-offset: 2px;
                      text-decoration-thickness: 1px; }
   main a:hover, footer a:hover { color: var(--accent-hover); }
   .card {
@@ -1592,7 +1659,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
      click. Drawn with an inset ring rather than a border so the button
      does not change size as it switches state. */
   button.is-current, button.is-current:hover {
-    background: transparent; color: var(--accent);
+    background: transparent; color: var(--accent-text, var(--accent));
     box-shadow: inset 0 0 0 1px var(--line);
   }
   button.is-current:hover { box-shadow: inset 0 0 0 1px var(--accent); }
@@ -1665,7 +1732,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   }
   details:not([open]) > summary.section-toggle { margin-bottom: 0; }
   details:not([open]) > summary.section-toggle::before { transform: rotate(-90deg); }
-  summary.section-toggle:hover::before { color: var(--accent); }
+  summary.section-toggle:hover::before { color: var(--accent-text, var(--accent)); }
   .section-cap { font-size: .82rem; font-weight: 600; color: var(--muted);
                  text-transform: uppercase; letter-spacing: .06em; margin: 1.1rem 0 .45rem; }
   .section-cap:first-child { margin-top: 0; }
@@ -1725,7 +1792,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
     position: absolute; top: 0; left: .8rem; transform: translateY(-50%);
     background: var(--card); padding: 0 .45rem;
     font-size: .72rem; font-weight: 700; letter-spacing: .03em;
-    color: var(--accent);
+    color: var(--accent-text, var(--accent));
   }
   /* The one line in here that means something just happened. It already
      carries --note-warn; bold is what makes it read as an event rather
@@ -1740,7 +1807,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   .error { background: var(--err-bg); color: var(--err-ink); border: 1px solid var(--err-line);
            border-radius: 8px; padding: .7rem 1rem; font-size: .92rem; }
   details { margin-top: .4rem; }
-  summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; color: var(--accent);
+  summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; color: var(--accent-text, var(--accent));
     list-style: none; display: flex; align-items: center; gap: .5rem;
     transition: color .15s ease; }
   summary:not(.section-toggle):hover { color: #1f4a86; }
@@ -1750,7 +1817,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
     transition: transform .15s ease;
   }
   details:not([open]) > summary::before { transform: rotate(-90deg); }
-  summary:hover::before { color: var(--accent); }
+  summary:hover::before { color: var(--accent-text, var(--accent)); }
   details[open] > summary:not(.section-toggle),
   details[open] > summary:not(.section-toggle)::before { color: var(--accent-open); }
   table { border-collapse: collapse; width: 100%; margin-top: .6rem; font-size: .88rem; }
@@ -1772,7 +1839,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   .chart-svg { width: 100%; height: auto; background: var(--card); border-radius: 8px; }
   .chart-svg text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
   .chart-svg .chart-title { fill: var(--ink); font-weight: 600; font-size: 12px; }
-  .chart-svg .chart-line { fill: none; stroke: var(--accent); stroke-width: 1.6; }
+  .chart-svg .chart-line { fill: none; stroke: var(--accent-text, var(--accent)); stroke-width: 1.6; }
   .chart-svg .chart-axis { stroke: var(--line); stroke-width: 1; }
   .chart-svg .chart-grid { stroke: var(--line); stroke-width: .5; opacity: .6; }
   .eval-row { display: flex; gap: .8rem; flex-wrap: wrap; align-items: flex-end; }
@@ -1922,7 +1989,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
     content: ""; flex: 1 1 0; max-width: 6rem; height: 1px;
     background: linear-gradient(90deg, transparent, var(--line) 40%, var(--line) 60%, transparent);
   }
-  .group-h .bracket { color: var(--accent); font-weight: 800; font-size: 1.15em; }
+  .group-h .bracket { color: var(--accent-text, var(--accent)); font-weight: 800; font-size: 1.15em; }
   /* Outputs has no intro paragraph between the heading and the first card
      the way Inputs does, so it reads as cramped without a bit of its own
      breathing room here -- Inputs is unaffected since .group-intro, not
@@ -1991,7 +2058,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   }
   .uploadlbl:hover:not(:disabled) { background: var(--accent-hover); }
   button.linkish {
-    background: none; border: 0; color: var(--accent); font-size: .84rem;
+    background: none; border: 0; color: var(--accent-text, var(--accent)); font-size: .84rem;
     padding: .1rem .3rem; text-decoration: underline; cursor: pointer;
     font-weight: 500; box-shadow: none;
   }
@@ -3491,7 +3558,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-07 10:40 UTC</span><br>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-08 01:50 UTC</span><br>
   <span class="notranslate" style="white-space:nowrap"><a href="https://symbulator.com" target="_blank" rel="noopener">symbulator.com</a> ·</span>
   <span data-i18n="free-and-open-source.d231">Free and open-source under the MIT licence · Runs on Python+SymPy</span>
 </footer>
@@ -7411,14 +7478,15 @@ window.addEventListener('message', (ev) => {
 // the chosen theme. The list is the menu's order -- chromatic, from the
 // approved sheet -- and every name is a t() call so the dictionaries
 // carry it (Firefly translates too, where the language has the word).
-const PALETTES = ['navy', 'bayerische', 'macaw', 'violet', 'pastels',
-                  'warmpink', 'burgundy', 'brick', 'earth', 'graygold',
-                  'firefly', 'forest', 'turquoise', 'highcontrast'];
+const PALETTES = ['navy', 'bayerische', 'macaw', 'ararauna', 'violet',
+                  'pastels', 'warmpink', 'burgundy', 'brick', 'earth',
+                  'graygold', 'firefly', 'forest', 'turquoise', 'highcontrast'];
 function paletteNames() {
   return {
     navy: t('js.palette.navy', 'Default'),
     bayerische: t('js.palette.bayerische', 'Bayerische'),
-    macaw: t('js.palette.macaw', 'Macaw'),
+    macaw: t('js.palette.macaw', 'Ara macao'),
+    ararauna: t('js.palette.ararauna', 'Ara ararauna'),
     violet: t('js.palette.violet', 'Violet'),
     pastels: t('js.palette.pastels', 'Pastels'),
     warmpink: t('js.palette.warmpink', 'Warm Pink'),

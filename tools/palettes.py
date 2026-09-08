@@ -62,11 +62,16 @@ TABLE = [
      "#0b2f4d #08243a #04121f #14456e #a8d8ff #4f7ea6 #ff5a63",
      "#f4f7fb #ffffff #12222f #5a6b7a #cf1f2a #ffffff #dfe6ee #fbfcfe #cbd7e3 #a9151f",
      "#0f1720 #17212c #e2e9f1 #93a4b6 #ff5a63 #0f1720 #263443 #0d151d #35455a #ff7f86"),
-    ("macaw", "Macaw",
-     "#14418f #1b4d9f #ffc61e #c3d1ec #e4ebf9",
-     "#0f2c58 #0a2245 #050f20 #1a4a86 #ffd75e #5f7ba8 #ff6a4d",
-     "#fbf7f0 #ffffff #22201c #6d6a63 #e8a90c #22201c #e6ded1 #fefcf8 #d8cdba #c78c00",
-     "#12161f #1a1f2b #e9e6df #9ba1ad #ffc61e #12161f #28303f #0f131b #37415a #ffd75e"),
+    ("macaw", "Ara macao",
+     "#bb1f14 #cb2419 #ffc61e #f6cdc6 #ffe4de",
+     "#16309b #0f2585 #060f3d #2447c4 #ffd75e #7f93da #ff7a63",
+     "#fbf7f4 #ffffff #241a17 #6f6058 #1b46c8 #ffffff #ece0da #fefcfa #ddcbc2 #123aa8",
+     "#16110f #1f1815 #f0e7e1 #b09a92 #6f9dff #16110f #3a2b26 #120d0b #4b3831 #9dbcff"),
+    ("ararauna", "Ara ararauna",
+     "#0a536f #0d6486 #ffb31a #a9dcef #cfeaf6",
+     "#0d3f6b #0a3054 #04182b #145181 #ffc55e #5f8bb0 #7fd0ea",
+     "#fbf8f0 #ffffff #1e2528 #5f6b70 #f2a30c #1e2528 #e6e0d2 #fefdf9 #d9d2c0 #d18f00",
+     "#101619 #182024 #e9eef0 #93a3ab #ffb31a #101619 #26333a #0d1416 #35454e #ffc857"),
     ("violet", "Violet",
      "#363a80 #42478f #b9bdff #bfc1e6 #e0e1f8",
      "#1b1d44 #14163a #0a0b22 #2b2e60 #c6c5ff #6b6ca8 #a3a1ff",
@@ -123,6 +128,32 @@ TABLE = [
      "#ffffff #ffffff #000000 #333333 #0000c8 #ffffff #000000 #ffffff #000000 #000080",
      "#000000 #000000 #ffffff #dddddd #ffd400 #000000 #ffffff #000000 #ffffff #ffe866"),
 ]
+
+# The accent as TEXT, where it must differ from the accent as a BUTTON.
+#
+# `--accent` is both: the Solve button's ground and the colour of links,
+# section headings, the [ I N P U T S ] brackets and a plot line. For twelve
+# themes one value serves both, and this table is empty for them.
+#
+# Macaw cannot: Roberto chose its gold button (#326), and gold on the warm
+# page measures 1.94:1 as text -- handsome as a button, faint as a link. The
+# bird settles it. A scarlet macaw is a scarlet BIRD with gold on the wing
+# and blue on the flight feathers, and the theme had the gold and the blue
+# and none of the red (Roberto, 8 Sep 2026: "add some red highlights ... so
+# it's not just dominated by blue and yellow"). So the text accent is the
+# bird's own scarlet: 5.25:1 on the light page, 7.08:1 on the dark.
+#
+# A theme listed here also derives --accent-open from this value rather than
+# from the accent, or an OPEN section heading would go gold while a closed
+# one stayed scarlet.
+ACCENT_TEXT = {
+    "macaw": {"light": "#c62a1c", "dark": "#ff7a63"},
+    # Ara ararauna's button is the bird's gold, which measures 1.97:1 as text
+    # on the warm page -- the same trap Macaw was in. Its links, headings and
+    # brackets take the wing blue instead (6.85:1), and on the dark page the
+    # baby blue Roberto pointed at in the first photograph (10.53:1).
+    "ararauna": {"light": "#0d5c85", "dark": "#7fd0ea"},
+}
 
 KEYS = [row[0] for row in TABLE]
 NAMES = dict((row[0], row[1]) for row in TABLE)
@@ -183,13 +214,21 @@ def _decl(pairs) -> str:
 
 # --- the app page (index.html) ------------------------------------------------
 
+def atext(t: dict, m: dict, mode: str) -> str:
+    """The accent as text: the theme's own, or the accent itself."""
+    return ACCENT_TEXT.get(t["key"], {}).get(mode, m["accent"])
+
+
 def app_page_vars(t: dict, m: dict, mode: str) -> list:
     """The page's own tokens for one mode, in the order :root declares them."""
-    return [
+    extra = ([("--accent-text", atext(t, m, mode))]
+             if t["key"] in ACCENT_TEXT else [])
+    return extra + [
         ("--bg", m["bg"]), ("--card", m["card"]), ("--ink", m["ink"]),
         ("--muted", m["muted"]), ("--accent", m["accent"]),
         ("--accent-ink", m["accent_ink"]),
-        ("--accent-open", mix(m["accent"], m["card"] if mode == "dark" else m["ink"], 0.15)),
+        ("--accent-open", mix(atext(t, m, mode),
+                              m["card"] if mode == "dark" else m["ink"], 0.15)),
         ("--accent-hover", m["hover"]),
         ("--line", m["line"]), ("--line-soft", mix(m["line"], m["bg"], 0.5)),
         ("--placeholder", mix(m["muted"], m["bg"], 0.45)),
@@ -254,6 +293,7 @@ def eq_page_vars(t: dict, m: dict, mode: str) -> list:
         ("--ink-3", mix(m["muted"], m["bg"], 0.4)),
         ("--line", m["line"]), ("--rule-2", mix(m["line"], m["bg"], 0.5)),
         ("--accent", m["accent"]),
+        ("--accent-text", atext(t, m, mode)),
         ("--result-ink", m["hover"] if mode == "light" else m["accent"]),
         ("--badge-bg", mix(m["card"], m["line"], 0.55)),
         ("--lcd", m["field"]), ("--lcd-edge", m["field_line"]),
