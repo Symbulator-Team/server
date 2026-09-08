@@ -62,7 +62,8 @@ EXAMPLES = os.path.join(SERVER, "examples")
 
 
 def _classic(desc: str, domain: str, entry: dict):
-    """The classic solve, exactly as the app would run it."""
+    """The classic solve, exactly as the app would run it -- in the
+    domain passed, which under --cover may not be the entry's own."""
     if domain == "dc":
         return dc(desc)
     if domain == "fd":
@@ -71,7 +72,8 @@ def _classic(desc: str, domain: str, entry: dict):
     return ac(desc, omega=sp.sympify(omega)) if omega else ac(desc)
 
 
-def run(method: str, only: str | None, verbose: bool) -> int:
+def run(method: str, only: str | None, verbose: bool,
+        cover: bool = False) -> int:
     tally = {"agrees": 0, "differs": 0, "unsure": 0,
              "unsupported": 0, "unsolved": 0, "skipped": 0}
     failures = []
@@ -93,8 +95,24 @@ def run(method: str, only: str | None, verbose: bool) -> int:
             # method produces.
             domain = (entry.get("domain") or "dc").strip().lower()
             desc = entry.get("desc") or ""
-            if (domain not in BY_HAND_DOMAINS or not desc.strip()
-                    or entry.get("tool")):
+            if not desc.strip():
+                tally["skipped"] += 1
+                continue
+            if cover:
+                # --cover asks a wider question: not "is every entry
+                # checked?" but "is every *circuit* in the book checked
+                # somewhere?". A transient's circuit is run in FD, which
+                # is the domain its own system is built in anyway; a
+                # tool entry's circuit is run as a plain solve. Neither
+                # is that entry's own answer, and the default run does
+                # not pretend otherwise -- but it does exercise the
+                # by-hand systems over every circuit the book contains.
+                if domain == "tr":
+                    domain = "fd"
+                if domain not in BY_HAND_DOMAINS:
+                    tally["skipped"] += 1
+                    continue
+            elif domain not in BY_HAND_DOMAINS or entry.get("tool"):
                 tally["skipped"] += 1
                 continue
             where = book + " / " + name
@@ -142,7 +160,7 @@ def run(method: str, only: str | None, verbose: bool) -> int:
                         print("      [" + row.kind + "] " + row.plain)
 
     print()
-    print("method: " + method)
+    print("method: " + method + ("  [--cover]" if cover else ""))
     for key in ("agrees", "differs", "unsure", "unsolved",
                 "unsupported", "skipped"):
         print("  {0:<12}{1}".format(key, tally[key]))
@@ -159,12 +177,18 @@ def main() -> int:
                         default="both")
     parser.add_argument("--entry", help="only entries whose name contains this")
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument(
+        "--cover", action="store_true",
+        help="sweep every entry's circuit, not only the entries a by-hand "
+             "run is offered for: a transient's circuit is run in FD and a "
+             "tool entry's as a plain solve. Not the entry's own answer -- "
+             "a wider net over the same circuits.")
     args = parser.parse_args()
 
     methods = ("nodal", "mesh") if args.method == "both" else (args.method,)
     status = 0
     for method in methods:
-        status |= run(method, args.entry, args.verbose)
+        status |= run(method, args.entry, args.verbose, args.cover)
     return status
 
 

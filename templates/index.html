@@ -3649,7 +3649,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-08 04:29 UTC</span><br>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-08 05:26 UTC</span><br>
   <span class="notranslate" style="white-space:nowrap"><a href="https://symbulator.com" target="_blank" rel="noopener">symbulator.com</a> ·</span>
   <span data-i18n="free-and-open-source.d231">Free and open-source under the MIT licence · Runs on Python+SymPy</span>
 </footer>
@@ -6277,13 +6277,16 @@ function renderByHand(data) {
     out.appendChild(lcd);
   };
 
-  // The mesh currents drawn round their own loops. The card carries its
-  // own copy of the drawing rather than marking up the Schematic card
-  // above, which belongs to the classic solve and stays untouched.
+  // The circuit with this run's own working drawn on it: the nodes
+  // whose KCL is written, dashed enclosures round each supernode and
+  // supermesh, and I1, I2, I3 round their own loops. The card carries
+  // its own copy rather than marking up the Schematic card above, which
+  // belongs to the classic solve and stays untouched.
   if (data.svg) {
     const cap = document.createElement('div');
     cap.className = 'section-cap';
-    cap.textContent = 'The meshes';
+    cap.textContent = data.method === 'mesh'
+      ? 'The meshes' : 'The nodes';
     out.appendChild(cap);
     const fig = document.createElement('div');
     fig.className = 'lcd';

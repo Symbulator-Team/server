@@ -4285,17 +4285,17 @@ def byhand_ui(desc: str, domain: str, omega: str, method: str,
                "byhand": _shown(c.byhand), "verdict": c.verdict}
               for c in verdict.checks]
 
-    # The circuit with I1, I2, I3 drawn round their own loops -- the
-    # thing that makes a mesh system readable, and Roberto's ask of
-    # 8 Sep 2026. The card carries its own copy rather than marking up
-    # the Schematic card above, which belongs to the classic solve.
+    # Every run gets the circuit with its own working drawn on it
+    # (Roberto, 8 Sep 2026): the nodes whose KCL is being written, the
+    # supernodes and supermeshes ringed, and I1, I2, I3 round their own
+    # loops. The card carries its own copy rather than marking up the
+    # Schematic card above, which belongs to the classic solve.
     svg = ""
-    if system.loops:
-        try:
-            from symbulator.schematic import to_svg
-            svg = to_svg(desc, loops=system.loops)
-        except Exception:                    # noqa: BLE001
-            svg = ""                         # a picture is never a failure
+    try:
+        from symbulator.schematic import to_svg
+        svg = to_svg(desc, marks=system.marks)
+    except Exception:                        # noqa: BLE001
+        svg = ""                             # a picture is never a failure
 
     return _ok({
         "method": method, "domain": domain, "supported": True, "reason": "",
