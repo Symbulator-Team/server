@@ -49,29 +49,26 @@ END = "/* ==== END palettes (#278) ==== */"
 #   light:  ground, card, ink, muted, accent, accent ink, rule, field,
 #           field border, button hover
 #   dark:   the same ten
-# The order of TABLE is the menu's order: chromatic, Navy first as the
-# default, High contrast last as the one achromatic theme.
+# The order of TABLE is the menu's order, and `PALETTES` in both
+# templates must match it -- that array is hand-kept, not generated here,
+# which is how the two drifted (#334).
+#
+# The order is chromatic: sorted by the hue of each theme's banner band,
+# walking forward round the wheel from Navy's blue, with Navy first
+# because it is the default. The two near-achromatic themes are taken out
+# of the walk and put at the end -- Gray & Gold next to last, Contrast
+# last -- since a hue means nothing at that saturation.
+#
+# A new theme goes at its hue, not at the end and not at the top. All
+# three of the newest ones went in near the top, which is what #334 had
+# to undo; Ara macao is the one that showed, a scarlet sitting between
+# two blues.
 TABLE = [
     ("navy", "Default",
      "#203864 #2a4576 #8ec7f5 #b7c3d6 #dbe6f5",
      "#102338 #0d1e30 #081525 #173352 #8ecbff #4a7098 #6fb8f0",
      "#f4f6fa #ffffff #1c2330 #5b6472 #2f5fa8 #ffffff #e2e5ea #fbfcfd #cfd6df #1f4a86",
      "#12161d #1b212c #e4e8ee #97a3b6 #5b96e0 #0d1420 #2b3341 #11161e #38424f #4a86d0"),
-    ("bayerische", "Bayerische",
-     "#16588e #1d68a4 #81c4ff #b3d3ee #dceafc",
-     "#0b2f4d #08243a #04121f #14456e #a8d8ff #4f7ea6 #ff5a63",
-     "#f4f7fb #ffffff #12222f #5a6b7a #cf1f2a #ffffff #dfe6ee #fbfcfe #cbd7e3 #a9151f",
-     "#0f1720 #17212c #e2e9f1 #93a4b6 #ff5a63 #0f1720 #263443 #0d151d #35455a #ff7f86"),
-    ("macaw", "Ara macao",
-     "#bb1f14 #cb2419 #ffc61e #f6cdc6 #ffe4de",
-     "#16309b #0f2585 #060f3d #2447c4 #ffd75e #7f93da #ff7a63",
-     "#fbf7f4 #ffffff #241a17 #6f6058 #1b46c8 #ffffff #ece0da #fefcfa #ddcbc2 #123aa8",
-     "#16110f #1f1815 #f0e7e1 #b09a92 #6f9dff #16110f #3a2b26 #120d0b #4b3831 #9dbcff"),
-    ("ararauna", "Ara ararauna",
-     "#0a536f #0d6486 #ffb31a #a9dcef #cfeaf6",
-     "#0d3f6b #0a3054 #04182b #145181 #ffc55e #5f8bb0 #7fd0ea",
-     "#fbf8f0 #ffffff #1e2528 #5f6b70 #f2a30c #1e2528 #e6e0d2 #fefdf9 #d9d2c0 #d18f00",
-     "#101619 #182024 #e9eef0 #93a3ab #ffb31a #101619 #26333a #0d1416 #35454e #ffc857"),
     ("violet", "Violet",
      "#363a80 #42478f #b9bdff #bfc1e6 #e0e1f8",
      "#1b1d44 #14163a #0a0b22 #2b2e60 #c6c5ff #6b6ca8 #a3a1ff",
@@ -92,6 +89,11 @@ TABLE = [
      "#2a0c14 #200810 #100408 #44182a #ffb8c6 #8c5868 #f28aa0",
      "#faf4f5 #ffffff #2c1a1f #6f5860 #8c1d38 #ffffff #ebdde0 #fdfafb #dcc6cb #6e1329",
      "#1a1114 #251a1e #f2e6e9 #ad949b #e3708c #1a1114 #3c2a30 #150e11 #4c373e #ee92a8"),
+    ("macaw", "Ara macao",
+     "#bb1f14 #cb2419 #ffc61e #f6cdc6 #ffe4de",
+     "#16309b #0f2585 #060f3d #2447c4 #ffd75e #7f93da #ff7a63",
+     "#fbf7f4 #ffffff #241a17 #6f6058 #1b46c8 #ffffff #ece0da #fefcfa #ddcbc2 #123aa8",
+     "#16110f #1f1815 #f0e7e1 #b09a92 #6f9dff #16110f #3a2b26 #120d0b #4b3831 #9dbcff"),
     ("brick", "Brick",
      "#6a2c20 #7b392c #f4b79e #d8b3a6 #f5e1da",
      "#2d1611 #23100c #120705 #4a2820 #ffbfa6 #8f5c4c #f39678",
@@ -102,26 +104,36 @@ TABLE = [
      "#2a2016 #201810 #100b07 #43352a #eacd9e #8a7250 #d7b078",
      "#f8f4ee #fffdf9 #2d2419 #6f6152 #8a5a2b #ffffff #e6dccf #fdfaf5 #d5c8b6 #6e4620",
      "#1a1512 #241d18 #ede4d8 #ab9c8a #d3a262 #1a1512 #3a3028 #15100d #4a3e33 #e2b87d"),
-    ("graygold", "Gray & Gold",
-     "#3b4048 #484e57 #d9aa4c #b8bec6 #e2e6ea",
-     "#23282e #1a1e22 #0d0f11 #343a41 #f0c070 #7d7466 #d9aa4c",
-     "#f2f3f4 #ffffff #1e2125 #5f666e #b3781e #ffffff #dde0e3 #fafbfb #c8cdd3 #8f5e14",
-     "#141618 #1d2023 #e6e8ea #9aa1a8 #e0a83c #141618 #2d3135 #101214 #3d4247 #f0bd5e"),
-    ("firefly", "Firefly",
-     "#0a1810 #122419 #e3f56b #8fb09a #d2e8c8",
-     "#0e2418 #081a10 #030d07 #1a3a26 #e8ff7a #4e7a56 #b9ec5c",
-     "#f1f5ee #fbfdf8 #16261b #52685a #4f7f21 #ffffff #d5e1d3 #f7faf4 #bdd0bf #3d6418",
-     "#070f0a #0d1a12 #d9ecd2 #7fa088 #d6f253 #0a1a10 #1c3324 #050b07 #23402c #e8ff7a"),
     ("forest", "Forest",
      "#1e3d2b #294a36 #a8d8a0 #b3c9b8 #dcebdf",
      "#14301f #0f2418 #061209 #1f4430 #b8ecb8 #5a8a66 #8fd49a",
      "#f3f7f3 #fffefc #172519 #566b5a #2c6e42 #ffffff #dbe6dc #fbfdfb #c6d8c9 #215532",
      "#0f1712 #16221a #e4eee5 #92ab97 #6cc488 #0f1712 #26362b #0c130e #33473a #8ad8a1"),
+    ("firefly", "Firefly",
+     "#0a1810 #122419 #e3f56b #8fb09a #d2e8c8",
+     "#0e2418 #081a10 #030d07 #1a3a26 #e8ff7a #4e7a56 #b9ec5c",
+     "#f1f5ee #fbfdf8 #16261b #52685a #4f7f21 #ffffff #d5e1d3 #f7faf4 #bdd0bf #3d6418",
+     "#070f0a #0d1a12 #d9ecd2 #7fa088 #d6f253 #0a1a10 #1c3324 #050b07 #23402c #e8ff7a"),
     ("turquoise", "Aqua",
      "#0f4a58 #175a69 #7fe3d6 #a9d3cf #d6f1ec",
      "#0b2f36 #08252b #041418 #164048 #8ef0e2 #3f8a84 #5fd6c8",
      "#f4f8f5 #fffefb #14302e #56706c #0f8a82 #ffffff #dbe8e3 #fbfdfb #c4d9d3 #0b6d67",
      "#0e1b1c #142628 #e3f0ec #8fb2ac #45d0c2 #0a1a1a #23393a #0b1617 #2f4a4b #6ee0d4"),
+    ("ararauna", "Ara ararauna",
+     "#0a536f #0d6486 #ffb31a #a9dcef #cfeaf6",
+     "#0d3f6b #0a3054 #04182b #145181 #ffc55e #5f8bb0 #7fd0ea",
+     "#fbf8f0 #ffffff #1e2528 #5f6b70 #f2a30c #1e2528 #e6e0d2 #fefdf9 #d9d2c0 #d18f00",
+     "#101619 #182024 #e9eef0 #93a3ab #ffb31a #101619 #26333a #0d1416 #35454e #ffc857"),
+    ("bayerische", "Bayerische",
+     "#16588e #1d68a4 #81c4ff #b3d3ee #dceafc",
+     "#0b2f4d #08243a #04121f #14456e #a8d8ff #4f7ea6 #ff5a63",
+     "#f4f7fb #ffffff #12222f #5a6b7a #cf1f2a #ffffff #dfe6ee #fbfcfe #cbd7e3 #a9151f",
+     "#0f1720 #17212c #e2e9f1 #93a4b6 #ff5a63 #0f1720 #263443 #0d151d #35455a #ff7f86"),
+    ("graygold", "Gray & Gold",
+     "#3b4048 #484e57 #d9aa4c #b8bec6 #e2e6ea",
+     "#23282e #1a1e22 #0d0f11 #343a41 #f0c070 #7d7466 #d9aa4c",
+     "#f2f3f4 #ffffff #1e2125 #5f666e #b3781e #ffffff #dde0e3 #fafbfb #c8cdd3 #8f5e14",
+     "#141618 #1d2023 #e6e8ea #9aa1a8 #e0a83c #141618 #2d3135 #101214 #3d4247 #f0bd5e"),
     ("highcontrast", "Contrast",
      "#000000 #111111 #ffd400 #dddddd #ffffff",
      "#000000 #000000 #ffffff #444444 #ffffff #bbbbbb #ffd400",
