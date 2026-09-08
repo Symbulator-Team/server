@@ -1092,5 +1092,61 @@ def api_spice():
                     "warnings": payload.get("warnings") or []})
 
 
+@app.post("/api/byhand")
+def api_byhand():
+    """X14: the by-hand equations card (Symbulator X only).
+
+    A second, optional system for the same circuit, written the way a
+    first course teaches it -- and always checked against the classic
+    solve, which stays the authority. Deliberately its own endpoint:
+    it runs only when asked, so the ordinary solve never pays for it,
+    and it is a second symbolic solve, so it gets its own killable
+    child process. Nothing it returns can change an answer above it.
+    """
+    data = request.get_json(silent=True) or {}
+    desc = str(data.get("desc", "")).strip()
+    desc = re.sub(r"[\r\n]+", ":", desc)
+    desc = re.sub(r":{2,}", ":", desc).strip(":")
+    domain = str(data.get("domain", "")).strip().lower()
+    omega = str(data.get("omega", "")).strip()
+    method = str(data.get("method", "nodal")).strip().lower()
+    digits = _clean_digits(data.get("digits"))
+    si = bool(data.get("si"))
+    units = bool(data.get("units"))
+
+    err = _validate(desc, domain, omega, None)
+    if not err and method not in ("nodal", "mesh"):
+        err = "Choose nodal or mesh analysis."
+    if err:
+        return jsonify(_err(err)), 400
+
+    t0 = time.time()
+    ok, payload = _run_in_process(
+        "byhand_ui", (desc, domain, omega, method, digits, si, units))
+    elapsed = round(time.time() - t0, 2)
+    if not ok:
+        return jsonify(_refusal(payload, elapsed=elapsed)), 422
+
+    # Listed by hand like every other route here, so a key added in
+    # symbulator_ui must be named or it is silently dropped.
+    return jsonify({"ok": True, "elapsed": elapsed,
+                    "method": payload.get("method"),
+                    "domain": payload.get("domain"),
+                    "supported": payload.get("supported"),
+                    "reason": payload.get("reason") or "",
+                    "rows": payload.get("rows") or [],
+                    "bridge": payload.get("bridge") or [],
+                    "unknowns": payload.get("unknowns") or [],
+                    "loops": payload.get("loops") or {},
+                    "notes": payload.get("notes") or [],
+                    "verdict": payload.get("verdict"),
+                    "message": payload.get("message") or "",
+                    "answers": payload.get("answers") or [],
+                    "checks": payload.get("checks") or [],
+                    "checked": payload.get("checked") or 0,
+                    "differing": payload.get("differing") or [],
+                    "svg": payload.get("svg") or ""})
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

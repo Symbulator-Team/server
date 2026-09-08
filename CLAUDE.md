@@ -148,6 +148,24 @@ The whole backend and the whole frontend, and they are each one file.
 9's and still accurate about the code; read their deploy sections as
 history, not instructions.
 
+## X14: the By-Hand Equations card
+
+X has a card version 9 does not, above the Numerical Solver: the same
+circuit written out as a student would write it, and checked against
+the classic solve every time it runs. `/api/byhand` in `app.py`,
+`byhand_ui` at the end of `symbulator_ui.py`, the card in
+`templates/index.html`, and the analysis itself in the solver's
+`symbulator/byhand.py`. `tools/check_byhand.py` runs both methods over
+every built-in entry — 194 nodal and 143 mesh systems, all agreeing.
+
+Three rules it keeps, and any change here must keep: **the classic
+solve is the authority** (nothing the card produces reaches a results
+card, an export, a plot or the Numerical Solver payload, and a failure
+inside it is a sentence in its own card); **it runs only when asked**;
+and **it runs on the description the classic solve used**, never on the
+textarea, so it cannot compare two different circuits. The full account
+is X14 in `../local/NEXT_X.md`.
+
 ## Two things that will bite you
 
 **`templates/index.html` is a Jinja template.** On 30 Aug 2026 an HTML

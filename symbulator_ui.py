@@ -4163,3 +4163,152 @@ def spice_ui(direction: str, text: str):
         return _ok({"output": out, "warnings": warnings})
     except Exception as exc:  # noqa: BLE001
         return _err(_exc_msg(exc))
+
+
+# ---------------------------------------------------------------------------
+# X14: by-hand equations (Symbulator X only, experimental)
+# ---------------------------------------------------------------------------
+#
+# The classic solve above is untouched by any of this and stays the
+# authority. This runs only when the reader asks for it, on the same
+# circuit description, and every run is checked against the classic
+# answers -- so the card can say whether the two agree rather than
+# leaving the reader to compare two lists of numbers by eye.
+#
+# It lives in its own entry point (and therefore its own killable child
+# process) rather than riding on the solve, because it is a *second*
+# symbolic solve and can be the slow one on a circuit whose first solve
+# was quick.
+
+#: A transient is solved in the s-domain and inverted back into time, so
+#: a by-hand system for it would be the s-domain one and its answers
+#: could not be compared with the classic ones without an inverse
+#: transform on every line. Out of X14's scope; the card says so.
+BYHAND_DOMAINS = ("dc", "ac", "fd")
+
+
+def byhand_ui(desc: str, domain: str, omega: str, method: str,
+              digits: int = 4, si: bool = False, units: bool = False):
+    """Build one by-hand system for `desc` and check it against the
+    classic solve. `method` is "nodal" or "mesh"."""
+    import sympy as sp
+    try:
+        from symbulator import ac, byhand, dc, fd
+        from symbulator.elements import parse_circuit
+    except ImportError:                      # pragma: no cover
+        # The server takes symbulator from PyPI unless X's own checkout
+        # is installed over it (X1), so a site can briefly be running a
+        # release that predates this module. Say so; do not traceback.
+        return _err("This build of Symbulator has no by-hand analysis. "
+                    "The classic solve above is unaffected.")
+
+    if method not in ("nodal", "mesh"):
+        return _err("Choose nodal or mesh analysis.")
+    domain = (domain or "dc").strip().lower()
+    if domain not in BYHAND_DOMAINS:
+        return _err(
+            "By-hand equations are written for DC, AC and FD. A transient "
+            "is solved in the s-domain and transformed back into time, so "
+            "the system a student would write for it is the s-domain one "
+            "-- run this circuit in FD to see that system.")
+
+    try:
+        elements = parse_circuit(desc)
+    except Exception as exc:                 # noqa: BLE001
+        return _err(_exc_msg(exc))
+
+    # The same classic solve the page is already showing, re-run here so
+    # the comparison is against real answers rather than against numbers
+    # the browser posted back.
+    try:
+        if domain == "dc":
+            classic = dc(desc)
+        elif domain == "fd":
+            classic = fd(desc)
+        else:
+            classic = ac(desc, omega=sp.sympify(omega)
+                         if str(omega).strip() else None)
+    except Exception as exc:                 # noqa: BLE001
+        return _err(_exc_msg(exc))
+
+    build = getattr(byhand, method)
+    try:
+        system = build(elements, domain,
+                       omega=sp.sympify(omega)
+                       if (str(omega).strip() and domain == "ac") else None,
+                       references=tuple(classic.references or ()))
+    except Exception as exc:                 # noqa: BLE001
+        # A by-hand system is a bonus, never a reason for the page to
+        # break: an unexpected failure becomes a sentence like a refusal.
+        return _ok({"method": method, "domain": domain, "supported": False,
+                    "reason": "A by-hand " + method + " system could not be "
+                              "built for this circuit (" +
+                              type(exc).__name__ + "). The classic answers "
+                              "above are unaffected.",
+                    "rows": [], "bridge": [], "unknowns": [],
+                    "verdict": "unsupported", "message": "", "checks": [],
+                    "loops": {}, "notes": []})
+
+    if not system.supported:
+        return _ok({"method": method, "domain": domain, "supported": False,
+                    "reason": system.reason, "rows": [], "bridge": [],
+                    "unknowns": [], "verdict": "unsupported",
+                    "message": "", "checks": [], "loops": {}, "notes": []})
+
+    verdict = byhand.compare(system, classic.values)
+
+    def _tex(obj):
+        """LaTeX for one line, falling back to its plain text -- the same
+        rule the Equations card uses (#176): a fallback that reads as
+        text beats a card that fails to typeset."""
+        try:
+            return sp.latex(obj)
+        except Exception:                    # noqa: BLE001
+            return None
+
+    def _row(row):
+        return {"kind": row.kind, "label": row.label, "plain": row.plain,
+                "latex": _tex(row.eq)}
+
+    def _shown(expr):
+        """One answer, rounded the way the rest of the page rounds."""
+        try:
+            return str(_round_expr(expr, digits) if digits else expr)
+        except Exception:                    # noqa: BLE001
+            return str(expr)
+
+    answers = [{"name": name, "value": _shown(value),
+                "latex": _tex(sp.Eq(sp.Symbol(name), value, evaluate=False))}
+               for name, value in sorted(verdict.solution.items())]
+
+    checks = [{"name": c.name, "classic": _shown(c.classic),
+               "byhand": _shown(c.byhand), "verdict": c.verdict}
+              for c in verdict.checks]
+
+    # The circuit with I1, I2, I3 drawn round their own loops -- the
+    # thing that makes a mesh system readable, and Roberto's ask of
+    # 8 Sep 2026. The card carries its own copy rather than marking up
+    # the Schematic card above, which belongs to the classic solve.
+    svg = ""
+    if system.loops:
+        try:
+            from symbulator.schematic import to_svg
+            svg = to_svg(desc, loops=system.loops)
+        except Exception:                    # noqa: BLE001
+            svg = ""                         # a picture is never a failure
+
+    return _ok({
+        "method": method, "domain": domain, "supported": True, "reason": "",
+        "rows": [_row(r) for r in system.rows],
+        "bridge": [_row(r) for r in system.bridge],
+        "unknowns": [str(u) for u in system.unknowns],
+        "loops": system.loops,
+        "notes": list(system.notes),
+        "verdict": verdict.verdict,
+        "message": verdict.message,
+        "answers": answers,
+        "checks": checks,
+        "checked": len(checks),
+        "differing": [c.name for c in verdict.differing],
+        "svg": svg,
+    })
