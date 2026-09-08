@@ -1113,40 +1113,33 @@ def api_byhand():
     digits = _clean_digits(data.get("digits"))
     si = bool(data.get("si"))
     units = bool(data.get("units"))
+    approx = bool(data.get("approx"))
 
+    # #331: `method` no longer picks what is computed -- both are -- so
+    # it is not validated. It still travels for an older page's sake.
     err = _validate(desc, domain, omega, None)
-    if not err and method not in ("nodal", "mesh"):
-        err = "Choose nodal or mesh analysis."
     if err:
         return jsonify(_err(err)), 400
 
     t0 = time.time()
     ok, payload = _run_in_process(
-        "byhand_ui", (desc, domain, omega, method, digits, si, units))
+        "byhand_ui", (desc, domain, omega, method, digits, si, units,
+                      approx))
     elapsed = round(time.time() - t0, 2)
     if not ok:
         return jsonify(_refusal(payload, elapsed=elapsed)), 422
 
     # Listed by hand like every other route here, so a key added in
-    # symbulator_ui must be named or it is silently dropped.
+    # symbulator_ui must be named or it is silently dropped. Since #331
+    # both methods come back in one response: `methods` holds each one's
+    # whole result, `default` says which to show first and `both` whether
+    # there is a choice to offer at all.
     return jsonify({"ok": True, "elapsed": elapsed,
-                    "method": payload.get("method"),
                     "domain": payload.get("domain"),
-                    "supported": payload.get("supported"),
-                    "reason": payload.get("reason") or "",
-                    "rows": payload.get("rows") or [],
-                    "bridge": payload.get("bridge") or [],
-                    "unknowns": payload.get("unknowns") or [],
-                    "loops": payload.get("loops") or {},
-                    "notes": payload.get("notes") or [],
-                    "verdict": payload.get("verdict"),
-                    "message": payload.get("message") or "",
-                    "answers": payload.get("answers") or [],
-                    "checks": payload.get("checks") or [],
-                    "checked": payload.get("checked") or 0,
-                    "differing": payload.get("differing") or [],
                     "route": payload.get("route"),
-                    "svg": payload.get("svg") or ""})
+                    "default": payload.get("default") or "nodal",
+                    "both": bool(payload.get("both")),
+                    "methods": payload.get("methods") or {}})
 
 
 if __name__ == "__main__":
