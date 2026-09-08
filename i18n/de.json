@@ -106,7 +106,6 @@
  "find-equivalent.fcc3": "Ersatzschaltung finden",
  "fold-every-card-shut.691f": "Alle Karten zuklappen",
  "for-the-two-port.ffe1": "Beim Zweitor-Werkzeug wird ein Tor, dessen unterer Anschluss nicht Masse ist, als Paar <code>[oben,unten]</code> in sein Knotenfeld geschrieben (und hier in <code>n1</code>/<code>n2</code>); ein Schaltungsteil ohne Pfad zum Knoten 0 wird gegen eine eigene Referenz gemessen, und die Antworten sagen, welche.",
- "free-and-open-source.d231": "Frei und quelloffen unter der MIT-Lizenz · Läuft auf Python+SymPy",
  "full.52e6": "voll",
  "function.f1e4": "Funktion",
  "g-inverse-hybrid.30d9": "g — inverse Hybridparameter",

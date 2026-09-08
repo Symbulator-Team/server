@@ -106,7 +106,6 @@
  "find-equivalent.fcc3": "Find equivalent",
  "fold-every-card-shut.691f": "Fold every card shut",
  "for-the-two-port.ffe1": "For the two-port tool, a port whose lower terminal is not ground is written as a pair, <code>[top,bottom]</code>, in its node field (and in <code>n1</code>/<code>n2</code> here); a side of the circuit that has no path to node 0 is measured against a reference of its own, and the answers say which.",
- "free-and-open-source.d231": "Free and open-source under the MIT licence · Runs on Python+SymPy",
  "full.52e6": "full",
  "function.f1e4": "Function",
  "g-inverse-hybrid.30d9": "g — inverse hybrid",

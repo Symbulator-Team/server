@@ -106,7 +106,6 @@
  "find-equivalent.fcc3": "Cari rangkaian ekuivalen",
  "fold-every-card-shut.691f": "Lipat semua kartu",
  "for-the-two-port.ffe1": "Pada alat dua-port, port yang terminal bawahnya bukan tanah ditulis sebagai pasangan, <code>[atas,bawah]</code>, di kolom simpulnya (dan di sini pada <code>n1</code>/<code>n2</code>); bagian rangkaian yang tidak punya jalur ke simpul 0 diukur terhadap acuannya sendiri, dan jawabannya menyebutkan yang mana.",
- "free-and-open-source.d231": "Bebas dan sumber terbuka di bawah lisensi MIT · Berjalan dengan Python+SymPy",
  "full.52e6": "penuh",
  "function.f1e4": "Fungsi",
  "g-inverse-hybrid.30d9": "g — hibrida balik",

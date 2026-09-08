@@ -106,7 +106,6 @@
  "find-equivalent.fcc3": "等価回路を求める",
  "fold-every-card-shut.691f": "すべてのカードを閉じる",
  "for-the-two-port.ffe1": "二端子対ツールでは、下側端子がグラウンドでないポートは、そのノード欄に <code>[上,下]</code> の組として書きます（ここでは <code>n1</code>/<code>n2</code> に）。ノード 0 への経路をもたない回路部分は、その部分固有の基準に対して測られ、答えにどのノードかが示されます。",
- "free-and-open-source.d231": "MIT ライセンスのフリー・オープンソース · Python+SymPy で動作",
  "full.52e6": "全精度",
  "function.f1e4": "関数",
  "g-inverse-hybrid.30d9": "g — 逆ハイブリッド",

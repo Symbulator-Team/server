@@ -106,7 +106,6 @@
  "find-equivalent.fcc3": "Encontrar equivalente",
  "fold-every-card-shut.691f": "Recolher todos os cartões",
  "for-the-two-port.ffe1": "Na ferramenta de dois portos, um porto cujo terminal inferior não é a terra escreve-se como um par, <code>[cima,baixo]</code>, no seu campo de nó (e aqui em <code>n1</code>/<code>n2</code>); uma parte do circuito sem caminho até ao nó 0 é medida contra uma referência própria, e as respostas dizem qual.",
- "free-and-open-source.d231": "Livre e de código aberto sob a licença MIT · Funciona com Python+SymPy",
  "full.52e6": "completa",
  "function.f1e4": "Função",
  "g-inverse-hybrid.30d9": "g — híbridos inversos",

@@ -106,7 +106,6 @@
  "find-equivalent.fcc3": "등가회로 구하기",
  "fold-every-card-shut.691f": "모든 카드를 접습니다",
  "for-the-two-port.ffe1": "2포트 도구에서 아래 단자가 접지가 아닌 포트는 노드 칸에 <code>[위,아래]</code> 쌍으로 적습니다(여기서는 <code>n1</code>/<code>n2</code>에). 노드 0으로 가는 경로가 없는 회로 부분은 그 부분만의 기준에 대해 측정되며, 답에 어느 노드인지 표시됩니다.",
- "free-and-open-source.d231": "MIT 라이선스의 자유 오픈소스 · Python+SymPy로 구동",
  "full.52e6": "전체",
  "function.f1e4": "함수",
  "g-inverse-hybrid.30d9": "g — 역 하이브리드",

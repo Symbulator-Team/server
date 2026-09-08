@@ -106,7 +106,6 @@
  "find-equivalent.fcc3": "Trouver un équivalent",
  "fold-every-card-shut.691f": "Replier toutes les cartes",
  "for-the-two-port.ffe1": "Pour l’outil quadripôle, un port dont la borne inférieure n’est pas la masse s’écrit comme une paire, <code>[haut,bas]</code>, dans son champ de nœud (et ici dans <code>n1</code>/<code>n2</code>) ; une partie du circuit sans chemin vers le nœud 0 est mesurée par rapport à une référence qui lui est propre, et les réponses disent laquelle.",
- "free-and-open-source.d231": "Libre et à code ouvert sous licence MIT · Fonctionne avec Python+SymPy",
  "full.52e6": "complète",
  "function.f1e4": "Fonction",
  "g-inverse-hybrid.30d9": "g — hybrides inverses",

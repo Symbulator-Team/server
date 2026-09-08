@@ -106,7 +106,6 @@
  "find-equivalent.fcc3": "求等效电路",
  "fold-every-card-shut.691f": "收起所有卡片",
  "for-the-two-port.ffe1": "在二端口工具中，下端子不接地的端口在其节点栏中写成一对 <code>[上,下]</code>（此处写在 <code>n1</code>/<code>n2</code> 中）；电路中没有通路到达节点 0 的部分，以其自身的参考节点为基准测量，答案会说明是哪一个。",
- "free-and-open-source.d231": "基于 MIT 许可证的自由开源软件 · 由 Python+SymPy 驱动",
  "full.52e6": "完整",
  "function.f1e4": "函数",
  "g-inverse-hybrid.30d9": "g — 逆混合",
