@@ -43,7 +43,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "a2420d9889";
+window.SYMB_I18N_V = "e56702e94a";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -3659,7 +3659,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-08 07:40 UTC</span><br>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-08 08:39 UTC</span><br>
   <span class="notranslate" style="white-space:nowrap"><a href="https://symbulator.com" target="_blank" rel="noopener">symbulator.com</a> ·</span>
   <span data-i18n="free-and-open-source.d231">Free and open-source under the MIT licence · Runs on Python+SymPy</span>
 </footer>
@@ -4692,6 +4692,21 @@ const UI_MESSAGES = {
                '%{name} does not have a single branch relation', a),
   735: () => t('js.ui.m735', 'a mesh could not be traced as a single loop'),
   736: () => t('js.ui.m736', 'a mesh did not close'),
+  737: a => tv('js.ui.m737', "%{name}'s own defining relation, carried as "
+               + 'an extra equation because its current is not one the '
+               + 'method can write on its own', a),
+  739: () => t('js.ui.m739', 'This circuit has mutually coupled coils. '
+               + 'They are taught with mesh analysis, where a coupled '
+               + "coil's induced voltage is a term in the loop equation "
+               + '\u2014 try mesh instead.'),
+  740: a => tv('js.ui.m740', 'This circuit contains %{what}. Its windings '
+               + 'are not branches a single mesh current flows round, so '
+               + 'a mesh system would need their voltages as extra '
+               + 'unknowns. Nodal analysis carries it directly \u2014 try '
+               + 'that instead.',
+               Object.assign({}, a, {
+                 what: String(a.what || '').split(', ')
+                         .map(tSrv).join(', ') })),
 
 };
 
