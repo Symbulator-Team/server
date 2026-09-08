@@ -4222,9 +4222,16 @@ _BYHAND_TERMS = {
 
 
 def byhand_ui(desc: str, domain: str, omega: str, method: str,
-              digits: int = 4, si: bool = False, units: bool = False):
+              digits: int = 4, si: bool = False, units: bool = False,
+              approx: bool = False):
     """Build one by-hand system for `desc` and check it against the
-    classic solve. `method` is "nodal" or "mesh"."""
+    classic solve. `method` is "nodal" or "mesh".
+
+    `digits` and `approx` are the page's Rounding setting, and they reach
+    the *equations* as well as the answers (#330). Display only: the
+    system that is solved and the comparison that judges it both run on
+    the exact one, so rounding can change what a line looks like and
+    never what it means."""
     import sympy as sp
     try:
         from symbulator import ac, byhand, dc, fd
@@ -4242,8 +4249,10 @@ def byhand_ui(desc: str, domain: str, omega: str, method: str,
                              "analysis. The classic solve above is "
                              "unaffected."})
 
-    if method not in ("nodal", "mesh"):
-        return _err(_solver_msg(SM, SM.E_BH_PICK_METHOD))
+    # `method` is accepted and ignored since #331: both are computed and
+    # the picker chooses which is shown. The parameter stays so an older
+    # page -- a cached offline build, a browser mid-deploy -- still gets
+    # an answer rather than a rejection.
     domain = (domain or "dc").strip().lower()
     if domain not in BYHAND_DOMAINS:
         return _err(_solver_msg(SM, SM.E_BH_DOMAIN))
@@ -4282,26 +4291,17 @@ def byhand_ui(desc: str, domain: str, omega: str, method: str,
                                  supported=False,
                                  reason=_solver_msg(SM, SM.E_BH_NO_MODULE))
 
-    system = _build(method)
-    # The other method is *built* too, never solved -- building is cheap
-    # and it is what answers "which of these should I be using?" (#329,
-    # Roberto's question of 8 Sep 2026). One line: which writes fewer
-    # equations here, or that the other one is not offered at all.
+    # Both methods, every time (#331, Roberto: the picker should choose
+    # what is *shown*, not what is computed). Solving both costs a median
+    # of 0.30 s and 11.3 s at the very worst, against a 25 s timeout, so
+    # the reader presses once and can then switch freely with no second
+    # request -- and never has to choose a method before knowing whether
+    # it applies.
+    systems = {"nodal": _build("nodal"), "mesh": _build("mesh")}
     try:
-        other = _build("mesh" if method == "nodal" else "nodal")
-        route = byhand.shorter_route(system if method == "nodal" else other,
-                                     other if method == "nodal" else system)
+        route = byhand.shorter_route(systems["nodal"], systems["mesh"])
     except Exception:                        # noqa: BLE001
         route = None
-
-    if not system.supported:
-        return _ok({"method": method, "domain": domain, "supported": False,
-                    "reason": system.reason, "rows": [], "bridge": [],
-                    "unknowns": [], "verdict": "unsupported",
-                    "message": None, "checks": [], "loops": {}, "notes": [],
-                    "route": route, "svg": ""})
-
-    verdict = byhand.compare(system, classic.values)
 
     def _tex(obj):
         """LaTeX for one line, falling back to its plain text -- the same
@@ -4312,53 +4312,110 @@ def byhand_ui(desc: str, domain: str, omega: str, method: str,
         except Exception:                    # noqa: BLE001
             return None
 
+    def _rounded(expr):
+        """One expression as the Rounding setting asks for it (#330).
+
+        The same two rules the answers above the card follow: with a
+        digit count, round in decimal through `_round_expr`; with
+        "approximate" and no count, evaluate. Exact mode changes
+        nothing. A nodal KCL on an AC circuit otherwise carries
+        `0.026525198938992*I*v_2` while the answer beside it reads
+        `0.02653`, which is the same number written two ways on one
+        screen."""
+        try:
+            if approx and not digits:
+                return sp.N(expr)
+            if not digits:
+                return expr
+            # Only the *floats* are rounded, not the whole expression.
+            # `_round_expr` is right for an answer, which is one number;
+            # an equation is a sum of coefficients, and rounding it
+            # wholesale turns `6*I1 - 4*I2 + 20 = 0` into
+            # `6.0*I1 - 4.0*I2 + 20.0 = 0` -- a `.0` on every coefficient
+            # of every DC equation in the book, to shorten nothing.
+            # Integers and rationals are already as short as they get;
+            # what needs shortening is `0.026525198938992`.
+            floats = expr.atoms(sp.Float) if hasattr(expr, "atoms") else ()
+            if not floats:
+                return expr
+            return expr.xreplace({f: _round_expr(f, digits) for f in floats})
+        except Exception:                    # noqa: BLE001
+            return expr
+
     def _row(row):
         # `label` travels as the coded message the package returned; the
         # page renders it with the same `uiMsg` every other engine
         # message goes through.
-        return {"kind": row.kind, "label": row.label, "plain": row.plain,
-                "latex": _tex(row.eq)}
+        #
+        # The equation is rounded here, at the point of display, and
+        # nowhere else: `system` stays exact, so `compare` above judged
+        # the exact system and the answers came from it.
+        shown = sp.Eq(_rounded(row.eq.lhs), _rounded(row.eq.rhs),
+                      evaluate=False)
+        return {"kind": row.kind, "label": row.label,
+                "plain": "{0} = {1}".format(shown.lhs, shown.rhs),
+                "latex": _tex(shown)}
 
     def _shown(expr):
         """One answer, rounded the way the rest of the page rounds."""
         try:
-            return str(_round_expr(expr, digits) if digits else expr)
+            return str(_rounded(expr))
         except Exception:                    # noqa: BLE001
             return str(expr)
 
-    answers = [{"name": name, "value": _shown(value),
-                "latex": _tex(sp.Eq(sp.Symbol(name), value, evaluate=False))}
-               for name, value in sorted(verdict.solution.items())]
+    def _one(system):
+        """One method's whole result, formatted."""
+        if not system.supported:
+            return {"supported": False, "reason": system.reason,
+                    "rows": [], "bridge": [], "unknowns": [], "loops": {},
+                    "notes": [], "verdict": "unsupported", "message": None,
+                    "answers": [], "checks": [], "checked": 0,
+                    "differing": [], "svg": ""}
+        verdict = byhand.compare(system, classic.values)
+        answers = [{"name": name, "value": _shown(value),
+                    "latex": _tex(sp.Eq(sp.Symbol(name), value,
+                                        evaluate=False))}
+                   for name, value in sorted(verdict.solution.items())]
+        checks = [{"name": c.name, "classic": _shown(c.classic),
+                   "byhand": _shown(c.byhand), "verdict": c.verdict}
+                  for c in verdict.checks]
+        svg = ""
+        try:
+            from symbulator.schematic import to_svg
+            svg = to_svg(desc, marks=system.marks)
+        except Exception:                    # noqa: BLE001
+            svg = ""                         # a picture is never a failure
+        return {
+            "supported": True, "reason": None,
+            "rows": [_row(r) for r in system.rows],
+            "bridge": [_row(r) for r in system.bridge],
+            "unknowns": [str(u) for u in system.unknowns],
+            "loops": system.loops,
+            "notes": list(system.notes),
+            "verdict": verdict.verdict,
+            "message": verdict.message,
+            "answers": answers,
+            "checks": checks,
+            "checked": len(checks),
+            "differing": [c.name for c in verdict.differing],
+            "svg": svg,
+        }
 
-    checks = [{"name": c.name, "classic": _shown(c.classic),
-               "byhand": _shown(c.byhand), "verdict": c.verdict}
-              for c in verdict.checks]
+    out = {"nodal": _one(systems["nodal"]), "mesh": _one(systems["mesh"])}
 
-    # Every run gets the circuit with its own working drawn on it
-    # (Roberto, 8 Sep 2026): the nodes whose KCL is being written, the
-    # supernodes and supermeshes ringed, and I1, I2, I3 round their own
-    # loops. The card carries its own copy rather than marking up the
-    # Schematic card above, which belongs to the classic solve.
-    svg = ""
-    try:
-        from symbulator.schematic import to_svg
-        svg = to_svg(desc, marks=system.marks)
-    except Exception:                        # noqa: BLE001
-        svg = ""                             # a picture is never a failure
+    # Which one to show first, and whether there is a choice to offer.
+    # Roberto's rule: the shorter route, and mesh when they are level --
+    # a tie means the meshes are as few as the nodes, and the mesh
+    # picture is the one with the arrows on it.
+    both = out["nodal"]["supported"] and out["mesh"]["supported"]
+    if both:
+        n, m = len(out["nodal"]["rows"]), len(out["mesh"]["rows"])
+        default = "nodal" if n < m else "mesh"
+    elif out["mesh"]["supported"]:
+        default = "mesh"
+    else:
+        default = "nodal"                    # its refusal is the one to show
 
-    return _ok({
-        "method": method, "domain": domain, "supported": True, "reason": "",
-        "rows": [_row(r) for r in system.rows],
-        "bridge": [_row(r) for r in system.bridge],
-        "unknowns": [str(u) for u in system.unknowns],
-        "loops": system.loops,
-        "notes": list(system.notes),
-        "verdict": verdict.verdict,
-        "message": verdict.message,
-        "answers": answers,
-        "checks": checks,
-        "checked": len(checks),
-        "differing": [c.name for c in verdict.differing],
-        "route": route,
-        "svg": svg,
-    })
+    return _ok({"domain": domain, "route": route,
+                "default": default, "both": both,
+                "methods": out})

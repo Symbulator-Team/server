@@ -43,7 +43,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "a2420d9889";
+window.SYMB_I18N_V = "e56702e94a";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -1645,6 +1645,11 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   html[data-theme="dark"] input:focus { border-color: var(--accent); }
   textarea::placeholder, input::placeholder { color: var(--placeholder); opacity: 1; }
   .row { display: flex; gap: .9rem; flex-wrap: wrap; margin-top: .9rem; }
+  /* #249's rule, and #331 is the case that needed it: an author
+     `display` beats the browser's `[hidden] { display: none }`, so a
+     .row carrying `hidden` would render anyway. Caught by
+     tools/check_hidden_guards.py rather than by anyone looking. */
+  .row[hidden] { display: none; }
   .row > div { flex: 1 1 180px; }
   .actions { display: flex; align-items: center; gap: 1rem; margin-top: 1.1rem; flex-wrap: wrap; }
   button {
@@ -3309,7 +3314,13 @@ units: yes</pre>
           disagree, the classic answers are the ones to trust.
         </p>
       </details>
-      <div class="row">
+      <!-- #331: the picker chooses which of the two is *shown*, not
+           which is computed -- both are, on one press. So it starts
+           hidden, stays hidden while the run is in flight, and appears
+           afterwards only when both methods actually apply to this
+           circuit. With one method there is no choice to offer, and the
+           line under the verdict says why the other is missing. -->
+      <div class="row" id="byhandMethodRow" hidden>
         <div>
           <label for="byhandMethod" data-i18n="method.8830">Method</label>
           <select id="byhandMethod">
@@ -3648,7 +3659,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-08 06:37 UTC</span><br>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-08 08:39 UTC</span><br>
   <span class="notranslate" style="white-space:nowrap"><a href="https://symbulator.com" target="_blank" rel="noopener">symbulator.com</a> ·</span>
   <span data-i18n="free-and-open-source.d231">Free and open-source under the MIT licence · Runs on Python+SymPy</span>
 </footer>
@@ -4681,6 +4692,21 @@ const UI_MESSAGES = {
                '%{name} does not have a single branch relation', a),
   735: () => t('js.ui.m735', 'a mesh could not be traced as a single loop'),
   736: () => t('js.ui.m736', 'a mesh did not close'),
+  737: a => tv('js.ui.m737', "%{name}'s own defining relation, carried as "
+               + 'an extra equation because its current is not one the '
+               + 'method can write on its own', a),
+  739: () => t('js.ui.m739', 'This circuit has mutually coupled coils. '
+               + 'They are taught with mesh analysis, where a coupled '
+               + "coil's induced voltage is a term in the loop equation "
+               + '\u2014 try mesh instead.'),
+  740: a => tv('js.ui.m740', 'This circuit contains %{what}. Its windings '
+               + 'are not branches a single mesh current flows round, so '
+               + 'a mesh system would need their voltages as extra '
+               + 'unknowns. Nodal analysis carries it directly \u2014 try '
+               + 'that instead.',
+               Object.assign({}, a, {
+                 what: String(a.what || '').split(', ')
+                         .map(tSrv).join(', ') })),
 
 };
 
@@ -6299,6 +6325,10 @@ document.addEventListener('DOMContentLoaded', () => {
 //     belongs to a different circuit: the card goes dead with every
 //     other stale thing, exactly as the load-equivalent button does
 //     (#299).
+//: The last by-hand response, holding both methods, so switching the
+//: picker repaints from memory instead of asking the server again.
+let lastByHand = null;
+
 function syncByHandCard() {
   const card = $('byhandCard'), btn = $('byhandBtn');
   if (!card || !btn) return;
@@ -6310,6 +6340,8 @@ function syncByHandCard() {
       + t('js.bh.first', '— run Symbulator first, then ask for these —')
       + '</div></div>';
     $('byhandStatus').textContent = '';
+    $('byhandMethodRow').hidden = true;
+    lastByHand = null;
   }
 }
 
@@ -6333,7 +6365,9 @@ function byhandVerdict(data) {
   return box;
 }
 
-function renderByHand(data) {
+function renderByHand(data, method) {
+  // `data` carries both methods (#331); `method` says which to paint.
+  const one = (data.methods || {})[method] || {};
   const out = $('byhandOut');
   out.innerHTML = '';
   const mjReady = window.MathJax && MathJax.typesetPromise;
@@ -6347,7 +6381,7 @@ function renderByHand(data) {
 
   // The verdict leads. A card whose whole claim is "these reach the same
   // answers" should say whether they did before it shows the working.
-  out.appendChild(byhandVerdict(data));
+  out.appendChild(byhandVerdict(one));
 
   // #329: which method is the shorter route for *this* circuit, or that
   // the other one is not offered. Roberto asked how a reader is meant to
@@ -6362,7 +6396,7 @@ function renderByHand(data) {
     line.textContent = route;
     out.appendChild(line);
   }
-  if (!data.supported) return;
+  if (!one.supported) return;
 
   const lines = (caption, rows) => {
     if (!rows || !rows.length) return;
@@ -6399,10 +6433,10 @@ function renderByHand(data) {
   // supermesh, and I1, I2, I3 round their own loops. The card carries
   // its own copy rather than marking up the Schematic card above, which
   // belongs to the classic solve and stays untouched.
-  if (data.svg) {
+  if (one.svg) {
     const cap = document.createElement('div');
     cap.className = 'section-cap';
-    cap.textContent = data.method === 'mesh'
+    cap.textContent = method === 'mesh'
       ? t('js.bh.cap.meshes', 'The meshes')
       : t('js.bh.cap.nodes', 'The nodes');
     out.appendChild(cap);
@@ -6411,25 +6445,25 @@ function renderByHand(data) {
     fig.style.overflowX = 'auto';
     // Server-built SVG from the drawer, not user text: the same source
     // the Schematic card renders.
-    fig.innerHTML = data.svg;
+    fig.innerHTML = one.svg;
     out.appendChild(fig);
   }
 
-  lines(data.method === 'mesh'
+  lines(method === 'mesh'
         ? t('js.bh.cap.meshEqs', 'The mesh equations')
-        : t('js.bh.cap.nodeEqs', 'The node equations'), data.rows);
+        : t('js.bh.cap.nodeEqs', 'The node equations'), one.rows);
 
-  if ((data.unknowns || []).length) {
+  if ((one.unknowns || []).length) {
     const unk = document.createElement('div');
     unk.className = 'hint';
     unk.style.marginTop = '.5rem';
     unk.textContent = tv('js.bh.unknowns',
       'Unknowns: %{list} — %{u} unknowns in %{e} equations.',
-      { list: data.unknowns.join(', '), u: data.unknowns.length,
-        e: data.rows.length });
+      { list: one.unknowns.join(', '), u: one.unknowns.length,
+        e: one.rows.length });
     out.appendChild(unk);
   }
-  for (const note of (data.notes || [])) {
+  for (const note of (one.notes || [])) {
     const div = document.createElement('div');
     div.className = 'hint';
     div.style.marginTop = '.35rem';
@@ -6438,19 +6472,19 @@ function renderByHand(data) {
   }
 
   lines(t('js.bh.cap.solving', 'Solving them'),
-        data.answers ? data.answers.map(a => ({
+        one.answers ? one.answers.map(a => ({
     label: '', latex: a.latex, plain: a.name + ' = ' + a.value })) : []);
 
   // The bridge is the point of the exercise as much as the answers: it
   // is where the reader sees their own I1 and I2 turn into Symbulator's
   // i_r3, and it is also what the comparison above was run through.
-  lines(data.method === 'mesh'
+  lines(method === 'mesh'
         ? t('js.bh.cap.backMesh',
             'Back to the branch currents Symbulator reports')
         : t('js.bh.cap.backNodal', 'Backing out the branch currents'),
-        data.bridge);
+        one.bridge);
 
-  if ((data.differing || []).length) {
+  if ((one.differing || []).length) {
     const table = document.createElement('table');
     table.className = 'bh-check';
     // Literal keys, one call each: a t() whose key is a variable never
@@ -6459,7 +6493,7 @@ function renderByHand(data) {
       + '<th>' + t('js.bh.th.quantity', 'Quantity') + '</th>'
       + '<th>' + t('js.bh.th.classic', 'Classic (trust this)') + '</th>'
       + '<th>' + t('js.bh.th.byhand', 'By hand') + '</th></tr>';
-    for (const c of data.checks) {
+    for (const c of one.checks) {
       if (c.verdict !== 'differs') continue;
       const tr = document.createElement('tr');
       for (const cell of [c.name, c.classic, c.byhand]) {
@@ -6486,6 +6520,10 @@ async function runByHand() {
   const btn = $('byhandBtn'), out = $('byhandOut');
   btn.disabled = true;
   $('byhandStatus').textContent = '';
+  // Hidden while the run is in flight: what it would offer is not known
+  // until the answer comes back.
+  $('byhandMethodRow').hidden = true;
+  lastByHand = null;
   out.innerHTML = '<div class="lcd"><div class="placeholder">'
     + t('js.bh.busy', 'writing the equations…') + '</div></div>';
   try {
@@ -6497,7 +6535,6 @@ async function runByHand() {
       body: JSON.stringify({ desc: last.desc_used,
                              domain: last.domain || 'dc',
                              omega: $('omega').value,
-                             method: $('byhandMethod').value,
                              ...roundingState(),
                              si: $('siUnits').checked,
                              units: $('showUnits').checked })
@@ -6512,7 +6549,12 @@ async function runByHand() {
       out.appendChild(div);
       return;
     }
-    renderByHand(data);
+    // Both methods came back. Show the shorter one -- mesh when they
+    // are level -- and offer the picker only when there is a choice.
+    lastByHand = data;
+    $('byhandMethod').value = data.default || 'nodal';
+    $('byhandMethodRow').hidden = !data.both;
+    renderByHand(data, $('byhandMethod').value);
     $('byhandStatus').textContent = data.elapsed ? data.elapsed + ' s' : '';
   } catch (e) {
     out.innerHTML = '<div class="error">'
@@ -6530,6 +6572,12 @@ async function runByHand() {
 document.addEventListener('DOMContentLoaded', () => {
   const btn = $('byhandBtn');
   if (btn) btn.addEventListener('click', runByHand);
+  // Switching the method repaints what is already in hand: both were
+  // solved on the one press, so there is nothing to ask the server.
+  const pick = $('byhandMethod');
+  if (pick) pick.addEventListener('change', () => {
+    if (lastByHand) renderByHand(lastByHand, pick.value);
+  });
   syncByHandCard();
 });
 
