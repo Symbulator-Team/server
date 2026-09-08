@@ -3209,7 +3209,12 @@ units: yes</pre>
       </div>
       <div id="miniArgs" class="row" style="margin-top:.7rem"></div>
       <div class="hint" id="miniHint" style="margin-top:.35rem"></div>
-      <div class="actions" style="margin-top:.7rem">
+      <!-- #339, Roberto 8 Sep 2026: the same run row as every other
+           card, so the button sits in the middle. It was `.actions`,
+           a left-aligned flex row shared with the download buttons --
+           right for a row of secondary actions, wrong for a card's one
+           Run. -->
+      <div class="run-row">
         <button id="miniBtn" data-i18n="run.b1b3">Run</button>
       </div>
       <div id="miniOut" class="lcd"></div>
@@ -3388,7 +3393,10 @@ units: yes</pre>
             move around the plane.</li>
         </ul>
       </details>
-      <div class="dl-row">
+      <!-- #339: centred like every other card's button. It was
+           `.dl-row`, which exists for a row of downloads and their
+           tick-boxes; this row is one button. -->
+      <div class="run-row">
         <button id="whatifBtn"
           title="opens the equation system in the Numerical Solver" data-i18n-title="opens-the-equation-system.6075" data-i18n="numerical-solver.0d2c">Numerical Solver</button>
       </div>
