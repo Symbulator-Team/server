@@ -4163,3 +4163,202 @@ def spice_ui(direction: str, text: str):
         return _ok({"output": out, "warnings": warnings})
     except Exception as exc:  # noqa: BLE001
         return _err(_exc_msg(exc))
+
+
+# ---------------------------------------------------------------------------
+# #329: by-hand equations
+# ---------------------------------------------------------------------------
+#
+# The classic solve above is untouched by any of this and stays the
+# authority. This runs only when the reader asks for it, on the same
+# circuit description, and every run is checked against the classic
+# answers -- so the card can say whether the two agree rather than
+# leaving the reader to compare two lists of numbers by eye.
+#
+# It lives in its own entry point (and therefore its own killable child
+# process) rather than riding on the solve, because it is a *second*
+# symbolic solve and can be the slow one on a circuit whose first solve
+# was quick.
+
+#: A transient is solved in the s-domain and inverted back into time, so
+#: a by-hand system for it would be the s-domain one and its answers
+#: could not be compared with the classic ones without an inverse
+#: transform on every line. Out of X14's scope; the card says so.
+def _solver_msg(SM, code, **args):
+    """One of the *solver's* coded messages in the shape the page reads.
+
+    `msg()` above renders this file's own 8xx catalogue; the by-hand
+    sentences live in the solver's 7xx one, so they are built here
+    against that catalogue instead. Same three fields either way, and
+    the page's `uiMsg` cannot tell them apart -- which is the point.
+    """
+    return {"code": code,
+            "args": {k: str(v) for k, v in args.items()},
+            "text": SM.render(code, args)}
+
+
+BYHAND_DOMAINS = ("dc", "ac", "fd")
+
+#: This file's own by-hand messages (#329). The solver's live in its
+#: `messages.py` 7xx range; these three are the app's, so they belong in
+#: the 8xx range this file already owns (#200).
+#: #329: what a multi-terminal element is called in a by-hand refusal.
+#: The solver names these in `byhand.py` because it is the one deciding,
+#: but the *words* are this app's to translate, so they are listed here
+#: where `tools/i18n.py`'s vocabulary scanner already looks -- the same
+#: route every answer label takes.
+_BYHAND_TERMS = {
+    "t": "a transformer",
+    "z": "a two-port parameter block",
+    "m": "mutual inductance",
+}
+
+#: The by-hand messages this file needs are the *solver's* (#329), not
+#: its own. Minting an 88x code for a sentence that already has a 7xx
+#: one would put the same words in the dictionaries twice and let the
+#: two copies drift, which is the failure the coded scheme exists to
+#: prevent. So there are no by-hand codes here: `byhand_ui` imports
+#: `symbulator.messages` and uses those.
+
+
+def byhand_ui(desc: str, domain: str, omega: str, method: str,
+              digits: int = 4, si: bool = False, units: bool = False):
+    """Build one by-hand system for `desc` and check it against the
+    classic solve. `method` is "nodal" or "mesh"."""
+    import sympy as sp
+    try:
+        from symbulator import ac, byhand, dc, fd
+        from symbulator import messages as SM
+        from symbulator.elements import parse_circuit
+    except ImportError:                      # pragma: no cover
+        # The server takes symbulator from PyPI, so a site can briefly be
+        # running a release that predates this module. Say so; do not
+        # traceback.
+        # The code is written out rather than imported: the import is
+        # what just failed. 729 is permanent (#199), so naming it here
+        # is safe and keeps this sentence translated like every other.
+        return _err({"code": 729, "args": {},
+                     "text": "This build of Symbulator has no by-hand "
+                             "analysis. The classic solve above is "
+                             "unaffected."})
+
+    if method not in ("nodal", "mesh"):
+        return _err(_solver_msg(SM, SM.E_BH_PICK_METHOD))
+    domain = (domain or "dc").strip().lower()
+    if domain not in BYHAND_DOMAINS:
+        return _err(_solver_msg(SM, SM.E_BH_DOMAIN))
+
+    try:
+        elements = parse_circuit(desc)
+    except Exception as exc:                 # noqa: BLE001
+        return _err(_exc_msg(exc))
+
+    # The same classic solve the page is already showing, re-run here so
+    # the comparison is against real answers rather than against numbers
+    # the browser posted back.
+    try:
+        if domain == "dc":
+            classic = dc(desc)
+        elif domain == "fd":
+            classic = fd(desc)
+        else:
+            classic = ac(desc, omega=sp.sympify(omega)
+                         if str(omega).strip() else None)
+    except Exception as exc:                 # noqa: BLE001
+        return _err(_exc_msg(exc))
+
+    omega_arg = (sp.sympify(omega)
+                 if (str(omega).strip() and domain == "ac") else None)
+    refs = tuple(classic.references or ())
+
+    def _build(which):
+        try:
+            return getattr(byhand, which)(elements, domain, omega=omega_arg,
+                                          references=refs)
+        except Exception:                    # noqa: BLE001
+            # A by-hand system is a bonus, never a reason for the page to
+            # break. An unexpected failure reads as a refusal.
+            return byhand.ByHand(method=which, domain=domain,
+                                 supported=False,
+                                 reason=_solver_msg(SM, SM.E_BH_NO_MODULE))
+
+    system = _build(method)
+    # The other method is *built* too, never solved -- building is cheap
+    # and it is what answers "which of these should I be using?" (#329,
+    # Roberto's question of 8 Sep 2026). One line: which writes fewer
+    # equations here, or that the other one is not offered at all.
+    try:
+        other = _build("mesh" if method == "nodal" else "nodal")
+        route = byhand.shorter_route(system if method == "nodal" else other,
+                                     other if method == "nodal" else system)
+    except Exception:                        # noqa: BLE001
+        route = None
+
+    if not system.supported:
+        return _ok({"method": method, "domain": domain, "supported": False,
+                    "reason": system.reason, "rows": [], "bridge": [],
+                    "unknowns": [], "verdict": "unsupported",
+                    "message": None, "checks": [], "loops": {}, "notes": [],
+                    "route": route, "svg": ""})
+
+    verdict = byhand.compare(system, classic.values)
+
+    def _tex(obj):
+        """LaTeX for one line, falling back to its plain text -- the same
+        rule the Equations card uses (#176): a fallback that reads as
+        text beats a card that fails to typeset."""
+        try:
+            return sp.latex(obj)
+        except Exception:                    # noqa: BLE001
+            return None
+
+    def _row(row):
+        # `label` travels as the coded message the package returned; the
+        # page renders it with the same `uiMsg` every other engine
+        # message goes through.
+        return {"kind": row.kind, "label": row.label, "plain": row.plain,
+                "latex": _tex(row.eq)}
+
+    def _shown(expr):
+        """One answer, rounded the way the rest of the page rounds."""
+        try:
+            return str(_round_expr(expr, digits) if digits else expr)
+        except Exception:                    # noqa: BLE001
+            return str(expr)
+
+    answers = [{"name": name, "value": _shown(value),
+                "latex": _tex(sp.Eq(sp.Symbol(name), value, evaluate=False))}
+               for name, value in sorted(verdict.solution.items())]
+
+    checks = [{"name": c.name, "classic": _shown(c.classic),
+               "byhand": _shown(c.byhand), "verdict": c.verdict}
+              for c in verdict.checks]
+
+    # Every run gets the circuit with its own working drawn on it
+    # (Roberto, 8 Sep 2026): the nodes whose KCL is being written, the
+    # supernodes and supermeshes ringed, and I1, I2, I3 round their own
+    # loops. The card carries its own copy rather than marking up the
+    # Schematic card above, which belongs to the classic solve.
+    svg = ""
+    try:
+        from symbulator.schematic import to_svg
+        svg = to_svg(desc, marks=system.marks)
+    except Exception:                        # noqa: BLE001
+        svg = ""                             # a picture is never a failure
+
+    return _ok({
+        "method": method, "domain": domain, "supported": True, "reason": "",
+        "rows": [_row(r) for r in system.rows],
+        "bridge": [_row(r) for r in system.bridge],
+        "unknowns": [str(u) for u in system.unknowns],
+        "loops": system.loops,
+        "notes": list(system.notes),
+        "verdict": verdict.verdict,
+        "message": verdict.message,
+        "answers": answers,
+        "checks": checks,
+        "checked": len(checks),
+        "differing": [c.name for c in verdict.differing],
+        "route": route,
+        "svg": svg,
+    })
