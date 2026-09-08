@@ -389,3 +389,22 @@ plotkey: i_r75
 plotmin: 0
 plotmax: 0.0005
 plotpoints: 300
+
+[NR9's 120 V and coupled 3 H and 15 H coils]
+
+e,1,0,120
+r1,1,a,7.5
+l1,a,0,3,0
+l2,a,0,15,0
+m,l1,l2,6
+
+analysis: tr
+note: Nilsson & Riedel (9th ed.): no energy is stored when the switch closes at t = 0. Find io, vo, i1 and i2 for t > 0. This is the same circuit as NR12's Problem 7.71 above, at a thousand times the inductance and a tenth of the resistance, so the two run side by side. Both dots are at the top, so both coils are written top node first: the parallel pair aids and reduces to (45 - 36)/(3 + 15 - 12) = 1.5 H, tau = 0.2 s. io = ir1 = 16 - 16e^(-5t) A, vo = va = 120 e^(-5t) V, i1 = il1 = 24 - 24e^(-5t) A and i2 = il2 = -8 + 8e^(-5t) A -- backwards, because with both coils shorts at the end the split is set by the flux linkages, and 24 - 8 is the 16 A the 7.5 ohm allows.
+rounding: exact
+si: no
+units: yes
+plottool: plot_time
+plotkey: i_r1
+plotmin: 0
+plotmax: 1
+plotpoints: 300
