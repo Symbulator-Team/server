@@ -1094,7 +1094,7 @@ def api_spice():
 
 @app.post("/api/byhand")
 def api_byhand():
-    """X14: the by-hand equations card (Symbulator X only).
+    """#329: the by-hand equations card.
 
     A second, optional system for the same circuit, written the way a
     first course teaches it -- and always checked against the classic
@@ -1145,6 +1145,7 @@ def api_byhand():
                     "checks": payload.get("checks") or [],
                     "checked": payload.get("checked") or 0,
                     "differing": payload.get("differing") or [],
+                    "route": payload.get("route"),
                     "svg": payload.get("svg") or ""})
 
 

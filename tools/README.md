@@ -1,5 +1,46 @@
 # tools
 
+## Before writing a new one: an entry's keys are not the file's keys (#328)
+
+`circuitbook.parse_book` renames some fields as it reads them, through an
+alias table near the top of `circuitbook.py`. Three keys are renamed,
+and every other key parses to itself:
+
+| the `.cir` file says | the parsed entry's key is |
+|---|---|
+| `analysis:` | `domain` |
+| `w:` | `omega` |
+| `variables:` | `vars` |
+
+(`domain:`, `omega:` and `vars:` are accepted too, and are what the
+entry ends up carrying either way. The aliases exist so the file reads
+naturally; the front end only ever sees the right-hand column.)
+
+So `entry.get("analysis")` on a parsed entry is **always `None`**, and
+`(entry.get("analysis") or "dc")` is always `"dc"`.
+
+That does not fail. It runs every entry in the book as a DC solve, and
+since most of them *are* DC, the run comes back clean and looks like a
+sweep of the whole book. It cost a session exactly that in Sep 2026: a
+new checker reported a complete pass over 310 systems while having
+tested one third of what it claimed, and only reading a second field off
+the same entry gave it away.
+
+**Read `entry["domain"]`.** The existing tools do -- `verify_lesson.py`
+line 91, `circuitbook.py`'s own AC branch -- so copy one of those rather
+than the field name you see in the file.
+
+Two more things a new tool wants to know about an entry:
+
+* **`tool:`** is `er`, `th`, `port` or `ex`, and means the entry is not a
+  plain solve. Its answers are that tool's, not `dc()`/`ac()`/`fd()`'s,
+  so a checker comparing against a plain solve must skip those entries
+  rather than mark them wrong.
+* **A `domain` of `tr`** is solved in the s-domain and inverted back into
+  time, so anything reasoning about the *system* for a transient has to
+  stamp `_sources_to_s(desc)` and not `desc` (#176), or it builds a
+  hybrid nobody solves.
+
 ## `review_schematics.py` — every example, drawn and checked
 
 Renders every entry of every `.cir` book in `../examples/` with

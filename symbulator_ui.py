@@ -4166,7 +4166,7 @@ def spice_ui(direction: str, text: str):
 
 
 # ---------------------------------------------------------------------------
-# X14: by-hand equations (Symbulator X only, experimental)
+# #329: by-hand equations
 # ---------------------------------------------------------------------------
 #
 # The classic solve above is untouched by any of this and stays the
@@ -4184,7 +4184,41 @@ def spice_ui(direction: str, text: str):
 #: a by-hand system for it would be the s-domain one and its answers
 #: could not be compared with the classic ones without an inverse
 #: transform on every line. Out of X14's scope; the card says so.
+def _solver_msg(SM, code, **args):
+    """One of the *solver's* coded messages in the shape the page reads.
+
+    `msg()` above renders this file's own 8xx catalogue; the by-hand
+    sentences live in the solver's 7xx one, so they are built here
+    against that catalogue instead. Same three fields either way, and
+    the page's `uiMsg` cannot tell them apart -- which is the point.
+    """
+    return {"code": code,
+            "args": {k: str(v) for k, v in args.items()},
+            "text": SM.render(code, args)}
+
+
 BYHAND_DOMAINS = ("dc", "ac", "fd")
+
+#: This file's own by-hand messages (#329). The solver's live in its
+#: `messages.py` 7xx range; these three are the app's, so they belong in
+#: the 8xx range this file already owns (#200).
+#: #329: what a multi-terminal element is called in a by-hand refusal.
+#: The solver names these in `byhand.py` because it is the one deciding,
+#: but the *words* are this app's to translate, so they are listed here
+#: where `tools/i18n.py`'s vocabulary scanner already looks -- the same
+#: route every answer label takes.
+_BYHAND_TERMS = {
+    "t": "a transformer",
+    "z": "a two-port parameter block",
+    "m": "mutual inductance",
+}
+
+#: The by-hand messages this file needs are the *solver's* (#329), not
+#: its own. Minting an 88x code for a sentence that already has a 7xx
+#: one would put the same words in the dictionaries twice and let the
+#: two copies drift, which is the failure the coded scheme exists to
+#: prevent. So there are no by-hand codes here: `byhand_ui` imports
+#: `symbulator.messages` and uses those.
 
 
 def byhand_ui(desc: str, domain: str, omega: str, method: str,
@@ -4194,23 +4228,25 @@ def byhand_ui(desc: str, domain: str, omega: str, method: str,
     import sympy as sp
     try:
         from symbulator import ac, byhand, dc, fd
+        from symbulator import messages as SM
         from symbulator.elements import parse_circuit
     except ImportError:                      # pragma: no cover
-        # The server takes symbulator from PyPI unless X's own checkout
-        # is installed over it (X1), so a site can briefly be running a
-        # release that predates this module. Say so; do not traceback.
-        return _err("This build of Symbulator has no by-hand analysis. "
-                    "The classic solve above is unaffected.")
+        # The server takes symbulator from PyPI, so a site can briefly be
+        # running a release that predates this module. Say so; do not
+        # traceback.
+        # The code is written out rather than imported: the import is
+        # what just failed. 729 is permanent (#199), so naming it here
+        # is safe and keeps this sentence translated like every other.
+        return _err({"code": 729, "args": {},
+                     "text": "This build of Symbulator has no by-hand "
+                             "analysis. The classic solve above is "
+                             "unaffected."})
 
     if method not in ("nodal", "mesh"):
-        return _err("Choose nodal or mesh analysis.")
+        return _err(_solver_msg(SM, SM.E_BH_PICK_METHOD))
     domain = (domain or "dc").strip().lower()
     if domain not in BYHAND_DOMAINS:
-        return _err(
-            "By-hand equations are written for DC, AC and FD. A transient "
-            "is solved in the s-domain and transformed back into time, so "
-            "the system a student would write for it is the s-domain one "
-            "-- run this circuit in FD to see that system.")
+        return _err(_solver_msg(SM, SM.E_BH_DOMAIN))
 
     try:
         elements = parse_circuit(desc)
@@ -4231,29 +4267,39 @@ def byhand_ui(desc: str, domain: str, omega: str, method: str,
     except Exception as exc:                 # noqa: BLE001
         return _err(_exc_msg(exc))
 
-    build = getattr(byhand, method)
+    omega_arg = (sp.sympify(omega)
+                 if (str(omega).strip() and domain == "ac") else None)
+    refs = tuple(classic.references or ())
+
+    def _build(which):
+        try:
+            return getattr(byhand, which)(elements, domain, omega=omega_arg,
+                                          references=refs)
+        except Exception:                    # noqa: BLE001
+            # A by-hand system is a bonus, never a reason for the page to
+            # break. An unexpected failure reads as a refusal.
+            return byhand.ByHand(method=which, domain=domain,
+                                 supported=False,
+                                 reason=_solver_msg(SM, SM.E_BH_NO_MODULE))
+
+    system = _build(method)
+    # The other method is *built* too, never solved -- building is cheap
+    # and it is what answers "which of these should I be using?" (#329,
+    # Roberto's question of 8 Sep 2026). One line: which writes fewer
+    # equations here, or that the other one is not offered at all.
     try:
-        system = build(elements, domain,
-                       omega=sp.sympify(omega)
-                       if (str(omega).strip() and domain == "ac") else None,
-                       references=tuple(classic.references or ()))
-    except Exception as exc:                 # noqa: BLE001
-        # A by-hand system is a bonus, never a reason for the page to
-        # break: an unexpected failure becomes a sentence like a refusal.
-        return _ok({"method": method, "domain": domain, "supported": False,
-                    "reason": "A by-hand " + method + " system could not be "
-                              "built for this circuit (" +
-                              type(exc).__name__ + "). The classic answers "
-                              "above are unaffected.",
-                    "rows": [], "bridge": [], "unknowns": [],
-                    "verdict": "unsupported", "message": "", "checks": [],
-                    "loops": {}, "notes": []})
+        other = _build("mesh" if method == "nodal" else "nodal")
+        route = byhand.shorter_route(system if method == "nodal" else other,
+                                     other if method == "nodal" else system)
+    except Exception:                        # noqa: BLE001
+        route = None
 
     if not system.supported:
         return _ok({"method": method, "domain": domain, "supported": False,
                     "reason": system.reason, "rows": [], "bridge": [],
                     "unknowns": [], "verdict": "unsupported",
-                    "message": "", "checks": [], "loops": {}, "notes": []})
+                    "message": None, "checks": [], "loops": {}, "notes": [],
+                    "route": route, "svg": ""})
 
     verdict = byhand.compare(system, classic.values)
 
@@ -4267,6 +4313,9 @@ def byhand_ui(desc: str, domain: str, omega: str, method: str,
             return None
 
     def _row(row):
+        # `label` travels as the coded message the package returned; the
+        # page renders it with the same `uiMsg` every other engine
+        # message goes through.
         return {"kind": row.kind, "label": row.label, "plain": row.plain,
                 "latex": _tex(row.eq)}
 
@@ -4310,5 +4359,6 @@ def byhand_ui(desc: str, domain: str, omega: str, method: str,
         "checks": checks,
         "checked": len(checks),
         "differing": [c.name for c in verdict.differing],
+        "route": route,
         "svg": svg,
     })

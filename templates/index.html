@@ -43,7 +43,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "d47155bacb";
+window.SYMB_I18N_V = "a2420d9889";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -3264,9 +3264,8 @@ units: yes</pre>
     </details>
   </div>
 
-  <!-- X14: By-Hand Equations. Symbulator X only, experimental.
-       Placed above the Numerical Solver at Roberto's ask,
-       8 Sep 2026.
+  <!-- #329: By-Hand Equations. Placed above the Numerical Solver at
+       Roberto's ask, 8 Sep 2026. Tried first in version X as X14-X16.
 
        The classic Symbulator solve above has 27 years behind it and
        stays the authority. This card writes a *second* system for the
@@ -3281,22 +3280,22 @@ units: yes</pre>
        version 9's to translate. -->
   <div class="card inactive" id="byhandCard">
     <details id="byhandBox">
-      <summary class="results-h section-toggle">By-Hand Equations</summary>
-      <p class="hint" style="margin:0 0 .9rem">
+      <summary class="results-h section-toggle" data-i18n="by-hand-equations.d143">By-Hand Equations</summary>
+      <p class="hint" style="margin:0 0 .9rem" data-i18n="the-same-circuit-written.cf47">
         The same circuit, written out the way it is taught in class —
         and then checked against the answers above.
-        <strong>Experimental, and version X only.</strong>
+        <strong>Experimental.</strong>
       </p>
       <details style="margin:0 0 .9rem">
-        <summary>What this is for</summary>
-        <p class="hint" style="margin:.4rem 0 .3rem">
+        <summary data-i18n="what-this-is-for.a5dd">What this is for</summary>
+        <p class="hint" style="margin:.4rem 0 .3rem" data-i18n="symbulator-does-not-solve.291a">
           Symbulator does not solve a circuit the way a student does. It
           stamps every element into one system and hands the whole thing
           to SymPy, so it never picks a mesh or draws a supernode. That
           is why its equations look unfamiliar next to the ones in your
           notebook.
         </p>
-        <p class="hint" style="margin:.3rem 0">
+        <p class="hint" style="margin:.3rem 0" data-i18n="these-are-the-ones.dca0">
           These are the ones from your notebook. They use the same names
           for the same quantities — <code>v_2</code> is still node 2's
           voltage, <code>i_r3</code> is still the current through
@@ -3305,26 +3304,26 @@ units: yes</pre>
           <code>I2</code>, <code>I3</code>, and shows you how each branch
           current is made of them.
         </p>
-        <p class="hint" style="margin:.3rem 0 0">
+        <p class="hint" style="margin:.3rem 0 0" data-i18n="every-run-is-compared.ba2a">
           Every run is compared with the classic solve. If the two ever
           disagree, the classic answers are the ones to trust.
         </p>
       </details>
       <div class="row">
         <div>
-          <label for="byhandMethod">Method</label>
+          <label for="byhandMethod" data-i18n="method.8830">Method</label>
           <select id="byhandMethod">
-            <option value="nodal">Nodal analysis (with supernodes)</option>
-            <option value="mesh">Mesh analysis (with supermeshes)</option>
+            <option value="nodal" data-i18n="nodal-analysis-with-supernod.cb6c">Nodal analysis (with supernodes)</option>
+            <option value="mesh" data-i18n="mesh-analysis-with-supermesh.16a4">Mesh analysis (with supermeshes)</option>
           </select>
         </div>
       </div>
       <div class="run-row">
-        <button id="byhandBtn">Write the equations</button>
+        <button id="byhandBtn" data-i18n="write-the-equations.ddb4">Write the equations</button>
         <span id="byhandStatus"></span>
       </div>
       <div id="byhandOut">
-        <div class="lcd"><div class="placeholder">— run Symbulator first, then ask for these —</div></div>
+        <div class="lcd"><div class="placeholder" data-i18n="run-symbulator-first-then.c685">— run Symbulator first, then ask for these —</div></div>
       </div>
     </details>
   </div>
@@ -3649,7 +3648,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-08 05:26 UTC</span><br>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-08 06:12 UTC</span><br>
   <span class="notranslate" style="white-space:nowrap"><a href="https://symbulator.com" target="_blank" rel="noopener">symbulator.com</a> ·</span>
   <span data-i18n="free-and-open-source.d231">Free and open-source under the MIT licence · Runs on Python+SymPy</span>
 </footer>
@@ -4584,6 +4583,105 @@ const UI_MESSAGES = {
   877: () => t('js.ui.m877', 'A decimal or scientific-notation value (like '
                 + "0.1 or 2e3) was found in the inputs, so the answers can't "
                 + 'be exact -- switched "Rounding" from exact to approximate.'),
+
+  // #329, the by-hand systems. Every line of a nodal or mesh system
+  // carries a sentence beside it and the package writes all of them, so
+  // this is the largest block here -- and the reason the feature could
+  // be translated at all. 7xx is the solver's range, 88x this app's.
+  701: a => tv('js.ui.m701', 'KCL at node %{node}', a),
+  702: a => tv('js.ui.m702',
+               'KCL around the supernode enclosing nodes %{nodes}', a),
+  703: a => tv('js.ui.m703', '%{name}: the inputs are held equal, and the '
+               + 'output node %{node} carries whatever current %{name} '
+               + 'supplies, so it gets no KCL', a),
+  704: a => tv('js.ui.m704',
+               '%{name} fixes node %{node} against the reference', a),
+  705: a => tv('js.ui.m705', "%{name}'s own equation, the constraint that "
+               + 'comes with the supernode over %{a} and %{b}', a),
+  706: a => tv('js.ui.m706', "%{name}'s own equation. Its current is named "
+               + 'elsewhere in the circuit, so it is carried as an unknown '
+               + 'of its own and nodes %{a} and %{b} keep their separate '
+               + 'KCLs', a),
+  707: a => tv('js.ui.m707', 'KVL around mesh %{mesh}', a),
+  708: a => tv('js.ui.m708', 'KVL around the supermesh formed by %{meshes} '
+               + "\u2014 the shared current source's drop cancels", a),
+  709: a => tv('js.ui.m709',
+               '%{name} sets the current in the branch it occupies', a),
+  710: a => tv('js.ui.m710', 'the current through %{name}', a),
+  711: a => tv('js.ui.m711', 'the current through %{name} \u2014 no mesh '
+               + 'runs through it, so none flows', a),
+  712: a => tv('js.ui.m712', 'The drop across %{name} did not eliminate '
+               + 'between the loops sharing it, so it is carried as an '
+               + 'unknown of its own.', a),
+  713: a => tv('js.ui.m713', 'Every one of the %{n} quantities the by-hand '
+               + 'system produces matches the classic Symbulator solve.', a),
+  714: a => tv('js.ui.m714', 'The by-hand answers do not match the classic '
+               + 'solve for %{names}. The classic answers above are the ones '
+               + 'to trust; the by-hand system is the one at fault.', a),
+  715: () => t('js.ui.m715', 'The by-hand answers could not be shown equal '
+               + 'to the classic ones by algebra, and no numerical test '
+               + 'point settled it either. This is not a disagreement '
+               + '\u2014 it is an unproven match.'),
+  716: () => t('js.ui.m716', 'The by-hand system was written, but solving it '
+               + 'did not succeed. The classic answers above stand.'),
+  717: () => t('js.ui.m717', 'The by-hand system solved, but it produced '
+               + 'none of the quantities the classic solve reports, so '
+               + 'there was nothing to check it against.'),
+  718: a => tv('js.ui.m718', 'Mesh analysis writes %{mesh} equations for '
+               + 'this circuit and nodal writes %{nodal}. Mesh is the '
+               + 'shorter route here.', a),
+  719: a => tv('js.ui.m719', 'Nodal analysis writes %{nodal} equations for '
+               + 'this circuit and mesh writes %{mesh}. Nodal is the '
+               + 'shorter route here.', a),
+  720: a => tv('js.ui.m720', 'Nodal and mesh each write %{n} equations for '
+               + 'this circuit, so neither is shorter.', a),
+  721: () => t('js.ui.m721',
+               'Mesh analysis is not offered for this circuit.'),
+  722: () => t('js.ui.m722',
+               'Nodal analysis is not offered for this circuit.'),
+  723: a => tv('js.ui.m723', 'This circuit contains %{what}, which by-hand '
+               + 'analysis is not taught for. The classic Symbulator '
+               + 'answers above are unaffected.',
+               Object.assign({}, a, {
+                 // A circuit can hold more than one of them, so the
+                 // engine sends a comma-joined list and each noun is
+                 // looked up on its own. Translating the join would
+                 // miss every circuit with two.
+                 what: String(a.what || '').split(', ')
+                         .map(tSrv).join(', ') })),
+  724: () => t('js.ui.m724', 'This circuit contains an op-amp. Its output '
+               + 'current is supplied by the op-amp rather than flowing '
+               + 'round a mesh, so mesh analysis by hand does not apply. '
+               + 'Nodal analysis does \u2014 try that instead.'),
+  725: () => t('js.ui.m725',
+               'This circuit has no closed loop to write a mesh equation '
+               + 'around.'),
+  726: a => tv('js.ui.m726', 'A source in this circuit is controlled by '
+               + '%{names}, a node voltage. Mesh analysis works in mesh '
+               + 'currents and has no node voltage to give it, so this '
+               + 'circuit is one for nodal analysis instead.', a),
+  727: a => tv('js.ui.m727', 'The current source %{name} sits on a branch '
+               + 'that no mesh passes through, so there is no mesh current '
+               + 'for it to set. Nodal analysis handles this circuit.', a),
+  728: () => t('js.ui.m728', 'By-hand equations are written for DC, AC and '
+               + 'FD. A transient is solved in the s-domain and transformed '
+               + 'back into time, so the system a student would write for '
+               + 'it is the s-domain one \u2014 run this circuit in FD to '
+               + 'see that system.'),
+  729: () => t('js.ui.m729', 'This build of Symbulator has no by-hand '
+               + 'analysis. The classic solve above is unaffected.'),
+  730: () => t('js.ui.m730', 'Choose nodal or mesh analysis.'),
+  731: () => t('js.ui.m731',
+               'a value in this circuit is not linear in the branch current'),
+  732: a => tv('js.ui.m732',
+               "%{name}'s relation does not involve its own nodes", a),
+  733: a => tv('js.ui.m733',
+               '%{name} does not depend on its terminals as a difference', a),
+  734: a => tv('js.ui.m734',
+               '%{name} does not have a single branch relation', a),
+  735: () => t('js.ui.m735', 'a mesh could not be traced as a single loop'),
+  736: () => t('js.ui.m736', 'a mesh did not close'),
+
 };
 
 // A message from the engine, as a sentence in the reader's language.
@@ -6185,7 +6283,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// ---- X14: By-Hand Equations (Symbulator X only) ---------------------
+// ---- #329: By-Hand Equations ----------------------------------------
 //
 // A second system for the circuit the classic solve just ran, written
 // the way a first course teaches it and always checked against that
@@ -6209,7 +6307,8 @@ function syncByHandCard() {
   card.classList.toggle('inactive', !live);
   if (!live) {
     $('byhandOut').innerHTML = '<div class="lcd"><div class="placeholder">'
-      + '— run Symbulator first, then ask for these —</div></div>';
+      + t('js.bh.first', '— run Symbulator first, then ask for these —')
+      + '</div></div>';
     $('byhandStatus').textContent = '';
   }
 }
@@ -6219,15 +6318,18 @@ function byhandVerdict(data) {
   box.className = 'bh-verdict ' + (data.verdict || 'unsupported');
   const head = document.createElement('strong');
   head.textContent = {
-    agrees: 'These equations give the same answers.',
-    differs: 'These equations do NOT give the same answers.',
-    unsure: 'Could not be shown equal either way.',
-    unsolved: 'Written, but not solved.',
-    unsupported: 'Not offered for this circuit.'
-  }[data.verdict] || 'Checked against the classic solve.';
+    agrees: t('js.bh.agrees', 'These equations give the same answers.'),
+    differs: t('js.bh.differs',
+               'These equations do NOT give the same answers.'),
+    unsure: t('js.bh.unsure', 'Could not be shown equal either way.'),
+    unsolved: t('js.bh.unsolved', 'Written, but not solved.'),
+    unsupported: t('js.bh.na', 'Not offered for this circuit.')
+  }[data.verdict] || t('js.bh.checked', 'Checked against the classic solve.');
   box.appendChild(head);
+  // Both are coded messages from the engine (#329), rendered by the same
+  // uiMsg every other engine message goes through.
   box.appendChild(document.createTextNode(
-    data.verdict === 'unsupported' ? (data.reason || '') : (data.message || '')));
+    uiMsg(data.verdict === 'unsupported' ? data.reason : data.message)));
   return box;
 }
 
@@ -6246,6 +6348,20 @@ function renderByHand(data) {
   // The verdict leads. A card whose whole claim is "these reach the same
   // answers" should say whether they did before it shows the working.
   out.appendChild(byhandVerdict(data));
+
+  // #329: which method is the shorter route for *this* circuit, or that
+  // the other one is not offered. Roberto asked how a reader is meant to
+  // know which to reach for; counting the equations is what a first
+  // course teaches, and the other system is built (never solved) to say
+  // so. Shown even on a refusal -- that is exactly when it helps most.
+  const route = uiMsg(data.route);
+  if (route) {
+    const line = document.createElement('div');
+    line.className = 'hint';
+    line.style.margin = '.5rem 0 0';
+    line.textContent = route;
+    out.appendChild(line);
+  }
   if (!data.supported) return;
 
   const lines = (caption, rows) => {
@@ -6260,10 +6376,11 @@ function renderByHand(data) {
     const lcd = document.createElement('div');
     lcd.className = 'lcd';
     for (const row of rows) {
-      if (row.label) {
+      const labelled = uiMsg(row.label);
+      if (labelled) {
         const lab = document.createElement('div');
         lab.className = 'bh-label';
-        lab.textContent = row.label;
+        lab.textContent = labelled;
         lcd.appendChild(lab);
       }
       const line = document.createElement('div');
@@ -6286,7 +6403,8 @@ function renderByHand(data) {
     const cap = document.createElement('div');
     cap.className = 'section-cap';
     cap.textContent = data.method === 'mesh'
-      ? 'The meshes' : 'The nodes';
+      ? t('js.bh.cap.meshes', 'The meshes')
+      : t('js.bh.cap.nodes', 'The nodes');
     out.appendChild(cap);
     const fig = document.createElement('div');
     fig.className = 'lcd';
@@ -6297,41 +6415,50 @@ function renderByHand(data) {
     out.appendChild(fig);
   }
 
-  lines(data.method === 'mesh' ? 'The mesh equations' : 'The node equations',
-        data.rows);
+  lines(data.method === 'mesh'
+        ? t('js.bh.cap.meshEqs', 'The mesh equations')
+        : t('js.bh.cap.nodeEqs', 'The node equations'), data.rows);
 
   if ((data.unknowns || []).length) {
     const unk = document.createElement('div');
     unk.className = 'hint';
     unk.style.marginTop = '.5rem';
-    unk.textContent = 'Unknowns: ' + data.unknowns.join(', ')
-      + ' — ' + data.unknowns.length + ' unknowns in '
-      + data.rows.length + ' equations.';
+    unk.textContent = tv('js.bh.unknowns',
+      'Unknowns: %{list} — %{u} unknowns in %{e} equations.',
+      { list: data.unknowns.join(', '), u: data.unknowns.length,
+        e: data.rows.length });
     out.appendChild(unk);
   }
   for (const note of (data.notes || [])) {
     const div = document.createElement('div');
     div.className = 'hint';
     div.style.marginTop = '.35rem';
-    div.textContent = note;
+    div.textContent = uiMsg(note);
     out.appendChild(div);
   }
 
-  lines('Solving them', data.answers ? data.answers.map(a => ({
+  lines(t('js.bh.cap.solving', 'Solving them'),
+        data.answers ? data.answers.map(a => ({
     label: '', latex: a.latex, plain: a.name + ' = ' + a.value })) : []);
 
   // The bridge is the point of the exercise as much as the answers: it
   // is where the reader sees their own I1 and I2 turn into Symbulator's
   // i_r3, and it is also what the comparison above was run through.
   lines(data.method === 'mesh'
-        ? 'Back to the branch currents Symbulator reports'
-        : 'Backing out the branch currents', data.bridge);
+        ? t('js.bh.cap.backMesh',
+            'Back to the branch currents Symbulator reports')
+        : t('js.bh.cap.backNodal', 'Backing out the branch currents'),
+        data.bridge);
 
   if ((data.differing || []).length) {
     const table = document.createElement('table');
     table.className = 'bh-check';
-    table.innerHTML = '<tr><th>Quantity</th><th>Classic (trust this)</th>'
-      + '<th>By hand</th></tr>';
+    // Literal keys, one call each: a t() whose key is a variable never
+    // reaches i18n/en.json and so never reaches a translator.
+    table.innerHTML = '<tr>'
+      + '<th>' + t('js.bh.th.quantity', 'Quantity') + '</th>'
+      + '<th>' + t('js.bh.th.classic', 'Classic (trust this)') + '</th>'
+      + '<th>' + t('js.bh.th.byhand', 'By hand') + '</th></tr>';
     for (const c of data.checks) {
       if (c.verdict !== 'differs') continue;
       const tr = document.createElement('tr');
@@ -6346,7 +6473,7 @@ function renderByHand(data) {
     const cap = document.createElement('div');
     cap.className = 'section-cap';
     cap.style.marginTop = '.9rem';
-    cap.textContent = 'Where they disagree';
+    cap.textContent = t('js.bh.cap.disagree', 'Where they disagree');
     out.appendChild(cap);
     out.appendChild(table);
   }
@@ -6360,7 +6487,7 @@ async function runByHand() {
   btn.disabled = true;
   $('byhandStatus').textContent = '';
   out.innerHTML = '<div class="lcd"><div class="placeholder">'
-    + 'writing the equations…</div></div>';
+    + t('js.bh.busy', 'writing the equations…') + '</div></div>';
   try {
     const r = await fetch('/api/byhand', {
       method: 'POST',
@@ -6380,7 +6507,8 @@ async function runByHand() {
       out.innerHTML = '';
       const div = document.createElement('div');
       div.className = 'error';
-      div.textContent = uiErr(data, 'Could not write the by-hand equations.');
+      div.textContent = uiErr(data,
+        t('js.bh.fail', 'Could not write the by-hand equations.'));
       out.appendChild(div);
       return;
     }
@@ -6388,8 +6516,7 @@ async function runByHand() {
     $('byhandStatus').textContent = data.elapsed ? data.elapsed + ' s' : '';
   } catch (e) {
     out.innerHTML = '<div class="error">'
-      + 'Could not reach the server for the by-hand equations.'
-      + '</div>';
+      + t('js.noServer', 'Could not reach the server.') + '</div>';
     showHostNotice();
   } finally {
     // Re-enabled only if the card is still live: an edit made while the

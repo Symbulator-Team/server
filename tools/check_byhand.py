@@ -52,6 +52,17 @@ from circuitbook import parse_book                          # noqa: E402
 from symbulator import ac, byhand, dc, fd                   # noqa: E402
 from symbulator.elements import parse_circuit               # noqa: E402
 
+
+def _text(message) -> str:
+    """A coded message's English (#329). The package returns codes and
+    the app puts them into words; a harness prints the English that
+    travels beside them."""
+    if not message:
+        return ""
+    if isinstance(message, dict):
+        return str(message.get("text", ""))
+    return str(message)
+
 #: A transient is solved in the s-domain and inverted back into time, so
 #: a by-hand system for it would be the s-domain one and its answers
 #: could only be compared after an inverse transform. Out of scope for
@@ -144,7 +155,7 @@ def run(method: str, only: str | None, verbose: bool,
 
             tally[verdict.verdict] = tally.get(verdict.verdict, 0) + 1
             if verdict.verdict == "differs":
-                failures.append((where, verdict.message))
+                failures.append((where, _text(verdict.message)))
                 print("  DIFFERS  " + where)
                 for check in verdict.differing:
                     print("      " + check.name + ": classic "
@@ -152,7 +163,7 @@ def run(method: str, only: str | None, verbose: bool,
                           + str(check.byhand))
             elif verdict.verdict in ("unsolved", "unsure"):
                 print("  " + verdict.verdict.upper().ljust(9) + where)
-                print("      " + verdict.message)
+                print("      " + _text(verdict.message))
             elif verbose:
                 print("  " + verdict.verdict.ljust(12) + where)
                 if verdict.verdict == "agrees":

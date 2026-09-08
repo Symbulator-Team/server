@@ -736,6 +736,15 @@ NOT_A_MESSAGE = {
     # The engine's own phrase, looked up by tSrv() in the page because
     # it carries a node name and cannot be looked up whole (#168).
     "current into port at node ",
+    # #329: the one by-hand sentence that cannot carry a code the usual
+    # way. It is the guard for `import symbulator` failing -- the server
+    # takes the package from PyPI and can briefly be a release behind
+    # this file -- so the catalogue that would supply the code is
+    # exactly what is unavailable. The dict literal beside it names 729
+    # outright, which is permanent (#199) and so safe to write out; the
+    # English here is the fallback for a page that has never seen it.
+    "This build of Symbulator has no by-hand analysis. The classic "
+    "solve above is unaffected.",
 }
 
 _MSG_WORD = re.compile(r"\b[A-Za-z][a-z]{1,}\b")
@@ -850,7 +859,9 @@ def js_calls():
 # symbulator_ui.py so a new element kind or parameter description cannot
 # arrive untranslated without saying so.
 SRV_SOURCES = ("_KIND_LABEL", "_ELEMENT_KEYS", "_TOOL_LABELS",
-               "_PORT_LABELS", "_QUANTITY_WORDS")
+               "_PORT_LABELS", "_QUANTITY_WORDS",
+               # #329: the nouns a by-hand refusal names.
+               "_BYHAND_TERMS")
 
 
 def srv_vocabulary() -> set:
