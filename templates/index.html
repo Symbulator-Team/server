@@ -3689,7 +3689,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-09 08:08 UTC</span>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-09 08:28 UTC</span>
 </footer>
 
 <script>
@@ -6271,6 +6271,17 @@ function renderEquations(system) {
     card.classList.add('inactive');
     return;
   }
+  // #348 (Roberto, 9 Sep 2026): the card arrives open, the same
+  // reasoning that opens Results when Solve is pressed -- asking to see
+  // the equations should not then cost a second click.
+  //
+  // Keyed on the card *appearing*, not on the setting changing: the tick
+  // is remembered across sessions, so a returning reader never fires a
+  // change event and a handler on that alone left them with a shut card.
+  // Keying it here also leaves a reader who collapsed the card on
+  // purpose collapsed through the next solve, since the card is already
+  // visible by then and this branch does not run.
+  if (card.hidden) $('equationsBox').open = true;
   const mjReady = window.MathJax && MathJax.typesetPromise;
   const tex = (t, plain) => {
     const div = document.createElement('div');
@@ -6343,7 +6354,7 @@ function renderEquations(system) {
 document.addEventListener('DOMContentLoaded', () => {
   const box = $('showEquations');
   if (box) box.addEventListener('change', () => {
-    renderEquations(last && last.system);
+    renderEquations(last && last.system);   // #348 opens it, in there
     refreshEntryLinks(); persistState();
   });
 });
