@@ -672,7 +672,7 @@
  "switch-to-dark-mode.c292": "Switch to dark mode",
  "symbulator-does-not-solve.291a": "Symbulator does not solve a circuit the way a student does. It stamps every element into one system and hands the whole thing to SymPy, so it never picks a mesh or draws a supernode. That is why its equations look unfamiliar next to the ones in your notebook.",
  "symbulator-home.a3cd": "Symbulator home",
- "symbulator-is-a-free.2be5": "Symbulator is a free linear circuit simulator for handheld devices. The name is a portmanteau of \"symbolic simulator\": Symbulator accepts inputs with numerical and symbolic values, and provides numerical and symbolic results. Over a quarter of a century, Symbulator has been widely considered the best symbolic simulator of linear circuits ever made for a handheld device. Symbulator is, has always been and will always be free of cost. <a href=\"https://learn.symbulator.com/9/credits#acknowledgements\" target=\"_blank\" rel=\"noopener\">Acknowledgements</a>",
+ "symbulator-is-a-free.2be5": "Symbulator is a free linear circuit simulator for handheld devices. The name is a portmanteau of \"symbolic simulator\": Symbulator accepts inputs with numerical and symbolic values, and provides numerical and symbolic results. For over a quarter of a century, Symbulator has been widely considered the best symbolic simulator of linear circuits ever made for a handheld device. Symbulator is, has always been and will always be free of charge. <a href=\"https://learn.symbulator.com/9/credits#acknowledgements\" target=\"_blank\" rel=\"noopener\">Acknowledgements</a>",
  "symbulator-is-free.9080": "Symbulator is free",
  "symbulator-logo.bc79": "Symbulator logo",
  "symbulator-notation.acaf": "Symbulator Notation",
