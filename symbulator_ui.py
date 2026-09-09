@@ -4389,8 +4389,13 @@ def byhand_ui(desc: str, domain: str, omega: str, method: str,
                     "differing": [], "svg": "",
                     "lead": None, "technique": None}
         verdict = byhand.compare(system, classic.values)
+        # #359: the LaTeX is rounded too. `value` went through `_shown`
+        # from the day the card shipped, but the typeset copy beside it
+        # was built from the exact expression -- and the card renders the
+        # LaTeX, so the Rounding setting reached everything on screen
+        # except the one box a reader actually reads.
         answers = [{"name": name, "value": _shown(value),
-                    "latex": _tex(sp.Eq(sp.Symbol(name), value,
+                    "latex": _tex(sp.Eq(sp.Symbol(name), _rounded(value),
                                         evaluate=False))}
                    for name, value in sorted(verdict.solution.items())]
         checks = [{"name": c.name, "classic": _shown(c.classic),

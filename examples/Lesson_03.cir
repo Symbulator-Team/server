@@ -810,3 +810,31 @@ image: https://learn.symbulator.com/assets/practice/tr5s-example-4-5-symbolic-50
 rounding: exact
 si: no
 units: yes
+
+[The Showing-off Problem (Expert)]
+
+es,e,0,vs
+js,0,d,is
+r1,e,m,10
+r2,a,e,20
+r3,m,0,30
+r4,b,m,40
+r5,n,m,50
+r6,c,d,60
+r7,n,d,70
+jd1,a,b,0.2vr7
+ed2,c,b,0.1ir5
+jd3,n,c,2ir1
+ed4,0,n,0.7vr6
+
+analysis: dc
+note: One dependent source of each species -- VCCS, CCVS, CCCS and VCVS -- woven through seven resistors. Find positive values of Vs and Is such that the VCCS delivers 80 W and the CCVS dissipates 0 W. Symbulator reports power consumed, so delivering 80 W is consuming -80 W. The two power constraints are quadratic, so four solutions fit; the conditions pick the one meant. First time: two unknown source values solved for at once, in Expert Mode.
+image: https://learn.symbulator.com/assets/practice/the-showing-off-problem-expert-4.png
+unknowns: vs, is
+equations: pjd1 = -80
+equations: ped2 = 0
+conditions: vs > 0
+conditions: is > 0
+rounding: 4
+si: no
+units: yes

@@ -1566,6 +1566,12 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
      preference. The sun and moon stay -- dark mode matters on a phone. */
   @media (max-width: 480px) {
     .subbar .palette-wrap { display: none; }
+    /* #360: and back again when the reader's language leaves room --
+       fitPaletteSwatch() adds the class after measuring the nav. Hidden
+       is the default on purpose: a page whose script has not run yet, or
+       has failed, must not be the one that loses the Documentation
+       link. */
+    .subbar .palette-wrap.palette-fits { display: inline-flex; }
   }
   @media (max-width: 520px) {
     .subbar .palette-wrap { width: 2.15rem; height: 2.15rem; }
@@ -3689,7 +3695,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-09 11:34 UTC</span>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-09 13:00 UTC</span>
 </footer>
 
 <script>
@@ -3908,6 +3914,7 @@ function refreshDynamic() {
   syncSettings();
   updateExpertFlag();
   syncThemeToggleLabel();
+  fitPaletteSwatch();
   refreshEntryLinks();
   paintFreshness('solve');
   if (typeof lastSolve !== 'undefined' && lastSolve) {
@@ -8017,6 +8024,64 @@ const themeToggleBtn = $('themeToggle');
 const ICON_MOON = '<svg viewBox="0 0 24 24" style="width:1.2em;height:1.2em;flex:none;color:var(--sky,#8ec7f5)" fill="currentColor" aria-hidden="true"><path d="M20.4 14.7A8.5 8.5 0 1 1 9.3 3.6a7 7 0 1 0 11.1 11.1Z"/></svg>';
 const ICON_SUN = '<svg viewBox="0 0 24 24" style="width:1.2em;height:1.2em;flex:none;color:var(--sky,#8ec7f5)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>';
 function isDarkTheme() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+// #360 (Roberto, 10 Sep 2026: "if and when the language allows for it,
+// the theme button is shown in mobile ... I know Ukrainian will not fit,
+// but in English for sure it does").
+//
+// #309 hid the swatch below 480px outright, because in six languages the
+// nav then clipped its Documentation link -- the app's only way out. That
+// was a rule about the worst language applied to every language. This
+// measures instead: show the swatch, ask whether any nav link has been
+// pushed onto a second row (the nav clips to one line-box, so a link that
+// wrapped is simply not shown), and take the swatch back if one has.
+//
+// Runs on every language change, because that is exactly when the answer
+// changes, and on resize, because the answer is a width.
+function fitPaletteSwatch() {
+  const wrap = document.querySelector('.subbar .palette-wrap');
+  const nav = document.querySelector('.subbar nav');
+  if (!wrap || !nav) { return; }
+  if (window.innerWidth > 480) { wrap.classList.remove('palette-fits'); return; }
+  // A hidden pane reports every width as 0, and measuring then would
+  // withhold the swatch on a screen that has room for it. Leave the last
+  // answer standing rather than compute a wrong one.
+  if (!nav.clientWidth) { return; }
+
+  // How many links the nav is clipping right now. The nav is capped at
+  // one line-box, so anything that wrapped sits below the first row.
+  const clipped = () => {
+    const kids = Array.prototype.filter.call(
+      nav.children, el => el.offsetParent !== null);
+    if (!kids.length) { return 0; }
+    const first = kids[0].offsetTop;
+    return kids.filter(el => el.offsetTop > first).length;
+  };
+
+  // The test is not "does everything fit" but "does the swatch cost a
+  // link" -- measured both ways. At 320px the Documentation link is
+  // clipped whether the swatch is there or not, and withholding it then
+  // buys the reader nothing; at 390px in English it costs nothing either.
+  // Only where showing it is what pushes a link off does it stay away,
+  // which is the Ukrainian case #309 was really about.
+  wrap.classList.remove('palette-fits');
+  void nav.offsetHeight;
+  const without = clipped();
+  wrap.classList.add('palette-fits');
+  void nav.offsetHeight;
+  if (clipped() > without) { wrap.classList.remove('palette-fits'); }
+}
+
+window.addEventListener('resize', () => {
+  clearTimeout(window._paletteFitTimer);
+  window._paletteFitTimer = setTimeout(fitPaletteSwatch, 120);
+});
+
+// The webfonts land after the first layout and every label changes width
+// when they do, so the answer taken at parse time is not the final one.
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(fitPaletteSwatch);
+}
+
 function syncThemeToggleLabel() {
   const dark = isDarkTheme();
   themeToggleBtn.innerHTML = dark ? ICON_SUN : ICON_MOON;
