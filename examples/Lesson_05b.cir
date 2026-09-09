@@ -207,6 +207,24 @@ si: no
 units: yes
 
 
+[AS2's Practice Problem 5.7 (checking the design)]
+
+e1,d,0,v1
+e2,c,0,v2
+r1,d,a,10'k
+r3,c,b,10'k
+r2,a,o,40'k
+r4,b,0,40'k
+o,b,a,o
+
+analysis: dc
+note: The same design asked for a gain of 4: the two factors give r2 = 4*r1 and r4 = 4*r3, which at r1 = r3 = 10k is 40k and 40k. vo comes back 4*v2 - 4*v1, as required.
+image: https://learn.symbulator.com/assets/practice/as2s-figure-5-24-difference-or-differential-34.jpg
+rounding: exact
+si: no
+units: yes
+
+
 [AS2's Practice Problem 5.8 (Instrumentation)]
 
 e1,1,0,8.
