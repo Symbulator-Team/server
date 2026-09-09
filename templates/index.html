@@ -2963,6 +2963,22 @@ units: yes</pre>
 
   <h2 class="group-h" data-i18n="o-u-t-p.9870"><span class="bracket">[</span>   O U T P U T S   <span class="bracket">]</span></h2>
 
+  <!-- #176. Hidden unless "Show equations" is ticked AND a solve
+       produced a system; both, so the card never appears empty.
+       #345 (Roberto, 9 Sep 2026): it sits directly *above* Results.
+       The system is what produced the answers, so it comes before them
+       rather than after; and it sits above the "Showing" picker too,
+       since that picker chooses which solution's answers to display
+       and the system is the same for every one of them. -->
+  <div class="card inactive" id="equationsCard" hidden>
+    <details id="equationsBox">
+      <summary class="results-h section-toggle" data-i18n="equations.45de">Equations</summary>
+      <div id="equationsOut">
+        <div class="lcd"><div class="placeholder" data-i18n="no-analysis-run-yet.4ec6">— no analysis run yet —</div></div>
+      </div>
+    </details>
+  </div>
+
   <div id="solutionPick" class="solution-pick" hidden>
     <label for="solutionSel">Showing</label>
     <select id="solutionSel"></select>
@@ -2991,18 +3007,6 @@ units: yes</pre>
           <button type="button" id="loadEquivGo" data-i18n="proceed.02ed">Proceed</button>
           <button type="button" id="loadEquivNo" class="linkish" style="margin-left:.6rem" data-i18n="cancel.77df">Cancel</button>
         </div>
-      </div>
-    </details>
-  </div>
-
-  <!-- #176. Hidden unless "Show equations" is ticked AND a solve
-       produced a system; both, so the card never appears empty. It sits
-       directly under Results because it explains them. -->
-  <div class="card inactive" id="equationsCard" hidden>
-    <details id="equationsBox">
-      <summary class="results-h section-toggle" data-i18n="equations.45de">Equations</summary>
-      <div id="equationsOut">
-        <div class="lcd"><div class="placeholder" data-i18n="no-analysis-run-yet.4ec6">— no analysis run yet —</div></div>
       </div>
     </details>
   </div>
@@ -3685,7 +3689,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-09 06:54 UTC</span>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-09 08:28 UTC</span>
 </footer>
 
 <script>
@@ -6267,6 +6271,17 @@ function renderEquations(system) {
     card.classList.add('inactive');
     return;
   }
+  // #348 (Roberto, 9 Sep 2026): the card arrives open, the same
+  // reasoning that opens Results when Solve is pressed -- asking to see
+  // the equations should not then cost a second click.
+  //
+  // Keyed on the card *appearing*, not on the setting changing: the tick
+  // is remembered across sessions, so a returning reader never fires a
+  // change event and a handler on that alone left them with a shut card.
+  // Keying it here also leaves a reader who collapsed the card on
+  // purpose collapsed through the next solve, since the card is already
+  // visible by then and this branch does not run.
+  if (card.hidden) $('equationsBox').open = true;
   const mjReady = window.MathJax && MathJax.typesetPromise;
   const tex = (t, plain) => {
     const div = document.createElement('div');
@@ -6339,7 +6354,7 @@ function renderEquations(system) {
 document.addEventListener('DOMContentLoaded', () => {
   const box = $('showEquations');
   if (box) box.addEventListener('change', () => {
-    renderEquations(last && last.system);
+    renderEquations(last && last.system);   // #348 opens it, in there
     refreshEntryLinks(); persistState();
   });
 });
