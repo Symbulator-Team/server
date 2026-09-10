@@ -62,8 +62,17 @@ import symbulator.schematic as sch               # noqa: E402
 from circuitbook import parse_book               # noqa: E402
 
 EXAMPLES = os.path.join(SERVER, "examples")
-OUT = (sys.argv[1] if len(sys.argv) > 1
-       else os.path.join(tempfile.gettempdir(), "symbulator_schematics"))
+_ARG = sys.argv[1] if len(sys.argv) > 1 else ""
+if _ARG.startswith("-"):
+    # The one positional this takes is a directory to write into, so an
+    # option-looking argument would be created as one: `--help` once wrote
+    # the whole 3.5 MB gallery into a folder of that name, and a bulk
+    # `git add` then committed it.
+    sys.exit("usage: py tools/review_schematics.py [output directory]\n"
+             "  Renders every .cir entry into a browsable gallery and\n"
+             "  checks each drawing. Defaults to a folder under the\n"
+             "  system temp directory. There are no options.")
+OUT = _ARG or os.path.join(tempfile.gettempdir(), "symbulator_schematics")
 
 # --- instrumentation: count wires through bodies / triangles ---------
 # The canvas keeps element segments (with their body half-lengths) and
