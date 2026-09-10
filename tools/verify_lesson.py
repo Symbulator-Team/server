@@ -63,6 +63,11 @@ def names_in(text):
 
 
 def main():
+    # The positional is a book name, so an option-looking argument would
+    # be read as one and fail obscurely on `examples/--help.cir`.
+    if len(sys.argv) < 2 or sys.argv[1].startswith("-"):
+        sys.exit("usage: py tools/verify_lesson.py Lesson_03 "
+                 "[--only N] [--quiet]")
     name = sys.argv[1]
     only = None
     if "--only" in sys.argv:
