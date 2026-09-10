@@ -78,7 +78,25 @@ OUT = _ARG or os.path.join(tempfile.gettempdir(), "symbulator_schematics")
 # The canvas keeps element segments (with their body half-lengths) and
 # op-amp triangle boxes precisely so a harness can prove no wire
 # violates them; the patched flush below does the proving.
-ANALYSIS = {"bad": 0}
+ANALYSIS = {"bad": 0, "inside": 0}
+
+# The four-terminal blocks, captured as they are drawn: a two-port or a
+# transformer emits its box through `raw`, with its bounds, and the
+# canvas keeps no other record of the rectangle.
+_orig_raw = sch._Canvas.raw
+
+
+def _patched_raw(self, s, *bounds):
+    if s.lstrip().startswith("<rect") and len(bounds) == 2:
+        (x0, y0), (x1, y1) = bounds
+        if not hasattr(self, "_blocks"):
+            self._blocks = []
+        self._blocks.append((x0, y0, x1, y1))
+    return _orig_raw(self, s, *bounds)
+
+
+sch._Canvas.raw = _patched_raw
+
 _orig_flush = sch._Canvas._flush_wires
 
 
@@ -125,6 +143,24 @@ def _patched_flush(self):
                         continue
                     bad += 1
     ANALYSIS["bad"] = bad
+    # An *element* inside another element's body, which is a different
+    # fault from a wire crossing one and was not checked at all until
+    # 10 Sep 2026. Thesis Problem 040 drew a 50 ohm resistor within the
+    # two-port block, its label over the block's own parameters, and
+    # every check here passed it: the box is `fill="none"` and registers
+    # ink only on its four edges -- deliberately, so the block's name and
+    # parameters may sit inside -- so nothing saw an element land there.
+    # A block's interior is free space for *labels*, never for elements.
+    inside = 0
+    boxes = [b for b in getattr(self, "_blocks", [])] + list(self.obstacles)
+    for (bx0, by0, bx1, by1) in boxes:
+        for (sx1, sy1, sx2, sy2, half) in self.esegs:
+            if half <= 0:
+                continue
+            mx, my = (sx1 + sx2) / 2.0, (sy1 + sy2) / 2.0
+            if bx0 + 1 < mx < bx1 - 1 and by0 + 1 < my < by1 - 1:
+                inside += 1
+    ANALYSIS["inside"] = inside
     # Kept for the clearance check: _flush_wires merges and empties the
     # list, so the harness has to take its copy here.
     ANALYSIS["wires"] = list(self.wires)
@@ -296,6 +332,9 @@ def main():
                         novl, "; ".join("%r/%r" % p for p in pairs[:6])))
                 if nbad:
                     issues.append("%d wire-through-body" % nbad)
+                if ANALYSIS.get("inside"):
+                    issues.append("%d element(s) inside another element's "
+                                  "body" % ANALYSIS["inside"])
                 if nhops > 3:
                     issues.append("%d hops" % nhops)
                 if w > 1600:
