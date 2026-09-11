@@ -2044,7 +2044,11 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
      currentColor -- so it takes the page's ink and works in both themes
      without being redrawn. Width is capped rather than stretched: a
      two-element circuit blown up to the full card looks absurd. */
-  #schematicOut svg { max-width: 100%; height: auto; color: var(--ink); }
+  /* The drawing's reference quantities -- a dependent source's control,
+     its arrow and signs -- are set in the book's blue (#423, Nilsson &
+     Riedel's #005B7F), lightened for a dark ground. */
+  #schematicOut svg { max-width: 100%; height: auto; color: var(--ink); --schematic-ref: #005b7f; }
+  html[data-theme="dark"] #schematicOut svg { --schematic-ref: #6cc0e8; }
   #schematicOut { overflow-x: auto; text-align: center; }
   #schematicOut:not(:empty) { margin-top: .9rem; }
   .schematic-line { margin: .35rem 0 0; font-size: .92rem; }
@@ -3735,7 +3739,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-11 13:32 UTC</span>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-11 15:59 UTC</span>
 </footer>
 
 <script>

@@ -198,12 +198,13 @@ TEXT_RE = re.compile(
     r'<text[^>]*x="([-\d.]+)" y="([-\d.]+)" text-anchor="(\w+)">(.*?)</text>')
 TSPAN_RE = re.compile(r'<tspan(?P<attrs>[^>]*)>(?P<txt>[^<]*)</tspan>')
 VIEWBOX_RE = re.compile(r'viewBox="([-\d.]+) ([-\d.]+) ([-\d.]+) ([-\d.]+)"')
-CHAR_W = 7.3   # rough advance width for the 13px UI font
-# Ink extents come from schematic.py, which measured them rather than
-# assuming glyphs sit on the baseline -- the assumption that let a value
-# like `-4j` and a node called `ag` hang into a symbol unnoticed.
+# Widths come from schematic.py's own per-character table for the label
+# face (#423), so the box a label is checked against is the box it was
+# bounded at. Ink extents come from there too, which measured them
+# rather than assuming glyphs sit on the baseline -- the assumption
+# that let a value like `-4j` and a node called `ag` hang into a symbol
+# unnoticed.
 TEXT_H = sch.LABEL_ASCENT
-SUB_W = CHAR_W * sch.SUB_SCALE
 SUB_DROP = sch.SUB_DY
 
 
@@ -219,7 +220,7 @@ def text_boxes(svg):
     for m in TEXT_RE.finditer(svg):
         x, y, anchor = float(m.group(1)), float(m.group(2)), m.group(3)
         runs = _runs(m.group(4))
-        w = sum(len(t) * (SUB_W if sub else CHAR_W) for t, sub in runs)
+        w = sum(sch._text_width(t, sub) for t, sub in runs)
         s = "".join(t for t, _ in runs)
         if anchor == "middle":
             x0 = x - w / 2
