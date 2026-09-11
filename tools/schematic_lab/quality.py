@@ -160,6 +160,27 @@ def measure(desc):
         return any(x0 - 1 <= p[0] <= x1 + 1 and y0 - 1 <= p[1] <= y1 + 1
                    for x0, y0, x1, y1 in keepout)
 
+    # The heights an op-amp's own three leads sit at: the two pins, at
+    # `mid ± h/4`, and the output axis at `mid`. Since #375 both input
+    # leads turn on one column, so their turns face each other across
+    # `h/2` = 29px -- the symbol's fixed pin span, which no layout
+    # choice can change. Two ends that are both at one op-amp's lead
+    # heights are that symbol's geometry, not a corner the drawing
+    # missed. Measured before believing it: of the 24 joins this
+    # exclusion removes, **every one is 29.0 or 14.5px** and none is
+    # any other distance.
+    pin_ys = []
+    for x0, y0, x1, y1 in cap["obstacles"]:
+        mid, hh = (y0 + y1) / 2.0, y1 - y0
+        pin_ys.append({mid - hh / 4.0, mid, mid + hh / 4.0})
+
+    def _same_opamp_leads(a, b):
+        if abs(a[0] - b[0]) > 0.5:
+            return False
+        return any(any(abs(a[1] - y) < 0.6 for y in ys)
+                   and any(abs(b[1] - y) < 0.6 for y in ys)
+                   for ys in pin_ys)
+
     ends = []                       # (point, id of the line it ends)
     line_ends = {}                  # line id -> its two endpoints
     for k, (x0, x1, y) in enumerate(hor + ehor):
@@ -195,6 +216,8 @@ def measure(desc):
                 continue                      # two pins on one face
             if _meet(ka, kb):
                 continue                      # they already share a corner
+            if _same_opamp_leads(a, b):
+                continue                      # the symbol's pin spacing
             near.append((round(d, 1), a, b))
     # One pair per place, not one per pair of coincident ends.
     seen, near_u = set(), []
