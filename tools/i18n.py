@@ -858,7 +858,8 @@ def js_calls():
 # page looks these up instead, through tSrv(). `check` re-reads them from
 # symbulator_ui.py so a new element kind or parameter description cannot
 # arrive untranslated without saying so.
-SRV_SOURCES = ("_KIND_LABEL", "_ELEMENT_KEYS", "_TOOL_LABELS",
+SRV_SOURCES = ("_KIND_LABEL", "_LABEL_KIND", "_ELEMENT_KEYS",
+               "_TOOL_LABELS",
                "_PORT_LABELS", "_QUANTITY_WORDS",
                # #329: the nouns a by-hand refusal names.
                "_BYHAND_TERMS")

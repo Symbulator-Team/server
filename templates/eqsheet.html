@@ -37,7 +37,7 @@
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "03bdfe1033";
+window.SYMB_I18N_V = "51949e6467";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -1017,9 +1017,11 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   }
 
   /* The dot between Clear and the language (#201). The separator this
-     design already uses -- the footer's links, "DC · real" -- so it is
-     punctuation rather than furniture. Sky at 55% keeps it under the
-     labels it separates. */
+     design already uses -- the footer's links -- so it is punctuation
+     rather than furniture. Sky at 55% keeps it under the labels it
+     separates. (It used to cite the mode buttons, "DC · real", as the
+     other precedent; #399 renamed those to Real and Complex, so the
+     footer carries the example alone now.) */
   .subbar .subbar-dot {
     color: var(--sky, #8ec7f5); opacity: .55; flex: none;
     font-size: .875rem; line-height: 1.4; user-select: none;
@@ -1113,8 +1115,113 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   .mode button{border:0;border-radius:0;background:transparent;color:var(--banner-sub,#b7c3d6);
     font:600 .85rem var(--sans);padding:0 .9rem;cursor:pointer;height:100%}
   .mode button.on{background:var(--sky);color:var(--navy)}
-  main{display:grid;grid-template-columns:1fr 1.15fr;gap:1.25rem;padding:1.5rem;max-width:76rem;margin:0 auto}
-  @media(max-width:60rem){main{grid-template-columns:1fr}}
+  /* #394: the page is wider and the equations get the larger share --
+     they were the 1fr against the variable sheet's 1.15fr, and an
+     equation is a line of mathematics that cannot be wrapped usefully,
+     while a variable row is cells that can. The two stay side by side
+     on a wide screen on purpose: the sheet's whole loop is ticking an
+     equation and watching the variables answer, and stacking puts the
+     answer off-screen from the tick. They stack below 68rem (was 60),
+     because both sides are wider now and a cramped pair of columns is
+     worse than one full-width column. */
+  /* #396: one column, equations above and variables below -- Roberto's
+     own suggestion at #394, which I declined then on the grounds that
+     the sheet's loop is ticking an equation and watching the variables
+     answer, and stacking puts the answer off-screen from the tick.
+
+     Measurement overruled that. Side by side at 92rem the variable
+     table wants 721px and its column gives 613, so with a range open
+     the "to" field sat 100px past its section and 61px past the window
+     -- a field the reader had just asked to fill, off the screen. Both
+     tables grew this evening: Restriction became a full last column
+     (#391) and the equations gained "What it is" (#393). Neither fits a
+     half any more, and a tick whose answer needs a scroll beats a field
+     that cannot be reached at all. */
+  /* #412: less air at the page's edges, so the cards sit closer to them
+     and the tables get the width instead. The top and bottom keep their
+     1.25rem -- it is the sides that were spending 48px on nothing. */
+  main{display:grid;grid-template-columns:1fr;gap:1.25rem;
+    padding:1.25rem .35rem;max-width:104rem;margin:0 auto}
+  /* #401: side by side once there is room for both, stacked when there
+     is not. #396 stacked unconditionally, which was right about the
+     problem and wrong as a rule -- on a wide screen the pair fits with
+     room to spare and stacking wastes it.
+
+     The numbers are measured, not chosen: with a range open the
+     variable table needs 721px and the equation table 229px, so the
+     pair plus the gap and the page padding wants about 1018px. The
+     breakpoint sits above that, and the right column is given a floor
+     of 45rem so the variable table keeps its width and the equations
+     take what is left -- the reverse of letting both halve and neither
+     fit. Below the breakpoint they stack; either way both tables can
+     still scroll sideways, which is the guarantee that nothing ends up
+     unreachable. */
+  @media(min-width:76rem){
+    /* #416: the variable sheet's floor is what it actually needs. At
+       1920px the old 45rem/1.15fr split handed it 771px for a table
+       that wants 783 in Complex mode with a range set -- so the last
+       column was clipped by 14px and the range chip sat 2px from the
+       card's edge. Measured on the reported window, not guessed. The
+       page cap went up with it, from 92rem to 104rem: a 1920px screen
+       was leaving 450px unused while the table inside was short. */
+    /* The variable sheet takes the width its table asks for and the
+       equations take the rest, rather than a fixed share each. That is
+       what makes Real and Complex different sizes with no rule per
+       mode: the mode changes the columns, the columns change the table,
+       and the grid follows. */
+    /* #419: both cards size to their own content and the pair is
+       centred, rather than one hugging and the other taking a fixed
+       share. #418 fixed the variable sheet and left the equation list
+       stretched over whatever was left, which is where the dead space
+       moved to -- short equations in a wide card.
+
+       `minmax(0,max-content)` is the whole trick: max-content so a card
+       ends where its table ends, and a floor of 0 so a card can still
+       be squeezed when the pair is wider than the page, at which point
+       the tables scroll as before. `justify-content:center` puts the
+       leftover space outside the cards, where it reads as margin
+       instead of as a hole in a card. */
+    main{grid-template-columns:minmax(0,max-content) minmax(0,max-content);
+      justify-content:center}
+  }
+  /* #395: the load-a-file box spans both columns and sits under them.
+     `[hidden]` needs saying because the rule above gives every section a
+     grid placement -- the #249 trap, where an author rule beats the
+     browser's own `[hidden] { display: none }` and the element stays on
+     screen while `el.hidden` reports true. */
+  /* #400: quiet, and out of the way -- it is a diagnostic, not part of
+     the sheet. */
+  .eqfoot{max-width:104rem;margin:0 auto;padding:0 .35rem 1.25rem;
+    font-size:12px;color:var(--ink-3,#8b96a5);text-align:right}
+  /* #407: the fold's summary is this card's heading bar -- same
+     padding, same type, same rule beneath as `section>h2`, so the
+     triangle sits where every other heading's text starts instead of
+     against the card's edge. The bar loses its bottom rule when shut,
+     since there is nothing under it to divide. */
+  /* The subcard: inset from the list's edge on every side, with its own
+     rule, so it reads as a part of the card rather than a seam in it. */
+  /* #414: a top margin, so the heading is not pressed against the last
+     row of the table above it. */
+  /* #419: the syntax note wraps instead of setting the card's width.
+     Once a card is sized by its content (#418), the widest thing in it
+     wins -- and #417 had just turned that note into a long sentence, so
+     the equation card was being stretched by prose rather than by the
+     equations. A max-width caps what it contributes. */
+  #synhint{display:block;max-width:32rem;line-height:1.5}
+  .subcard{margin:1.4rem 1rem 1rem;border:1px solid var(--line);border-radius:8px;
+    overflow:hidden;background:var(--card)}
+  .editsum{cursor:pointer;margin:0;padding:.6rem 1rem;font-size:.8rem;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(var(--card),var(--card-2));
+    user-select:none}
+  .editsum:hover{color:var(--ink)}
+  #editbox:not([open]) .editsum{border-bottom:0}
+  #editbox .pad{padding-top:.8rem}
+  #loadbox{grid-column:1/-1}
+  #loadbox[hidden]{display:none}
+  #loadbox .toolbar{gap:.6rem;align-items:center;flex-wrap:wrap}
+  #loadFile{font:13px var(--sans);color:var(--ink-2);max-width:100%}
   .tagline{max-width:76rem;margin:1.1rem auto -0.4rem;padding:0 1.5rem;
     font-size:.92rem;color:var(--ink-2)}
   section{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
@@ -1130,20 +1237,137 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   .primary:hover{background:var(--navy-2)}
   .ghost{background:transparent;color:var(--accent-text, var(--accent));border:1px solid var(--line)}
   table{width:100%;border-collapse:collapse;font-size:.95rem}
+  /* #409: headings centred over their columns (Roberto, 11 Sep 2026).
+     The cells stay left-aligned: a column of equations or of numbers
+     reads down its left edge, and centring those would make every row
+     start somewhere different. Only the labels above them move.
+
+     The first column's heading is the tick box's, which has no text, so
+     nothing is centred there either way. */
   th{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);
-    text-align:left;padding:.45rem .6rem;border-bottom:1px solid var(--line)}
+    text-align:center;padding:.45rem .6rem;border-bottom:1px solid var(--line)}
   td{padding:.4rem .6rem;border-bottom:1px solid var(--line);vertical-align:middle}
+  /* #413: the right-hand column keeps clear of the card's edge. When the
+     table is at its minimum width there is no slack to borrow, so the
+     last cell has to carry the gap itself -- otherwise whatever sits in
+     it (the range chip, most visibly) ends flush against the border. */
+  #vtab td:last-child,#vtab th:last-child,
+  #rtab td:last-child,#rtab th:last-child{padding-right:1rem}
   td.eq{font-family:var(--mono);font-size:.9rem}
   tr.off td{color:var(--ink-3)}
   input.val{width:6.2rem;font:14px var(--mono);padding:.35rem .5rem;color:var(--ink);
     border:1px solid var(--line);border-radius:5px;background:var(--lcd)}
   input.val:disabled{background:var(--rule-2);color:var(--ink-3)}
   select.pre{font:13px var(--mono);width:3.4rem}
+  /* #410: the sheet's own menus a size down -- Known/Unknown,
+     Complex/Real only, None/Positive/Range. They are labels on a control
+     rather than content, and at 14px they were setting the width of
+     three of the eight columns. Scoped to the table, so the Rounding
+     menu in the status bar and the mode buttons keep their size.
+
+     The 16px floor under the narrow media query still wins on a phone,
+     where anything smaller makes iOS zoom the page on focus. */
+  #vtab select{font-size:12.5px;padding:.25rem .3rem}
   /* The Restriction cell (#131): the range's two ends sit beside the
-     dropdown, small, and only while Range… is chosen. */
+     dropdown, and only while Range… is chosen.
+
+     #391: they are the size of an ordinary value box now, not the
+     3.8rem/13px they were (Roberto, 11 Sep 2026). They were made small
+     because the column sat between Status and the value, where widening
+     them pushed the number a reader is reading off to the right; the
+     column is at the far right now, so the reason is gone and a range
+     end is typed into the same box as every other number. The cell is
+     `nowrap`, so it grows to hold them, and the table already scrolls
+     sideways on a narrow screen. */
+  /* #393: what an imported equation is. Quiet, because it is an aid to
+     reading the system rather than part of it -- the mathematics stays
+     the loudest thing in the row. Empty for a hand-typed sheet. */
+  /* #398: it wraps inside a cap now (Roberto: "text can wrap around"),
+     so a long sentence costs height rather than width. */
+  td.what{color:var(--ink-2);font-size:12px;line-height:1.35;
+    white-space:normal;max-width:18rem}
+  /* #398: a table wider than its section must stay reachable. The
+     sideways scroll used to exist only under the narrow media query, so
+     on a wide screen anything past the edge was simply gone -- which is
+     how a range field a reader had just opened became unreachable.
+     `display:block` is what makes overflow-x apply to a table at all. */
+  /* #418: each table is as wide as it needs and no wider. `display:block`
+     is what lets a table scroll sideways at all; `max-content` is what
+     stops that block filling its column, so the card ends where the
+     table ends. In Real mode the sheet loses Domain, Re and Im, and the
+     card narrows with it instead of leaving a third of itself blank --
+     which is what Roberto marked with a red X. `max-width` is the
+     escape: when the table is wider than the space it goes back to
+     filling and scrolling. */
+  #vtab,#rtab{display:block;overflow-x:auto;max-width:100%}
+  /* The variable sheet is the one that changes shape with the mode, so
+     it is the one sized to its content -- and centred in whatever the
+     card ends up being. The card's width is set by the status bar
+     underneath (Solve, Interactive Mode, Rounding), which is wider than
+     a Real-mode table; centring is what keeps the columns from sitting
+     against the left edge with the slack all on the right.
+
+     The equation list keeps filling its card: it is a list read down
+     the left, and centring it would leave every row starting in a
+     different place from the heading above it. */
+  #vtab,#rtab{width:max-content;margin-inline:auto}
   td.rstcell{white-space:nowrap}
-  .rng{font-size:12px;color:var(--ink-2)}
-  input.val.rlim{width:3.8rem;padding:.25rem .35rem;font-size:13px}
+  /* #396: the range's two ends sit on their own line, under the menu,
+     instead of beside it. With Restriction moved to the last column
+     (#391) and the ends grown to a full value box (#391 again), the row
+     needed about 230px more than its half of the page had, and a table
+     that scrolls sideways put the two fields a reader had just asked
+     for past the right edge -- reported from the live site.
+
+     `display:block` here is an author rule, so it beats the browser's
+     own `[hidden] { display: none }` and would leave the fields on
+     screen while `rng.hidden` reads true -- the #249 trap exactly.
+     Hence the second line, which `check_hidden_guards.py` is what
+     watches for. */
+  .rng[hidden]{display:none}
+  /* #404: the range's ends at 4rem. #391 grew them from 3.8rem to a
+     full 6.2rem value box, which was right when Restriction had the row
+     to itself; on their own line under the menu they then stretched the
+     column to 218px and read as two oversized empty boxes -- reported
+     from the live site with a screengrab. 4rem is a hair wider than
+     they were before #391 and holds the five or six characters a bound
+     actually carries. */
+  input.val.rlim{width:5rem;padding:.3rem .4rem}
+  /* #406: the ends live in a popover, so the column is sized by the menu
+     and the chip alone. That is what lets the fields be comfortable
+     again -- 5rem here, where #404 had squeezed them to 4rem to keep the
+     row on screen. The popover is positioned, so it takes no space in
+     the table at all; `td.rstcell` is the containing block. */
+  td.rstcell{position:relative}
+  .rngchip{font:12px var(--mono);margin-left:.4rem;padding:.15rem .45rem;
+    border:1px dashed var(--line);border-radius:5px;background:transparent;
+    color:var(--ink-2);cursor:pointer}
+  .rngchip:hover{border-style:solid;color:var(--ink)}
+  /* Fixed, and placed by `placeRange()` -- see the note there. Absolute
+     put it inside the table's scroll box, where a cell at the right-hand
+     end carried it off the visible edge. */
+  .rng{position:fixed;z-index:60;
+    display:flex;gap:.5rem;align-items:center;white-space:nowrap;
+    padding:.5rem .6rem;border:1px solid var(--line);border-radius:7px;
+    background:var(--card);
+    /* #408: it has to read as floating *above* the sheet, not as part of
+       it. One shadow cannot do that in both themes -- a dark shadow is
+       invisible on a dark ground, which is why this looked flat in dark
+       mode. So: a real drop shadow on light, and on dark a lit rim plus
+       a soft halo in the page's own sky, which is what "raised" looks
+       like when the background is darker than the shadow could be. */
+    box-shadow:0 10px 28px rgba(15,23,32,.22), 0 2px 6px rgba(15,23,32,.14)}
+  html[data-theme="dark"] .rng{
+    border-color:var(--sky,#8ec7f5);
+    box-shadow:0 0 0 1px var(--sky,#8ec7f5), 0 0 22px rgba(142,199,245,.20),
+      0 14px 34px rgba(0,0,0,.60)}
+  .rng label{display:flex;gap:.3rem;align-items:center;margin:0;
+    font-weight:400;font-size:12px;color:var(--ink-2)}
+  .rngdone{font-size:12px;padding:.2rem .55rem}
+  /* The two words that label the ends are quieter and tighter than the
+     boxes they introduce, so the line reads as one control rather than
+     four things in a row. */
+
   select{font:14px var(--sans);padding:.32rem .4rem;border:1px solid var(--line);
     border-radius:5px;background:var(--card);color:var(--ink)}
   .status{padding:.6rem 1rem;font-size:.9rem;border-top:1px solid var(--line);
@@ -1163,6 +1387,23 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
   .hint{font-size:.85rem;color:var(--ink-2);margin:.5rem 0 0}
   .toolbar{display:flex;gap:.6rem;margin-top:.7rem;align-items:center;flex-wrap:wrap}
   .jlab{font:12px var(--mono);color:var(--ink-2)}
+  /* #404: in Complex mode a row carries two number boxes instead of
+     one, plus Domain, and that is what pushes Restriction off the right
+     edge -- reported from the live site with a screengrab. The pair is
+     narrower than the single DC box for that reason: 4.8rem each saves
+     about 44px a row, which is the difference between Restriction being
+     readable and being cut in half.
+
+     4.8rem holds seven mono characters at this size, which covers the
+     values these fields actually carry (70.7107, -0.004, 595.5). A
+     longer one is not lost -- the box scrolls, and the Result column
+     beside it shows the full value anyway.
+
+     `nowrap` on the imaginary cell keeps the j beside its box rather
+     than stacked above it, which is what the narrower box makes room
+     for. */
+  input.val[data-re],input.val[data-im]{width:4.3rem}
+  td.imcell{white-space:nowrap}
   @media(max-width:520px){
     /* The section clips at its rounded corners (overflow:hidden), so on a
        phone the variable table's rightmost columns -- Value/guess and SI
@@ -1246,7 +1487,7 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
            pair alone is 186px — and at 375px the row wrapped, taking the
            Tutorial link with it. Long form above 480px, "DC" / "AC"
            below, where the pair itself says what the letters mean. -->
-      <button id="mdc" class="on" data-i18n="dc-realdc.addd"><span class="subbar-lbl">DC · real</span><span class="subbar-lbl-short">DC</span></button><button id="mac" data-i18n="ac-phasorac.38d8"><span class="subbar-lbl">AC · phasor</span><span class="subbar-lbl-short">AC</span></button>
+      <button id="mdc" class="on" data-i18n="realreal.de5d"><span class="subbar-lbl">Real</span><span class="subbar-lbl-short">Real</span></button><button id="mac" data-i18n="complexcplx.f5cd"><span class="subbar-lbl">Complex</span><span class="subbar-lbl-short">Cplx</span></button>
     </div>
     <!-- #186: the same control the app carries, in the same place and
          the same class, so the two properties read alike. -->
@@ -1273,14 +1514,43 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
 </div>
 </div>
 
-<p class="tagline" data-i18n="an-interactive-numerical-sol.9a63">An interactive numerical solver to explore your circuit's
+<p class="tagline" data-i18n="an-interactive-numerical-sol.f3b3">An interactive numerical solver to explore your circuit's
 equations and variables. Arrives preloaded with the solved circuit's equation
-system and results — untick an equation, flip a Known to Unknown, and see how
-the results change.</p>
+system and results.</p>
 
 <main>
   <section>
     <h2 data-i18n="list-of-equations.21d7">List of Equations</h2>
+    <!-- #391: the ticked list first, the editable text under it
+         (Roberto, 11 Sep 2026). The sheet arrives preloaded far more
+         often than it is typed into, so what a reader wants at the top
+         of this section is the list they are about to tick, not the box
+         they are not going to edit. Nothing is keyed on the order --
+         `doParse` reads `#rules` and fills `#rtab` by id -- so this is a
+         move of the markup alone. On a cold arrival the table is still
+         `hidden` and the box is the only thing in the section, which is
+         what it was before. -->
+    <table id="rtab" hidden>
+      <thead><tr><th></th><th data-i18n="equation.295e">Equation</th><th data-i18n="what-it-is.f8c9">What it is</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <!-- #402: the editable text folds away (Roberto, 11 Sep 2026:
+         "add the option to close the space where the editable equations
+         live"). A sheet that arrived preloaded is read and ticked far
+         more often than it is typed into, and the box is the tallest
+         thing that is not the system. The choice sticks, so closing it
+         once closes it for good; `syncLoadBox` still reads the textarea
+         inside it, which works whether the fold is open or shut. -->
+    <!-- #407: a subcard at the foot of the list, not a card beside it.
+         It began as a bare <details>, whose triangle sat hard against
+         this card's edge; the fix of promoting it to its own <section>
+         was worse, because since #401 `main` is a two-column grid above
+         76rem, so it took the column next to the list instead of the
+         space beneath it. Nested and inset is what was wanted: part of
+         the list it belongs to, with its own rule and its own heading
+         bar so the triangle lines up with text rather than an edge. -->
+    <details id="editbox" class="subcard" open>
+      <summary class="editsum" data-i18n="edit-the-equations.2dac">Edit the equations</summary>
     <div class="pad">
       <!-- #185: empty on purpose. This box used to ship a worked
            example in it -- a voltage divider and a thermal equation --
@@ -1299,10 +1569,7 @@ the results change.</p>
       </div>
       <div id="perr" class="msg bad"></div>
     </div>
-    <table id="rtab" hidden>
-      <thead><tr><th></th><th data-i18n="equation.295e">Equation</th><th data-i18n="variables.ac01">Variables</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    </details>
   </section>
 
   <section>
@@ -1329,7 +1596,46 @@ the results change.</p>
       <div class="resid" id="resid"></div>
     </div>
   </section>
+
+  <!-- #395: load a saved system by picking the file, for readers who
+       would rather not drag one. At the bottom and **only while the
+       sheet is empty** (Roberto, 11 Sep 2026): once there is a system on
+       screen this is the one control that could silently throw it away,
+       and an empty sheet is the only moment it has anything to offer.
+       Dropping a file anywhere on the page still works and always did --
+       this is a second door, not a replacement.
+
+       It spans both columns, so it sits under the pair rather than
+       inside either one. -->
+  <section id="loadbox" hidden>
+    <div class="pad">
+      <h2 data-i18n="load-a-saved-system.d7b7">Load a saved system</h2>
+      <p class="hint" style="margin:.3rem 0 .8rem" data-i18n="pick-a-numerical-system.c943">
+        Pick a <code>numerical_system.json</code> file that the app saved,
+        and load it here. You can also drop the file anywhere on this page.
+      </p>
+      <div class="toolbar">
+        <input type="file" id="loadFile" accept=".json,application/json">
+        <button class="primary" id="loadBtn" data-i18n="load-system.a49c">Load system</button>
+      </div>
+      <div id="loaderr" class="msg bad"></div>
+    </div>
+  </section>
 </main>
+
+<!-- #400: which build this is. The app's footer has carried one since
+     the beginning and this page never did, so "is my change missing
+     because it is cached, or because it was not deployed?" had no
+     answer here -- and on 11 Sep 2026 that cost four exchanges, wrongly
+     diagnosed in both directions.
+
+     Same shape as the app's, and stamped by the same `stamp_template()`
+     on every build, which now insists on exactly one `Release` in this
+     file as well. `notranslate` for the same reason as the app's: the
+     stamp is not prose. -->
+<footer class="eqfoot">
+  <span class="notranslate" style="white-space:nowrap">Release 2026-09-11 13:32 UTC</span>
+</footer>
 
 <script>
 // ---- Languages (#197) ----------------------------------------------
@@ -1584,6 +1890,76 @@ function eqMsg(m) {
   return f ? f(m.args || {}) : (m.text || '');
 }
 
+// ---- What each imported equation is (#393) --------------------------
+// The handover names every equation it sends: the stamped system's own
+// labels come from the engine (32x), the expert extras and the third
+// level are named by the app (89x). Same {code, args, text} shape as
+// every other coded message, so an unknown code falls back to the
+// English the sender put in `text` -- which is the window where this
+// page is older than the app that linked to it.
+//
+// A term the engine names -- "resistor", "voltage drop" -- is looked up
+// under its own English, the srv.* scheme the app has used since #199;
+// the dictionaries this page already loads carry those keys.
+function eqSrv(en) { return t('srv.' + en, en); }
+
+// #395: a label arrives as `[code, ...slot values]`, positional, with no
+// English beside it. #393 sent {code, args, text} and the text alone was
+// most of the payload -- four times the system it described on a
+// 51-equation circuit, which pushed an ordinary sheet past the URL cap.
+// Each function below therefore takes the row's values in order; the
+// order is `_LABEL_SLOTS` in symbulator_ui.py, and a code this page does
+// not know shows nothing rather than a wrong sentence.
+const EQ_LABELS = {
+  320: (node) => tv('js.eq.lbl320', 'current balance at node %{node}',
+                    {node}),
+  321: (kind, name) => tv('js.eq.lbl321',
+                          'equation for %{kind} %{name}',
+                          {kind: eqSrv(kind), name}),
+  322: (kind, name, part) => tv('js.eq.lbl322',
+                                'equation for %{kind} %{name} '
+                                + '(%{part})',
+                                {kind: eqSrv(kind), name, part}),
+  323: (name) => tv('js.eq.lbl323', 'short circuit across %{name}', {name}),
+  324: (name) => tv('js.eq.lbl324', 'defining equation for %{name}',
+                    {name}),
+  890: (what, kind, name) => tv('js.eq.lbl890',
+                                '%{what} by %{kind} %{name}',
+                                {what: eqSrv(what), kind: eqSrv(kind), name}),
+  891: () => t('js.eq.lbl891', 'expert mode equation'),
+};
+
+function labelText(l) {
+  if (!l) return '';
+  // The travelling shape: [code, ...slot values].
+  if (Array.isArray(l)) {
+    const f = EQ_LABELS[l[0]];
+    return f ? f(...l.slice(1)) : '';
+  }
+  // A system saved by a build between #393 and #395 carries
+  // {code, args, text} instead. Its own English is used as it stands --
+  // untranslated, which is the right trade for a legacy artefact and
+  // costs nothing, since that is the very field those files are fat with.
+  //
+  // **This is the case #395 argued could not exist.** It reasoned that
+  // the app and the Solver always ship in one build, so no page could be
+  // older than the payload reaching it -- true, and beside the point: a
+  // *saved file* outlives the build that wrote it, and is opened by
+  // whatever is current. Dropping the English broke exactly the file a
+  // reader had been told to keep. A persisted artefact is a version
+  // boundary even when no two programs disagree.
+  if (typeof l === 'object' && typeof l.text === 'string') return l.text;
+  return '';
+}
+
+// Kept by the equation's own text rather than by its position, so that
+// editing a line drops its label instead of moving someone else's onto
+// it, and so that reordering the box keeps every label with its
+// equation. Two equations of one circuit cannot share a line of text --
+// each names its own element's current or its own node -- so the key is
+// unique in practice.
+let importedLabels = {};
+
 async function post(url, body){
   const r = await fetch(url,{method:'POST',
     headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
@@ -1659,24 +2035,42 @@ function setMode(m){
   $('mac').className = m==='ac' ? 'on' : '';
   $('synhint').innerHTML = m==='dc'
     ? t('js.eq.hintDc',
-        'One equation per line · <code>^</code> allowed · <code>#</code> comments · sin cos exp log sqrt pi u(t) …')
+        'One equation per line, each with a single <code>=</code>. Powers use <code>^</code>; anything after <code>#</code> is a comment. You can call sin, cos, tan, exp, log, ln, sqrt, abs, min, max, pi and e — and <code>u(t)</code>, the unit step, for a system handed over from a transient run. Any name can be a variable, <code>is</code> included.')
     : t('js.eq.hintAc',
-        'One equation per line · <code>j</code> or <code>I</code> = imaginary unit · <code>^</code> · <code>#</code> comments · conj re im …');
+        'One equation per line, each with a single <code>=</code>. <code>j</code> or <code>I</code> is the imaginary unit, so <code>3 + 4j</code> is a phasor; <code>conj</code>, <code>re</code> and <code>im</code> give its conjugate, real part and imaginary part. Powers use <code>^</code>; anything after <code>#</code> is a comment. sin, cos, tan, exp, log, ln, sqrt, abs, min, max, pi and e can be called too.');
   doParse();
 }
 $('mdc').onclick = ()=>setMode('dc');
 $('mac').onclick = ()=>setMode('ac');
 
+// #411: ticked first, unticked after, each group in its own line order.
+// A plain sort on (not ticked, line) -- stable, so two rows never swap
+// for any reason but being ticked.
+function rulesInDisplayOrder(){
+  return rules.slice().sort((a, b) => {
+    const A = state.sel.has(a.line) ? 0 : 1, B = state.sel.has(b.line) ? 0 : 1;
+    return A - B || a.line - b.line;
+  });
+}
+
 function renderRules(){
   const tb = $('rtab').querySelector('tbody'); tb.innerHTML='';
-  rules.forEach(r=>{
+  rulesInDisplayOrder().forEach(r=>{
     const tr = document.createElement('tr');
     if(!state.sel.has(r.line)) tr.className='off';
-    tr.innerHTML = `<td><input type="checkbox" ${state.sel.has(r.line)?'checked':''}></td>
-      <td class="eq">${r.text}</td><td class="resid">${r.vars.join(', ')}</td>`;
+    const what = labelText(importedLabels[r.text.trim()]);
+    tr.innerHTML = `<td><input type="checkbox" data-line="${r.line}" ${state.sel.has(r.line)?'checked':''}></td>
+      <td class="eq">${r.text}</td>
+      <td class="what">${what}</td>`;
     tr.querySelector('input').onchange = e=>{
       e.target.checked ? state.sel.add(r.line) : state.sel.delete(r.line);
-      tr.className = e.target.checked ? '' : 'off';
+      // The row has to move, so the table is redrawn rather than
+      // restyled -- and the box that was just clicked is given the
+      // keyboard back, at its new position. Without that a reader
+      // ticking several in a row loses their place on the first click.
+      renderRules();
+      const again = tb.querySelector(`input[data-line="${r.line}"]`);
+      if(again) again.focus();
       renderVars();
       queueSolve();
     };
@@ -1722,11 +2116,18 @@ function renderVars(){
     + '<th>' + t('js.eq.hStatus', 'Status') + '</th>'
     + (mode === 'dc' ? ''
         : '<th>' + t('js.eq.hDomain', 'Domain') + '</th>')
-    + '<th>' + t('js.eq.hRestriction', 'Restriction') + '</th>'
     + (mode === 'dc'
         ? '<th>' + t('js.eq.hValue', 'Value / guess') + '</th>'
         : '<th>Re</th><th>Im</th>')
-    + '<th>' + t('js.eq.hPrefix', 'SI Prefix') + '</th>';
+    + '<th>' + t('js.eq.hPrefix', 'SI Prefix') + '</th>'
+    // #391: Restriction sits at the far right (Roberto, 11 Sep 2026). It
+    // used to come between Status and the value, which put the widest
+    // and least-used control in the middle of the row and pushed the
+    // number a reader is actually reading away from the name it belongs
+    // to. Nothing is keyed on column position -- the cells are found by
+    // their data- attributes and styled by class -- so this is a move of
+    // the heading and the cell, in both modes.
+    + '<th>' + t('js.eq.hRestriction', 'Restriction') + '</th>';
   const tb = $('vtab').querySelector('tbody'); tb.innerHTML='';
   activeVars().forEach(name=>{
     const v = ensure(name);
@@ -1735,9 +2136,9 @@ function renderVars(){
       tr.innerHTML = `<td class="eq">${name}</td>
         <td class="out" data-out></td>
         <td><select data-st><option value="known">${t('js.eq.known','Known')}</option><option value="unknown">${t('js.eq.unknown','Unknown')}</option></select></td>
-        <td class="rstcell">${restrictCell()}</td>
         <td><input class="val" data-v placeholder="${v.mode==='known'?t('js.eq.value','value'):t('js.eq.guess','guess')}"></td>
-        <td><select data-pre class="pre">${preOpts(v.pre)}</select></td>`;
+        <td><select data-pre class="pre">${preOpts(v.pre)}</select></td>
+        <td class="rstcell">${restrictCell()}</td>`;
       const st = tr.querySelector('[data-st]'), inp = tr.querySelector('[data-v]');
       const pr = tr.querySelector('[data-pre]');
       st.value = v.mode; inp.value = v.value;
@@ -1752,11 +2153,11 @@ function renderVars(){
       tr.innerHTML = `<td class="eq">${name}</td>
         <td class="out" data-out></td>
         <td><select data-st><option value="known">${t('js.eq.known','Known')}</option><option value="unknown">${t('js.eq.unknown','Unknown')}</option></select></td>
-        <td><select data-dom><option value="complex">${t('js.eq.complex','Complex')}</option><option value="real">${t('js.eq.realOnly','Real only')}</option><option value="imag">${t('js.eq.imagOnly','Imag only')}</option></select></td>
-        <td class="rstcell">${restrictCell()}</td>
+        <td><select data-dom><option value="complex">${t('js.eq.complex','Complex')}</option><option value="real">${t('js.eq.realOnly','Real')}</option><option value="imag">${t('js.eq.imagOnly','Imag')}</option></select></td>
         <td><input class="val" data-re></td>
-        <td><span class="jlab">j</span> <input class="val" data-im></td>
-        <td><select data-pre class="pre">${preOpts(v.pre)}</select></td>`;
+        <td class="imcell"><span class="jlab">j</span> <input class="val" data-im></td>
+        <td><select data-pre class="pre">${preOpts(v.pre)}</select></td>
+        <td class="rstcell">${restrictCell()}</td>`;
       const st = tr.querySelector('[data-st]'), dm = tr.querySelector('[data-dom]');
       const re = tr.querySelector('[data-re]'), im = tr.querySelector('[data-im]');
       const pr = tr.querySelector('[data-pre]');
@@ -1791,25 +2192,111 @@ function renderVars(){
 // unknown. Unrestricted, one sign only, or an explicit range -- the
 // range's two ends read in the row's SI prefix, like the guess.
 function restrictCell(){
+  // #406: the menu, a chip that shows the bounds at rest, and a popover
+  // that holds the two fields only while they are being edited.
   return `<select data-sg>
       <option value="any">${t('js.eq.rstNone','None')}</option>
       <option value="pos">${t('js.eq.rstPos','Positive')}</option>
       <option value="neg">${t('js.eq.rstNeg','Negative')}</option>
-      <option value="range">${t('js.eq.rstRange','Range…')}</option></select>
-    <span class="rng" data-rng hidden>${t('js.eq.rangeFrom','from')} <input class="val rlim" data-lo>
-      ${t('js.eq.rangeTo','to')} <input class="val rlim" data-hi></span>`;
+      <option value="range">${t('js.eq.rstRange','Range…')}</option></select><button
+      type="button" class="rngchip" data-chip hidden></button>
+    <span class="rng" data-rng hidden><label>${t('js.eq.rangeFrom','from')} <input class="val rlim" data-lo></label>
+      <label>${t('js.eq.rangeTo','to')} <input class="val rlim" data-hi></label>
+      <button type="button" class="rngdone" data-done>${t('js.eq.rangeDone','Done')}</button></span>`;
 }
+// #406: the chip's text -- what the bounds say, in one short string.
+// An open end is an arrow rather than a blank, so "3 →" reads as "3 and
+// upwards" and cannot be mistaken for a field someone forgot to fill.
+function rangeChipText(v){
+  const lo = (v.lo || '').trim(), hi = (v.hi || '').trim();
+  if(lo && hi) return lo + ' – ' + hi;
+  if(lo) return lo + ' →';
+  if(hi) return '→ ' + hi;
+  return t('js.eq.rangeSet', 'set…');
+}
+
+// Only one popover at a time, and a click anywhere else shuts it. Kept
+// at module scope rather than per row, because two open popovers would
+// be two sets of fields on screen -- the thing this item removes.
+let openRange = null, openAnchor = null;
+
+// Put the open popover under its anchor, then pull it back inside the
+// window. The clamp is the point: the cell it belongs to can be far off
+// to the right of a table wider than the screen, and without this the
+// popover goes there with it.
+function placeRange(){
+  if(!openRange || !openAnchor) return;
+  const a = openAnchor.getBoundingClientRect();
+  const w = openRange.offsetWidth, h = openRange.offsetHeight;
+  let left = Math.min(a.right - w, window.innerWidth - w - 8);
+  left = Math.max(8, left);
+  let top = a.bottom + 6;
+  if(top + h > window.innerHeight - 8) top = Math.max(8, a.top - h - 6);
+  openRange.style.left = left + 'px';
+  openRange.style.top = top + 'px';
+}
+window.addEventListener('resize', placeRange);
+// Capture, so a scroll of the variable table reaches this as well as a
+// scroll of the page: a fixed element does not move with either.
+window.addEventListener('scroll', placeRange, true);
+
+function closeRange(){
+  if(openRange){ openRange.hidden = true; openRange = null; openAnchor = null; }
+}
+document.addEventListener('click', function(ev){
+  if(openRange && !openRange.contains(ev.target)
+     && !ev.target.closest('[data-chip],[data-sg]')) closeRange();
+});
+document.addEventListener('keydown', function(ev){
+  if(ev.key === 'Escape') closeRange();
+});
+
 function wireRestrict(tr, v, enabledFn){
   const sg = tr.querySelector('[data-sg]'), rng = tr.querySelector('[data-rng]');
   const lo = tr.querySelector('[data-lo]'), hi = tr.querySelector('[data-hi]');
+  const chip = tr.querySelector('[data-chip]');
+  const done = tr.querySelector('[data-done]');
   sg.value = v.rst || 'any'; lo.value = v.lo || ''; hi.value = v.hi || '';
+
+  const isRange = ()=> (v.rst || 'any') === 'range' && !sg.disabled;
+  const paintChip = ()=>{
+    chip.hidden = !isRange();
+    if(isRange()){
+      chip.textContent = rangeChipText(v);
+      // The hover Roberto asked for: the full sentence, for a reader who
+      // wants to be sure which end is which.
+      chip.title = tv('js.eq.rangeTitle', 'between %{lo} and %{hi}',
+        {lo: (v.lo || '').trim() || '−∞', hi: (v.hi || '').trim() || '∞'});
+    }
+  };
+  const openPopover = ()=>{
+    if(!isRange()) return;
+    closeRange();
+    rng.hidden = false;
+    openRange = rng;
+    // The chip is the anchor once there is one; before that, the menu.
+    openAnchor = chip.hidden ? sg : chip;
+    placeRange();
+    lo.focus();
+  };
   const sync = ()=>{
     sg.disabled = !enabledFn();
-    rng.hidden = sg.disabled || (v.rst || 'any') !== 'range';
+    if(!isRange() && rng === openRange) closeRange();
+    if(!isRange()) rng.hidden = true;
+    paintChip();
   };
-  sg.onchange = ()=>{ v.rst = sg.value; sync(); queueSolve(); };
-  lo.oninput = ()=>{ v.lo = lo.value; queueSolve(); };
-  hi.oninput = ()=>{ v.hi = hi.value; queueSolve(); };
+
+  sg.onchange = ()=>{
+    v.rst = sg.value;
+    sync();
+    // Choosing Range is a request to type the ends, so open straight away.
+    if(isRange()) openPopover();
+    queueSolve();
+  };
+  chip.onclick = openPopover;
+  lo.oninput = ()=>{ v.lo = lo.value; paintChip(); queueSolve(); };
+  hi.oninput = ()=>{ v.hi = hi.value; paintChip(); queueSolve(); };
+  done.onclick = closeRange;
   sync();
   return sync;
 }
@@ -1823,16 +2310,28 @@ function restrictionOf(name, v){
   if(rst !== 'range') return {};
   const f = PFACT[v.pre];
   const lo = parseFloat((v.lo || '').trim()), hi = parseFloat((v.hi || '').trim());
-  if(isNaN(lo) || isNaN(hi)) {
-    return {err: tv('js.eq.rangeBothEnds',
-                    'give both ends of the range for %{name}', {name})};
+  // #391: one end may be left empty, and means open on that side --
+  // "3 and upwards". The solve API has taken a null end since the
+  // restrictions were built (`_restriction_bounds` leaves that bound at
+  // ±infinity); it was only this function that insisted on both, so a
+  // condition like `x > 3`, which has one number and no ceiling, had
+  // nowhere to land. Both empty is still nothing to say, and is the
+  // message that used to cover both cases.
+  if(isNaN(lo) && isNaN(hi)) {
+    // Renamed from js.eq.rangeBothEnds, because "both" stopped being
+    // true: one end is a range now. The key change is what makes the
+    // twelve old translations show up as orphans instead of going on
+    // saying the old thing in every language but English.
+    return {err: tv('js.eq.rangeOneEnd',
+                    'give at least one end of the range for %{name}',
+                    {name})};
   }
-  if(!(lo < hi)) {
+  if(!isNaN(lo) && !isNaN(hi) && !(lo < hi)) {
     return {err: tv('js.eq.rangeEmpty',
                     "empty range for %{name} — 'from' must be below 'to'",
                     {name})};
   }
-  return {r: [lo * f, hi * f]};
+  return {r: [isNaN(lo) ? null : lo * f, isNaN(hi) ? null : hi * f]};
 }
 
 function scalars(v){          // scalar unknowns a variable contributes (AC)
@@ -1876,7 +2375,7 @@ async function doParse(){
   rules.forEach(r=>{ if(!old.has(r.line)) state.sel.add(r.line); });
   const lines = new Set(rules.map(r=>r.line));
   [...state.sel].forEach(l=>{ if(!lines.has(l)) state.sel.delete(l); });
-  renderRules(); renderVars();
+  renderRules(); renderVars(); syncLoadBox();
 }
 $('parse').onclick = async ()=>{ await doParse(); queueSolve(); };
 
@@ -1901,7 +2400,7 @@ $('clearAllBtn').onclick = ()=>{
   $('smsg').className = 'msg';
   $('resid').innerHTML = '';
   $('residbox').hidden = true;
-  renderRules(); renderVars(); count();
+  renderRules(); renderVars(); count(); syncLoadBox();
   $('rules').focus();
 };
 
@@ -1910,6 +2409,11 @@ $('clearAllBtn').onclick = ()=>{
 // and the solve follows the parse.
 let parseTimer = null;
 $('rules').addEventListener('input', ()=>{
+  // #395: before the Interactive Mode gate, not after it. Typing the
+  // first character of a system is the moment the load box stops being
+  // offerable, and that is true whether or not the sheet re-solves as
+  // you type.
+  syncLoadBox();
   if(!$('interactive').checked) return;
   clearTimeout(parseTimer);
   parseTimer = setTimeout(async ()=>{ await doParse(); queueSolve(); }, 700);
@@ -2074,8 +2578,35 @@ async function importData(d){
   if(!d || !Array.isArray(d.equations))
     throw new Error(t('js.eq.noEquations', 'missing "equations" list'));
   if(d.mode==='ac' || d.mode==='dc') setModeSilently(d.mode);
+  // #393: what each equation is, parallel to `equations`. Stored before
+  // the parse, since renderRules reads it. A payload without the field
+  // leaves the column empty, which is every hand-typed sheet.
+  importedLabels = {};
+  (d.labels || []).forEach((l, i) => {
+    const eq = d.equations[i];
+    if (l && typeof eq === 'string') importedLabels[eq.trim()] = l;
+  });
   $('rules').value = d.equations.join('\n');
   await doParse();
+  // #391: equations the payload wants to arrive **unticked**, as indices
+  // into its own `equations` list. Everything else keeps arriving ticked,
+  // which is what doParse has just done to all of them.
+  //
+  // Indices rather than a count, so the field says nothing about where in
+  // the list they sit; and indices rather than the equations' text,
+  // because two elements of one circuit can produce the same line.
+  // `$('rules').value` is that list joined by newlines, so index i is
+  // line i+1 -- the numbering doParse's rules carry.
+  //
+  // The app uses it for the third level: with the card's tick on, the
+  // powers and voltage drops come over but stay off, so the sheet still
+  // lands square on the stamped system and the reader ticks the one line
+  // they want. A payload without the field is unchanged by it.
+  const off = Array.isArray(d.unticked) ? d.unticked : [];
+  if(off.length){
+    off.forEach(i => { if(Number.isInteger(i)) state.sel.delete(i + 1); });
+    renderRules();
+  }
   const setValue = (s, v) => {
     if(Array.isArray(v)){
       s.pre = autoPre(Math.max(Math.abs(v[0]), Math.abs(v[1])));
@@ -2104,6 +2635,24 @@ async function importData(d){
     const s = ensure(name);
     s.mode = 'known';
     setValue(s, v);
+  }
+  // #391: Expert Mode's conditions, as restrictions on the search rather
+  // than as equations. 'pos' / 'neg' / [lo, hi], the same three shapes
+  // the solve API takes, with either end of a range null for open.
+  //
+  // **After the two loops above, and it has to be.** The ends are given
+  // in base units and the row holds them in its own SI prefix, which is
+  // what `setValue` has just chosen from the imported value. Applied
+  // first, every range would be out by the prefix's factor -- and
+  // silently, since a bound of 3 where 3000 was meant still solves.
+  for(const [name, r] of Object.entries(d.restrictions || {})){
+    const s = ensure(name);
+    if(r === 'pos' || r === 'neg'){ s.rst = r; continue; }
+    if(!Array.isArray(r)) continue;
+    const f = PFACT[s.pre] || 1;
+    const end = x => (x === null || x === undefined)
+      ? '' : String(+(x / f).toPrecision(10));
+    s.rst = 'range'; s.lo = end(r[0]); s.hi = end(r[1]);
   }
   renderVars();
   queueSolve();
@@ -2139,6 +2688,45 @@ window.addEventListener('drop', ev=>{
   const f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
   importFile(f);
 });
+
+// #395: the same load, from a file picker, for readers who would rather
+// not drag. Shown only while the sheet is empty -- see `syncLoadBox`.
+$('loadBtn').onclick = async ()=>{
+  const f = $('loadFile').files && $('loadFile').files[0];
+  if(!f){
+    $('loaderr').textContent = t('js.eq.pickAFile',
+      'Choose a file first, then press Load system.');
+    return;
+  }
+  $('loaderr').textContent = '';
+  await importFile(f);
+  // importFile reports its own failure in `perr`; if it succeeded there
+  // is now a system on screen and this box has taken itself away.
+  syncLoadBox();
+};
+
+// Visible only when there is no system: an empty sheet is the one moment
+// this control has anything to offer, and the one moment it cannot throw
+// away work. `rules` is the parsed list, the textarea is what a reader
+// may have typed but not yet parsed -- both must be empty.
+// #402: the fold's state sticks, so closing it once closes it for good.
+// Read before first paint would be better still, but the box is below
+// the fold of the page in every layout, so a flash is not reachable.
+(function(){
+  var d = document.getElementById('editbox');
+  try {
+    if (localStorage.getItem('symbulator-eqsheet-edit') === 'shut') d.open = false;
+  } catch (e) {}
+  d.addEventListener('toggle', function(){
+    try { localStorage.setItem('symbulator-eqsheet-edit',
+                               d.open ? 'open' : 'shut'); } catch (e) {}
+  });
+}());
+
+function syncLoadBox(){
+  const typed = ($('rules').value || '').trim();
+  $('loadbox').hidden = !!(rules.length || typed);
+}
 
 // ---- Dark Mode ------------------------------------------------------
 // The same toggle, icons, attribute and storage key as the app, so the
@@ -2255,6 +2843,11 @@ if(urlImp){
 }else{
   setMode('dc');
 }
+// #395: the arriving state. With an `?import=` the box is hidden by the
+// import's own parse; without one the sheet is empty and this is what
+// puts the box on screen. Last, so it reads whatever the branch above
+// left behind.
+syncLoadBox();
 </script>
 </body>
 </html>

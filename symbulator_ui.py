@@ -2100,6 +2100,299 @@ def prepare_inputs(desc: str, extra_equations=None, extra_unknowns=None,
             each(extra_conditions), each(evaluate), notices)
 
 
+# The four relational spellings a condition may use, longest first so
+# ">=" is not read as ">" with a stray "=" -- the same table and the same
+# reason as `engine._INEQ_OPS`.
+_COND_OPS = (">=", "<=", ">", "<")
+_COND_FLIP = {">": "<", "<": ">", ">=": "<=", "<=": ">="}
+_BARE_NAME = re.compile(r"[A-Za-z_]\w*\Z")
+
+
+# The quantity each third-level prefix names, in the Results card's own
+# wording (see `_ELEMENT_KEYS`), so #393's labels reuse vocabulary the
+# dictionaries already carry.
+# #405: the kinds as a *label* names them -- both sources are "source",
+# since the equation beside the label already says which. Separate from
+# `_KIND_LABEL`, which the Results card reads and which must keep the
+# distinction. `tools/i18n.py` harvests this one too, so "source" gets a
+# srv.* entry of its own.
+#
+# The closing brace sits on its own line deliberately. `tools/i18n.py`
+# finds a table's end by looking for a newline followed by a brace, so a
+# brace tucked after the last entry makes the harvest run on into
+# whatever follows -- which is how a stray `srv.pos` appeared the first
+# time this table was written.
+_LABEL_KIND = {
+    "r": "resistor", "l": "inductor", "c": "capacitor",
+    "e": "source", "j": "source", "o": "op-amp",
+    "s": "short circuit", "t": "transformer",
+    "m": "mutual inductance", "z": "two-port", "y": "two-port",
+    "h": "two-port", "g": "two-port", "a": "two-port", "b": "two-port",
+}
+
+_DERIVED_WORD = {"v": "voltage drop", "p": "power consumed",
+                 "ap": "average power", "s": "complex power",
+                 "r": "resistance seen", "z": "impedance seen"}
+
+
+def condition_restrictions(conditions, domain: str):
+    """Expert Mode's conditions as the Numerical Solver's per-unknown
+    **search restrictions** (#391, Roberto's third ask) -- not as
+    equations. `vs > 0` becomes Positive on `vs`; `x > 3` with `x < 7`
+    becomes a range from 3 to 7.
+
+    Returns `{name: "pos" | "neg" | [lo, hi]}` in base units, under the
+    sans-underscore names the payload spells, with `lo` or `hi` None
+    meaning open on that side. `{}` when there is nothing to carry.
+
+    **Bounds on one name are combined**, which is the only way a range
+    can arise: `7 > x > 3` is refused by the app -- `_parse_inequality`
+    splits on the first operator it finds, so the chained form reaches
+    `safe_sympify` as the value `x > 3` and is rejected as "not
+    arithmetic". Measured, not assumed. Two conditions is how a reader
+    writes a range today, so two conditions is what this reads. The
+    tightest of several lower bounds wins, and likewise the highest
+    upper bound, so a contradictory pair is visible as `lo >= hi` and
+    dropped rather than handed on as an empty range.
+
+    `> 0` and `< 0` are read as bounds like any other and only become
+    the sign restrictions at the end, when nothing has bounded the other
+    side. That keeps one rule instead of two: `x > 0` with `x < 7` comes
+    out as the range it is, not as Positive with the 7 thrown away.
+
+    **What cannot cross**, and is left unrestricted rather than
+    approximated: a condition whose two sides are not a bare name and a
+    real number. `2*vs > 3` and `vs > ir1` are both accepted by the
+    solver and neither is a statement about where to look for one
+    variable. So is an `=` condition, which is a substitution and not a
+    bound at all.
+
+    **DC only** (Roberto's call). A restriction is a statement about one
+    real scalar; in AC every imported variable arrives Complex, where
+    the page greys the menu out, and the only way to make it bite would
+    be to switch the variable to Real only -- an assertion that its
+    imaginary part is zero, which is about the circuit and not about the
+    search."""
+    import sympy as sp
+    if domain != "dc" or not conditions:
+        return {}
+    from symbulator.si_prefix import expand_shorthand
+    from symbulator.engine import split_chained_comparison
+
+    lows, highs = {}, {}
+    for raw in conditions:
+        text = str(raw)
+        try:
+            text = expand_shorthand(text)     # so 3'k reads as 3000
+        except Exception:                                      # noqa: BLE001
+            pass
+        # #392: `7 > x > 3` is two bounds, and reaches this the same way
+        # two separate conditions do -- which is what the combining below
+        # was already written for.
+        for fragment in split_chained_comparison(text):
+            op = next((o for o in _COND_OPS if o in fragment), None)
+            if op is None:
+                continue      # an `=` substitution, not a bound
+            lhs, rhs = (s.strip() for s in fragment.split(op, 1))
+            if _BARE_NAME.match(lhs):
+                name, other, sense = lhs, rhs, op
+            elif _BARE_NAME.match(rhs):
+                # `0 < vs` says the same as `vs > 0`, from the far end.
+                name, other, sense = rhs, lhs, _COND_FLIP[op]
+            else:
+                continue
+            try:
+                num = sp.sympify(other)
+                if not num.is_number or num.is_real is False:
+                    continue
+                value = float(num)
+            except Exception:                                  # noqa: BLE001
+                continue
+            key = name.replace("_", "")
+            if sense.startswith(">"):
+                lows[key] = max(value, lows.get(key, value))
+            else:
+                highs[key] = min(value, highs.get(key, value))
+
+    out = {}
+    for key in sorted(set(lows) | set(highs)):
+        lo, hi = lows.get(key), highs.get(key)
+        if lo is not None and hi is not None and not lo < hi:
+            continue          # contradictory; the sheet would only error
+        if hi is None and lo == 0.0:
+            out[key] = "pos"
+        elif lo is None and hi == 0.0:
+            out[key] = "neg"
+        else:
+            out[key] = [lo, hi]
+    return out
+
+
+# #393: the two labels the app writes itself. The engine names its own
+# stamped equations (codes 32x); these two name the things the engine
+# never sees -- the third level, which is derived after the solve, and
+# an expert-mode equation, which the reader typed.
+M_LABEL_DERIVED = 890
+M_LABEL_EXPERT  = 891
+
+
+# #395: a label's slots, in the order they travel. The payload sends
+# `[code, value, value, ...]` rather than `{code, args, text}` -- every
+# name here is a slot in that code's sentence, in `messages.py` for the
+# package's codes and in `_LABEL_EN` below for the app's two.
+#
+# **Why positional, and why no English.** #393 shipped the obvious shape,
+# an object per label carrying the code, a named-argument dict and the
+# rendered English. On Roberto's 51-equation circuit that turned a
+# 2,841-character URL into 10,229 and pushed an ordinary system past the
+# 6,000-character cap into the file fallback -- the labels were four
+# times the size of the system they described. The `text` was the bulk
+# of it and was pure duplication: the page renders the sentence from the
+# code and the slots, in the reader's own language, and only falls back
+# to English for a code it does not know. That fallback was written for
+# a Solver page older than the app, and there is no such thing -- the two
+# ship in one build, which #391's own deploy note had to be corrected
+# for claiming otherwise. Positional and textless: 4,816 characters, and
+# the system travels in a link again.
+_LABEL_SLOTS = {
+    320: ("node",),               # current balance at node N
+    321: ("kind", "name"),        # element equation for <kind> <name>
+    322: ("kind", "name", "part"),
+    323: ("name",),               # short circuit across <name>
+    324: ("name",),               # defining equation for <name>
+    M_LABEL_DERIVED: ("what", "kind", "name"),
+    M_LABEL_EXPERT: (),
+}
+
+# The English for the app's own two labels, kept for `messages`-style
+# rendering in a traceback or a test. The package's are in `messages.py`.
+_LABEL_EN = {
+    M_LABEL_DERIVED: "{what} by {kind} {name}",
+    M_LABEL_EXPERT: "expert mode equation",
+}
+
+
+def _label_row(code: int, args) -> list:
+    """One label as it travels: `[code, *slot values]`, in `_LABEL_SLOTS`
+    order. A code with no entry sends its code alone rather than guessing
+    an order, so the page shows nothing for it instead of the wrong
+    sentence."""
+    slots = _LABEL_SLOTS.get(code, ())
+    return [code] + [str(args.get(s, "")) for s in slots]
+
+
+def _label(code: int, **args):
+    """The app's own labels, in the same travelling shape."""
+    return _label_row(code, args)
+
+
+def _round_for_export(value, digits: int) -> complex:
+    """`value` as a complex number, rounded to `digits` significant
+    figures the way the app's own Rounding setting rounds -- decimal,
+    ties away from zero -- and then read back at full binary precision.
+
+    Raises TypeError/ValueError on a symbolic value, like `complex()`
+    itself, so the caller's existing skip still works.
+
+    **The read-back is the whole point of this function.** `_round_expr`
+    hands back a `sp.Float` carrying exactly `digits` digits of
+    *precision*, which is right for printing and wrong for exporting: it
+    displays as "0.3333" while its nearest double is
+    0.3333015441894531, so a payload built by calling `complex()` on it
+    carries thirteen digits of noise dressed as a four-digit answer --
+    worse than the unrounded number it replaced. Going out through the
+    Float's own decimal string is what fixes it, and it is the one line
+    here that a reader would otherwise delete as redundant.
+
+    At "full" (`digits == 0`) nothing is rounded, which is the behaviour
+    the payload had before #391."""
+    import sympy as sp
+    z = complex(value)
+    if not digits:
+        return z
+
+    def part(x: float) -> float:
+        try:
+            return float(str(_round_expr(sp.Float(x), digits)))
+        except (TypeError, ValueError):
+            return x
+    return complex(part(z.real), part(z.imag))
+
+
+def third_level_equations(circ, domain: str, values, use_rms: bool = False):
+    """The defining equations for the third-level quantities -- the ones
+    `analysis._derived` computes *after* the KCL system is solved: a
+    branch voltage `v_<el>`, a power `p_<el>` (in ac, the complex power
+    `s_<el>` and its real part, under `p_` with RMS phasors and `ap_`
+    without), and -- sources only -- the resistance or impedance
+    `r_`/`z_<el>` the source sees looking into the rest of the circuit.
+
+    They are absent from the stamped system by construction, which is
+    why the Numerical Solver's handover carried their *values* (they are
+    in `values`, `analysis._run` having updated the solution with them)
+    and, until #391, nothing tying those values to the circuit. With
+    these the reader can pin a power Known and solve the circuit
+    backwards for the source or the resistance that delivers it.
+
+    Every equation is written in the system's **own** first- and
+    second-level variables -- node voltages and branch currents -- never
+    in each other, so the block has no internal ordering to get wrong
+    and any subset of it stands on its own.
+
+    `engine._derived_definition` is the source of every formula it will
+    give: `v_` in both domains, `p_` in dc, and `r_`/`z_`. It refuses
+    the three ac powers, because `conjugate` cannot go into a symbolic
+    stamp the linear solver then has to invert. The Numerical Solver has
+    no such problem -- it evaluates to complex and splits the residual,
+    and `conj`, `re` and `im` are in its ac namespace -- so those three
+    are written here instead, mirroring `analysis._derived`. That is one
+    formula in two places, and `tools/check_third_level_export.py` is
+    what keeps them from drifting: it runs the exported equations
+    through the Solver itself and compares its answers against the
+    solver's own, which is the artefact rather than the model.
+
+    Returns [(name, sp.Eq), ...] in circuit order, under the underscored
+    Symbulator names -- the caller renames them for the payload."""
+    import sympy as sp
+    from symbulator.engine import _derived_definition
+    out = []
+    # `_derived` halves the phasor product unless the phasors are RMS.
+    half = sp.Integer(1) if use_rms else sp.Rational(1, 2)
+    for e in circ.elements:
+        for prefix in ("v", "s", "p", "ap", "r", "z"):
+            name = f"{prefix}_{e.name}"
+            if name not in values:
+                continue      # `_derived` did not produce this one
+            eq = None
+            try:
+                found = _derived_definition(circ, name, domain)
+            except Exception:
+                found = None  # the ac powers, refused -- written below
+            if found is not None:
+                eq = found[0]
+            elif domain == "ac" and prefix in ("s", "p", "ap"):
+                # A `j` source's current, and a capacitor's in ac, live
+                # in `known` rather than among the unknowns -- the same
+                # lookup `_derived_definition` makes.
+                i = circ.known.get(f"i_{e.name}") or circ.i_symbol(e.name)
+                if e.kind == "o":
+                    # Op-amp power is measured at the output node, on the
+                    # current the amplifier drives out of it.
+                    s = circ.v(e.fields[2]) * sp.conjugate(-i) * half
+                else:
+                    s = (circ.v(e.n1) - circ.v(e.n2)) * sp.conjugate(i) * half
+                eq = sp.Eq(sp.Symbol(name), s if prefix == "s" else sp.re(s))
+            if eq is not None:
+                # #393: and what it is, in the words the Results card
+                # already uses for these quantities -- they are srv.*
+                # terms, so the thirteen dictionaries translate them
+                # without a new string apiece.
+                out.append((name, eq, _label(
+                    M_LABEL_DERIVED, what=_DERIVED_WORD[prefix],
+                    kind=_LABEL_KIND.get(e.kind, e.kind), name=e.name)))
+    return out
+
+
 def solve_ui(desc: str, domain: str, omega: str, variables,
                   tool: str, n1: str, n2: str, kind: str,
                   extra_equations, extra_unknowns, extra_conditions,
@@ -2666,6 +2959,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             if tool == "solve" and (
                     domain != "ac" or sp.sympify(omega).is_number):
                 from symbulator.si_prefix import expand_shorthand
+                from symbulator import messages as _M
                 # The Numerical Solver shows its variables sans
                 # underscore -- Roberto's call, 27 Aug 2026 -- so the
                 # payload strips them from every Symbulator-defined name:
@@ -2686,6 +2980,16 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                         f"{sp.sstr(_eq.lhs.subs(_rename))} = "
                         f"{sp.sstr(_eq.rhs.subs(_rename))}"
                         for _eq in circ.equations]
+                    # #393: what each of them is. The engine labels every
+                    # equation it stamps (codes 32x) and guarantees one
+                    # per equation, so this rides along in the same order
+                    # -- and falls back to nothing at all on a solver too
+                    # old to carry them, which the server's pin allows.
+                    eq_labels = [_label_row(_c, _a)
+                                 for _c, _a in getattr(
+                                     circ, "equation_labels", [])]
+                    if len(eq_labels) != len(eq_strings):
+                        eq_labels = []      # never mislabel; say nothing
                     _text_renames = sorted(
                         ((str(k), str(v)) for k, v in _rename.items()),
                         key=lambda kv: -len(kv[0]))
@@ -2756,6 +3060,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                                     _rhs = _rhs.subs(_m)
                             eq_strings.append(
                                 f"{sp.sstr(_lhs)} = {sp.sstr(_rhs)}")
+                            eq_labels.append(_label(M_LABEL_EXPERT))
                         except Exception:
                             # fall back to the old textual rendering
                             try:
@@ -2766,17 +3071,99 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                                 _txt = re.sub(
                                     rf"\b{re.escape(_old)}\b", _new, _txt)
                             eq_strings.append(_txt)
+                            eq_labels.append(_label(M_LABEL_EXPERT))
+                    # #391 -- the third level, as a list of its own. It
+                    # rides in the payload beside the stamped system and
+                    # the page merges it into the equations only when the
+                    # card's tick is on, so changing your mind about it
+                    # costs no re-solve. The Solver's `?import=` contract
+                    # is untouched: the button merges the two lists into
+                    # `equations` and drops this key before encoding, so
+                    # what crosses -- and what a saved
+                    # `numerical_system.json` holds -- is the documented
+                    # shape either way.
+                    #
+                    # `conjugate` is rewritten as `conj`, the spelling
+                    # the Solver's ac namespace has -- `ALLOWED_AC` maps
+                    # conj, re and im, and nothing else. Measured rather
+                    # than assumed: a *called* name outside that
+                    # namespace raises NameError out of `parse_expr`'s
+                    # code generation, so the sheet refuses the line
+                    # rather than quietly reading `conjugate * ir1`.
+                    # Loud, but it would refuse every ac power at once.
+                    _conj = sp.Function("conj")
+                    third_strings, third_labels = [], []
+                    try:
+                        for _tname, _teq, _tlabel in third_level_equations(
+                                circ, domain, values, use_rms=use_rms):
+                            _sides = []
+                            for _side in (_teq.lhs, _teq.rhs):
+                                _side = _side.replace(
+                                    sp.conjugate, lambda a: _conj(a))
+                                _side = _side.subs(_rename)
+                                for _s in _side.free_symbols:
+                                    _n = str(_s)
+                                    if "_" in _n:
+                                        _side = _side.subs(
+                                            {_s: sp.Symbol(
+                                                _n.replace("_", ""))})
+                                _sides.append(sp.sstr(_side))
+                            third_strings.append(f"{_sides[0]} = {_sides[1]}")
+                            third_labels.append(_tlabel)
+                    except Exception:
+                        # a bonus on top of a bonus
+                        third_strings, third_labels = [], []
+
                     _complex_mode = domain in ("ac", "fd")
                     results = {}
                     for _name, _value in values.items():
+                        # #391: the value crosses rounded to whatever the
+                        # app's Rounding setting says at the moment the
+                        # button is pushed (Roberto, 11 Sep 2026), rather
+                        # than at the solver's full precision. A reader
+                        # looking at 8 V in the Results card should find
+                        # 8 V in the sheet, not 7.999999999999999.
+                        #
+                        # `_round_expr` is the app's own rounding, the
+                        # same call the Results card's `fmt` makes, so
+                        # the two cannot disagree -- and it is decimal,
+                        # ties away from zero, not `sp.N` (#318). At
+                        # "full" (`digits == 0`) it returns the
+                        # expression untouched, which is the behaviour
+                        # this had before.
+                        #
+                        # It rounds the number, not the display: the
+                        # sheet's own Rounding menu is display-only, so
+                        # rounding here is what a variable flipped to
+                        # Known actually constrains the system with. On
+                        # a guess that costs nothing -- a guess is a
+                        # starting point.
                         try:
-                            z = complex(_value)
+                            z = _round_for_export(_value, digits)
                         except (TypeError, ValueError):
                             continue      # symbolic -- not a what-if Known
                         results[_name.replace("_", "")] = \
                             [z.real, z.imag] if _complex_mode else z.real
                     eqsheet = {"mode": "ac" if _complex_mode else "dc",
-                               "equations": eq_strings, "results": results}
+                               "equations": eq_strings, "results": results,
+                               "third_level": third_strings}
+                    # #393: what each equation is, parallel to the list it
+                    # belongs to. Sent only when complete -- a labels list
+                    # shorter than its equations would put the wrong
+                    # sentence beside a line, which is worse than none.
+                    if len(eq_labels) == len(eq_strings):
+                        eqsheet["labels"] = eq_labels
+                    if len(third_labels) == len(third_strings):
+                        eqsheet["third_level_labels"] = third_labels
+                    # #391: the conditions cross as restrictions on the
+                    # search, never as equations -- they are a filter on
+                    # the solve, and one arrived in the List of Equations
+                    # as a parse error once already (see the note above
+                    # the expert extras).
+                    _restrict = condition_restrictions(extra_conditions,
+                                                       domain)
+                    if _restrict:
+                        eqsheet["restrictions"] = _restrict
                     if domain == "fd":
                         eqsheet["known"] = {"s": [0.0, 1.0]}
                 else:                     # tr -- the answers cross instead
@@ -3566,6 +3953,20 @@ def _parse_condition(text: str):
         ("<", lambda l, r: l < r),
         ("=", sp.Eq),
     )
+    # #392: a chained comparison -- `7 > x > 3`, the way anyone writes a
+    # range -- is the conjunction of its links. The split is the solver's
+    # `split_chained_comparison`, imported rather than written a third
+    # time: this parser, the Evaluate card's and the engine's all had the
+    # same first-operator-split fault, and one of them is enough.
+    #
+    # Every caller substitutes and simplifies whatever comes back, and an
+    # `And` reduces to true or false like a single relation, so nothing
+    # downstream needed to change.
+    from symbulator.engine import split_chained_comparison
+    fragments = split_chained_comparison(text)
+    if len(fragments) > 1:
+        return sp.And(*[_parse_condition(f) for f in fragments])
+
     for op, make in ops:
         if op in text:
             lhs, rhs = text.split(op, 1)
