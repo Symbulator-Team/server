@@ -250,7 +250,15 @@ def measure(desc):
                 continue
             deg += 1 if (abs(y - y0) < 0.5 or abs(y - y1) < 0.5) else 2
         dots.append((x, y, deg))
-    stray_dots = [d for d in dots if d[2] < 3]
+    # A *junction* dot short of three lines is the defect. A dot with no
+    # line on it at all is not a junction at all: a coupling dot on a
+    # mutual inductance and a transformer's polarity dots are the same
+    # shape saying a different thing, and they are drawn inside the
+    # symbol's own group. Counting them made 24 drawings -- every one in
+    # Lesson 10, Lesson 13 or the monograph -- report a stray dot for
+    # having a transformer in them, which is a metric counting something
+    # other than its name.
+    stray_dots = [d for d in dots if 1 <= d[2] < 3]
 
     # --- 5. figure size against element size -------------------------
     # Roberto's rule 5 as the drawing shows it: how much bare lead each
