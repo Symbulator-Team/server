@@ -43,7 +43,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "03bdfe1033";
+window.SYMB_I18N_V = "51949e6467";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -1623,6 +1623,14 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
     background: #fff; border: 1px solid var(--line);
   }
   label { display: block; font-weight: 600; font-size: .9rem; margin: 0 0 .3rem; }
+  /* #397: a field's name on the left, its Copy pill hard right. The
+     label keeps its own bottom margin off inside this row, since the
+     row carries it instead -- otherwise the pill sits 0.3rem high. */
+  .labelrow { display: flex; align-items: baseline; justify-content: space-between;
+    gap: .6rem; margin: 0 0 .3rem; }
+  .labelrow label { margin: 0; }
+  button.copypill { font-size: .75rem; padding: .12rem .5rem; font-weight: 500;
+    line-height: 1.5; }
   .hint { font-weight: 400; color: var(--muted); }
   textarea, select, input[type=text], input[type=number] {
     width: 100%; font-family: var(--mono); font-size: .95rem;
@@ -2269,9 +2277,10 @@ window.SYMB_I18N_CODES = ["bn","de","eo","es","fr","hi","id","ja","ko","pt","uk"
     <button type="button" id="clearAllBtn" class="subbar-action"
       title="Empty every input and start over" data-i18n-title="empty-every-input-and.02e4" data-i18n="clear-all-inputsclear.97d7"><span class="subbar-lbl">Clear all inputs</span><span class="subbar-lbl-short">Clear</span></button>
     <!-- The dot that separates the two (Roberto, 31 Aug 2026). It is the
-         separator this design already uses -- the footer's four links,
-         "DC · real" on the Numerical Solver -- so it is punctuation a
-         reader has met before rather than new furniture. It survives at
+         separator this design already uses -- the footer's four links
+         -- so it is punctuation a reader has met before rather than new
+         furniture. (The Numerical Solver's mode buttons were the other
+         example until #399 renamed them to Real and Complex.) It survives at
          every width because the Clear button abbreviates instead. -->
     <span class="subbar-dot" aria-hidden="true">·</span>
     <!-- The language menu (#197, reworked #201). A native <select>, not a
@@ -3407,8 +3416,27 @@ units: yes</pre>
           <li style="margin:.25rem 0" data-i18n="an-fd-solve-hands.4221">An FD solve hands over its s-domain
             system, with <code>s</code> as a Known complex number you can
             move around the plane.</li>
+          <li style="margin:.25rem 0" data-i18n="tick-include-the-derived.81b1">Tick <em>Include the derived
+            answers</em> and each element&#8217;s power and voltage drop
+            cross too, as equations of their own &#8212; arriving
+            unticked, so the sheet still lands on the circuit alone. Tick
+            the one you want; or untick the source&#8217;s equation, pin a
+            power Known, and the sheet finds the source value that
+            delivers it.</li>
         </ul>
       </details>
+      <!-- #391: the third level -- power, voltage drop, and the
+           resistance or impedance a source sees -- is derived after the
+           KCL system is solved, so it is not in the stamped equations.
+           The payload carries its defining equations in a list of their
+           own and this tick decides whether the button merges them in,
+           which is why changing your mind costs no re-solve.
+           Hidden when the last solve produced none: FD derives no
+           powers and TR hands over its answers instead of a system. -->
+      <label class="checkline" id="whatifThirdLine" hidden
+        style="margin:0 0 .7rem"><input type="checkbox"
+        id="whatifThirdOpt"><span data-i18n="include-the-derived-answers.406f">Include the derived answers &#8212;
+        power, voltage drop, and what a source sees</span></label>
       <!-- #339: centred like every other card's button. It was
            `.dl-row`, which exists for a row of downloads and their
            tick-boxes; this row is one button. -->
@@ -3443,13 +3471,25 @@ units: yes</pre>
         on it: it runs in another tool, where a silent difference would
         surface a long way from here.
       </p>
+      <!-- #397: a Copy pill beside each field's name. The pill itself is
+           built in script (`makeCopyPill`) so its label translates
+           through `t()` and changes to "Copied" on click; the markup
+           only holds the slot it goes in. `.labelrow` keeps the name on
+           the left and the pill hard right, which is why the label is
+           no longer a bare child of the div. -->
       <div class="row" style="margin-top:.7rem">
         <div>
-          <label for="spiceSym" data-i18n="symbulator-notation.acaf">Symbulator Notation</label>
+          <div class="labelrow">
+            <label for="spiceSym" data-i18n="symbulator-notation.acaf">Symbulator Notation</label>
+            <span id="spiceSymCopy"></span>
+          </div>
           <textarea id="spiceSym" spellcheck="false" placeholder="e1,1,0,5&#10;r1,1,2,1'k&#10;r2,2,0,1'k"></textarea>
         </div>
         <div>
-          <label for="spiceNet" data-i18n="spice-notation.e361">SPICE Notation</label>
+          <div class="labelrow">
+            <label for="spiceNet" data-i18n="spice-notation.e361">SPICE Notation</label>
+            <span id="spiceNetCopy"></span>
+          </div>
           <textarea id="spiceNet" spellcheck="false" placeholder="V1 1 0 5&#10;R1 1 2 1k&#10;R2 2 0 1k"></textarea>
         </div>
       </div>
@@ -3598,7 +3638,7 @@ units: yes</pre>
       <summary data-i18n="about-symbulator.9ed9">About Symbulator</summary>
 
       <div class="section-cap" style="margin-top:.9rem" data-i18n="what-is-symbulator.362b">What is Symbulator</div>
-      <p style="font-size:.92rem;margin-top:.2rem" data-i18n="symbulator-is-a-free.2be5">
+      <p style="font-size:.92rem;margin-top:.2rem" data-i18n="symbulator-is-a-free.8289">
         Symbulator is a free linear circuit simulator for handheld
         devices. The name is a portmanteau of "symbolic simulator":
         Symbulator accepts inputs with numerical and symbolic values, and
@@ -3695,7 +3735,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-11 04:03 UTC</span>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-11 13:32 UTC</span>
 </footer>
 
 <script>
@@ -4302,7 +4342,9 @@ function activatePostSolve() {
   // the exceptions that leave it off are in symbulator_ui.
   // The Explore Numerically card is always active (#136): with a solved
   // payload the button hands the system over, without one it opens a
-  // blank solver -- the click handler tells the two apart.
+  // blank solver -- the click handler tells the two apart. Its one tick
+  // does depend on the run, though (#391).
+  syncWhatifThird();
   // Mini-Tools is always active too (#149): aa, pf and gain work on
   // typed arguments and read nothing from a solve, so nothing here.
 }
@@ -4333,6 +4375,7 @@ function clearResults() {
   $('resultsCard').classList.add('inactive');
   $('loadEquivBox').hidden = true;                                 // #300
   $('loadEquivWarn').hidden = true;
+  syncWhatifThird();                                               // #391
   // Evaluate stays active (#291): only its last answer is cleared, since
   // pr(...) and Define need no circuit.
   $('evalOut').innerHTML = '';
@@ -4764,6 +4807,61 @@ const UI_MESSAGES = {
 // #199 -- and is its own answer. And a code this page has never seen
 // means the server is ahead of it, mid-deploy; the engine sends its own
 // English in `text` for exactly that window.
+// ---- Copy to the clipboard (#397) -----------------------------------
+// One implementation, two callers: the two-port parameter term (#166)
+// had it inline, and the SPICE Translator's two fields now want the
+// same thing. Factored out rather than pasted, because the interesting
+// part is the fallback and a second copy of a fallback is a second copy
+// of its bugs.
+//
+// `navigator.clipboard` is unavailable on an insecure origin, which the
+// offline builds hit whenever someone serves the ZIP over plain http on
+// something that is not localhost. The hidden-textarea + execCommand
+// path is deprecated and still the only thing that works there, so it
+// stays. When neither works the button says so rather than pretending:
+// a pill that reads "Copied" over an empty clipboard is worse than one
+// that admits it.
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    let done = false;
+    try { done = document.execCommand('copy'); } catch (e2) {}
+    ta.remove();
+    return done;
+  }
+}
+
+// A Copy pill. `getText` is read at click time, not when the pill is
+// built, so a pill beside a field copies what the field says *now*
+// rather than what it said when the card was drawn.
+function makeCopyPill(getText) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'copypill';
+  btn.textContent = t('js.copy', 'Copy');
+  btn.addEventListener('click', async () => {
+    const text = String(getText() || '');
+    if (!text.trim()) {
+      btn.textContent = t('js.copy.empty', 'Nothing to copy');
+      setTimeout(() => { btn.textContent = t('js.copy', 'Copy'); }, 1600);
+      return;
+    }
+    const done = await copyToClipboard(text);
+    btn.textContent = done ? t('js.copy.done', 'Copied')
+                           : t('js.copy.byHand', 'Select and copy by hand');
+    setTimeout(() => { btn.textContent = t('js.copy', 'Copy'); }, 1600);
+  });
+  return btn;
+}
+
 function uiMsg(m) {
   if (!m) return '';
   if (typeof m === 'string') return m;
@@ -6839,29 +6937,8 @@ async function renderSolveResult(data, idx) {
         const code = document.createElement('code');
         code.textContent = term;
         rowd.appendChild(code);
-        const btn = document.createElement('button');
-        btn.textContent = t('js.copy', 'Copy');
+        const btn = makeCopyPill(() => term);
         btn.style.marginLeft = '.6rem';
-        btn.addEventListener('click', async () => {
-          let done = false;
-          try {
-            await navigator.clipboard.writeText(term);
-            done = true;
-          } catch (e) {
-            // Fallback for contexts without the async clipboard API.
-            const ta = document.createElement('textarea');
-            ta.value = term;
-            ta.style.position = 'fixed';
-            ta.style.opacity = '0';
-            document.body.appendChild(ta);
-            ta.select();
-            try { done = document.execCommand('copy'); } catch (e2) {}
-            ta.remove();
-          }
-          btn.textContent = done ? t('js.copy.done', 'Copied')
-                                 : t('js.copy.byHand', 'Select and copy by hand');
-          setTimeout(() => { btn.textContent = t('js.copy', 'Copy'); }, 1600);
-        });
         rowd.appendChild(btn);
         out.appendChild(rowd);
       }
@@ -7656,6 +7733,12 @@ async function runSpice(direction) {
   }
 }
 
+// #397: the two Copy pills. Read at click time, so each copies what its
+// field holds now -- which for the destination field is the translation
+// that has just been written into it.
+$('spiceSymCopy').appendChild(makeCopyPill(() => $('spiceSym').value));
+$('spiceNetCopy').appendChild(makeCopyPill(() => $('spiceNet').value));
+
 $('spiceToBtn').addEventListener('click', () => runSpice('to_spice'));
 $('spiceFromBtn').addEventListener('click', () => runSpice('from_spice'));
 
@@ -7959,11 +8042,18 @@ $('sympyBtn').addEventListener('click', () => {
 // internal name) with this solve's equation system and answers
 // preloaded. The payload normally travels in the URL (base64url of its
 // JSON, the ?import= contract in eqsheet.py), so the new tab needs
-// nothing further from this page. The URL is absolute on purpose: the
-// offline builds carry this same script, and the solver needs SciPy, so
-// there is exactly one of it and it lives on the server -- like the
-// Documentation link, this is an outward link that works offline only
-// when the network does.
+// nothing further from this page. The URL is absolute because this is
+// the *server* build's copy; `build_local.py` rewrites this one line to
+// 'eqsheet.html' for the offline builds, which have carried their own
+// Solver beside the app since #208.
+//
+// This comment used to say the opposite -- that there was exactly one
+// Solver and it lived on the server, an outward link like the
+// Documentation one. That was true until #208 and has been wrong since,
+// and it cost #391 a deploy note warning of a window between the
+// offline pair and the server's pull in which a handover would meet an
+// older Solver. There is no such window: each build hands over to the
+// Solver it ships with.
 //
 // A very large circuit can push the URL past what the host's front end
 // accepts on a request line (~8 KB), so past a safe margin the payload
@@ -7972,6 +8062,63 @@ $('sympyBtn').addEventListener('click', () => {
 // leaves the host room for headers on top of the URL itself.
 const EQSHEET_URL = 'https://symbulator.pythonanywhere.com/eqsheet/';
 const EQSHEET_URL_MAX = 6000;
+
+// #391: what actually crosses. The payload carries the stamped system in
+// `equations` and the third level -- the powers, voltage drops and seen
+// resistances `analysis._derived` works out after the solve -- in
+// `third_level`. The tick decides whether they are merged, here at click
+// time rather than at solve time, so changing your mind costs no
+// re-solve.
+//
+// The key never leaves this function: the Solver's `?import=` contract
+// knows nothing of it, and a saved `numerical_system.json` has to be the
+// documented shape too, since dropping one on the page is the other way
+// in.
+function whatifPayload() {
+  const p = Object.assign({}, last.eqsheet);
+  const third = p.third_level || [];
+  const thirdLabels = p.third_level_labels || [];
+  delete p.third_level;
+  delete p.third_level_labels;
+  if (third.length && $('whatifThirdOpt').checked) {
+    const base = (p.equations || []).length;
+    p.equations = (p.equations || []).concat(third);
+    // #393: the labels follow their equations, or the whole list goes.
+    // A short `labels` would slide every third-level sentence one row
+    // up the table, which reads perfectly and is wrong.
+    if (p.labels && p.labels.length === base
+        && thirdLabels.length === third.length) {
+      p.labels = p.labels.concat(thirdLabels);
+    } else {
+      delete p.labels;
+    }
+    // They arrive in the List of Equations but **unticked** (Roberto,
+    // 11 Sep 2026), where the stamped system arrives ticked. So the
+    // sheet still lands square on the circuit alone and the reader ticks
+    // the one power or drop they came for, which is one more equation
+    // and one more unknown -- square again. (There is no tick-all
+    // control on that page, so wanting the whole block is a tick each;
+    // that is the trade for not arriving with twelve of them on.)
+    //
+    // `unticked` is the Solver's field, not ours: indices into the
+    // `equations` we are handing it. The third level is appended, so it
+    // is the tail.
+    p.unticked = third.map((_, i) => base + i);
+  }
+  return p;
+}
+
+// The tick is shown only when the last solve produced a third level to
+// offer: FD derives no powers, and TR hands over its answers rather than
+// a system. `.hidden` alone would not hide it -- `label.checkline` sets
+// its own `display: flex`, which beats the browser's `[hidden]` rule --
+// so the stylesheet carries `label.checkline[hidden] { display: none }`,
+// the #249 fix this line depends on.
+function syncWhatifThird() {
+  const n = (last && last.eqsheet && last.eqsheet.third_level || []).length;
+  $('whatifThirdLine').hidden = !n;
+  if (!n) $('whatifThirdOpt').checked = false;
+}
 $('whatifBtn').addEventListener('click', () => {
   $('whatifNote').hidden = true;
   if (!last || !last.eqsheet) {
@@ -7984,7 +8131,7 @@ $('whatifBtn').addEventListener('click', () => {
     a.click();
     return;
   }
-  const json = JSON.stringify(last.eqsheet);
+  const json = JSON.stringify(whatifPayload());
   const b64 = btoa(unescape(encodeURIComponent(json)))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const url = EQSHEET_URL + '?import=' + b64;

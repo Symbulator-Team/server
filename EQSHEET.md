@@ -79,7 +79,54 @@ a plain variable named `u` still works.
 ## Restricting where the solver looks (#131)
 Every unknown's row carries a **Restriction** menu: *Unrestricted*
 (the default), *Positive*, *Negative*, or *Range…* with a from/to
-pair read in the row's SI prefix, like the guess. A restricted solve
+pair read in the row's SI prefix, like the guess. **One end of a range
+may be left empty since #391**, and means open on that side — "3 and
+upwards". The solve API has taken a null end since this feature was
+built; it was only the page that insisted on both, which left a
+condition like `x > 3` nowhere to land. Both ends empty is still a
+refusal.
+
+The menu sits in the **last column** since #391 (it used to come between
+Status and the value), and its range boxes are the size of an ordinary
+value box rather than the small ones they were — there is room at the
+end of the row, and there was not in the middle of it.
+
+### Conditions arrive as restrictions (#391)
+
+Expert Mode's **Conditions** are a filter on the solve, not part of the
+system, so they have never crossed as equations — an early version sent
+them and they arrived as parse errors, `is > 0` being no equation at all.
+They cross as **restrictions** instead: `vs > 0` sets Positive on `vs`,
+and `vs > 3` with `vs < 7` sets a range from 3 to 7.
+
+Bounds on one name are **combined**, which is the only way a range can
+arise, because the chained spelling is refused by the app itself: 
+`_parse_inequality` splits on the first operator it finds, so `7 > x > 3`
+reaches the value parser as `x > 3` and is rejected as "not arithmetic".
+Two conditions is how a reader writes a range today. The tightest lower
+bound wins and the lowest upper bound wins; a contradictory pair is
+dropped rather than handed over as an empty range.
+
+`> 0` and `< 0` are read as bounds like any other and only become the
+sign restrictions when nothing has bounded the other side, so `x > 0`
+with `x < 7` arrives as the range it is rather than as Positive with the
+7 discarded.
+
+What does not cross, and is left unrestricted rather than approximated:
+a condition whose sides are not a bare name and a real number
+(`2*vs > 3`, `vs > ir1`), and an `=` condition, which is a substitution.
+
+**DC only.** A restriction is a statement about one real scalar, and
+every imported AC variable arrives Complex, where the menu is greyed out;
+the only way to make one bite would be to set the variable Real only,
+which asserts its imaginary part is zero — a claim about the circuit, not
+about where to search.
+
+The payload field is `restrictions`: `{name: "pos" | "neg" | [lo, hi]}`
+in **base units**, either end of a range null for open. The page converts
+each end into the row's own SI prefix, which is why it applies them after
+`results` — the prefix is chosen from the imported value, and applying
+them first would put every range out by that factor, silently. A restricted solve
 runs through SciPy's `least_squares` with bounds instead of MINPACK's
 hybr (which takes none); a square restricted system is judged by its
 residual, so a system whose root lies outside the restriction says
@@ -125,6 +172,81 @@ All four domains cross now (#124), each in the shape that survives:
   same.) Only an AC solve with symbolic ω, or a TR solve whose every
   answer carried a delta, produces no payload.
 
+## The third level, and the tick that carries it (#391)
+
+A DC or AC solve works out more than the stamped system holds. After the
+KCL system is solved, `analysis._derived` computes a **third level**: each
+element's branch voltage `v_<el>` and power `p_<el>` (in AC, the complex
+power `s_<el>` and its real part, under `p_` with RMS phasors and `ap_`
+without), and — sources only — the resistance or impedance `r_`/`z_<el>`
+the source sees looking into the rest of the circuit.
+
+Those values have always crossed, in `results`. What did not cross was
+anything **tying them to the circuit**, so they appeared in the Variable
+sheet only when some other equation happened to name one. The app's
+Numerical Solver card now carries a tick, *Include the derived answers*,
+off by default; with it on, the button adds their defining equations to
+the ones it hands over.
+
+**They arrive in the List of Equations switched off** (Roberto, 11 Sep
+2026), where the stamped system arrives on. So a handover with the tick
+on lands exactly where one without it lands — square, on the circuit
+alone — and the reader ticks the one line they came for, which is one
+more equation and one more unknown, square again. Until a line is ticked
+its variable is not in the Variable sheet at all, which is the same rule
+derived results have always followed here.
+
+That is what the `unticked` field in the payload is for; see below.
+
+What that buys is the direction the stamped system cannot go: untick the
+source's own equation, flip a power to **Known**, and the sheet finds the
+source value that delivers it. On `e1,1,0,12:r1,1,2,2'k:r2,2,0,1'k`,
+pinning `pr2` at 36 mW returns `v1 = 18 V`.
+
+They are written in the system's **own** first- and second-level
+variables — node voltages and branch currents — never in each other, so
+any subset of the block stands on its own:
+
+    ve1 = v1
+    pe1 = ie1*v1
+    -ie1*re1 = v1            # not re1 = v1/(-ie1): a zero current would
+    vr1 = v1 - v2            # otherwise put a division into the system
+    pr1 = ir1*(v1 - v2)
+
+In AC they use `conj` and `re`, which that mode's namespace has:
+
+    se1 = v1*conj(ie1)/2
+    ape1 = re(v1*conj(ie1))/2
+
+**Two payload fields, and only one of them is this page's.**
+`third_level` is the app's own: the button merges it into `equations`
+when the tick is on and **deletes the key before encoding**, so this page
+never sees it. `unticked` *is* this page's, and is the one thing #391
+added to the `?import=` contract: **indices into `equations`** whose
+lines arrive switched off. Indices rather than a count, so the field says
+nothing about where in the list they sit, and rather than the equations'
+text, because two elements of one circuit can produce the same line. A
+payload without the field behaves exactly as before — everything ticked.
+
+The tick is read at click time, not at solve time, so changing your mind
+about it costs no re-solve. A saved `numerical_system.json` carries
+`unticked` like the link does, so dropping the file arrives the same way.
+
+The field is absent for TR (its answers cross, not a system) and empty
+for FD (`_derived` runs for dc and ac only). The tick hides itself when
+there is nothing to offer.
+
+Most of those formulas come from `engine._derived_definition`, which is
+where they are written once. It refuses the three AC powers, because
+`conjugate` cannot go into a symbolic stamp the linear solver then has to
+invert — this page has no such problem, it evaluates to complex and
+splits the residual. So those three are written a second time, in
+`symbulator_ui.third_level_equations`, and
+`tools/check_third_level_export.py` is what stops the two drifting: it
+runs the exported equations through `api_parse` and `api_solve` and
+compares the sheet's answers with the solver's own. `build_local.py` runs
+it on every build.
+
 The optional payload field carrying this is `known`:
 `{"t": 0.0}` (real) or `{"s": [0.0, 1.0]}` (complex, [re, im]) — those
 variables arrive **Known** at that value; everything else keeps the
@@ -136,8 +258,15 @@ reference implementation of the contract, for doing it from a shell:
     python tools/eqsheet_export.py "..." --url https://symbulator.pythonanywhere.com/eqsheet  # link
 
 On import the mode switches automatically, the equations land in the
-List of Equations (all ticked), and every variable arrives **Unknown**
-with its solved value as the guess — the sheet lands square and
+List of Equations (all ticked, bar any the payload's `unticked` names —
+see the third-level section above), and every variable arrives **Unknown**
+with its solved value as the guess, **rounded to whatever the app's own
+Rounding setting said at the moment the button was pushed** (#391) — at
+"exact" it is not rounded, as before. The rounding is the app's own
+`_round_expr`, so the sheet cannot disagree with the Results card; note
+that it rounds the *number*, not the display, since the sheet's own
+Rounding menu is display-only and a variable flipped to Known constrains
+the system with whatever value it holds — the sheet lands square and
 re-solves as it stands. Flip variables to Known as you pin them down:
 drop the source equation, fix a current, solve the source backwards.
 
