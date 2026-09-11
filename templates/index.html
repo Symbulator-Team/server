@@ -3739,7 +3739,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-11 15:59 UTC</span>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-11 16:38 UTC</span>
 </footer>
 
 <script>
@@ -5415,6 +5415,10 @@ async function openFromUrl() {
   let name = null;
   if (lesson === 'showcase') name = 'Showcase.cir';
   else if (lesson === 'monograph') name = 'The_Monograph.cir';
+  // #425: the Nilsson & Riedel sampler. The word is also in NAMED_BOOKS in
+  // Documentation/tools/app_links.py, which writes the links that use it;
+  // change the two together.
+  else if (lesson === 'nr12') name = 'Nilsson_Riedel.cir';
   else {
     const m = lesson.match(/^0?(\d{1,2})([a-d]?)$/);
     if (m) name = 'Lesson_' + m[1].padStart(2, '0') + m[2] + '.cir';
