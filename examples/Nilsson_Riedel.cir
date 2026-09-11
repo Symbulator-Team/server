@@ -557,13 +557,13 @@ r2,2,a,100j
 r3,a,p,200
 r4,p,0,3600j
 m,r4,r5,1200j
-r5,q,0,1600j
+r5,q,d,1600j
 r6,q,c,100
 
 analysis: ac
 tool: th
 n1: c
-n2: 0
+n2: d
 omega: omega
 note: Analyzing a Linear Transformer in the Frequency Domain. A linear transformer has R1 = 200 ohm, R2 = 100 ohm, L1 = 9 H, L2 = 4 H, k = 0.5, and couples an 800 ohm + 1 uF load to a 300 V (rms) source of internal impedance 500 + j100 at 400 rad/s. g) Calculate the Thevenin equivalent with respect to the terminals of the load.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex9-15.jpg
