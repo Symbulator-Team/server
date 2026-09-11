@@ -169,10 +169,16 @@ def measure(desc):
     # missed. Measured before believing it: of the 24 joins this
     # exclusion removes, **every one is 29.0 or 14.5px** and none is
     # any other distance.
+    # The pins sit `OP_PIN` off the output axis since #423 (the book's
+    # 8 pt on a 36 pt triangle); before it they sat a quarter of the
+    # height off, which is what `at_rev.py` still needs when it measures
+    # an older revision, so the old rule is the fallback.
+    from symbulator import schematic as _sch
     pin_ys = []
     for x0, y0, x1, y1 in cap["obstacles"]:
         mid, hh = (y0 + y1) / 2.0, y1 - y0
-        pin_ys.append({mid - hh / 4.0, mid, mid + hh / 4.0})
+        off = getattr(_sch, "OP_PIN", hh / 4.0)
+        pin_ys.append({mid - off, mid, mid + off})
 
     def _same_opamp_leads(a, b):
         if abs(a[0] - b[0]) > 0.5:
