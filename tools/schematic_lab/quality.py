@@ -194,6 +194,20 @@ def measure(desc):
         return any(abs(p[0] - q[0]) < 0.5 and abs(p[1] - q[1]) < 0.5
                    for p in line_ends[ka] for q in line_ends[kb])
 
+    all_lines = [("h", x0, x1, y) for x0, x1, y in hor + ehor] \
+        + [("v", y0, y1, x) for x, y0, y1 in ver + ever]
+
+    def _degree(p):
+        """Lines meeting at `p`: ending counts once, passing through
+        twice. A corner is 2, a tee 3."""
+        n = 0
+        for kind, lo, hi, key in all_lines:
+            along, across = (p[0], p[1]) if kind == "h" else (p[1], p[0])
+            if abs(key - across) > 0.5 or not (lo - 0.5 <= along <= hi + 0.5):
+                continue
+            n += 1 if (abs(along - lo) < 0.5 or abs(along - hi) < 0.5) else 2
+        return n
+
     near = []
     for i in range(len(ends)):
         for j in range(i + 1, len(ends)):
@@ -218,6 +232,14 @@ def measure(desc):
                 continue                      # they already share a corner
             if _same_opamp_leads(a, b):
                 continue                      # the symbol's pin spacing
+            # A join near a corner needs two *joins*. A line that simply
+            # stops -- at an op-amp's pin, at an element's terminal --
+            # is a terminus, not a connection, and pairing it with a
+            # real junction 29px along the same wire reports a defect
+            # where the picture has one tee and one pin. #377's lifted
+            # node produced exactly that.
+            if _degree(a) < 2 or _degree(b) < 2:
+                continue
             near.append((round(d, 1), a, b))
     # One pair per place, not one per pair of coincident ends.
     seen, near_u = set(), []
