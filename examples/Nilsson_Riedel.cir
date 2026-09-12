@@ -273,6 +273,23 @@ rounding: 6
 si: no
 units: yes
 
+[NR12's Example 7.1 (DC, before the switch opens)]
+
+j,0,1,20
+r0,1,0,0.1
+l,1,0,2
+r1,1,2,2
+r2,2,0,10
+r3,2,0,40
+
+analysis: dc
+note: The switch in the circuit shown in Fig. 7.6 has been closed for a long time before it is opened at t = 0. Find a) i_L(t) for t ≥ 0, b) i_o(t) for t ≥ 0+, c) v_o(t) for t ≥ 0+.
+note: This is the circuit before the switch opens, run in DC to find the inductor's current, which the next entry takes as its initial condition.
+image: https://learn.symbulator.com/assets/circuit/nr12-ex7-1.jpg
+rounding: 6
+si: no
+units: yes
+
 [NR12's Example 7.1 (TR)]
 
 l,1,0,2,20
@@ -282,7 +299,22 @@ r3,2,0,40
 
 analysis: tr
 note: The switch in the circuit shown in Fig. 7.6 has been closed for a long time before it is opened at t = 0. Find a) i_L(t) for t ≥ 0, b) i_o(t) for t ≥ 0+, c) v_o(t) for t ≥ 0+.
+note: This is the circuit after the switch has moved; its initial condition comes from the entry before it.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex7-1.jpg
+rounding: 6
+si: no
+units: yes
+
+[NR12's Example 7.3 (DC, before the switch moves)]
+
+e,1,0,100
+r0,1,2,10'k
+c,2,0,0.5'u
+
+analysis: dc
+note: The switch in the circuit shown in Fig. 7.15 has been in position x for a long time. At t = 0 it moves instantaneously to position y. Find a) v_C(t) for t ≥ 0, b) v_o(t) for t ≥ 0+, and c) i_o(t) for t ≥ 0+.
+note: This is the circuit at position x, before the switch moves, run in DC to find the capacitor's voltage, which the next entry takes as its initial condition.
+image: https://learn.symbulator.com/assets/circuit/nr12-ex7-3.jpg
 rounding: 6
 si: no
 units: yes
@@ -296,7 +328,22 @@ r3,2,0,60'k
 
 analysis: tr
 note: The switch in the circuit shown in Fig. 7.15 has been in position x for a long time. At t = 0 it moves instantaneously to position y. Find a) v_C(t) for t ≥ 0, b) v_o(t) for t ≥ 0+, and c) i_o(t) for t ≥ 0+.
+note: This is the circuit after the switch has moved; its initial condition comes from the entry before it.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex7-3.jpg
+rounding: 6
+si: no
+units: yes
+
+[NR12's Example 7.5 (DC, at position a)]
+
+j,1,0,8
+r,1,0,10
+l,1,0,0.2
+
+analysis: dc
+note: The switch in the circuit shown in Fig. 7.21 has been in position a for a long time. At t = 0 it moves from position a to position b. The switch is a make-before-break type, so the inductor current is continuous. a) Find the expression for i(t) for t ≥ 0. b) What is the initial voltage across the inductor just after the switch has been moved to position b?
+note: This is the circuit at position a, before the switch moves, run in DC to find the inductor's current, which the next entry takes as its initial condition.
+image: https://learn.symbulator.com/assets/circuit/nr12-ex7-5.jpg
 rounding: 6
 si: no
 units: yes
@@ -309,6 +356,7 @@ l,2,0,0.2,-8
 
 analysis: tr
 note: The switch in the circuit shown in Fig. 7.21 has been in position a for a long time. At t = 0 it moves from position a to position b. The switch is a make-before-break type, so the inductor current is continuous. a) Find the expression for i(t) for t ≥ 0. b) What is the initial voltage across the inductor just after the switch has been moved to position b?
+note: This is the circuit after the switch has moved; its initial condition comes from the entry before it.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex7-5.jpg
 rounding: 6
 si: no
@@ -329,6 +377,24 @@ rounding: 6
 si: no
 units: yes
 
+[NR12's Example 7.11 to 35 ms (DC, both switches closed)]
+
+e,1,0,60
+r4,1,2,4
+r12,2,0,12
+r6,2,0,6
+r3,2,3,3
+l,3,0,0.15
+r18,3,0,18
+
+analysis: dc
+note: The two switches in the circuit shown in Fig. 7.39 have been closed for a long time. At t = 0 switch 1 is opened; then, 35 ms later, switch 2 is opened. a) Find i_L(t) for 0 ≤ t ≤ 35 ms.
+note: This is the circuit with both switches closed, run in DC to find the inductor's current, which the next entry takes as its initial condition.
+image: https://learn.symbulator.com/assets/circuit/nr12-ex7-11.jpg
+rounding: 6
+si: no
+units: yes
+
 [NR12's Example 7.11 to 35 ms (TR)]
 
 r6,2,0,6
@@ -338,6 +404,7 @@ r18,3,0,18
 
 analysis: tr
 note: The two switches in the circuit shown in Fig. 7.39 have been closed for a long time. At t = 0 switch 1 is opened; then, 35 ms later, switch 2 is opened. a) Find i_L(t) for 0 ≤ t ≤ 35 ms.
+note: This is the circuit after the switch has moved; its initial condition comes from the entry before it.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex7-11.jpg
 rounding: 6
 si: no
@@ -347,7 +414,7 @@ units: yes
 
 r6,2,0,6
 r3,2,3,3
-l,3,0,0.15,1.47961
+l,3,0,0.15,6*exp(-1.4)
 
 analysis: tr
 note: b) Find i_L(t) for t ≥ 35 ms. (Time is measured from the second switching.)
@@ -438,6 +505,25 @@ rounding: 6
 si: no
 units: yes
 
+[NR12's Example 13.7 (DC, at position a)]
+
+e,1,0,60
+r9,1,a,9
+r3,a,p,3
+l1,p,0,2
+m,l1,l2,2
+l2,q,d,8
+r2b,q,c,2
+r10,c,d,10
+
+analysis: dc
+note: The make-before-break switch in the circuit in Fig. 13.23 has been in position a for a long time. At t = 0 it moves instantaneously to position b. Use Laplace methods to find i_2(t) for t ≥ 0.
+note: This is the circuit at position a, before the switch moves, run in DC to find the two coil currents, which the next entry takes as its initial conditions.
+image: https://learn.symbulator.com/assets/circuit/nr12-ex13-7.jpg
+rounding: 6
+si: no
+units: yes
+
 [NR12's Example 13.7 (TR)]
 
 r3,0,p,3
@@ -449,7 +535,24 @@ r10,c,d,10
 
 analysis: tr
 note: The make-before-break switch in the circuit in Fig. 13.23 has been in position a for a long time. At t = 0 it moves instantaneously to position b. Use Laplace methods to find i_2(t) for t ≥ 0.
+note: This is the circuit after the switch has moved; its initial condition comes from the entry before it.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex13-7.jpg
+rounding: 6
+si: no
+units: yes
+
+[NR12's Example 13.13 (DC, switch closed)]
+
+e,1,0,100
+r1,1,2,10
+l1,2,0,3
+r2,0,4,15
+l2,4,0,2
+
+analysis: dc
+note: The switch in the circuit shown in Fig. 13.50 has been closed for a long time. At t = 0 it opens. Use Laplace methods to find the output voltage v_o and the current in the 3 H inductor, i_1.
+note: This is the circuit with the switch closed, run in DC to find the two inductor currents, which the next entry takes as its initial conditions.
+image: https://learn.symbulator.com/assets/circuit/nr12-ex13-13.jpg
 rounding: 6
 si: no
 units: yes
@@ -464,6 +567,7 @@ l2,4,0,2,0
 
 analysis: tr
 note: The switch in the circuit shown in Fig. 13.50 has been closed for a long time. At t = 0 it opens. Use Laplace methods to find the output voltage v_o and the current in the 3 H inductor, i_1.
+note: This is the circuit after the switch has moved; its initial condition comes from the entry before it.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex13-13.jpg
 rounding: 6
 si: no
@@ -639,6 +743,20 @@ units: yes
 rms: no
 polar: yes
 
+[NR12's Example 13.2 (DC, before the switch moves)]
+
+e,1,0,100
+r0,1,2,10'k
+c,2,0,0.5'u
+
+analysis: dc
+note: The circuit in Fig. 13.11 was analyzed in Example 7.3 using first-order circuit analysis techniques. Use the Laplace transform method to find v_o(t) for t ≥ 0+.
+note: This is the circuit at position x, before the switch moves, run in DC to find the capacitor's voltage, which the next entry takes as its initial condition.
+image: https://learn.symbulator.com/assets/circuit/nr12-ex13-2.jpg
+rounding: 6
+si: no
+units: yes
+
 [NR12's Example 13.2 (FD)]
 
 c,1,0,0.5'u,100
@@ -648,6 +766,7 @@ r3,2,0,60'k
 
 analysis: fd
 note: The circuit in Fig. 13.11 was analyzed in Example 7.3 using first-order circuit analysis techniques. Use the Laplace transform method to find v_o(t) for t ≥ 0+.
+note: This is the circuit after the switch has moved; its initial condition comes from the entry before it.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex13-2.jpg
 rounding: 6
 si: no
