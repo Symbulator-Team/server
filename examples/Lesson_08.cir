@@ -31,7 +31,7 @@ r2,2,0,-2j
 r3,2,0,4
 
 analysis: ac
-note: Find the power factor of the circuit as seen by the source, and the average power the source delivers — the Evaluate line, -pe: 125.4 W. The values are RMS, so the RMS setting is on. The power factor comes from the pf mini-tool, given ve and -ie: 0.97342 leading. The minus sign matters -- ie is the current into the source, and without it the tool says lagging.
+note: Find the power factor of the circuit as seen by the source, and the average power the source delivers — the Evaluate line, -pe: 125.4 W. The values are RMS, so the RMS setting is on. The power factor comes from the pf mini-tool given the source's name, e: 0.97342 leading -- a source is read on the power it delivers, so the reading is of the circuit it sees. Given the complex power se instead, the tool answers with the value alone.
 image: https://learn.symbulator.com/assets/circuit/as7e1110.png [509px]
 omega: omega
 rounding: 5
@@ -69,7 +69,7 @@ r3,2,3,8
 r4,3,0,-6j
 
 analysis: ac
-note: Find the power factor of the circuit as seen by the source, and the average power it supplies — the Evaluate line, -pe: 2007.1 W. pf with ve and -ie reads 0.93595 lagging.
+note: Find the power factor of the circuit as seen by the source, and the average power it supplies — the Evaluate line, -pe: 2007.1 W. pf given the source's name, e, reads 0.93595 lagging.
 image: https://learn.symbulator.com/assets/circuit/as7pp1110.png [494px]
 omega: omega
 rounding: 5
@@ -106,7 +106,7 @@ r2,1,0,120+70j
 r3,1,0,60
 
 analysis: ac
-note: Parts (a) and (b): find the total complex power delivered (the Evaluate line, -se) and the power factor. pf with ve and -ie reads 0.99805 leading, which is what makes part (c) come out the way it does.
+note: Parts (a) and (b): find the total complex power delivered (the Evaluate line, -se) and the power factor. pf given the source's name, e, reads 0.99805 leading, which is what makes part (c) come out the way it does.
 image: https://learn.symbulator.com/assets/circuit/as7p1175.png [490px]
 omega: omega
 rounding: 5

@@ -108,8 +108,10 @@ M_NEED_CIRCUIT     = 841
 M_UNKNOWN_TOOL     = 850
 M_TOOL_NEEDS_1     = 851
 M_TOOL_NEEDS_N     = 852
-M_PF_TWO_VALUES    = 853
+M_PF_ONE_VALUE     = 853
 M_PF_NEEDS_NUMBERS = 854
+M_PF_NO_CONVENTION = 855
+M_PF_ZERO          = 856
 # SPICE
 M_BAD_DIRECTION    = 860
 # Notes -- severity "note", which is why severity is a field and not a
@@ -119,6 +121,13 @@ M_NORMALISED       = 870
 M_ORDINARY_VARIABLE = 871
 M_DEFINE_SHADOWS   = 872
 M_TR_STEP_ONE      = 873
+# pf's own line under its reading (#430): which power the factor is of.
+# Roberto, 13 Sep 2026: with a whole screen to report on, spell it out.
+M_PF_OF_CONSUMED   = 878
+M_PF_OF_DELIVERED  = 879
+M_PF_OF_VALUE      = 880
+M_PF_OF_SOURCE     = 881
+M_PF_OF_IMPEDANCE  = 882
 M_TR_STEP_MANY     = 874
 M_FD_IMPULSE_ONE   = 875
 M_FD_IMPULSE_MANY  = 876
@@ -213,12 +222,29 @@ CATALOGUE = {
     M_UNKNOWN_TOOL:  ("error", "Unknown tool `%{tool}`."),
     M_TOOL_NEEDS_1:  ("error", "`%{tool}` needs %{n} value: %{hint}."),
     M_TOOL_NEEDS_N:  ("error", "`%{tool}` needs %{n} values: %{hint}."),
-    M_PF_TWO_VALUES: ("error", "`pf` needs two values: a voltage and a "
-                               "current, as in `pf(v_1, i_r1)`."),
+    M_PF_ONE_VALUE:  ("error", "`pf` takes one value: a complex power, as "
+                               "in `pf(se)`, or the name of an element of "
+                               "the AC solve, as in `pf(e)`."),
     M_PF_NEEDS_NUMBERS: ("error",
-                         "`pf` needs numbers, and `%{arg}` still contains "
-                         "%{unknown}. Solve the circuit in AC first, then "
-                         "refer to its answers by name."),
+                         "`pf` can say leading or lagging only for numbers, "
+                         "and the voltage and current of `%{name}` still "
+                         "contain %{unknown}. Give it the complex power "
+                         "`s%{name}` instead for the value alone."),
+    M_PF_NO_CONVENTION: ("error",
+                         "`pf` knows the sign convention of sources (e, j) "
+                         "and loads (r, l, c) only; `%{name}` is neither."),
+    M_PF_ZERO:       ("error", "`%{text}` is zero, so it has no power "
+                               "factor."),
+    M_PF_OF_CONSUMED: ("note", "This is the power factor for the power "
+                               "consumed in `%{name}`."),
+    M_PF_OF_DELIVERED: ("note", "This is the power factor for the power "
+                                "delivered by `%{name}`."),
+    M_PF_OF_VALUE:   ("note", "This is the power factor of the value given. "
+                              "A value alone cannot say leading or lagging."),
+    M_PF_OF_SOURCE:  ("note", "This is the power factor for the power "
+                              "delivered by source `%{name}`."),
+    M_PF_OF_IMPEDANCE: ("note", "This is the power factor for the power "
+                                "consumed by impedance `%{name}`."),
     M_BAD_DIRECTION: ("error", "Unknown direction `%{direction}`."),
     M_NORMALISED:    ("note", "normalised '%{was}' to '%{now}' in %{element}"),
     M_ORDINARY_VARIABLE: ("note",
@@ -4040,6 +4066,11 @@ def schematic_ui(desc: str, tool: str = "", n1: str = "", n2: str = ""):
 # unsubstituted and because what they hand back is a sentence, not
 # something the formatters downstream can round or prefix.
 #
+# `pf` is the odd one: its argument may be an element's *name*, which is
+# not a value at all, or an expression that is allowed to keep its symbols.
+# So it does not go through `_as_number` with the others; it is answered by
+# `_pf_of` below, the same function Evaluate's `pf(...)` uses (#430).
+#
 # So they get their own small surface, chosen by name, with their arguments
 # evaluated against the solved answers first -- which is what lets a user
 # write `i_r1` instead of copying a phasor out of the results by hand.
@@ -4051,8 +4082,8 @@ def schematic_ui(desc: str, tool: str = "", n1: str = "", n2: str = ""):
 MINI_TOOLS = {
     "aa": {"args": 1, "label": "aa -- amplitude and angle",
            "hint": "a complex value, as in i_r1"},
-    "pf": {"args": 2, "label": "pf -- power factor",
-           "hint": "a voltage and a current, as in v_1 and i_r1"},
+    "pf": {"args": 1, "label": "pf -- power factor",
+           "hint": "a complex power, as in se, or an element's name, as in e"},
     "gain": {"args": 4, "label": "gain -- voltage, current and power gain",
              "hint": "an input pair and an output pair: v1, i1, v2, i2"},
 }
@@ -4105,6 +4136,21 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
             return _err(msg(code, tool=tool, n=spec["args"],
                             hint=spec["hint"]))
 
+        if tool == "pf":
+            got = _pf_of(args[0], values)
+            if isinstance(got, dict):
+                return got                  # the element form, or an error
+            # The complex-value form: a number or an expression, shown as
+            # the other mini-tools show theirs -- two digits more than the
+            # Results card, rounded in decimal (#318) -- with the line
+            # under it saying which power the factor is of.
+            expr, note = got
+            from symbulator._display import round_sig
+            shown = round_sig(sp.N(expr), digits + 2) if digits else sp.N(expr)
+            plain = _plain_with_j(shown)
+            return _ok({"plain": plain, "latex": _latex_with_j(shown),
+                        "magnitude": plain, "direction": "", "note": note})
+
         numbers = []
         for a in args[:spec["args"]]:
             got, bad = _as_number(a, values)
@@ -4155,38 +4201,174 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
                           "latex": _latex_with_j(rounded(v))}
                          for k, label, v in rows]})
 
-        if tool == "pf":
-            from symbulator.utils import pf as _pf
-            text = _pf(*numbers)
-            body = text.split(":", 1)[1].strip() if ":" in text else text
-            magnitude, _, direction = body.partition(" ")
-            return _ok({"plain": body, "latex": rf"\text{{{body}}}",
-                        "magnitude": magnitude,
-                        "direction": direction.strip()})
-
         return _err(msg(M_UNKNOWN_TOOL, tool=tool))
     except Exception as exc:                                  # noqa: BLE001
         return _err(_exc_msg(exc))
 
 
 # --------------------------------------------------------------------------
-# Power factor, in Evaluate
+# Power factor
 # --------------------------------------------------------------------------
 #
-# `pf` is a different creature from everything else Evaluate takes. It
-# answers with a sentence -- "pf: 0.6 lagging" -- rather than an
-# expression, and it needs its two arguments as actual numbers: given
-# symbols it raises "Cannot convert expression to float", because it has
-# to compare an angle against zero to decide leading from lagging.
+# `pf` is version 8's tool, ported as it was (#430): it takes ONE value, and
+# what it answers depends on what that value is.
 #
-# So it cannot live in the parsing namespace, where sympify would call it
-# with the symbols still unsubstituted. It is handled here instead, as a
-# form Evaluate recognises: each argument is evaluated against the solved
-# answers first -- which is the whole reason Evaluate is the right home,
-# since it is the only place a user can refer to a phasor as `v_1` rather
-# than retyping it -- and only then does pf see two numbers.
+#   * A complex power -- `se`, `-se`, `sr1` -- or any complex expression,
+#     with symbols in it or not: the answer is |Re| / |S|, a number or an
+#     expression, and NO direction. The calculation is done on the value as
+#     given, which for `se` is the power the source consumes, and consumed
+#     or delivered the ratio is the same; a bare number cannot say leading
+#     from lagging, because the same complex power is consumed by one side
+#     of a branch and delivered by the other.
+#
+#   * The name of an element of the AC solve -- `e`, `j1`, `r2`: the answer
+#     is a sentence, the value to five decimals and the word, and it works
+#     only when the element's voltage and current came out as numbers. The
+#     word is read the way the calculator read it, and the convention
+#     differs by kind: a load (`r`, and in version 9 `l` and `c`) on the
+#     power it CONSUMES, the angle between its voltage and its current as
+#     stored; a source (`e`, `j`) on the power it DELIVERS, the current
+#     negated first, so the reading is that of the circuit the source sees.
+#     The value is the same either way; only the word depends on it, and a
+#     source read on its consumed power would say the opposite word --
+#     which is why the word is given only for a name, and why the tool
+#     does the negating rather than the reader.
+#
+# Either way the answer carries a `note` saying which power the factor is
+# of -- "the power delivered by source e", "the power consumed by impedance
+# r1", "the power consumed in e" for `se` -- because the screen has room
+# to say so and the sign convention is the whole subtlety of the tool.
+#
+# It is written here rather than imported from the package's `pf()`: the
+# app's answers are strings keyed by name, which is what the element form
+# has to search, and keeping it in this file lets the app carry the tool
+# without a solver release. The package's `symbulator.utils.pf` is the same
+# tool for a `Result`, and `tools/check_pf_tool.py` holds the two to the
+# same readings.
 
 _PF_CALL = re.compile(r"^\s*pf\s*\((.*)\)\s*$", re.S)
+_PF_NAME = re.compile(r"^[A-Za-z_]\w*$")
+#: `se`, `s_e`, `-sr1`: a complex-power answer, possibly negated.
+_PF_POWER_NAME = re.compile(r"^\s*(-?)\s*[sS]_?(\w+)\s*$")
+
+#: The kinds the element form knows a sign convention for.
+PF_SOURCE_KINDS = "ej"
+PF_LOAD_KINDS = "rlc"
+
+
+def _pf_reading(s):
+    """The value and the word for a numerical complex power `s`, as version
+    8 printed them: |cos| to five decimals; `lagging` for a positive angle,
+    `leading` for a negative one, and no word at all for a purely real
+    power. A reactive part that is float noise beside the real one -- below
+    one part in 10^9 -- counts as zero rather than as a word."""
+    s = complex(s)
+    magnitude = round(abs(s.real) / abs(s), 5)
+    im = 0.0 if abs(s.imag) <= 1e-9 * abs(s) else s.imag
+    return magnitude, ("lagging" if im > 0 else "leading" if im < 0 else "")
+
+
+def _has_top_level_comma(inside: str) -> bool:
+    """True when `inside` holds a comma outside any bracket -- a second
+    argument, which pf no longer takes."""
+    depth = 0
+    for ch in inside:
+        if ch in "([":
+            depth += 1
+        elif ch in ")]":
+            depth -= 1
+        elif ch == "," and depth == 0:
+            return True
+    return False
+
+
+def _pf_of(text: str, values: dict, subs_map=None, assumptions=None):
+    """One `pf` argument against the solved answers.
+
+    Returns a dict -- `_ok` with the sentence for the element form, or an
+    `_err` -- or, for the complex-value form, a pair `(expression, note)`
+    which the caller formats as it formats any other value."""
+    import sympy as sp
+    from symbulator.si_prefix import safe_sympify
+
+    text = (text or "").strip()
+    if not text:
+        return _err(msg(M_GIVE_A_VALUE))
+
+    # Every answer under its spelling-free key, so `e` finds `v_e` and
+    # `i_e`, and `s_e` is recognised however the reader wrote it.
+    by_norm = {_norm_name(k): k for k in values}
+
+    name = text.strip("\"'")
+    if _PF_NAME.match(name):
+        # The element form: `e` names an element when the solve produced
+        # its voltage and its current.
+        v_key = by_norm.get("v" + _norm_name(name))
+        i_key = by_norm.get("i" + _norm_name(name))
+        if v_key and i_key:
+            # Named as the solve stored it -- `e` for a typed `E` -- so the
+            # line under the reading matches the Results card.
+            name = v_key.split("_", 1)[1] if "_" in v_key else v_key[1:]
+            kind = name[:1].lower()
+            if kind in PF_SOURCE_KINDS:
+                sign = -1                 # the current the source delivers
+                note = msg(M_PF_OF_SOURCE, name=name)
+            elif kind in PF_LOAD_KINDS:
+                sign = 1                  # the current the load consumes
+                note = msg(M_PF_OF_IMPEDANCE, name=name)
+            else:
+                return _err(msg(M_PF_NO_CONVENTION, name=name))
+            try:
+                v = _parse_answer(values[v_key])
+                i = _parse_answer(values[i_key])
+                s = v * sp.conjugate(sign * i)
+                s = sp.N(sp.simplify(_apply_conditions(s, subs_map,
+                                                       assumptions)))
+            except Exception as exc:                          # noqa: BLE001
+                return _err(_exc_msg(exc))
+            if s.free_symbols:
+                unknown = ", ".join(sorted(str(x) for x in s.free_symbols))
+                return _err(msg(M_PF_NEEDS_NUMBERS, name=name,
+                                unknown=unknown))
+            s = complex(s)
+            if s == 0:
+                return _err(msg(M_PF_ZERO, text=name))
+            magnitude, direction = _pf_reading(s)
+            body = f"{magnitude} {direction}".strip()
+            return _ok({"plain": body, "latex": rf"\text{{{body}}}",
+                        "magnitude": str(magnitude), "direction": direction,
+                        "note": note, "text_only": True})
+
+    # The complex-value form: any expression, resolved against the answers.
+    # The note names the element when the value is one of the stored
+    # complex powers, `se` or `-se`; anything else is just a value.
+    note = msg(M_PF_OF_VALUE)
+    m = _PF_POWER_NAME.match(text)
+    s_key = m and by_norm.get("s" + _norm_name(m.group(2)))
+    if s_key:
+        stored = s_key.split("_", 1)[1] if "_" in s_key else s_key[1:]
+        note = msg(M_PF_OF_DELIVERED if m.group(1) else M_PF_OF_CONSUMED,
+                   name=stored)
+    try:
+        parsed = safe_sympify(expand_value_for_ui(text))
+        z = parsed.subs(_alias_mapping(values, expr=parsed))
+        z = sp.simplify(_apply_conditions(z, subs_map, assumptions))
+    except Exception as exc:                                  # noqa: BLE001
+        return _err(_exc_msg(exc))
+    if z == 0:
+        return _err(msg(M_PF_ZERO, text=text))
+    if not z.free_symbols:
+        return sp.N(sp.Abs(sp.re(z)) / sp.Abs(z)), note
+    # The calculator takes a symbol as real; SymPy does not, and
+    # Abs(re(x))/Abs(x) with x complex-unknown is a page of conjugates.
+    # Compute with real twins and put the reader's own symbols back, so
+    # what comes out is `Abs(x)/sqrt(x**2 + 4)` in the symbols typed.
+    twins = {x: sp.Symbol(x.name, real=True) for x in z.free_symbols
+             if x.is_real is not True}
+    zr = z.xreplace(twins)
+    ratio = sp.simplify(sp.Abs(sp.re(zr)) / sp.Abs(zr))
+    return ratio.xreplace({twin: x for x, twin in twins.items()}), note
+
 
 #: `s2t(v_o)` and `t2s(...)` have the same trouble as pf, for the same
 #: reason: sympify calls the function while its argument is still the
@@ -4218,57 +4400,18 @@ def _domain_transform(expr_str: str, values: dict, subs_map=None,
     return got
 
 
-def _split_two_args(inside: str):
-    """The two arguments of a pf(...) call, split on the comma that
-    separates them rather than on any comma inside a nested call."""
-    depth, split_at = 0, None
-    for i, ch in enumerate(inside):
-        if ch in "([":
-            depth += 1
-        elif ch in ")]":
-            depth -= 1
-        elif ch == "," and depth == 0:
-            if split_at is not None:
-                return None            # more than two: not a pf call
-            split_at = i
-    if split_at is None:
-        return None
-    return inside[:split_at], inside[split_at + 1:]
-
-
 def _power_factor(expr_str: str, values: dict, subs_map=None,
                   assumptions=None):
-    """`pf(v, i)` against the solved answers, or None if this is not one."""
+    """`pf(...)` in Evaluate: None when `expr_str` is not a pf call;
+    otherwise what `_pf_of` returns -- a dict for the element form and for
+    an error, an (expression, note) pair for the complex-value form."""
     m = _PF_CALL.match(expr_str)
     if not m:
         return None
-    args = _split_two_args(m.group(1))
-    if not args:
-        return _err(msg(M_PF_TWO_VALUES))
-
-    import sympy as sp
-    from symbulator.si_prefix import safe_sympify
-    from symbulator.utils import pf as _pf
-
-    numbers = []
-    for arg in args:
-        parsed = safe_sympify(expand_value_for_ui(arg))
-        got = parsed.subs(_alias_mapping(values, expr=parsed))
-        got = sp.simplify(_apply_conditions(got, subs_map, assumptions))
-        if got.free_symbols:
-            unknown = ", ".join(sorted(str(s) for s in got.free_symbols))
-            return _err(msg(M_PF_NEEDS_NUMBERS, arg=arg.strip(),
-                            unknown=unknown))
-        numbers.append(got)
-
-    text = _pf(*numbers)
-    # pf() answers "pf: 0.6 lagging". Split it so the interface can show
-    # the number and the direction as the two things they are.
-    body = text.split(":", 1)[1].strip() if ":" in text else text
-    magnitude, _, direction = body.partition(" ")
-    return _ok({"plain": body, "latex": rf"\text{{{body}}}",
-                "magnitude": magnitude, "direction": direction.strip(),
-                "text_only": True})
+    inside = m.group(1)
+    if _has_top_level_comma(inside):
+        return _err(msg(M_PF_ONE_VALUE))
+    return _pf_of(inside, values, subs_map, assumptions)
 
 
 def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
@@ -4287,8 +4430,8 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
 
         # The Conditions box (#96). Read once, up front, so every form
         # below gets the same substitutions and assumptions -- including
-        # pf(), whose arguments have to come out as numbers, and which is
-        # exactly where "at t = to" earns its keep.
+        # pf(), whose element form has to come out as numbers, and which
+        # is exactly where "at t = to" earns its keep.
         conds = _evaluate_conditions(conditions, values)
         if isinstance(conds, dict):
             return conds                     # an error reading the box
@@ -4331,11 +4474,16 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
                 return exact                                         # #181
             return _join_dual(exact, approximate)
 
-        # pf() is answered before the ordinary path, because it wants its
-        # arguments as numbers and gives back a sentence.
+        # pf() is answered before the ordinary path: given a name it gives
+        # back a sentence, and given a value it is formatted like any other
+        # answer, with its note under it (#430).
         power_factor = _power_factor(expr_str, values, subs_map, assumptions)
+        if isinstance(power_factor, dict):
+            return power_factor          # the element form, or an error
         if power_factor is not None:
-            return power_factor
+            expr, note = power_factor
+            plain, latex = shown(sp.simplify(expr))
+            return _ok({"plain": plain, "latex": latex, "note": note})
 
         # A domain transform is answered with the ordinary formatting, so
         # it is folded back into `result` rather than returned whole.
