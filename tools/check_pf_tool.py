@@ -11,8 +11,9 @@ the tool exists for:
 
   * a source is read on the power it DELIVERS, an impedance on the power
     it CONSUMES, and the note under the reading says which;
-  * a complex-power variable (`se`, `s_e`, `-se`) gives the value alone,
-    with the note naming the element and consumed or delivered;
+  * a complex-power variable (`se`, `s_e`, `-se`) is read as given -- the
+    word of the consumed power, opposite to the source's own -- and with
+    no line under it, the reader knowing by then what `se` is;
   * a symbolic circuit refuses the name form and still answers the value
     form, with the symbol in it;
   * `pf(v, i)` -- the two-argument form this replaced -- is refused by
@@ -95,29 +96,29 @@ def main(prove_red=False):
     print("A source on the power it delivers, an impedance on the power it consumes:")
     vload = solve("e,1,0,10:r,1,0,3+4j")
     check("e feeding 3+4j", reading(mini("e", vload)),
-          "0.6 lagging | This is the power factor for the power delivered by source `e`.")
+          "0.60000 lagging | This is the power factor for the power delivered by source `e`.")
     check("r of 3+4j", reading(mini("r", vload)),
-          "0.6 lagging | This is the power factor for the power consumed by impedance `r`.")
+          "0.60000 lagging | This is the power factor for the power consumed by impedance `r`.")
     check("j feeding 3+4j", reading(mini("j", solve("j,1,0,2:r,1,0,3+4j"))),
-          "0.6 lagging | This is the power factor for the power delivered by source `j`.")
+          "0.60000 lagging | This is the power factor for the power delivered by source `j`.")
     check("r2 of Example 11.10, a capacitor", reading(mini("r2", v1110)),
-          "0.0 leading | This is the power factor for the power consumed by impedance `r2`.")
+          "0 leading | This is the power factor for the power consumed by impedance `r2`.")
     check("r1 of Example 11.10, purely real: no word", reading(mini("r1", v1110)),
-          "1.0 | This is the power factor for the power consumed by impedance `r1`.")
+          "1.0000 | This is the power factor for the power consumed by impedance `r1`.")
 
-    print("A complex-power variable gives the value alone, and says whose power it is:")
+    print("A complex-power variable is read as given, factor and word, no line:")
     for spelling in ("se", "s_e", "S_E"):
-        d = mini(spelling, v1110)
-        check(f"pf {spelling}, value", d.get("plain"), "0.9734172")
-        check(f"pf {spelling}, note", (d.get("note") or {}).get("text"),
-              "This is the power factor for the power consumed in `e`.")
-    check("pf -se, note", (mini("-se", v1110).get("note") or {}).get("text"),
-          "This is the power factor for the power delivered by `e`.")
+        # The consumed power at a source: the opposite word to `e`.
+        check(f"pf {spelling}", reading(mini(spelling, v1110)), "0.97342 lagging")
+    check("pf -se, the delivered power", reading(mini("-se", v1110)),
+          "0.97342 leading")
     check("pf se in Evaluate", reading(evaluate("pf(se)", v1110)),
-          "0.97342 | This is the power factor for the power consumed in `e`.")
-    # Seven figures, padded, as `aa` prints 5.000000: the mini-tools' style.
+          "0.97342 lagging")
+    # At the Rounding setting's five figures, padded as the Results card
+    # pads -- not the two extra digits `aa` shows (Roberto, 13 Sep 2026).
     check("pf 3+4j, a bare value", reading(mini("3+4j", v1110)),
-          "0.6000000 | This is the power factor of the value given. A value alone cannot say leading or lagging.")
+          "0.60000 lagging")
+    check("pf 5, purely real: no word", reading(mini("5", v1110)), "1.0000")
 
     print("A symbolic circuit refuses the name and answers the value:")
     vsym = solve(P_1175C, omega="2*pi*50")
@@ -127,6 +128,7 @@ def main(prove_red=False):
     d = mini("se", vsym)
     check("pf se with x in the circuit is an expression in x",
           bool(d.get("ok")) and "x" in d["plain"], True)
+    check("  ...with no word and no line", (d.get("direction"), d.get("note")), ("", None))
 
     print("What is refused:")
     check("the old two-argument form", reading(evaluate("pf(ve, -ie)", v1110)),
@@ -141,9 +143,12 @@ def main(prove_red=False):
     for desc, name in ((EX_1110, "e"), (PP_1110, "e"), (P_1175, "e"),
                        ("e,1,0,10:r,1,0,3+4j", "r")):
         res = ac(desc, omega=sp.Symbol("omega"), use_rms=True)
-        got = pf(name, res)
-        app = mini(name, solve(desc))["plain"]
-        check(f"package pf({name!r}) on {desc[:22]}...", got, f"pf: {app}")
+        # The package prints five decimals as version 8 did; the app prints
+        # the Rounding setting. Compare the number and the word, not the text.
+        got = pf(name, res).split(": ", 1)[1].split()
+        app = mini(name, solve(desc))["plain"].split()
+        check(f"package pf({name!r}) on {desc[:22]}...",
+              (float(got[0]), got[1:]), (float(app[0]), app[1:]))
 
     print()
     if failures:

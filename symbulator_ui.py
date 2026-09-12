@@ -121,11 +121,10 @@ M_NORMALISED       = 870
 M_ORDINARY_VARIABLE = 871
 M_DEFINE_SHADOWS   = 872
 M_TR_STEP_ONE      = 873
-# pf's own line under its reading (#430): which power the factor is of.
-# Roberto, 13 Sep 2026: with a whole screen to report on, spell it out.
-M_PF_OF_CONSUMED   = 878
-M_PF_OF_DELIVERED  = 879
-M_PF_OF_VALUE      = 880
+# pf's own line under a NAME's reading (#430): which power the factor is
+# of. Roberto, 13 Sep 2026: with a whole screen to report on, spell it out
+# -- for a name; an expression or an answer gets the factor and the word
+# alone, the reader knowing by then what `se` is.
 M_PF_OF_SOURCE     = 881
 M_PF_OF_IMPEDANCE  = 882
 M_TR_STEP_MANY     = 874
@@ -235,12 +234,6 @@ CATALOGUE = {
                          "and loads (r, l, c) only; `%{name}` is neither."),
     M_PF_ZERO:       ("error", "`%{text}` is zero, so it has no power "
                                "factor."),
-    M_PF_OF_CONSUMED: ("note", "This is the power factor for the power "
-                               "consumed in `%{name}`."),
-    M_PF_OF_DELIVERED: ("note", "This is the power factor for the power "
-                                "delivered by `%{name}`."),
-    M_PF_OF_VALUE:   ("note", "This is the power factor of the value given. "
-                              "A value alone cannot say leading or lagging."),
     M_PF_OF_SOURCE:  ("note", "This is the power factor for the power "
                               "delivered by source `%{name}`."),
     M_PF_OF_IMPEDANCE: ("note", "This is the power factor for the power "
@@ -4137,19 +4130,24 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
                             hint=spec["hint"]))
 
         if tool == "pf":
-            got = _pf_of(args[0], values)
+            got = _pf_of(args[0], values, digits=digits)
             if isinstance(got, dict):
                 return got                  # the element form, or an error
-            # The complex-value form: a number or an expression, shown as
-            # the other mini-tools show theirs -- two digits more than the
-            # Results card, rounded in decimal (#318) -- with the line
-            # under it saying which power the factor is of.
-            expr, note = got
+            # The complex-value form: a number or an expression, at the
+            # Rounding setting's own digits -- not the two extra `aa` shows
+            # (Roberto, 13 Sep 2026: too many digits) -- rounded in decimal
+            # (#318).
+            expr, note, direction = got
             from symbulator._display import round_sig
-            shown = round_sig(sp.N(expr), digits + 2) if digits else sp.N(expr)
+            shown = round_sig(sp.N(expr), digits) if digits else sp.N(expr)
             plain = _plain_with_j(shown)
-            return _ok({"plain": plain, "latex": _latex_with_j(shown),
-                        "magnitude": plain, "direction": "", "note": note})
+            latex = _latex_with_j(shown)
+            if direction:
+                plain = f"{plain} {direction}"
+                latex = rf"{latex}\ \text{{{direction}}}"
+            return _ok({"plain": plain, "latex": latex,
+                        "magnitude": _plain_with_j(shown),
+                        "direction": direction, "note": note})
 
         numbers = []
         for a in args[:spec["args"]]:
@@ -4215,11 +4213,14 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
 #
 #   * A complex power -- `se`, `-se`, `sr1` -- or any complex expression,
 #     with symbols in it or not: the answer is |Re| / |S|, a number or an
-#     expression, and NO direction. The calculation is done on the value as
-#     given, which for `se` is the power the source consumes, and consumed
-#     or delivered the ratio is the same; a bare number cannot say leading
-#     from lagging, because the same complex power is consumed by one side
-#     of a branch and delivered by the other.
+#     expression, computed on the value AS GIVEN, which for `se` is the
+#     power the source consumes. When the value is a number the word goes
+#     with it, read on that same value -- so `se` at a source says the
+#     opposite word to `e`, because it is the consumed power -- and NO
+#     line under it: Roberto, 13 Sep 2026, *the user should know this by
+#     now*. Version 8 gave no word here at all; the screen has room for
+#     one. With symbols in the value there is no word, only the
+#     expression.
 #
 #   * The name of an element of the AC solve -- `e`, `j1`, `r2`: the answer
 #     is a sentence, the value to five decimals and the word, and it works
@@ -4234,10 +4235,10 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
 #     which is why the word is given only for a name, and why the tool
 #     does the negating rather than the reader.
 #
-# Either way the answer carries a `note` saying which power the factor is
-# of -- "the power delivered by source e", "the power consumed by impedance
-# r1", "the power consumed in e" for `se` -- because the screen has room
-# to say so and the sign convention is the whole subtlety of the tool.
+# The name form carries a `note` saying which power the factor is of --
+# "the power delivered by source e", "the power consumed by impedance r1"
+# -- because the screen has room to say so and the sign convention is the
+# whole subtlety of the tool. The value form carries none.
 #
 # It is written here rather than imported from the package's `pf()`: the
 # app's answers are strings keyed by name, which is what the element form
@@ -4248,22 +4249,26 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
 
 _PF_CALL = re.compile(r"^\s*pf\s*\((.*)\)\s*$", re.S)
 _PF_NAME = re.compile(r"^[A-Za-z_]\w*$")
-#: `se`, `s_e`, `-sr1`: a complex-power answer, possibly negated.
-_PF_POWER_NAME = re.compile(r"^\s*(-?)\s*[sS]_?(\w+)\s*$")
-
 #: The kinds the element form knows a sign convention for.
 PF_SOURCE_KINDS = "ej"
 PF_LOAD_KINDS = "rlc"
 
 
-def _pf_reading(s):
-    """The value and the word for a numerical complex power `s`, as version
-    8 printed them: |cos| to five decimals; `lagging` for a positive angle,
-    `leading` for a negative one, and no word at all for a purely real
-    power. A reactive part that is float noise beside the real one -- below
-    one part in 10^9 -- counts as zero rather than as a word."""
+def _pf_reading(s, digits: int = 0):
+    """The value and the word for a numerical complex power `s`: |cos| at
+    the Rounding setting's digits (version 8 printed five decimals; the
+    app follows its own setting instead -- Roberto, 13 Sep 2026), and the
+    word as version 8 gave it: `lagging` for a positive angle, `leading`
+    for a negative one, and no word at all for a purely real power. A
+    reactive part that is float noise beside the real one -- below one
+    part in 10^9 -- counts as zero rather than as a word. The value comes
+    back as text, already formatted."""
+    import sympy as sp
+    from symbulator._display import round_sig
+
     s = complex(s)
-    magnitude = round(abs(s.real) / abs(s), 5)
+    ratio = sp.Float(abs(s.real) / abs(s))
+    magnitude = _plain_with_j(round_sig(ratio, digits) if digits else ratio)
     im = 0.0 if abs(s.imag) <= 1e-9 * abs(s) else s.imag
     return magnitude, ("lagging" if im > 0 else "leading" if im < 0 else "")
 
@@ -4282,12 +4287,14 @@ def _has_top_level_comma(inside: str) -> bool:
     return False
 
 
-def _pf_of(text: str, values: dict, subs_map=None, assumptions=None):
+def _pf_of(text: str, values: dict, subs_map=None, assumptions=None,
+           digits: int = 0):
     """One `pf` argument against the solved answers.
 
     Returns a dict -- `_ok` with the sentence for the element form, or an
-    `_err` -- or, for the complex-value form, a pair `(expression, note)`
-    which the caller formats as it formats any other value."""
+    `_err` -- or, for the complex-value form, `(expression, note, word)`:
+    the caller formats the expression as it formats any other value and
+    puts the word (leading, lagging, or empty) after it."""
     import sympy as sp
     from symbulator.si_prefix import safe_sympify
 
@@ -4296,7 +4303,7 @@ def _pf_of(text: str, values: dict, subs_map=None, assumptions=None):
         return _err(msg(M_GIVE_A_VALUE))
 
     # Every answer under its spelling-free key, so `e` finds `v_e` and
-    # `i_e`, and `s_e` is recognised however the reader wrote it.
+    # `i_e` however the reader spelled it.
     by_norm = {_norm_name(k): k for k in values}
 
     name = text.strip("\"'")
@@ -4333,22 +4340,15 @@ def _pf_of(text: str, values: dict, subs_map=None, assumptions=None):
             s = complex(s)
             if s == 0:
                 return _err(msg(M_PF_ZERO, text=name))
-            magnitude, direction = _pf_reading(s)
+            magnitude, direction = _pf_reading(s, digits)
             body = f"{magnitude} {direction}".strip()
             return _ok({"plain": body, "latex": rf"\text{{{body}}}",
-                        "magnitude": str(magnitude), "direction": direction,
+                        "magnitude": magnitude, "direction": direction,
                         "note": note, "text_only": True})
 
-    # The complex-value form: any expression, resolved against the answers.
-    # The note names the element when the value is one of the stored
-    # complex powers, `se` or `-se`; anything else is just a value.
-    note = msg(M_PF_OF_VALUE)
-    m = _PF_POWER_NAME.match(text)
-    s_key = m and by_norm.get("s" + _norm_name(m.group(2)))
-    if s_key:
-        stored = s_key.split("_", 1)[1] if "_" in s_key else s_key[1:]
-        note = msg(M_PF_OF_DELIVERED if m.group(1) else M_PF_OF_CONSUMED,
-                   name=stored)
+    # The complex-value form: any expression, resolved against the answers,
+    # and no line under it.
+    note = None
     try:
         parsed = safe_sympify(expand_value_for_ui(text))
         z = parsed.subs(_alias_mapping(values, expr=parsed))
@@ -4358,7 +4358,9 @@ def _pf_of(text: str, values: dict, subs_map=None, assumptions=None):
     if z == 0:
         return _err(msg(M_PF_ZERO, text=text))
     if not z.free_symbols:
-        return sp.N(sp.Abs(sp.re(z)) / sp.Abs(z)), note
+        # A number: the ratio, and the word read on the value as given.
+        _, direction = _pf_reading(complex(sp.N(z)))
+        return sp.N(sp.Abs(sp.re(z)) / sp.Abs(z)), note, direction
     # The calculator takes a symbol as real; SymPy does not, and
     # Abs(re(x))/Abs(x) with x complex-unknown is a page of conjugates.
     # Compute with real twins and put the reader's own symbols back, so
@@ -4367,7 +4369,7 @@ def _pf_of(text: str, values: dict, subs_map=None, assumptions=None):
              if x.is_real is not True}
     zr = z.xreplace(twins)
     ratio = sp.simplify(sp.Abs(sp.re(zr)) / sp.Abs(zr))
-    return ratio.xreplace({twin: x for x, twin in twins.items()}), note
+    return ratio.xreplace({twin: x for x, twin in twins.items()}), note, ""
 
 
 #: `s2t(v_o)` and `t2s(...)` have the same trouble as pf, for the same
@@ -4401,17 +4403,17 @@ def _domain_transform(expr_str: str, values: dict, subs_map=None,
 
 
 def _power_factor(expr_str: str, values: dict, subs_map=None,
-                  assumptions=None):
+                  assumptions=None, digits: int = 0):
     """`pf(...)` in Evaluate: None when `expr_str` is not a pf call;
     otherwise what `_pf_of` returns -- a dict for the element form and for
-    an error, an (expression, note) pair for the complex-value form."""
+    an error, an (expression, note, word) triple for the value form."""
     m = _PF_CALL.match(expr_str)
     if not m:
         return None
     inside = m.group(1)
     if _has_top_level_comma(inside):
         return _err(msg(M_PF_ONE_VALUE))
-    return _pf_of(inside, values, subs_map, assumptions)
+    return _pf_of(inside, values, subs_map, assumptions, digits=digits)
 
 
 def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
@@ -4477,12 +4479,16 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
         # pf() is answered before the ordinary path: given a name it gives
         # back a sentence, and given a value it is formatted like any other
         # answer, with its note under it (#430).
-        power_factor = _power_factor(expr_str, values, subs_map, assumptions)
+        power_factor = _power_factor(expr_str, values, subs_map, assumptions,
+                                     digits=digits)
         if isinstance(power_factor, dict):
             return power_factor          # the element form, or an error
         if power_factor is not None:
-            expr, note = power_factor
+            expr, note, direction = power_factor
             plain, latex = shown(sp.simplify(expr))
+            if direction:
+                plain = f"{plain} {direction}"
+                latex = rf"{latex}\ \text{{{direction}}}"
             return _ok({"plain": plain, "latex": latex, "note": note})
 
         # A domain transform is answered with the ordinary formatting, so

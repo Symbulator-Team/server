@@ -761,9 +761,6 @@
  "z-parameters-impedance-two.4802": "blok dua-port parameter z (impedansi)",
  "js.ui.m855": "`pf` hanya mengenal konvensi tanda sumber (e, j) dan beban (r, l, c); `%{name}` bukan keduanya.",
  "js.ui.m856": "`%{text}` bernilai nol, sehingga tidak memiliki faktor daya.",
- "js.ui.m878": "Ini adalah faktor daya untuk daya yang dikonsumsi di `%{name}`.",
- "js.ui.m879": "Ini adalah faktor daya untuk daya yang disalurkan oleh `%{name}`.",
- "js.ui.m880": "Ini adalah faktor daya dari nilai yang diberikan. Nilai saja tidak dapat menyatakan leading atau lagging.",
  "js.ui.m881": "Ini adalah faktor daya untuk daya yang disalurkan oleh sumber `%{name}`.",
  "js.ui.m882": "Ini adalah faktor daya untuk daya yang dikonsumsi oleh impedansi `%{name}`."
 }

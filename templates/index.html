@@ -43,7 +43,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "0dbc0c956a";
+window.SYMB_I18N_V = "ed0fda5b91";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -3739,7 +3739,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-12 08:58 UTC</span>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-12 09:55 UTC</span>
 </footer>
 
 <script>
@@ -4618,13 +4618,7 @@ const UI_MESSAGES = {
   856: a  => tv('js.ui.m856', '`%{text}` is zero, so it has no power factor.', a),
   860: a  => tv('js.ui.m860', 'Unknown direction `%{direction}`.', a),
   870: a  => tv('js.ui.m870', "normalised '%{was}' to '%{now}' in %{element}", a),
-  // pf's line under its reading (#430): which power the factor is of.
-  878: a  => tv('js.ui.m878', 'This is the power factor for the power consumed '
-                + 'in `%{name}`.', a),
-  879: a  => tv('js.ui.m879', 'This is the power factor for the power delivered '
-                + 'by `%{name}`.', a),
-  880: () => t('js.ui.m880', 'This is the power factor of the value given. A '
-                + 'value alone cannot say leading or lagging.'),
+  // pf's line under a name's reading (#430): which power the factor is of.
   881: a  => tv('js.ui.m881', 'This is the power factor for the power delivered '
                 + 'by source `%{name}`.', a),
   882: a  => tv('js.ui.m882', 'This is the power factor for the power consumed '
