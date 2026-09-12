@@ -275,7 +275,7 @@ CATALOGUE = {
                         "Cannot limit the results to %{names}. A transient "
                         "analysis answers in element currents and node "
                         "voltages \u2014 an element's voltage drop, such as "
-                        "v_r1, is worked out from its nodes and may be asked "
+                        "vr1, is worked out from its nodes and may be asked "
                         "for too. Powers are not available in TR. Check the "
                         "spelling against the names in Results."),
     M_GIVE_A_VALUE:  ("error", "Give a value."),
@@ -4074,7 +4074,7 @@ def schematic_ui(desc: str, tool: str = "", n1: str = "", n2: str = ""):
 
 MINI_TOOLS = {
     "aa": {"args": 1, "label": "aa -- amplitude and angle",
-           "hint": "a complex value, as in i_r1"},
+           "hint": "a complex value, as in ir1"},
     "pf": {"args": 1, "label": "pf -- power factor",
            "hint": "a complex power, as in se, or an element's name, as in e"},
     "gain": {"args": 4, "label": "gain -- voltage, current and power gain",
