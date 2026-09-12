@@ -25,7 +25,7 @@ units: yes
 e,1,0,vs
 r1,1,a,1'k
 r2,1,b,4'k
-rg,a,b,500
+rg,a,b,rg
 r3,a,0,r3
 rx,b,0,rx
 
