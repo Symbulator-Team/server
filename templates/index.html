@@ -43,7 +43,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "ed0fda5b91";
+window.SYMB_I18N_V = "364e1a5249";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -2596,10 +2596,10 @@ units: yes</pre>
         <tr><td>a</td><td data-i18n="a-parameters-abcd-transmissi.f948">a-parameters (ABCD / transmission) two-port block</td><td class="notranslate">name,n1,n2<br>name,[tl,bl],[tr,br]</td></tr>
         <tr><td>b</td><td data-i18n="b-parameters-inverse-transmi.2aa5">b-parameters (inverse transmission) two-port block</td><td class="notranslate">name,n1,n2<br>name,[tl,bl],[tr,br]</td></tr>
       </table>
-      <p class="hint" data-i18n="a-value-can-be.5443">
-        A value can be a number, a symbol (<code>r_load</code>,
+      <p class="hint" data-i18n="a-value-can-be.7c2b">
+        A value can be a number, a symbol (<code>rload</code>,
         <code>vin</code>) or an expression — and an expression referring
-        to another answer, like <code>2*v_2</code>, makes a dependent
+        to another answer, like <code>2*v2</code>, makes a dependent
         (controlled) source.
       </p>
       <p class="hint" data-i18n="tr-reads-a-source.8987">
@@ -2830,9 +2830,9 @@ units: yes</pre>
         <label class="checkline"><input type="checkbox" id="limitVars"><span data-i18n="do-you-want-to.c926">Do you
           want to limit the results to save time?</span></label>
         <div id="varsSubfield" style="display:none;margin-top:.5rem">
-          <label for="vars" data-i18n="what-results-are-you.b148">What results are you after? List the variables here:
-            <span class="hint">e.g. v_2, i_l1</span></label>
-          <input type="text" id="vars" placeholder="v_2, i_l1">
+          <label for="vars" data-i18n="what-results-are-you.9954">What results are you after? List the variables here:
+            <span class="hint">e.g. v2, il1</span></label>
+          <input type="text" id="vars" placeholder="v2, il1" data-i18n-placeholder="v-il.3c64">
         </div>
       </div>
     </div>
@@ -2941,8 +2941,8 @@ units: yes</pre>
                spans (#148): equations and conditions read "one per line
                or separated by `and`", unknowns "one per line or
                separated by commas", each with an e.g. -->
-          <label for="eqs" data-i18n="add-equation-s-one.e3a4">Add equation(s) — <span class="hint">one per line or separated
-            by <code>and</code>, e.g. <code>v_2 = 6 and p_e1=10</code>;
+          <label for="eqs" data-i18n="add-equation-s-one.a992">Add equation(s) — <span class="hint">one per line or separated
+            by <code>and</code>, e.g. <code>v2 = 6 and pe1=10</code>;
             parsed the same as circuit values — SI shorthand like <code>4.7'k</code>
             and, in AC, imaginary units (<code>i</code>/<code>j</code>) both work, but a bare
             suffix like <code>4.7k</code> with no apostrophe doesn't</span></label>
@@ -3265,7 +3265,7 @@ units: yes</pre>
       <div class="row">
         <div>
           <label for="plotKey" data-i18n="variable-to-plot.44b4"><span id="plotKeyLabel">Variable to plot</span></label>
-          <input type="text" id="plotKey" placeholder="v_2">
+          <input type="text" id="plotKey" placeholder="v2">
         </div>
         <div id="plotXField" hidden>
           <label for="plotX" data-i18n="variable-on-the-x.6692">Variable on the x-axis</label>
@@ -3338,10 +3338,10 @@ units: yes</pre>
           is why its equations look unfamiliar next to the ones in your
           notebook.
         </p>
-        <p class="hint" style="margin:.3rem 0" data-i18n="these-are-the-ones.dca0">
+        <p class="hint" style="margin:.3rem 0" data-i18n="these-are-the-ones.1889">
           These are the ones from your notebook. They use the same names
-          for the same quantities — <code>v_2</code> is still node 2's
-          voltage, <code>i_r3</code> is still the current through
+          for the same quantities — <code>v2</code> is still node 2's
+          voltage, <code>ir3</code> is still the current through
           <code>r3</code> — so the two systems can be read side by side.
           Mesh analysis adds its own unknowns, <code>I1</code>,
           <code>I2</code>, <code>I3</code>, and shows you how each branch
@@ -3739,7 +3739,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-12 09:55 UTC</span>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-12 10:24 UTC</span>
 </footer>
 
 <script>
@@ -4329,7 +4329,7 @@ function activatePostSolve() {
   syncLoadEquivBox();   // #299/#300: `last` is the new run by now
   syncByHandCard();     // X14: same reason -- the card runs on `last`
   $('solveqEqs').disabled = false;
-  $('solveqEqs').placeholder = t('js.solveq.hint', 'e.g. p_r2 = 0.05');
+  $('solveqEqs').placeholder = t('js.solveq.hint', 'e.g. pr2 = 0.05');
   $('solveqUnks').disabled = false;
   $('solveqUnks').placeholder = 'x';            // the live hints, back (#184)
   $('solveqConds').disabled = false;
@@ -4649,7 +4649,7 @@ const UI_MESSAGES = {
   826: a  => tv('js.ui.m826', '%{name} is defined twice.', a),
   827: a  => tv('js.ui.m827', 'Cannot limit the results to %{names}. A '
                 + 'transient analysis answers in element currents and node '
-                + "voltages \u2014 an element's voltage drop, such as v_r1, is "
+                + "voltages \u2014 an element's voltage drop, such as vr1, is "
                 + 'worked out from its nodes and may be asked for too. Powers '
                 + 'are not available in TR. Check the spelling against the '
                 + 'names in Results.', a),
@@ -7617,7 +7617,7 @@ $('solveqBtn').addEventListener('click', solveEquations);
 // variable names and stay as they are in every language.
 const MINI_SPEC = {
   aa:   {fields: () => [t('js.mini.value', 'Value')],
-         hint: () => t('js.mini.hint.aa', 'a complex value, as in i_r1')},
+         hint: () => t('js.mini.hint.aa', 'a complex value, as in ir1')},
   // pf takes one value (#430): a complex power, or an element's name.
   pf:   {fields: () => [t('js.mini.value', 'Value')],
          hint: () => t('js.mini.hint.pf',
