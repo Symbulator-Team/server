@@ -1477,11 +1477,14 @@ _KIND_LABEL = {
 
 # Per-element derived keys, in display order, with human labels.
 _ELEMENT_KEYS = [
+    # Roberto's rule, 13 Sep 2026: "power" never stands alone on a card --
+    # it is consumed or delivered, said explicitly. These are the consumed
+    # forms; a source's card negates the value and says "delivered" (#434).
     ("p_{n}", "p", "power consumed", "W"),
-    ("ap_{n}", "p", "average power", "W"),
+    ("ap_{n}", "p", "real power consumed", "W"),
     # Complex power S = V*conj(I): its magnitude is apparent power in
     # volt-amperes, its real part watts, its imaginary part reactive var.
-    ("s_{n}", "s", "complex power", "VA"),
+    ("s_{n}", "s", "complex power consumed", "VA"),
     ("z_{n}", "z", "impedance seen", "ohm"),
     ("r_{n}", "r", "resistance seen", "ohm"),
 ]
@@ -2797,10 +2800,52 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                 for pattern, symbol, label, unit in _ELEMENT_KEYS:
                     key = pattern.format(n=el.name)
                     if key in values:
-                        plain, latex = fmt(values[key], unit)
-                        items.append({"sym": symbol, "label": label,
-                                      "plain": plain, "latex": latex})
+                        if symbol == "p" and pattern == "ap_{n}" and el.kind in "ej":
+                            # and in AC the average power the source delivers
+                            plain, latex = fmt(-values[key], unit)
+                            items.append({"sym": "-p", "label": "real power delivered",
+                                          "plain": plain, "latex": latex})
+                        elif symbol == "s" and el.kind in "ej":
+                            # and the complex power it delivers, `-se`, in
+                            # line with the real power above it (Roberto,
+                            # 13 Sep 2026); `s_e` itself stays consumed.
+                            plain, latex = fmt(-values[key], unit)
+                            items.append({"sym": "-s", "label": "complex power delivered",
+                                          "plain": plain, "latex": latex})
+                        elif symbol == "p" and pattern == "p_{n}" and el.kind in "ej":
+                            # #434 (Roberto, 13 Sep 2026): a source's card
+                            # reads the power it DELIVERS, `-pe1 = 10 W`,
+                            # labelled so. The answer `p_e1` itself is
+                            # unchanged -- p is always power consumed, in
+                            # Evaluate, Solve and every file -- only what
+                            # the card shows, so that a reader is not told
+                            # to change a sign every time a source is
+                            # asked about.
+                            plain, latex = fmt(-values[key], unit)
+                            items.append({"sym": "-p", "label": "power delivered",
+                                          "plain": plain, "latex": latex})
+                        else:
+                            plain, latex = fmt(values[key], unit)
+                            items.append({"sym": symbol, "label": label,
+                                          "plain": plain, "latex": latex})
                         used.add(key)
+                if domain == "ac" and el.kind in "ej":
+                    # #435: in AC a source's card also carries the power
+                    # factor of the power it delivers -- the pf tool's own
+                    # element reading (#430), current negated first -- when
+                    # the voltage and current came out as numbers.
+                    v_ac, i_ac = values.get(f"v_{el.name}"), values.get(f"i_{el.name}")
+                    if v_ac is not None and i_ac is not None:
+                        try:
+                            s_ac = sp.N(sp.simplify(v_ac * sp.conjugate(-i_ac)))
+                        except Exception:                   # noqa: BLE001
+                            s_ac = None
+                        if s_ac is not None and not s_ac.free_symbols and s_ac != 0:
+                            magnitude, direction = _pf_reading(complex(s_ac), digits or 4)
+                            body = f"{magnitude} {direction}".strip()
+                            items.append({"sym": "pf", "label": "delivered — power factor",
+                                          "plain": body,
+                                          "latex": rf"\text{{{body}}}"})
                 if items:
                     element_cards.append({"name": el.name,
                                           "kind": _KIND_LABEL.get(el.kind, el.kind),
@@ -3993,6 +4038,25 @@ def _parse_condition(text: str):
     return _sympify_input(text)
 
 
+def _equality_binding(cond, wanted):
+    """`(symbol, value)` when a parsed condition is an equality with a
+    bare symbol on one side -- `R_3 = 10`, `10 = R_3` -- and that symbol
+    is not one of the unknowns being solved for; `(None, None)` for
+    anything else (an inequality, a chained comparison, an equality
+    between two expressions, an equality on an unknown). The first kind
+    is the calculator's `|` operator, a substitution; the rest stay
+    filters on the solutions (#433)."""
+    import sympy as sp
+
+    if not isinstance(cond, sp.Equality):
+        return None, None
+    names = {str(w) for w in wanted}
+    for sym, other in ((cond.lhs, cond.rhs), (cond.rhs, cond.lhs)):
+        if isinstance(sym, sp.Symbol) and str(sym) not in names:
+            return sym, other
+    return None, None
+
+
 def _conditions_hold(sol, conditions, values, wanted) -> bool:
     """True if every parsed condition holds once the solved unknowns and
     the circuit's known answers are substituted in. A condition that
@@ -4580,12 +4644,49 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
             eqs.append(eq.subs(_alias_mapping(
                 values, exclude=[str(w) for w in wanted], expr=eq)))
 
+        # #433: the card's conditions follow the solver's own rule for
+        # Expert Mode's -- the calculator's `|` ("with") operator. An
+        # EQUALITY on a bare symbol, `R_3 = 10`, is a substitution applied
+        # to the equations before solving; an INEQUALITY, `x > 0`, is a
+        # filter on the solutions after. Until #433 every condition was a
+        # filter, and `R_3 = 10` tested against `R_x = 4*R_3` decides
+        # nothing, so it was kept as satisfied and changed nothing: the
+        # card answered `4 R_3` where Expert Mode answered 40 Ω.
+        parsed_conds = [_parse_condition(c) for c in conditions] if conditions else []
+        with_map = {}
+        filters = []
+        for cond in parsed_conds:
+            sym, val = _equality_binding(cond, wanted)
+            if sym is not None:
+                with_map[sym] = val.subs(with_map)
+            else:
+                filters.append(cond)
+        if with_map:
+            eqs = [eq.subs(with_map) for eq in eqs]
+
         if not wanted:
             # Nothing named: solve for whatever symbols remain.
             free = set()
             for eq in eqs:
                 free |= eq.free_symbols
             wanted = sorted(free, key=str)
+        else:
+            # #433, the other half: an equation that names none of the
+            # unknowns -- `R_3 = 10` beside `isg = 0` with `R_x` asked for
+            # -- used to be dropped on the floor, because sp.solve() is
+            # asked only for the named unknowns and an equation with none
+            # of them in it constrains nothing it is solving. The solver
+            # picks such a symbol up as an unknown of its own accord
+            # ("a brand-new symbol appearing in an extra equation becomes
+            # an unknown automatically"), and so does the card now.
+            named = set(wanted)
+            for eq in eqs:
+                if eq.free_symbols & named:
+                    continue
+                for sym in sorted(eq.free_symbols, key=str):
+                    if sym not in named and str(sym) not in ("s", "t"):
+                        wanted.append(sym)
+                        named.add(sym)
         if not wanted:
             return _err(msg(M_NOTHING_TO_SOLVE))
 
@@ -4619,8 +4720,7 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
             sols = [s for s in sols if all(_is_real(v) for v in s.values())]
 
         had_sols = bool(sols)
-        if conditions:
-            parsed_conds = [_parse_condition(c) for c in conditions]
+        if filters:
             if real_only and real_map:
                 # The unknowns were re-declared as real above, so a
                 # solution is keyed by Symbol("w", real=True) while the
@@ -4628,12 +4728,12 @@ def solveq_ui(equations, unknowns, values: dict, digits: int = 0,
                 # are different symbols and subs() silently does nothing,
                 # which left the condition unevaluated and every root
                 # kept -- `w > 0` quietly filtering nothing at all.
-                parsed_conds = [c.xreplace(real_map) for c in parsed_conds]
+                filters = [c.xreplace(real_map) for c in filters]
             sols = [s for s in sols
-                    if _conditions_hold(s, parsed_conds, values, wanted)]
+                    if _conditions_hold(s, filters, values, wanted)]
 
         if not sols:
-            if conditions and had_sols:
+            if filters and had_sols:
                 return _ok({"solutions": [],
                             "unknowns": [str(w) for w in wanted],
                             "notes": [msg(M_NO_SOLUTION_COND)]})
