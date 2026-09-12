@@ -761,9 +761,6 @@
  "z-parameters-impedance-two.4802": "Zweitor-Block mit z-Parametern (Impedanz)",
  "js.ui.m855": "`pf` kennt die Vorzeichenkonvention nur für Quellen (e, j) und Lasten (r, l, c); `%{name}` ist keines von beiden.",
  "js.ui.m856": "`%{text}` ist null und hat daher keinen Leistungsfaktor.",
- "js.ui.m878": "Dies ist der Leistungsfaktor der in `%{name}` aufgenommenen Leistung.",
- "js.ui.m879": "Dies ist der Leistungsfaktor der von `%{name}` abgegebenen Leistung.",
- "js.ui.m880": "Dies ist der Leistungsfaktor des angegebenen Werts. Ein Wert allein kann nicht sagen, ob voreilend oder nacheilend.",
  "js.ui.m881": "Dies ist der Leistungsfaktor der von der Quelle `%{name}` abgegebenen Leistung.",
  "js.ui.m882": "Dies ist der Leistungsfaktor der von der Impedanz `%{name}` aufgenommenen Leistung."
 }

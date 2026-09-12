@@ -31,7 +31,7 @@ r2,2,0,-2j
 r3,2,0,4
 
 analysis: ac
-note: Find the power factor of the circuit as seen by the source, and the average power the source delivers — the Evaluate line, -pe: 125.4 W. The values are RMS, so the RMS setting is on. The power factor comes from the pf mini-tool given the source's name, e: 0.97342 leading -- a source is read on the power it delivers, so the reading is of the circuit it sees. Given the complex power se instead, the tool answers with the value alone.
+note: Find the power factor of the circuit as seen by the source, and the average power the source delivers — the Evaluate line, -pe: 125.4 W. The values are RMS, so the RMS setting is on. The power factor comes from the pf mini-tool given the source's name, e: 0.97342 leading -- a source is read on the power it delivers, so the reading is of the circuit it sees. Given the complex power se instead, it reads 0.97342 lagging -- the word for the power the source consumes, which is the opposite of what it delivers.
 image: https://learn.symbulator.com/assets/circuit/as7e1110.png [509px]
 omega: omega
 rounding: 5

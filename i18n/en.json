@@ -761,9 +761,6 @@
  "z-parameters-impedance-two.4802": "z-parameters (impedance) two-port block",
  "js.ui.m855": "`pf` knows the sign convention of sources (e, j) and loads (r, l, c) only; `%{name}` is neither.",
  "js.ui.m856": "`%{text}` is zero, so it has no power factor.",
- "js.ui.m878": "This is the power factor for the power consumed in `%{name}`.",
- "js.ui.m879": "This is the power factor for the power delivered by `%{name}`.",
- "js.ui.m880": "This is the power factor of the value given. A value alone cannot say leading or lagging.",
  "js.ui.m881": "This is the power factor for the power delivered by source `%{name}`.",
  "js.ui.m882": "This is the power factor for the power consumed by impedance `%{name}`."
 }

@@ -761,9 +761,6 @@
  "z-parameters-impedance-two.4802": "duoporda bloko kun z-parametroj (impedanco)",
  "js.ui.m855": "`pf` konas la signokonvencion nur de fontoj (e, j) kaj ŝarĝoj (r, l, c); `%{name}` estas nek unu nek la alia.",
  "js.ui.m856": "`%{text}` estas nulo, do ĝi ne havas potencfaktoron.",
- "js.ui.m878": "Ĉi tio estas la potencfaktoro de la potenco konsumita en `%{name}`.",
- "js.ui.m879": "Ĉi tio estas la potencfaktoro de la potenco liverita de `%{name}`.",
- "js.ui.m880": "Ĉi tio estas la potencfaktoro de la donita valoro. Valoro sola ne povas diri ĉu antaŭa aŭ malantaŭa.",
  "js.ui.m881": "Ĉi tio estas la potencfaktoro de la potenco liverita de la fonto `%{name}`.",
  "js.ui.m882": "Ĉi tio estas la potencfaktoro de la potenco konsumita de la impedanco `%{name}`."
 }

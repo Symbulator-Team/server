@@ -761,9 +761,6 @@
  "z-parameters-impedance-two.4802": "bloque cuadripolo de parámetros z (impedancia)",
  "js.ui.m855": "`pf` conoce la convención de signos solo de las fuentes (e, j) y de las cargas (r, l, c); `%{name}` no es ninguna de las dos.",
  "js.ui.m856": "`%{text}` es cero, así que no tiene factor de potencia.",
- "js.ui.m878": "Este es el factor de potencia de la potencia consumida en `%{name}`.",
- "js.ui.m879": "Este es el factor de potencia de la potencia entregada por `%{name}`.",
- "js.ui.m880": "Este es el factor de potencia del valor dado. Un valor por sí solo no puede decir si está en adelanto o en atraso.",
  "js.ui.m881": "Este es el factor de potencia de la potencia entregada por la fuente `%{name}`.",
  "js.ui.m882": "Este es el factor de potencia de la potencia consumida por la impedancia `%{name}`."
 }

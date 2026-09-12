@@ -761,9 +761,6 @@
  "z-parameters-impedance-two.4802": "bloc quadripôle en paramètres z (impédance)",
  "js.ui.m855": "`pf` ne connaît la convention de signe que des sources (e, j) et des charges (r, l, c) ; `%{name}` n'est ni l'une ni l'autre.",
  "js.ui.m856": "`%{text}` vaut zéro, donc n'a pas de facteur de puissance.",
- "js.ui.m878": "C'est le facteur de puissance de la puissance consommée dans `%{name}`.",
- "js.ui.m879": "C'est le facteur de puissance de la puissance fournie par `%{name}`.",
- "js.ui.m880": "C'est le facteur de puissance de la valeur donnée. Une valeur seule ne peut pas dire si elle est en avance ou en retard.",
  "js.ui.m881": "C'est le facteur de puissance de la puissance fournie par la source `%{name}`.",
  "js.ui.m882": "C'est le facteur de puissance de la puissance consommée par l'impédance `%{name}`."
 }
