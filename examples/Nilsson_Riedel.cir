@@ -531,9 +531,9 @@ r9,1,a,9
 r3,a,p,3
 l1,p,0,2
 m,l1,l2,2
-l2,q,d,8
+l2,q,0,8
 r2b,q,c,2
-r10,c,d,10
+r10,c,0,10
 
 analysis: dc
 note: The make-before-break switch in the circuit in the figure has been in position a for a long time. At t = 0 it moves instantaneously to position b. Find i_2(t) for t ≥ 0.
@@ -548,9 +548,9 @@ units: yes
 r3,0,p,3
 l1,p,0,2,5
 m,l1,l2,2
-l2,q,d,8,0
+l2,q,0,8,0
 r2b,q,c,2
-r10,c,d,10
+r10,c,0,10
 
 analysis: tr
 note: The make-before-break switch in the circuit in the figure has been in position a for a long time. At t = 0 it moves instantaneously to position b. Find i_2(t) for t ≥ 0.
@@ -602,7 +602,7 @@ c,1,0,1'u
 
 analysis: ac
 omega: 200000
-note: The sinusoidal current source in the circuit shown in the figure produces the current i_s = 8 cos 200,000t A. b) Find the equivalent admittance to the right of the current source. c) Find the phasor voltage V. d) Find the phasor current I. e) Find the steady-state expressions for v and i.
+note: The sinusoidal current source in the circuit shown in the figure produces the current i_s = 8 cos 200,000t A. b) Find the equivalent admittance to the right of the current source. c) Find the phasor voltage v. d) Find the phasor current i. e) Find the steady-state expressions for v and i.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex9-9.jpg
 rounding: 4
 si: no
@@ -634,13 +634,13 @@ polar: yes
 e1,1,0,120
 r1,1,2,12
 r2,2,0,60
-r3,2,9,-40j
+r3,2,a,-40j
 e2,3,0,10*v2
-r4,3,9,120
+r4,3,a,120
 
 analysis: ac
 tool: th
-n1: 9
+n1: a
 n2: 0
 omega: omega
 note: Find the Thevenin equivalent circuit with respect to terminals a,b for the circuit shown in the figure.
@@ -653,14 +653,11 @@ polar: yes
 
 [NR12's Example 9.14 (AC)]
 
-e1,1,0,150
-r1,1,2,1
-r2,2,a,2j
-r3,a,c,12
-r4,c,0,-16j
-r5,a,4,1
-r6,4,b,3j
-e2,b,0,39*ir3
+e1,a,0,150
+r1,a,b,1+2j
+r2,b,0,12-16j
+r3,b,c,1+3j
+e2,c,0,39*ir2
 
 analysis: ac
 omega: omega
@@ -678,18 +675,17 @@ e,1,0,300
 r1,1,2,500
 r2,2,a,100j
 r3,a,p,200
-r4,p,0,3600j
-m,r4,r5,1200j
-r5,q,d,1600j
+l1,p,0,9
+m,l1,l2,k=0.5
+l2,q,0,4
 r6,q,c,100
 
 analysis: ac
 tool: th
 n1: c
-n2: d
-omega: omega
+n2: 0
+omega: 400
 note: A linear transformer has R_1 = 200 Ω, R_2 = 100 Ω, L_1 = 9 H, L_2 = 4 H and k = 0.5, and couples a load of an 800 Ω resistor in series with a 1 µF capacitor to a 300 V (rms) source of internal impedance 500 + j100 Ω at 400 rad/s. g) Calculate the Thevenin equivalent with respect to the terminals of the load impedance.
-image: https://learn.symbulator.com/assets/circuit/nr12-ex9-15.jpg
 rounding: 4
 si: no
 units: yes
@@ -698,14 +694,11 @@ polar: yes
 
 [NR12's Example 10.8 (AC)]
 
-e1,1,0,150
-r1,1,2,1
-r2,2,a,2j
-r3,a,c,12
-r4,c,0,-16j
-r5,a,4,1
-r6,4,b,3j
-e2,b,0,39*ir3
+e1,a,0,150
+r1,a,b,1+2j
+r2,b,0,12-16j
+r3,b,c,1+3j
+e2,c,0,39*ir2
 
 analysis: ac
 omega: omega

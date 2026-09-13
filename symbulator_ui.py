@@ -160,7 +160,7 @@ CATALOGUE = {
                                "(max %{max} characters)."),
     M_DESC_CHARS:    ("error", "Circuit description contains characters that "
                                "aren't used in Symbulator syntax. Allowed: "
-                               "letters, digits, , : . + - * / ( ) ' ^"),
+                               "letters, digits, , : . + - * / ( ) ' ^ ="),
     M_DESC_TOKEN:    ("error", "Circuit description contains an invalid token."),
     M_BAD_DOMAIN:    ("error", "Unknown analysis type. Choose DC, AC, FD, or TR."),
     M_BRACES_FD_ONLY: ("error",
@@ -446,7 +446,9 @@ MAX_VARIABLES = 40
 # Beta and gamma joined mu and delta on 27 Aug 2026, for the same
 # reason those were let in: the 2023 documentation's symbolic circuits
 # use them as values (\u03b2*irb, v\u03b3), and the engine reads them fine.
-_ALLOWED = re.compile("^[A-Za-z0-9_,.:+\\-*/()\\[\\]{}'^ \u00b5\u03bc\u03b4"
+# `=` joined on 13 Sep 2026 (#438): a coupling written as its factor,
+# `m,l1,l2,k=0.5`, is the one place a description carries it.
+_ALLOWED = re.compile("^[A-Za-z0-9_,.:=+\\-*/()\\[\\]{}'^ \u00b5\u03bc\u03b4"
                       "\u03b2\u03b3\u2220\u00b0\u00ba\u2212\u2013]*$")
 # Expert-mode equations/conditions additionally need "=".
 _ALLOWED_EQ = re.compile("^[A-Za-z0-9_,.=+\\-*/()\\[\\]{}'^ \u00b5\u03bc\u03b4"
@@ -2385,6 +2387,8 @@ def third_level_equations(circ, domain: str, values, use_rms: bool = False):
             name = f"{prefix}_{e.name}"
             if name not in values:
                 continue      # `_derived` did not produce this one
+            if prefix == "ap" and f"p_{e.name}" in values:
+                continue      # #439: the same power under its other name
             eq = None
             try:
                 found = _derived_definition(circ, name, domain)
@@ -2800,6 +2804,12 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                 for pattern, symbol, label, unit in _ELEMENT_KEYS:
                     key = pattern.format(n=el.name)
                     if key in values:
+                        # #439: in AC the real power is in `values` under
+                        # both names, `p_` and `ap_`; the card shows it
+                        # once, as the `p` row.
+                        if pattern == "ap_{n}" and f"p_{el.name}" in values:
+                            used.add(key)
+                            continue
                         if symbol == "p" and pattern == "ap_{n}" and el.kind in "ej":
                             # and in AC the average power the source delivers
                             plain, latex = fmt(-values[key], unit)
