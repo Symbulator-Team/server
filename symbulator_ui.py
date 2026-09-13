@@ -1482,8 +1482,12 @@ _ELEMENT_KEYS = [
     # Roberto's rule, 13 Sep 2026: "power" never stands alone on a card --
     # it is consumed or delivered, said explicitly. These are the consumed
     # forms; a source's card negates the value and says "delivered" (#434).
+    # #441 (Roberto, 13 Sep 2026): in AC the three powers are P, Q and S
+    # as every book writes them -- `p` = Re(S), the average (real) power
+    # (the row says so in AC), `q` = Im(S) in var, `s` = S. `ap_` is an
+    # alias of `p_` in the answers and never a row of its own.
     ("p_{n}", "p", "power consumed", "W"),
-    ("ap_{n}", "p", "real power consumed", "W"),
+    ("q_{n}", "q", "reactive power consumed", "var"),
     # Complex power S = V*conj(I): its magnitude is apparent power in
     # volt-amperes, its real part watts, its imaginary part reactive var.
     ("s_{n}", "s", "complex power consumed", "VA"),
@@ -1517,7 +1521,6 @@ _TOOL_LABELS = {
     # equivalent (v8's th, after "Interested? [y/n]"), in its words.
     "irl": "current in load", "vrl": "voltage drop in load",
     "prl": "power consumed in load",
-    "aprl": "average power consumed in load",
 }
 
 # Same idea for the two-port (port) tool: one textbook description per
@@ -1603,8 +1606,9 @@ def _load_answers(ino, z, domain: str, use_rms: bool):
     s_load = (ino * sp.conjugate(ino) * load * z * sp.conjugate(z)
               / ((load + z) * (sp.conjugate(load) + sp.conjugate(z))))
     power = sp.re(s_load) if use_rms else sp.re(s_load) / 2
+    # #441: the average power under one name whatever the convention
     return [("irl", sp.simplify(irl)), ("vrl", sp.simplify(vrl)),
-            ("prl" if use_rms else "aprl", sp.simplify(power))]
+            ("prl", sp.simplify(power))]
 
 
 def _without_unit(text: str) -> str:
@@ -1905,13 +1909,13 @@ def banned_name_errors(elements) -> list:
 # ports, so the alias has to cover the suffixes as well as the bare name.
 _NODE_QUANTITIES = ("v",)
 _QUANTITIES_BY_KIND = {
-    "r": ("ap", "i", "p", "s", "v"),
-    "e": ("ap", "i", "p", "r", "s", "v", "z"),
-    "j": ("ap", "i", "p", "r", "s", "v", "z"),
+    "r": ("ap", "i", "p", "q", "s", "v"),
+    "e": ("ap", "i", "p", "q", "r", "s", "v", "z"),
+    "j": ("ap", "i", "p", "q", "r", "s", "v", "z"),
     "c": ("i", "p", "s", "v"),
     "l": ("i", "p", "s", "v"),
     "s": ("i",),                       # a short carries current, nothing else
-    "o": ("ap", "i", "p", "s"),        # an op-amp reports no voltage
+    "o": ("ap", "i", "p", "q", "s"),   # an op-amp reports no voltage
     "m": (),                           # mutual inductance reports nothing
     "t": ("i",),
     "z": ("i",), "y": ("i",), "h": ("i",),
@@ -2155,7 +2159,8 @@ _LABEL_KIND = {
 }
 
 _DERIVED_WORD = {"v": "voltage drop", "p": "power consumed",
-                 "ap": "average power", "s": "complex power",
+                 "ap": "average (real) power", "q": "reactive power",
+                 "s": "complex power",
                  "r": "resistance seen", "z": "impedance seen"}
 
 
@@ -2383,12 +2388,10 @@ def third_level_equations(circ, domain: str, values, use_rms: bool = False):
     # `_derived` halves the phasor product unless the phasors are RMS.
     half = sp.Integer(1) if use_rms else sp.Rational(1, 2)
     for e in circ.elements:
-        for prefix in ("v", "s", "p", "ap", "r", "z"):
+        for prefix in ("v", "s", "p", "q", "r", "z"):
             name = f"{prefix}_{e.name}"
             if name not in values:
                 continue      # `_derived` did not produce this one
-            if prefix == "ap" and f"p_{e.name}" in values:
-                continue      # #439: the same power under its other name
             eq = None
             try:
                 found = _derived_definition(circ, name, domain)
@@ -2396,7 +2399,7 @@ def third_level_equations(circ, domain: str, values, use_rms: bool = False):
                 found = None  # the ac powers, refused -- written below
             if found is not None:
                 eq = found[0]
-            elif domain == "ac" and prefix in ("s", "p", "ap"):
+            elif domain == "ac" and prefix in ("s", "p", "ap", "q"):
                 # A `j` source's current, and a capacitor's in ac, live
                 # in `known` rather than among the unknowns -- the same
                 # lookup `_derived_definition` makes.
@@ -2407,7 +2410,8 @@ def third_level_equations(circ, domain: str, values, use_rms: bool = False):
                     s = circ.v(e.fields[2]) * sp.conjugate(-i) * half
                 else:
                     s = (circ.v(e.n1) - circ.v(e.n2)) * sp.conjugate(i) * half
-                eq = sp.Eq(sp.Symbol(name), s if prefix == "s" else sp.re(s))
+                eq = sp.Eq(sp.Symbol(name), s if prefix == "s" else
+                           (sp.im(s) if prefix == "q" else sp.re(s)))
             if eq is not None:
                 # #393: and what it is, in the words the Results card
                 # already uses for these quantities -- they are srv.*
@@ -2758,7 +2762,12 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                 ikey = f"i_{el.name}"
                 if ikey in values:
                     plain, latex = fmt(values[ikey], "A")
-                    items.append({"sym": "i", "label": "current through",
+                    # #441: with RMS phasors the magnitudes are effective
+                    # values, and the label says so (Roberto, 13 Sep 2026).
+                    items.append({"sym": "i",
+                                  "label": ("effective current through"
+                                            if domain == "ac" and use_rms
+                                            else "current through"),
                                   "plain": plain, "latex": latex})
                     used.add(ikey)
                 # A two-port has no single branch current: it has one per
@@ -2799,21 +2808,19 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                             drop = v1 - v2
                     if drop is not None:
                         plain, latex = fmt(drop, "V")
-                        items.append({"sym": "v", "label": "voltage drop",
+                        items.append({"sym": "v",
+                                      "label": ("effective voltage drop"
+                                                if domain == "ac" and use_rms
+                                                else "voltage drop"),
                                       "plain": plain, "latex": latex})
+                used.add(f"ap_{el.name}")       # #441: the alias of p_, never a row
                 for pattern, symbol, label, unit in _ELEMENT_KEYS:
                     key = pattern.format(n=el.name)
                     if key in values:
-                        # #439: in AC the real power is in `values` under
-                        # both names, `p_` and `ap_`; the card shows it
-                        # once, as the `p` row.
-                        if pattern == "ap_{n}" and f"p_{el.name}" in values:
-                            used.add(key)
-                            continue
-                        if symbol == "p" and pattern == "ap_{n}" and el.kind in "ej":
-                            # and in AC the average power the source delivers
+                        if symbol == "q" and el.kind in "ej":
+                            # and the reactive power it delivers, `-qe`
                             plain, latex = fmt(-values[key], unit)
-                            items.append({"sym": "-p", "label": "real power delivered",
+                            items.append({"sym": "-q", "label": "reactive power delivered",
                                           "plain": plain, "latex": latex})
                         elif symbol == "s" and el.kind in "ej":
                             # and the complex power it delivers, `-se`, in
@@ -2832,18 +2839,15 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
                             # to change a sign every time a source is
                             # asked about.
                             plain, latex = fmt(-values[key], unit)
-                            # In AC the row says "real" (Roberto, 13 Sep
-                            # 2026): under RMS `p` is the average power
-                            # and the card pairs it with `-s` below.
                             items.append({"sym": "-p",
-                                          "label": ("real power delivered"
+                                          "label": ("average (real) power delivered"
                                                     if domain == "ac" else
                                                     "power delivered"),
                                           "plain": plain, "latex": latex})
                         else:
                             plain, latex = fmt(values[key], unit)
                             if domain == "ac" and pattern == "p_{n}":
-                                label = "real power consumed"
+                                label = "average (real) power consumed"
                             items.append({"sym": symbol, "label": label,
                                           "plain": plain, "latex": latex})
                         used.add(key)
@@ -2878,7 +2882,7 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             # 1 Sep 2026). `_value_units` reads the unit off the circuit
             # instead of off the name; the prefix rule stays for the
             # underscored keys it was written for.
-            _EXTRA_UNITS = {"v": "V", "i": "A", "p": "W", "ap": "W",
+            _EXTRA_UNITS = {"v": "V", "i": "A", "p": "W", "ap": "W", "q": "var",
                             "s": "VA", "z": "ohm", "r": "ohm"}
             by_value = _value_units(elements)
             extras = []
@@ -4610,7 +4614,7 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
 
 # Units inferred from an answer's name prefix, for labelling solved
 # unknowns like "p_out" or "i_x".
-_PREFIX_UNITS = {"v": "V", "i": "A", "p": "W", "ap": "W", "s": "VA",
+_PREFIX_UNITS = {"v": "V", "i": "A", "p": "W", "ap": "W", "q": "var", "s": "VA",
                  "z": "ohm", "r": "ohm"}
 
 
