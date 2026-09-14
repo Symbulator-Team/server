@@ -62,6 +62,31 @@ rms: no
 polar: yes
 
 
+[NR9's Assessment Problem 9.14]
+
+e,1,0,245.2
+rs,1,a,184
+r1,a,p,100
+l1,p,0,0.5
+m,l1,l2,k=0.4
+l2,q,0,0.125
+r2,q,c,40
+rl,c,d,360
+ll,d,0,0.25
+
+analysis: ac
+note: Nilsson & Riedel (9th ed.), Assessment Problem 9.14: a linear transformer, R1 = 100 ohms, L1 = 0.5 H, R2 = 40 ohms, L2 = 0.125 H and k = 0.4, couples a 360 ohm resistor in series with 0.25 H to a 245.20 V (maximum) source at 800 rad/s with an internal impedance of 184 ohms. Calculate (a) the reflected impedance, (b) the primary current and (c) the secondary current.
+note: First time here: the coupling written as its coefficient, k=0.4, rather than as a mutual inductance. Both dots are at the top, so both coils are written top node first. The primary current is ir1 = 0.5 at -53.13 degrees A and the secondary current ir2 = 0.08 at 0 degrees A. The reflected impedance is ze - (184 + 100 + 400j) = 10.24 - 7.68j ohms.
+image: https://learn.symbulator.com/assets/circuit/sym_nr9_ap0914.png
+omega: 800
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+evaluate: ze - (184 + 100 + 400j)
+
+
 [AS7's Figure 13.33 (ideal transformer, symbolic)]
 
 t,2,3,1,n
