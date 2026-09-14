@@ -1816,9 +1816,15 @@ def _collidable_names() -> dict:
     exactly the failure this guards."""
     import keyword
 
-    from symbulator.si_prefix import _allowed_namespace
+    from symbulator.si_prefix import _SHIELDABLE, _allowed_namespace
 
-    owned = {name: "a Python keyword" for name in keyword.kwlist}
+    # A keyword the parser shields is an ordinary name since solver 0.5.19
+    # (`safe_sympify` reads `is` as Symbol('is')), four days after this
+    # guard was written, so it collides with nothing. Banning it kept
+    # refusing the most natural name for a short, `s`, whose current is
+    # `is`. Only the literals the shield leaves alone still own a name.
+    owned = {name: "a Python keyword" for name in keyword.kwlist
+             if name not in _SHIELDABLE}
     for name, obj in _allowed_namespace(True).items():
         if not callable(obj):
             owned.setdefault(name, "a name Symbulator reserves")
@@ -3757,9 +3763,15 @@ def _parse_with_rearrangers(text: str, reserve_imaginary: bool = True):
     """
     import sympy as sp
     from symbulator.si_prefix import (_allowed_namespace, _IDENT_RE,
+                                      _shield_keywords, _unshield_keywords,
                                       check_expression_syntax)
 
-    check_expression_syntax(text)
+    # A keyword used as a name -- `is`, the current of a short `s` -- is
+    # shielded as safe_sympify shields it; this parse had been left out,
+    # so Evaluate refused `is` as invalid syntax.
+    shown = text
+    text = _shield_keywords(text)
+    check_expression_syntax(text, shown)
     ns = _allowed_namespace(reserve_imaginary)
     used = set(_IDENT_RE.findall(text))
     for name in _REARRANGERS:
@@ -3767,7 +3779,7 @@ def _parse_with_rearrangers(text: str, reserve_imaginary: bool = True):
             ns[name] = sp.Function(name)
     for name in used:
         ns.setdefault(name, sp.Symbol(name))
-    return sp.sympify(text, locals=ns)
+    return _unshield_keywords(sp.sympify(text, locals=ns))
 
 
 def _apply_rearrangers(expr):
@@ -3975,10 +3987,55 @@ def _apply_conditions(expr, subs_map, assumptions):
         return expr
     expr = _canonical_time(expr)
     if subs_map:
-        expr = expr.subs(subs_map)
+        expr = _substitute_conditions(expr, subs_map)
     if assumptions:
         expr = sp.refine(expr, sp.And(*assumptions))
     return expr
+
+
+def _substitute_conditions(expr, subs_map):
+    """The Conditions box's substitutions, with a limit wherever a plain
+    substitution cannot give the value.
+
+    `s = oo` is how a reader asks for the value as s grows without bound
+    -- the initial-value theorem's `s*V(s)`, a filter's gain at high
+    frequency, a transient's final value at `t = oo`. Substituted, that
+    is oo/oo for any ratio that does not happen to cancel first, and the
+    card printed NaN (AS7's Practice Problem 16.6). So a condition at
+    `oo` or `-oo` is taken as a limit, and so is a finite one whose
+    substitution comes out undefined, as `sin(x)/x` at `x = 0` does. A
+    limit SymPy cannot take leaves the substitution's result as it was.
+    """
+    import sympy as sp
+
+    ends = (sp.oo, -sp.oo)
+    finite = {k: v for k, v in subs_map.items() if v not in ends}
+    out = expr.subs(finite) if finite else expr
+    if finite and out.has(sp.nan):
+        out = expr
+        for name, point in finite.items():
+            stepped = out.subs(name, point)
+            if stepped.has(sp.nan):
+                stepped = _limit_or(out, name, point, stepped)
+            out = stepped
+    for name, point in subs_map.items():
+        if point in ends:
+            out = _limit_or(out, name, point, out.subs(name, point))
+    return out
+
+
+def _limit_or(expr, name, point, fallback):
+    """`expr`'s limit as `name` goes to `point`, or `fallback` when SymPy
+    cannot say."""
+    import sympy as sp
+
+    try:
+        got = sp.limit(sp.simplify(expr), name, point)
+    except Exception:                                          # noqa: BLE001
+        return fallback
+    if isinstance(got, sp.Limit) or got.has(sp.nan):
+        return fallback
+    return got
 
 
 def _unbrace_for(text: str, domain: str) -> str:
@@ -4032,6 +4089,21 @@ def _parse_equation(text: str):
     return sp.Eq(_sympify_input(text), 0)
 
 
+def _equality(lhs, rhs):
+    """`lhs = rhs` as a SymPy equality. One against infinity is kept
+    unevaluated: SymPy decides `Eq(t, oo)` is False, `t` being a real
+    symbol, so `t = oo` -- a transient's final value -- was refused as
+    neither a substitution nor a comparison, while `s = oo` was taken."""
+    import sympy as sp
+
+    got = sp.Eq(lhs, rhs)
+    ends = (sp.oo, -sp.oo, sp.zoo)
+    if isinstance(got, sp.logic.boolalg.BooleanAtom) and \
+            (lhs.has(*ends) or rhs.has(*ends)):
+        return sp.Eq(lhs, rhs, evaluate=False)
+    return got
+
+
 def _parse_condition(text: str):
     """Parse one "Conditions / constraints" clause into a sympy relational
     -- '=' becomes an equality, the four comparisons become the matching
@@ -4046,7 +4118,7 @@ def _parse_condition(text: str):
         ("<=", lambda l, r: l <= r),
         (">", lambda l, r: l > r),
         ("<", lambda l, r: l < r),
-        ("=", sp.Eq),
+        ("=", _equality),
     )
     # #392: a chained comparison -- `7 > x > 3`, the way anyone writes a
     # range -- is the conjunction of its links. The split is the solver's
@@ -4628,6 +4700,59 @@ def _pf_of(text: str, values: dict, subs_map=None, assumptions=None,
 _TRANSFORM_CALL = re.compile(r"^\s*(s2t|t2s)\s*\((.*)\)\s*$", re.S)
 
 
+#: `limit(s*v_o, s, oo)` has the trouble s2t has: sympify would take the
+#: limit of the bare symbol `v_o`, which is `v_o`. So the answers go in
+#: first, as for a transform. Three arguments, as the theorems are
+#: written; anything else falls through to the ordinary parse.
+_LIMIT_CALL = re.compile(r"^\s*limit\s*\((.*)\)\s*$", re.S)
+
+
+def _split_top_level(inside: str) -> list:
+    """`inside` split at the commas outside any bracket."""
+    parts, depth, start = [], 0, 0
+    for i, ch in enumerate(inside):
+        if ch in "([":
+            depth += 1
+        elif ch in ")]":
+            depth -= 1
+        elif ch == "," and depth == 0:
+            parts.append(inside[start:i])
+            start = i + 1
+    parts.append(inside[start:])
+    return [p.strip() for p in parts]
+
+
+def _limit_call(expr_str: str, values: dict, subs_map=None, assumptions=None):
+    """`limit(expression, variable, point)` against the solved answers,
+    or None when `expr_str` is not such a call."""
+    m = _LIMIT_CALL.match(expr_str)
+    if not m:
+        return None
+    args = _split_top_level(m.group(1))
+    if len(args) != 3 or not all(args):
+        return None
+
+    import sympy as sp
+    from symbulator.si_prefix import safe_sympify
+
+    try:
+        inner = _parse_with_rearrangers(expand_value_for_ui(args[0]))
+        inner = inner.subs(_alias_mapping(values, expr=inner))
+        inner, _ = _apply_rearrangers(inner)
+        name = _canonical_time(safe_sympify(args[1]))
+        if not isinstance(name, sp.Symbol):
+            return None
+        point = _canonical_time(safe_sympify(expand_value_for_ui(args[2])))
+        point = point.subs(_alias_mapping(values, expr=point))
+        # the other conditions first, then the limit itself
+        others = {k: v for k, v in (subs_map or {}).items() if k != name}
+        inner = _apply_conditions(inner, others, assumptions)
+        got = sp.limit(sp.simplify(inner), name, point)
+    except Exception as exc:                                  # noqa: BLE001
+        return _err(_exc_msg(exc))
+    return got
+
+
 def _domain_transform(expr_str: str, values: dict, subs_map=None,
                       assumptions=None):
     """`s2t(...)` / `t2s(...)` against the solved answers, or None."""
@@ -4738,6 +4863,14 @@ def evaluate_ui(expr_str: str, values: dict, digits: int = 0,
                 plain = f"{plain} {direction}"
                 latex = rf"{latex}\ \text{{{direction}}}"
             return _ok({"plain": plain, "latex": latex, "note": note})
+
+        # limit() likewise: the answers have to be in before it is taken.
+        limited = _limit_call(expr_str, values, subs_map, assumptions)
+        if isinstance(limited, dict):
+            return limited              # an error from the limit
+        if limited is not None:
+            plain, latex = shown(sp.simplify(limited))
+            return _ok({"plain": plain, "latex": latex})
 
         # A domain transform is answered with the ordinary formatting, so
         # it is folded back into `result` rather than returned whole.

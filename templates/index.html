@@ -3751,7 +3751,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-14 10:28 UTC</span>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-14 13:17 UTC</span>
 </footer>
 
 <script>
@@ -5484,6 +5484,8 @@ async function openFromUrl() {
   // Documentation/tools/app_links.py, which writes the links that use it;
   // change the two together.
   else if (lesson === 'nr12') name = 'Nilsson_Riedel.cir';
+  // The Alexander & Sadiku sampler, likewise in NAMED_BOOKS.
+  else if (lesson === 'as7') name = 'Alexander_Sadiku.cir';
   else {
     const m = lesson.match(/^0?(\d{1,2})([a-d]?)$/);
     if (m) name = 'Lesson_' + m[1].padStart(2, '0') + m[2] + '.cir';
