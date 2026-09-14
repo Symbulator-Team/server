@@ -95,13 +95,13 @@ units: yes
 
 [HK5's Figure 2-29]
 
-e,3,0,1.5*is1
+e,3,0,1.5*is
 r3,3,2,3
 r2,2,0,2
-s1,2,1
+s,2,1
 
 analysis: dc
-note: Find the equivalent resistance between nodes 1 and 0. The short is named s1 rather than a bare s, whose current would be spelled is — a Python word version 9 refuses.
+note: Find the equivalent resistance between nodes 1 and 0. The dependent source's value is the current through the short s.
 image: https://learn.symbulator.com/assets/practice/hk5s-figure-2-29-10.jpg [331px]
 tool: er
 n1: 1

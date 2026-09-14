@@ -1,0 +1,898 @@
+# Symbulator circuit book
+
+title: Problems from Alexander & Sadiku 7ed
+
+[AS7's Example 2.15 (DC)]
+
+e,a,0,120
+r1,a,c,12.5
+r2,c,0,15
+r3,a,n,10
+r4,n,0,20
+r5,c,n,5
+r6,a,0,30
+
+analysis: dc
+note: Obtain the equivalent resistance R_ab for the circuit in the figure and use it to find current i.
+image: https://learn.symbulator.com/assets/circuit/as7-ex2-15.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 3.4 (DC)]
+
+e1,1,2,20
+r3,1,4,3
+r6,2,3,6
+e2,3,4,3*vr3
+r2,1,0,2
+j,0,2,10
+r4,3,0,4
+r1,4,0,1
+
+analysis: dc
+note: Find the node voltages in the circuit of the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-ex3-4.jpg
+rounding: approx
+si: no
+units: yes
+
+[AS7's Practice Problem 3.4 (DC)]
+
+e1,1,2,25
+r6,1,3,6
+e2,3,2,5*ir2
+r2,1,0,2
+r4,2,0,4
+r3,3,0,3
+
+analysis: dc
+note: Find v_1, v_2, and v_3 in the circuit of the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-pp3-4.jpg
+rounding: approx
+si: no
+units: yes
+
+[AS7's Example 3.7 (DC)]
+
+r6,p,0,6
+j1,p,x,5
+r2a,p,x,2
+j2,x,0,-3*ie
+r4,x,y,4
+r8,y,0,8
+r2b,y,z,2
+e,z,0,10
+
+analysis: dc
+note: For the circuit in the figure, find i_1 to i_4.
+image: https://learn.symbulator.com/assets/circuit/as7-ex3-7.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 3.11 (DC)]
+
+e1,1,0,24
+r4a,1,a,4
+r2a,a,0,2
+r2b,a,m,2
+e2,b,m,3*vr4b
+r1,a,b,1
+r8,b,0,8
+r4b,b,0,4
+
+analysis: dc
+note: In the circuit of the figure, determine the currents i_1, i_2, and i_3.
+image: https://learn.symbulator.com/assets/circuit/as7-ex3-11.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 4.7 (DC)]
+
+e1,1,0,6
+r2a,1,a,2
+r2b,a,0,2
+r4,a,b,4
+j,b,a,vr2b/4
+e2,b,0,18
+
+analysis: dc
+note: Find v_x in the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-ex4-7.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 4.9 (Thévenin)]
+
+j,0,p,5
+r4,p,0,4
+r2a,p,q,2
+e,q,p,2*vr4
+r6,q,0,6
+r2b,q,a,2
+
+analysis: dc
+tool: th
+n1: a
+n2: 0
+note: Find the Thevenin equivalent of the circuit in the figure at terminals a-b.
+image: https://learn.symbulator.com/assets/circuit/as7-ex4-9.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Practice Problem 4.9 (Thévenin)]
+
+e,1,0,6
+r5,1,x,5
+j,0,x,3*ir3/2
+r3,x,a,3
+r4,a,0,4
+
+analysis: dc
+tool: th
+n1: a
+n2: 0
+note: Find the Thevenin equivalent circuit of the circuit in the figure to the left of the terminals.
+image: https://learn.symbulator.com/assets/circuit/as7-pp4-9.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 4.10 (equivalent)]
+
+j,a,0,2*ir2
+r4,a,0,4
+r2,0,a,2
+
+analysis: dc
+tool: er
+n1: a
+n2: 0
+note: Determine the Thevenin equivalent of the circuit in the figure at terminals a-b.
+image: https://learn.symbulator.com/assets/circuit/as7-ex4-10.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Example 4.12 (Thévenin)]
+
+r4,p,0,4
+e,p,0,10
+r5,p,a,5
+j,p,a,2*ir4
+
+analysis: dc
+tool: th
+n1: a
+n2: 0
+note: Find R_N and I_N of the circuit in the figure at terminals a-b.
+image: https://learn.symbulator.com/assets/circuit/as7-ex4-12.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Example 4.13 (Thévenin)]
+
+e,1,0,12
+r6,1,2,6
+r12,2,0,12
+r3,2,3,3
+j,0,3,2
+r2,3,a,2
+
+analysis: dc
+tool: th
+n1: a
+n2: 0
+note: Find the value of R_L for maximum power transfer in the circuit of the figure. Find the maximum power.
+image: https://learn.symbulator.com/assets/circuit/as7-ex4-13.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 4.18 (DC)]
+
+e,1,0,220
+r3k,1,a,3'k
+r1k,a,0,1'k
+r400,1,b,400
+r600,b,0,600
+rg,a,b,40
+
+analysis: dc
+note: The circuit in the figure represents an unbalanced bridge. If the galvanometer has a resistance of 40 Ω, find the current through the galvanometer.
+image: https://learn.symbulator.com/assets/circuit/as7-ex4-18.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 5.1 (DC)]
+
+e1,in,0,vs
+r10k,in,1,10'k
+ri,0,1,2'M
+e2,m,0,200000*vri
+ro,m,out,50
+r20k,1,out,20'k
+
+analysis: dc
+note: A 741 op amp has an open-loop voltage gain of 2 × 10⁵, input resistance of 2 MΩ, and output resistance of 50 Ω. The op amp is used in the circuit of the figure. Find the closed-loop gain v_o/v_s. Determine current i when v_s = 2 V.
+image: https://learn.symbulator.com/assets/circuit/as7-ex5-1.jpg
+rounding: approx
+si: no
+units: yes
+
+[AS7's Example 5.10 (DC)]
+
+e1,s1,0,1
+r2k,s1,n1,2'k
+o1,0,n1,a
+r6k,n1,a,6'k
+e2,s2,0,2
+r4k,s2,n2,4'k
+o2,0,n2,b
+r8k,n2,b,8'k
+r5k,a,n3,5'k
+r15k,b,n3,15'k
+o3,0,n3,out
+r10k,n3,out,10'k
+
+analysis: dc
+note: If v_1 = 1 V and v_2 = 2 V, find v_o in the op amp circuit of the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-ex5-10.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Practice Problem 5.13 (DC)]
+
+e1,in1,0,v1
+e2,in2,0,v2
+o1,in1,g1,x1
+r1,x1,g1,25'k
+rg,g1,g2,R_G
+o2,in2,g2,x2
+r2,x2,g2,25'k
+r3,x1,n,25'k
+r4,n,out,25'k
+o3,p,n,out
+r5,x2,p,25'k
+r6,p,0,25'k
+
+analysis: dc
+solve_equations: v_out=142*(v2-v1)
+solve_unknowns: R_G
+solve_real_only: yes
+note: Determine the value of the external gain-setting resistor R_G required for the IA in the figure to produce a gain of 142 when R = 25 kΩ.
+image: https://learn.symbulator.com/assets/circuit/as7-pp5-13.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Practice Problem 6.10 (DC)]
+
+j,0,1,10
+r6,1,0,6
+l,1,2,6
+r2,2,0,2
+c,2,0,4
+
+analysis: dc
+note: Determine v_C, i_L, and the energy stored in the capacitor and inductor in the circuit of the figure under dc conditions.
+image: https://learn.symbulator.com/assets/circuit/as7-pp6-10.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 19.9 (Thévenin)]
+
+e,1,0,50
+r10,1,p,10
+a,p,q,[4,20,0.1,2]
+
+analysis: dc
+tool: th
+n1: q
+n2: 0
+note: The ABCD parameters of the two-port network in the figure are A = 4, B = 20 Ω, C = 0.1 S, D = 2. The output port is connected to a variable load for maximum power transfer. Find R_L and the maximum power transferred.
+image: https://learn.symbulator.com/assets/circuit/as7-ex19-9.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Practice Problem 19.9 (DC)]
+
+e,1,0,14
+r2,1,p,2
+a,p,q,[5,10,0.4,1]
+r10,q,0,10
+
+analysis: dc
+note: Find I_1 and I_2 if the transmission parameters for the two-port in the figure are A = 5, B = 10 Ω, C = 0.4 S, D = 1.
+image: https://learn.symbulator.com/assets/circuit/as7-pp19-9.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Example 19.12 (DC)]
+
+e,1,0,vs
+r5,1,a,5
+z,[a,m],[b,m],[12,8,8,20]
+r10,m,0,10
+r20,b,0,20
+
+analysis: dc
+note: Evaluate V_2/V_s in the circuit of the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-ex19-12.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 19.17 gains (DC)]
+
+e,1,0,3.2'm
+rs,1,b,800
+h,b,c,[1000,2.5e-4,50,20'u]
+rl,c,0,1.2'k
+
+analysis: dc
+note: Consider the common-emitter amplifier circuit of the figure. Determine the voltage gain, current gain, input impedance, and output impedance using these h parameters: h_ie = 1 kΩ, h_re = 2.5 × 10⁻⁴, h_fe = 50, h_oe = 20 μS. Find the output voltage V_o.
+image: https://learn.symbulator.com/assets/circuit/as7-ex19-17.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 19.17 output impedance (Thévenin)]
+
+e,1,0,3.2'm
+rs,1,b,800
+h,b,c,[1000,2.5e-4,50,20'u]
+
+analysis: dc
+tool: th
+n1: c
+n2: 0
+note: Determine the output impedance of the amplifier.
+image: https://learn.symbulator.com/assets/circuit/as7-ex19-17.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 7.5 (DC, switch open)]
+
+e,1,0,10
+r2,1,a,2
+r3,a,b,3
+r6,b,0,6
+l,b,0,2
+
+analysis: dc
+note: In the circuit shown in the figure, find i_o, v_o, and i for all time, assuming that the switch was open for a long time.
+note: This is the circuit before the switch closes, run in DC for the answers before t = 0 and for the inductor's current, which the next entry takes as its initial condition.
+image: https://learn.symbulator.com/assets/circuit/as7-ex7-5.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Example 7.5 (TR)]
+
+e,1,0,10
+r2,1,a,2
+r3,a,b,3
+s,a,0
+r6,b,0,6
+l,b,0,2,2
+
+analysis: tr
+note: In the circuit shown in the figure, find i_o, v_o, and i for all time, assuming that the switch was open for a long time.
+note: This is the circuit after the switch has moved; its initial condition comes from the entry before it.
+image: https://learn.symbulator.com/assets/circuit/as7-ex7-5.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 7.13 to 4 s (TR)]
+
+e1,1,0,40
+r4,1,p,4
+r6,p,x,6
+l,x,0,5
+
+analysis: tr
+note: At t = 0, switch 1 in the figure is closed, and switch 2 is closed 4 s later. Find i(t) for t > 0. Calculate i for t = 2 s and t = 5 s.
+image: https://learn.symbulator.com/assets/circuit/as7-ex7-13.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 7.13 after 4 s (TR)]
+
+e1,1,0,40
+r4,1,p,4
+r2,p,q,2
+e2,q,0,10
+r6,p,x,6
+l,x,0,5,4-4*exp(-8)
+
+analysis: tr
+note: Find i(t) for t ≥ 4 s, and calculate i for t = 5 s. (Time is measured from the closing of switch 2.)
+image: https://learn.symbulator.com/assets/circuit/as7-ex7-13.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 7.14 (TR)]
+
+r1,1,0,20'k
+c,1,2,5'u,3
+o,0,2,out
+rf,2,out,80'k
+
+analysis: tr
+note: For the op amp circuit in the figure, find v_o for t > 0, given that v(0) = 3 V. Let R_f = 80 kΩ, R_1 = 20 kΩ, and C = 5 μF.
+image: https://learn.symbulator.com/assets/circuit/as7-ex7-14.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Example 7.16 (TR)]
+
+e,1,0,2
+r1,1,n,20'k
+o,0,n,a
+rf,n,a,50'k
+r2,a,p,10'k
+r3,p,0,10'k
+c,p,0,2'u
+
+analysis: tr
+note: Find the step response v_o(t) for t > 0 in the op amp circuit of the figure. Let v_i = 2u(t) V, R_1 = 20 kΩ, R_f = 50 kΩ, R_2 = R_3 = 10 kΩ, C = 2 μF.
+image: https://learn.symbulator.com/assets/circuit/as7-ex7-16.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Practice Problem 8.6 (DC, before the switch opens)]
+
+j,0,1,4.5
+r20,1,0,20
+l,1,0,10
+c,1,0,4'm
+
+analysis: dc
+note: Refer to the circuit in the figure. Find v(t) for t > 0.
+note: This is the circuit before the switch opens, run in DC to find the inductor's current and the capacitor's voltage, which the next entry takes as its initial conditions.
+image: https://learn.symbulator.com/assets/circuit/as7-pp8-6.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Practice Problem 8.6 (TR)]
+
+r20,1,0,20
+l,1,0,10,4.5
+c,1,0,4'm,0
+
+analysis: tr
+note: Refer to the circuit in the figure. Find v(t) for t > 0.
+note: This is the circuit after the switch has moved; its initial condition comes from the entry before it.
+image: https://learn.symbulator.com/assets/circuit/as7-pp8-6.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Practice Problem 8.10 (TR)]
+
+e,s,0,20
+ra,s,1,1
+c1,1,0,1/2
+rb,1,2,1
+c2,2,0,1/3
+
+analysis: tr
+note: For t > 0, obtain v_o(t) in the circuit of the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-pp8-10.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Example 8.11 (TR)]
+
+e,in,0,10'm
+r1,in,1,10'k
+r2,1,2,10'k
+c1,2,0,20'u
+c2,1,out,100'u
+o,2,out,out
+
+analysis: tr
+note: In the op amp circuit of the figure, find v_o(t) for t > 0 when v_s = 10u(t) mV. Let R_1 = R_2 = 10 kΩ, C_1 = 20 μF, and C_2 = 100 μF.
+image: https://learn.symbulator.com/assets/circuit/as7-ex8-11.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Example 9.14 (AC)]
+
+e,in,0,vi
+r150,in,1,150
+l10,1,0,10'm
+r100,1,out,100
+l5,out,0,5'm
+
+analysis: ac
+omega: 12566.4
+note: For the RL circuit shown in the figure, calculate the amount of phase shift produced at 2 kHz.
+image: https://learn.symbulator.com/assets/circuit/as7-ex9-14.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Example 10.2 (AC)]
+
+j,0,1,3
+rc,1,0,-3j
+e,1,2,(10∠45°)
+r4,1,2,4
+rl,2,0,6j
+r12,2,0,12
+
+analysis: ac
+omega: omega
+note: Compute V_1 and V_2 in the circuit of the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-ex10-2.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Example 10.4 (AC)]
+
+e,l,0,10
+rc4,t,l,-4j
+r8,l,c,8
+j1,c,t,4
+rl,c,r,5j
+r6,t,r,6
+j2,0,r,3
+rc2,c,0,-2j
+
+analysis: ac
+omega: omega
+note: Solve for V_o in the circuit of the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-ex10-4.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Example 10.9 (Thévenin)]
+
+j1,0,1,15
+r1,1,0,2-4j
+r2,1,a,4+3j
+j2,a,0,ir1/2
+
+analysis: ac
+tool: th
+n1: a
+n2: 0
+omega: omega
+note: Find the Thevenin equivalent of the circuit in the figure as seen from terminals a-b.
+image: https://learn.symbulator.com/assets/circuit/as7-ex10-9.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Practice Problem 10.9 (Thévenin)]
+
+r1,1,0,4-2j
+r2,1,a,8+4j
+j1,1,a,5
+j2,0,a,vr2/5
+
+analysis: ac
+tool: th
+n1: a
+n2: 0
+omega: omega
+note: Determine the Thevenin equivalent of the circuit in the figure as seen from the terminals a-b.
+image: https://learn.symbulator.com/assets/circuit/as7-pp10-9.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Example 10.10 (AC)]
+
+r5,a,l,5
+e,l,0,(40∠90°)
+r8,l,m,8-2j
+j,m,a,3
+r10,m,0,10+4j
+ro,a,0,20+15j
+
+analysis: ac
+omega: omega
+note: Obtain current I_o in the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-ex10-10.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Example 10.11 (AC)]
+
+e,s,0,3
+r1,s,1,10'k
+c1,1,0,0.2'u
+r2,1,n,10'k
+rf,1,out,20'k
+c2,n,out,0.1'u
+o,0,n,out
+
+analysis: ac
+omega: 1000
+note: Determine v_o(t) for the op amp circuit in the figure if v_s = 3 cos 1000t V.
+image: https://learn.symbulator.com/assets/circuit/as7-ex10-11.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Practice Problem 10.13 (AC)]
+
+e,s,0,20
+r2k,s,1,2'k
+c,1,0,1'u
+l,1,2,2
+r1k,2,0,1'k
+r3k,1,d,3'k
+e2,d,0,2*vr1k
+
+analysis: ac
+omega: 3000
+note: Obtain v_o and i_o in the circuit of the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-pp10-13.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Example 11.4 (AC)]
+
+j,0,1,4
+r20,1,m,20
+rl,m,0,10j
+rc,m,r,-5j
+e,r,0,(60∠30°)
+
+analysis: ac
+omega: omega
+note: Determine the average power generated by each source and the average power absorbed by each passive element in the circuit of the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-ex11-4.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Example 11.14 (AC)]
+
+e,1,0,(120∠10°)
+r1,1,0,(60∠-30°)
+r2,1,0,(40∠45°)
+
+analysis: ac
+omega: omega
+note: In the circuit of the figure, Z_1 = 60∠−30° Ω and Z_2 = 40∠45° Ω. Calculate the total: (a) apparent power, (b) real power, (c) reactive power, and (d) pf, supplied by the source and seen by the source.
+image: https://learn.symbulator.com/assets/circuit/as7-ex11-14.jpg
+rounding: 4
+si: no
+units: yes
+rms: yes
+polar: yes
+
+[AS7's Practice Problem 13.2 (AC)]
+
+e,1,0,(100∠60°)
+r5,1,2,5
+rl2,2,3,2j
+m,rl2,rl6,3j
+rl6,0,3,6j
+rc,3,0,-4j
+
+analysis: ac
+omega: omega
+note: Determine the phasor currents I_1 and I_2 in the circuit of the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-pp13-2.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Practice Problem 13.13 (AC)]
+
+e,1,0,(160∠50°)
+r20,1,a,20
+l1,a,m,5
+l2,m,b,4
+m,l1,l2,k=0.4
+r12,b,c,12
+l3,c,r,6
+c,m,r,25'm
+r10,0,m,10
+r8,r,0,8
+
+analysis: ac
+omega: 4
+note: Find i_o in the circuit of the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-pp13-13.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Example 13.14 (AC)]
+
+e,1,0,(120∠30°)
+r1,1,p,80-40j
+t,[p,x],[q,x],[-4,1]
+r2,x,0,20
+r3,q,0,6+10j
+
+analysis: ac
+omega: omega
+note: Find V_1 and V_2 in the ideal transformer circuit of the figure.
+image: https://learn.symbulator.com/assets/circuit/as7-ex13-14.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Example 14.10 (AC)]
+
+e,1,0,vi
+l,1,2,2
+rr,2,0,2'k
+c,2,0,2'u
+
+analysis: ac
+omega: omega
+solve_equations: abs(v_2/vi)=1/sqrt(2)
+solve_unknowns: omega
+solve_real_only: yes
+note: Determine what type of filter is shown in the figure. Calculate the corner or cutoff frequency. Take R = 2 kΩ, L = 2 H, and C = 2 μF.
+image: https://learn.symbulator.com/assets/circuit/as7-ex14-10.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Practice Problem 14.10 (AC)]
+
+e,1,0,vi
+r1,1,o,100
+l,o,0,2'm
+r2,o,0,100
+
+analysis: ac
+omega: omega
+solve_equations: abs(v_o/vi)=1/(2*sqrt(2))
+solve_unknowns: omega
+solve_real_only: yes
+note: For the circuit in the figure, obtain the transfer function V_o(\omega)/V_i(\omega). Identify the type of filter the circuit represents and determine the corner frequency. Take R_1 = 100 Ω = R_2, L = 2 mH.
+image: https://learn.symbulator.com/assets/circuit/as7-pp14-10.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Example 14.2 (FD)]
+
+j,0,1,ii
+r4,1,a,4
+l,a,0,2
+c,1,0,1/2
+
+analysis: fd
+note: For the circuit in the figure, calculate the gain I_o(\omega)/I_i(\omega) and its poles and zeros.
+image: https://learn.symbulator.com/assets/circuit/as7-ex14-2.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Example 16.4 (FD)]
+
+e,1,0,10/s
+r,1,2,10/3
+l,2,0,5,-1
+c,2,0,1/10,5
+
+analysis: fd
+note: Consider the circuit in the figure. Find the value of the voltage across the capacitor assuming that the value of v_s(t) = 10u(t) V and assume that at t = 0, −1 A flows through the inductor and +5 V is across the capacitor.
+image: https://learn.symbulator.com/assets/circuit/as7-ex16-4.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Example 16.6 (FD)]
+
+j,0,a,10/s
+l,a,b,2
+e,a,m,2*il
+r5a,m,0,5
+r5b,b,0,5
+
+analysis: fd
+note: Assume that there is no initial energy stored in the circuit of the figure at t = 0 and that i_s = 10u(t) A. (a) Find V_o(s). (b) Apply the initial- and final-value theorems to find v_o(0^+) and v_o(\infty). (c) Determine v_o(t).
+image: https://learn.symbulator.com/assets/circuit/as7-ex16-6.jpg
+rounding: 4
+si: no
+units: yes
+
+[AS7's Practice Problem 16.6 (FD)]
+
+e1,1,0,30/s
+r1,1,m,1
+r2,m,0,2
+c,m,r,1
+e2,r,0,4*ir1
+
+analysis: fd
+note: The initial energy in the circuit of the figure is zero at t = 0. Assume that v_s = 30u(t) V. (a) Find V_o(s). (b) Apply the initial- and final-value theorems to find v_o(0) and v_o(\infty). (c) Obtain v_o(t).
+image: https://learn.symbulator.com/assets/circuit/as7-pp16-6.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Example 16.8 (FD)]
+
+e,1,0,vs
+r1,1,t,1
+l,t,m,1
+r4,m,0,4
+c,t,b,2
+r2,b,0,2
+
+analysis: fd
+note: Determine the transfer function H(s) = V_o(s)/I_o(s) of the circuit in the figure. (Practice Problem 16.8 asks the same circuit for I_1(s)/I_o(s).)
+image: https://learn.symbulator.com/assets/circuit/as7-ex16-8.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Example 16.9 (FD)]
+
+e,in,0,vi
+r1,in,a,1
+r2,a,0,1
+l,a,out,1
+r3,out,0,1
+
+analysis: fd
+note: For the s-domain circuit in the figure, find: (a) the transfer function H(s) = V_o/V_i, (b) the impulse response, (c) the response when v_i(t) = u(t) V, (d) the response when v_i(t) = 8 cos 2t V.
+image: https://learn.symbulator.com/assets/circuit/as7-ex16-9.jpg
+rounding: 4
+si: no
+units: yes
