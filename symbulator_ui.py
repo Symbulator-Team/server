@@ -112,6 +112,9 @@ M_PF_ONE_VALUE     = 853
 M_PF_NEEDS_NUMBERS = 854
 M_PF_NO_CONVENTION = 855
 M_PF_ZERO          = 856
+# pz (#445)
+M_PZ_NOT_RATIONAL  = 857
+M_PZ_NEEDS_S       = 858
 # SPICE
 M_BAD_DIRECTION    = 860
 # Notes -- severity "note", which is why severity is a field and not a
@@ -238,6 +241,12 @@ CATALOGUE = {
                               "delivered by source `%{name}`."),
     M_PF_OF_IMPEDANCE: ("note", "This is the power factor for the power "
                                 "consumed by impedance `%{name}`."),
+    M_PZ_NOT_RATIONAL: ("error", "`pz` needs a ratio of polynomials in s, and "
+                                 "`%{text}` is not one."),
+    M_PZ_NEEDS_S:    ("error", "`pz` reads poles and zeros in s, and `%{text}` "
+                               "does not contain s. In FD an answer is a "
+                               "function of s, and a transfer function is "
+                               "one answer divided by another, as in `v2/vg`."),
     M_BAD_DIRECTION: ("error", "Unknown direction `%{direction}`."),
     M_NORMALISED:    ("note", "normalised '%{was}' to '%{now}' in %{element}"),
     M_ORDINARY_VARIABLE: ("note",
@@ -4165,6 +4174,11 @@ MINI_TOOLS = {
            "hint": "a complex power, as in se, or an element's name, as in e"},
     "gain": {"args": 4, "label": "gain -- voltage, current and power gain",
              "hint": "an input pair and an output pair: v1, i1, v2, i2"},
+    # #445 (Roberto, 14 Sep 2026). Before it, finding the poles of a
+    # transfer function meant copying its denominator out by hand into the
+    # Solve card, solving, then doing the numerator separately.
+    "pz": {"args": 1, "label": "pz -- poles and zeros",
+           "hint": "a transfer function, as in v2/vg, or any ratio in s"},
 }
 
 
@@ -4235,6 +4249,9 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
                         "magnitude": _plain_with_j(shown),
                         "direction": direction, "note": note})
 
+        if tool == "pz":
+            return _pz_of(args[0], values, digits=digits)
+
         numbers = []
         for a in args[:spec["args"]]:
             got, bad = _as_number(a, values)
@@ -4288,6 +4305,151 @@ def mini_tool_ui(tool: str, args, values: dict, digits: int = 4):
         return _err(msg(M_UNKNOWN_TOOL, tool=tool))
     except Exception as exc:                                  # noqa: BLE001
         return _err(_exc_msg(exc))
+
+
+# --------------------------------------------------------------------------
+# Poles and zeros (#445)
+# --------------------------------------------------------------------------
+#
+# `pz` takes ONE value: a transfer function -- an answer divided by the
+# symbol its source was left as, `v2/vg` -- or any ratio of polynomials in
+# s typed out. It cancels the ratio, then reads the roots of the
+# denominator as the poles and the roots of the numerator as the zeros.
+#
+# Three things it does that the Solve card cannot, which is why it is a
+# tool and not a hint to type two equations:
+#
+#   * it finds both at once, from the transfer function itself, so neither
+#     polynomial has to be copied out by hand -- and a polynomial copied
+#     out by hand is a polynomial that can be copied out wrong;
+#   * it keeps a repeated root as one root with a multiplicity, `-40000 x2`,
+#     where solving prints it once and says nothing about the repetition;
+#   * it cancels a common factor first, so a ratio like (s+1)/(s+1)(s+2)
+#     reports the one pole it really has.
+#
+# A root is a number at the Rounding setting's digits, or an expression
+# when the circuit was symbolic. An expression that is not a ratio of
+# polynomials in s is refused by name (857, 858) rather than left to fail
+# somewhere inside SymPy.
+
+#: a repeated root is written once, with how many times it occurs
+_PZ_TIMES = "\u00d7"
+
+
+def _pz_roots(poly, var):
+    """[(root, multiplicity)] for a SymPy Poly, exact where SymPy can find
+    every root and numerical where it cannot."""
+    import sympy as sp
+
+    if poly.degree() <= 0:
+        return []
+    found = sp.roots(poly, var)
+    if not found or sum(found.values()) < poly.degree():
+        try:
+            counted = {}
+            for r in poly.nroots():
+                counted[r] = counted.get(r, 0) + 1
+            found = counted
+        except Exception:                                     # noqa: BLE001
+            pass
+    return [(r, int(m)) for r, m in found.items()]
+
+
+def _pz_round(x, digits: int):
+    """One root at the Rounding setting: real and imaginary parts rounded
+    in decimal (#318), and the speck of imaginary part a numerical root
+    finder leaves on a real root dropped."""
+    import sympy as sp
+    from symbulator._display import round_sig
+
+    if x.free_symbols:
+        return x
+    v = sp.N(x)
+    re_, im_ = sp.re(v), sp.im(v)
+    if abs(im_) <= 1e-9 * max(abs(re_), abs(im_), sp.Float("1e-300")):
+        im_ = sp.Integer(0)
+
+    def one(part):
+        if part == 0:
+            return sp.Integer(0)
+        part = round_sig(part, digits) if digits else part
+        try:                       # a rounded whole number prints as one
+            f = float(part)
+            if f == int(f) and abs(f) < 1e15:
+                return sp.Integer(int(f))
+        except (TypeError, ValueError, OverflowError):
+            pass
+        return part
+
+    return one(re_) + sp.I * one(im_)
+
+
+def _pz_sort_key(item):
+    """Numbers in a readable order, real part then imaginary; anything
+    symbolic after them, in its own printed order."""
+    import sympy as sp
+
+    root = item[0]
+    if root.free_symbols:
+        return (1, 0.0, 0.0, str(root))
+    v = complex(sp.N(root))
+    return (0, v.real, v.imag, "")
+
+
+def _pz_of(text: str, values: dict, digits: int = 4):
+    """One `pz` argument against the solved answers."""
+    import sympy as sp
+    from symbulator.si_prefix import safe_sympify
+
+    text = (text or "").strip()
+    if not text:
+        return _err(msg(M_GIVE_A_VALUE))
+    try:
+        parsed = safe_sympify(expand_value_for_ui(text))
+    except Exception as exc:                                  # noqa: BLE001
+        return _err(_exc_text(exc))
+    expr = parsed.subs(_alias_mapping(values, expr=parsed))
+    # the s an answer carries is the s the reader types: one symbol, by name
+    var = next((x for x in expr.free_symbols if str(x) == "s"), None)
+    if var is None:
+        return _err(msg(M_PZ_NEEDS_S, text=text))
+    try:
+        num, den = sp.fraction(sp.cancel(sp.together(expr)))
+        pn = sp.Poly(sp.expand(num), var)
+        pd = sp.Poly(sp.expand(den), var)
+    except Exception:                                         # noqa: BLE001
+        return _err(msg(M_PZ_NOT_RATIONAL, text=text))
+    # a coefficient that still contains s is not a polynomial coefficient:
+    # exp(-s), sqrt(s) and their kind land here rather than in a traceback
+    if any(var in c.free_symbols for c in pn.coeffs() + pd.coeffs()):
+        return _err(msg(M_PZ_NOT_RATIONAL, text=text))
+
+    def listed(roots):
+        items = []
+        for root, mult in sorted(roots, key=_pz_sort_key):
+            shown = _pz_round(root, digits)
+            plain, latex = _plain_with_j(shown), _latex_with_j(shown)
+            if mult > 1:
+                plain = f"{plain} {_PZ_TIMES}{mult}"
+                latex = rf"{latex}\ \times {mult}"
+            items.append({"plain": plain, "latex": latex,
+                          "multiplicity": mult})
+        return items
+
+    poles, zeros = listed(_pz_roots(pd, var)), listed(_pz_roots(pn, var))
+    rows = []
+    for key, label, items in (("poles", "roots of the denominator", poles),
+                              ("zeros", "roots of the numerator", zeros)):
+        rows.append({"key": key, "label": label,
+                     "plain": ", ".join(i["plain"] for i in items) or "none",
+                     "latex": r",\ ".join(i["latex"] for i in items)
+                              or r"\text{none}"})
+    return _ok({
+        "plain": "   ".join(f"{r['key']}: {r['plain']}" for r in rows),
+        "latex": r" \quad ".join(f"{r['key']}: {r['latex']}" for r in rows),
+        "rows": rows,
+        "poles": poles, "zeros": zeros,
+        "degree": {"numerator": pn.degree(), "denominator": pd.degree()}})
 
 
 # --------------------------------------------------------------------------

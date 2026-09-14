@@ -43,7 +43,7 @@ window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'glo
 //
 // The <script> written below is parser-blocking on purpose: see
 // pack_block() in tools/i18n.py for why it cannot be a fetch.
-window.SYMB_I18N_V = "8419743139";
+window.SYMB_I18N_V = "308cd2a9c3";
 // Rewritten to a relative path by build_local.py: the offline page
 // sits at the root of its own folder, and the server serves the
 // app at / and the Numerical Solver at /eqsheet/, so only a
@@ -3238,6 +3238,7 @@ units: yes</pre>
             <option value="aa" data-i18n="aa-amplitude-and-angle.65ae">aa — amplitude and angle</option>
             <option value="pf" data-i18n="pf-power-factor.bd91">pf — power factor</option>
             <option value="gain" data-i18n="gain-voltage-current-and.e378">gain — voltage, current and power gain</option>
+            <option value="pz" data-i18n="pz-poles-and-zeros.45fc">pz — poles and zeros</option>
           </select>
         </div>
       </div>
@@ -3750,7 +3751,7 @@ units: yes</pre>
        server's /healthz reads it with _BUILD_RE, both keyed on the
        word Release, and each expects it exactly once in this file. -->
   <span class="notranslate" style="white-space:nowrap">Symbulator by Roberto Perez-Franco (1999–2026)</span>
-  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-13 12:48 UTC</span>
+  <span class="notranslate" style="white-space:nowrap">· Release 2026-09-14 09:44 UTC</span>
 </footer>
 
 <script>
@@ -4662,6 +4663,13 @@ const UI_MESSAGES = {
   855: a  => tv('js.ui.m855', '`pf` knows the sign convention of sources (e, j) '
                 + 'and loads (r, l, c) only; `%{name}` is neither.', a),
   856: a  => tv('js.ui.m856', '`%{text}` is zero, so it has no power factor.', a),
+  // pz's two refusals (#445).
+  857: a  => tv('js.ui.m857', '`pz` needs a ratio of polynomials in s, and '
+                + '`%{text}` is not one.', a),
+  858: a  => tv('js.ui.m858', '`pz` reads poles and zeros in s, and `%{text}` '
+                + 'does not contain s. In FD an answer is a function of s, and a '
+                + 'transfer function is one answer divided by another, as in '
+                + '`v2/vg`.', a),
   860: a  => tv('js.ui.m860', 'Unknown direction `%{direction}`.', a),
   870: a  => tv('js.ui.m870', "normalised '%{was}' to '%{now}' in %{element}", a),
   // pf's line under a name's reading (#430): which power the factor is of.
@@ -7671,6 +7679,10 @@ const MINI_SPEC = {
                        "a complex power, as in se, or an element's name, as in e")},
   gain: {fields: () => ['v1', 'i1', 'v2', 'i2'],
          hint: () => t('js.mini.hint.gain', 'an input pair and an output pair')},
+  // pz takes one value (#445): a transfer function, or any ratio in s.
+  pz:   {fields: () => [t('js.mini.value', 'Value')],
+         hint: () => t('js.mini.hint.pz',
+                       'a transfer function, as in v2/vg, or any ratio in s')},
 };
 
 function miniFields() {
@@ -7720,7 +7732,8 @@ async function runMiniTool() {
     }
     out.innerHTML = '';
     if (data.rows) {
-      // gain answers with four figures; a list reads better than a sentence.
+      // gain answers with four figures and pz with two lists; a table
+      // reads better than a sentence.
       const table = document.createElement('table');
       table.className = 'mini-table';
       data.rows.forEach(r => {
