@@ -53,7 +53,7 @@ r6,4,0,37.5
 analysis: dc
 note: Find the current and power supplied by the 40 V source in the circuit shown in the figure.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex3-11.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -152,7 +152,7 @@ e2,0,c,2*ir1
 analysis: dc
 note: Find v_o in the circuit shown in the figure.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex4-23.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -171,7 +171,7 @@ solve_conditions: va=1.5
 solve_real_only: yes
 note: The op amp in the circuit shown in the figure is ideal. a) Calculate v_o if v_a = 1 V and v_b = 0 V. b) Repeat (a) for v_a = 1 V and v_b = 2 V. c) If v_a = 1.5 V, specify the range of v_b that avoids amplifier saturation.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex5-1.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -236,7 +236,7 @@ solve_conditions: va=1
 solve_real_only: yes
 note: a) You have designed a difference amplifier, as per the problem's specifications. Verify that it amplifies the difference between two input voltages by a gain of 8, using an ideal op amp and ±8 V power supplies. b) Suppose v_a = 1 V. What range of v_b keeps the op amp linear?
 image: https://learn.symbulator.com/assets/circuit/nr12-ex5-5.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -270,7 +270,7 @@ n1: 1
 n2: 2
 note: Find the z parameters for the circuit shown in the figure.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex18-1.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -302,7 +302,7 @@ analysis: dc
 note: The switch in the circuit shown in the figure has been closed for a long time before it is opened at t = 0. Find a) i_L(t) for t ≥ 0, b) i_o(t) for t ≥ 0+, c) v_o(t) for t ≥ 0+.
 note: This is the circuit before the switch opens, run in DC to find the inductor's current, which the next entry takes as its initial condition.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex7-1.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -346,7 +346,7 @@ analysis: tr
 note: The switch in the circuit shown in the figure has been in position x for a long time. At t = 0 it moves instantaneously to position y. Find a) v_C(t) for t ≥ 0, b) v_o(t) for t ≥ 0+, and c) i_o(t) for t ≥ 0+.
 note: This is the circuit after the switch has moved; its initial condition comes from the entry before it.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex7-3.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -374,7 +374,7 @@ analysis: tr
 note: The switch in the circuit shown in the figure has been in position a for a long time. At t = 0 it moves from position a to position b. The switch is a make-before-break type, so the inductor current is continuous. a) Find the expression for i(t) for t ≥ 0. b) What is the initial voltage across the inductor just after the switch has been moved to position b?
 note: This is the circuit after the switch has moved; its initial condition comes from the entry before it.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex7-5.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -389,7 +389,7 @@ m,l1,l2,6
 analysis: tr
 note: There is no energy stored in the circuit in the figure at the time the switch is closed. Find the solutions for i_o, v_o, i_1 and i_2.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex7-10.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -465,7 +465,7 @@ r,1,0,200
 analysis: tr
 note: For the circuit in the figure, v(0^+) = 12 V and i_L(0^+) = 30 mA. Find the expression for v(t). (Example 8.3 asks the same circuit for its three branch currents.)
 image: https://learn.symbulator.com/assets/circuit/nr12-ex8-2.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -505,7 +505,7 @@ c,3,0,0.4'u
 analysis: tr
 note: No energy is stored in the 100 mH inductor or the 0.4 µF capacitor when the switch in the circuit shown in the figure is closed. Find v_C(t) for t ≥ 0.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex8-12.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -520,7 +520,7 @@ r2,3,0,48
 analysis: tr
 note: The circuit in the figure has no initial stored energy. At t = 0 the switch closes. Find i_1(t) and i_2(t) for t ≥ 0.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex13-5.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -714,7 +714,7 @@ polar: yes
 
 e,1,0,840
 r60,1,p,60
-t,[p,x],[x,a],[4,1]
+t,[p,x],[a,x],[-4,1]
 r20,x,0,20
 
 analysis: ac
@@ -724,7 +724,7 @@ n2: 0
 omega: omega
 note: The variable resistor in the circuit in the figure is adjusted until maximum average power is delivered to R_L. a) What is the value of R_L in ohms? b) What is the maximum average power delivered to R_L?
 image: https://learn.symbulator.com/assets/circuit/nr12-ex10-12.jpg
-rounding: exact
+rounding: 4
 si: no
 units: yes
 rms: yes
@@ -732,9 +732,9 @@ polar: yes
 
 [NR12's Example 11.1 (AC)]
 
-ea,ga,0,120
-eb,gb,0,120*exp(-2j*pi/3)
-ec,gc,0,120*exp(2j*pi/3)
+ea,ga,0,(120∠0°)
+eb,gb,0,(120∠-120°)
+ec,gc,0,(120∠120°)
 rga,ga,a,0.2+0.5j
 rgb,gb,b,0.2+0.5j
 rgc,gc,c,0.2+0.5j
@@ -747,7 +747,7 @@ rfc,pc,nn,39+28j
 
 analysis: ac
 omega: omega
-note: A balanced, positive-sequence Y-connected generator with an internal impedance of 0.2 + j0.5 Ω per phase and an internal voltage of 120 V per phase feeds a balanced Y-connected load of 39 + j28 Ω per phase over a line of 0.8 + j1.5 Ω per phase; the a-phase internal voltage is the reference. b) Calculate the three line currents. c) Calculate the phase voltages at the load. d) Calculate the line voltages at the load. e) Calculate the phase voltages at the generator terminals.
+note: A balanced, positive-sequence Y-connected generator with an internal impedance of 0.2 + j0.5 Ω per phase and an internal voltage of 120 V per phase feeds a balanced Y-connected load of 39 + j28 Ω per phase over a line of 0.8 + j1.5 Ω per phase; the a-phase internal voltage is the reference. b) Calculate the three line currents. c) Calculate the phase voltages at the load. d) Calculate the line voltages at the load. e) Calculate the phase voltages at the generator terminals. f) Calculate the line voltages at the generator terminals. g) Repeat for a negative phase sequence.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex11-1.jpg
 rounding: approx
 si: no
@@ -780,7 +780,7 @@ analysis: fd
 note: The circuit in the figure is the circuit of Example 7.3. Find v_o(t) for t ≥ 0+.
 note: This is the circuit after the switch has moved; its initial condition comes from the entry before it.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex13-2.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -794,7 +794,7 @@ r,1,0,500
 analysis: fd
 note: Consider the circuit in the figure, where the initial current in the inductor is 29 mA and the initial voltage across the capacitor is 50 V. Find v(t) for t ≥ 0.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex13-3.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -811,7 +811,7 @@ n1: a
 n2: 0
 note: The circuit in the figure has no initial stored energy, and at t = 0 the switch closes. Find the Thevenin equivalent for the circuit to the left of the terminals a and b in the s domain.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex13-6.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
@@ -824,11 +824,9 @@ l,3,0,50'm
 c,2,0,1'u
 
 analysis: fd
-solve_equations: s**2+6000*s+25000000=0
-solve_unknowns: s
 note: The voltage source v_g drives the circuit shown in the figure. The output signal is the voltage across the capacitor, v_o. a) Find the transfer function for this circuit. b) Calculate the numerical values for the poles and zeros of the transfer function.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex13-9.jpg
-rounding: 4
+rounding: exact
 si: no
 units: yes
 
