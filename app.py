@@ -1114,6 +1114,7 @@ def api_byhand():
     si = bool(data.get("si"))
     units = bool(data.get("units"))
     approx = bool(data.get("approx"))
+    flip = bool(data.get("flip"))            # #451
 
     # #331: `method` no longer picks what is computed -- both are -- so
     # it is not validated. It still travels for an older page's sake.
@@ -1124,7 +1125,7 @@ def api_byhand():
     t0 = time.time()
     ok, payload = _run_in_process(
         "byhand_ui", (desc, domain, omega, method, digits, si, units,
-                      approx))
+                      approx, flip))
     elapsed = round(time.time() - t0, 2)
     if not ok:
         return jsonify(_refusal(payload, elapsed=elapsed)), 422

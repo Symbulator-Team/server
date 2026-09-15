@@ -5195,7 +5195,7 @@ _BYHAND_TERMS = {
 
 def byhand_ui(desc: str, domain: str, omega: str, method: str,
               digits: int = 4, si: bool = False, units: bool = False,
-              approx: bool = False):
+              approx: bool = False, flip: bool = False):
     """Build one by-hand system for `desc` and check it against the
     classic solve. `method` is "nodal" or "mesh".
 
@@ -5270,6 +5270,24 @@ def byhand_ui(desc: str, domain: str, omega: str, method: str,
     # request -- and never has to choose a method before knowing whether
     # it applies.
     systems = {"nodal": _build("nodal"), "mesh": _build("mesh")}
+
+    # #451 (Roberto, 15 Sep 2026): every mesh current turns clockwise, as
+    # textbooks draw them, and `flip` turns them all the other way. The
+    # module orients its meshes only relative to one another -- the first
+    # follows its first branch -- so which way that is on the page is
+    # read off the drawing, the same one the card shows, and the meshes
+    # turning the wrong way are reversed. The system is the same system;
+    # only the reversed mesh currents change sign.
+    mesh_system = systems["mesh"]
+    if mesh_system.supported and mesh_system.loops:
+        try:
+            from symbulator.schematic import mesh_turning
+            turning = mesh_turning(desc, mesh_system.marks)
+            wrong_way = [name for name, clockwise in turning.items()
+                         if clockwise == bool(flip)]
+            systems["mesh"] = byhand.reverse_meshes(mesh_system, wrong_way)
+        except Exception:                    # noqa: BLE001
+            pass                             # an older solver: as it was
     try:
         route = byhand.shorter_route(systems["nodal"], systems["mesh"])
     except Exception:                        # noqa: BLE001

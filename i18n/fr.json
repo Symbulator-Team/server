@@ -104,6 +104,7 @@
  "femto.c8c4": "femto, ×10<sup>−15</sup>",
  "fields.e8b6": "Champs",
  "find-equivalent.fcc3": "Trouver un équivalent",
+ "flip-the-mesh-currents.8269": "Inverser les courants de maille",
  "fold-every-card-shut.691f": "Replier toutes les cartes",
  "for-the-two-port.ffe1": "Pour l’outil quadripôle, un port dont la borne inférieure n’est pas la masse s’écrit comme une paire, <code>[haut,bas]</code>, dans son champ de nœud (et ici dans <code>n1</code>/<code>n2</code>) ; une partie du circuit sans chemin vers le nœud 0 est mesurée par rapport à une référence qui lui est propre, et les réponses disent laquelle.",
  "full.52e6": "complète",

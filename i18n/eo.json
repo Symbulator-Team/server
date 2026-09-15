@@ -104,6 +104,7 @@
  "femto.c8c4": "femto, ×10<sup>−15</sup>",
  "fields.e8b6": "Kampoj",
  "find-equivalent.fcc3": "Trovi ekvivalenton",
+ "flip-the-mesh-currents.8269": "Inversigi la maŝajn kurentojn",
  "fold-every-card-shut.691f": "Faldi ĉiujn kartojn",
  "for-the-two-port.ffe1": "Ĉe la dupord-ilo, pordo kies malsupra terminalo ne estas tero skribiĝas kiel paro, <code>[supro,malsupro]</code>, en sia noda kampo (kaj ĉi tie en <code>n1</code>/<code>n2</code>); parto de la cirkvito sen vojo al nodo 0 mezuriĝas kontraŭ propra referenco, kaj la respondoj diras kiu.",
  "full.52e6": "plena",

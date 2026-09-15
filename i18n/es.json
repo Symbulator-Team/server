@@ -104,6 +104,7 @@
  "femto.c8c4": "femto, ×10<sup>−15</sup>",
  "fields.e8b6": "Campos",
  "find-equivalent.fcc3": "Hallar equivalente",
+ "flip-the-mesh-currents.8269": "Invertir las corrientes de malla",
  "fold-every-card-shut.691f": "Plegar todas las tarjetas",
  "for-the-two-port.ffe1": "En la herramienta de dos puertos, un puerto cuyo terminal inferior no es tierra se escribe como un par, <code>[arriba,abajo]</code>, en su campo de nodo (y aquí en <code>n1</code>/<code>n2</code>); una parte del circuito sin camino al nodo 0 se mide contra una referencia propia, y las respuestas dicen cuál.",
  "full.52e6": "completa",

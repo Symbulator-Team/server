@@ -55,7 +55,7 @@ units: yes
 
 [AS7's Example 3.7 (DC)]
 
-r6,p,0,6
+r6,0,p,6
 j1,p,x,5
 r2a,p,x,2
 j2,x,0,-3*ie
@@ -569,6 +569,104 @@ analysis: ac
 omega: omega
 note: Solve for V_o in the circuit of the figure.
 image: https://learn.symbulator.com/assets/circuit/as7-ex10-4.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Example 10.6 (DC, the 5 V source alone)]
+
+e1,a,0,0
+l,a,b,2
+j,0,b,0
+r1,b,c,1
+c,c,0,0.1
+r4,c,d,4
+e2,d,0,5
+
+analysis: dc
+note: Find v_o of the circuit of the figure.
+note: This is the circuit with the 5 V source alone, the first of three runs.
+image: https://learn.symbulator.com/assets/circuit/as7-ex10-6.jpg
+rounding: exact
+si: no
+units: yes
+
+[AS7's Example 10.6 (AC at 2 rad/s)]
+
+e1,a,0,10
+l,a,b,2
+j,0,b,0
+r1,b,c,1
+c,c,0,0.1
+r4,c,d,4
+e2,d,0,0
+
+analysis: ac
+omega: 2
+note: Find v_o of the circuit of the figure.
+note: This is the circuit with the 10 cos 2t V source alone, the second of three runs.
+image: https://learn.symbulator.com/assets/circuit/as7-ex10-6.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Example 10.6 (AC at 5 rad/s)]
+
+e1,a,0,0
+l,a,b,2
+j,0,b,(2∠-90°)
+r1,b,c,1
+c,c,0,0.1
+r4,c,d,4
+e2,d,0,0
+
+analysis: ac
+omega: 5
+note: Find v_o of the circuit of the figure.
+note: This is the circuit with the 2 sin 5t A source alone, the third of three runs. The other two are the entries before it.
+image: https://learn.symbulator.com/assets/circuit/as7-ex10-6.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Practice Problem 10.6 (AC at 5 rad/s)]
+
+e,a,0,(75∠-90°)
+r8,a,b,8
+c,b,0,0.2
+l,b,0,1
+j,0,b,0
+
+analysis: ac
+omega: 5
+note: Calculate v_o in the circuit of the figure.
+note: This is the circuit with the 75 sin 5t V source alone, the first of two runs.
+image: https://learn.symbulator.com/assets/circuit/as7-pp10-6.jpg
+rounding: 4
+si: no
+units: yes
+rms: no
+polar: yes
+
+[AS7's Practice Problem 10.6 (AC at 10 rad/s)]
+
+e,a,0,0
+r8,a,b,8
+c,b,0,0.2
+l,b,0,1
+j,0,b,6
+
+analysis: ac
+omega: 10
+note: Calculate v_o in the circuit of the figure.
+note: This is the circuit with the 6 cos 10t A source alone, the second of two runs. The first is the entry before it.
+image: https://learn.symbulator.com/assets/circuit/as7-pp10-6.jpg
 rounding: 4
 si: no
 units: yes
