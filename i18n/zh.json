@@ -735,7 +735,7 @@
  "these-are-the-ones.1889": "这些就是您笔记本上的那些。它们对相同的量使用相同的名称 — <code>v2</code> 仍是节点 2 的电压，<code>ir3</code> 仍是流过 <code>r3</code> 的电流 — 因此两个方程组可以并排阅读。网孔分析会引入自己的未知量 <code>I1</code>、<code>I2</code>、<code>I3</code>，并向您展示每个支路电流是如何由它们构成的。",
  "this-copy-of-the.6df3": "<span aria-hidden=\"true\">🧭</span> <span>这份页面副本连不上任何数学引擎，所以计算器无法在这里运行。你仍然可以完全在自己的浏览器里运行 Symbulator — 见本页靠下的“<a href=\"#runLocallyCard\">本地运行</a>”，或者直接访问 <a href=\"https://install.symbulator.com\" target=\"_blank\" rel=\"noopener\">install.symbulator.com</a>。</span>",
  "this-online-version-of.83ca": "Symbulator 9 的这个<strong>在线版本</strong>托管在远端，每次使用都需要网络连接。还有一个完全相同的<strong>离线版本</strong>，它完全在你自己的浏览器里运行 — 不会向任何服务器发送任何东西 — 所以一旦下载完成，即使完全没有网络也照常工作，而且你的浏览器可以像安装普通应用那样安装它。",
- "this-port-of-symbulator.5ea6": "把 Symbulator 移植到 Python 和 SymPy 上，就是这一脉络中的第 9 版。第 1 到第 8 版都是 Roberto 完全手写的，而这个新版本 — 也是时代的标志 — 是借助 Anthropic 的 AI 助手移植和开发的。Claude 负责了全部编码，Roberto 则给出指示和反馈，这是 2026 年 8 月一段密集的合作。作者希望这次移植能让 Symbulator 留给新的一代。",
+ "this-port-of-symbulator.4422": "把 Symbulator 移植到 Python 和 SymPy 上，就是这一脉络中的第 9 版。第 1 到第 8 版都是 Roberto 完全手写的，而这个新版本 — 也是时代的标志 — 是借助 Anthropic 的 AI 助手移植和开发的。Claude 负责了全部编码，Roberto 则给出指示和反馈，这是 2026 年 8 月至 9 月一段密集的合作。作者希望这次移植能让 Symbulator 留给新的一代。",
  "this-process-requires-python.095b": "这个过程只在上面那次一次性的本地服务器时需要 Python 3 — 如果你没有，可以从 <a href=\"https://python.org\" target=\"_blank\" rel=\"noopener\">python.org</a> 免费获取；此外无需安装任何东西，因为数学引擎本身（Python、SymPy 和 <code>symbulator</code> 包）就运行在你的浏览器里。",
  "this-system-is-too.d20f": "这个方程组太大，无法放进链接里，所以已被保存为 <code>numerical_system.json</code> — 把该文件拖放到刚打开的数值求解器页面上的任意位置，它就会被载入。",
  "this-will-start-a.e391": "这会启动一个小型本地网页服务器，并自动在你的浏览器中打开 Symbulator 9。使用本软件期间请让那个窗口保持打开。",
