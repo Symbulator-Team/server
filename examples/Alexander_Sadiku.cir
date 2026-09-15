@@ -13,7 +13,7 @@ r5,c,n,5
 r6,a,0,30
 
 analysis: dc
-note: Obtain the equivalent resistance R_ab for the circuit in the figure and use it to find current i.
+note: Obtain (a) the equivalent resistance R_ab for the circuit in the figure and (b) use it to find current i.
 image: https://learn.symbulator.com/assets/circuit/as7-ex2-15.jpg
 rounding: 4
 si: no
@@ -169,7 +169,7 @@ analysis: dc
 tool: th
 n1: a
 n2: 0
-note: Find R_N and I_N of the circuit in the figure at terminals a-b.
+note: Find (a) R_N and (b) I_N of the circuit in the figure at terminals a-b.
 image: https://learn.symbulator.com/assets/circuit/as7-ex4-12.jpg
 rounding: exact
 si: no
@@ -188,7 +188,7 @@ analysis: dc
 tool: th
 n1: a
 n2: 0
-note: Find the value of R_L for maximum power transfer in the circuit of the figure. Find the maximum power.
+note: (a) Find the value of R_L for maximum power transfer in the circuit of the figure. (b) Find the maximum power.
 image: https://learn.symbulator.com/assets/circuit/as7-ex4-13.jpg
 rounding: 4
 si: no
@@ -220,7 +220,7 @@ ro,m,out,50
 r20k,1,out,20'k
 
 analysis: dc
-note: A 741 op amp has an open-loop voltage gain of 2 × 10⁵, input resistance of 2 MΩ, and output resistance of 50 Ω. The op amp is used in the circuit of the figure. Find the closed-loop gain v_o/v_s. Determine current i when v_s = 2 V.
+note: A 741 op amp has an open-loop voltage gain of 2 × 10⁵, input resistance of 2 MΩ, and output resistance of 50 Ω. The op amp is used in the circuit of the figure. (a) Find the closed-loop gain v_o/v_s. (b) Determine current i when v_s = 2 V.
 image: https://learn.symbulator.com/assets/circuit/as7-ex5-1.jpg
 rounding: approx
 si: no
@@ -282,7 +282,7 @@ r2,2,0,2
 c,2,0,4
 
 analysis: dc
-note: Determine v_C, i_L, and the energy stored in the capacitor and inductor in the circuit of the figure under dc conditions.
+note: Determine (a) v_C, (b) i_L, and (c) the energy stored in the capacitor and inductor in the circuit of the figure under dc conditions.
 image: https://learn.symbulator.com/assets/circuit/as7-pp6-10.jpg
 rounding: 4
 si: no
@@ -298,7 +298,7 @@ analysis: dc
 tool: th
 n1: q
 n2: 0
-note: The ABCD parameters of the two-port network in the figure are A = 4, B = 20 Ω, C = 0.1 S, D = 2. The output port is connected to a variable load for maximum power transfer. Find R_L and the maximum power transferred.
+note: The ABCD parameters of the two-port network in the figure are A = 4, B = 20 Ω, C = 0.1 S, D = 2. The output port is connected to a variable load for maximum power transfer. Find (a) R_L and (b) the maximum power transferred.
 image: https://learn.symbulator.com/assets/circuit/as7-ex19-9.jpg
 rounding: exact
 si: no
@@ -341,7 +341,7 @@ h,b,c,[1000,2.5e-4,50,20'u]
 rl,c,0,1.2'k
 
 analysis: dc
-note: Consider the common-emitter amplifier circuit of the figure. Determine the voltage gain, current gain, input impedance, and output impedance using these h parameters: h_ie = 1 kΩ, h_re = 2.5 × 10⁻⁴, h_fe = 50, h_oe = 20 μS. Find the output voltage V_o.
+note: Consider the common-emitter amplifier circuit of the figure. Determine (a) the voltage gain, (b) current gain, (c) input impedance, and (d) output impedance using these h parameters: h_ie = 1 kΩ, h_re = 2.5 × 10⁻⁴, h_fe = 50, h_oe = 20 μS. (e) Find the output voltage V_o.
 image: https://learn.symbulator.com/assets/circuit/as7-ex19-17.jpg
 rounding: 4
 si: no
@@ -357,7 +357,7 @@ analysis: dc
 tool: th
 n1: c
 n2: 0
-note: Determine the output impedance of the amplifier.
+note: (d) Determine the output impedance of the amplifier.
 image: https://learn.symbulator.com/assets/circuit/as7-ex19-17.jpg
 rounding: 4
 si: no
@@ -404,7 +404,7 @@ r6,p,x,6
 l,x,0,5
 
 analysis: tr
-note: At t = 0, switch 1 in the figure is closed, and switch 2 is closed 4 s later. Find i(t) for t > 0. Calculate i for t = 2 s and t = 5 s.
+note: At t = 0, switch 1 in the figure is closed, and switch 2 is closed 4 s later. (a) Find i(t) for t > 0. (b) Calculate i for t = 2 s and t = 5 s.
 image: https://learn.symbulator.com/assets/circuit/as7-ex7-13.jpg
 rounding: 4
 si: no
@@ -420,7 +420,7 @@ r6,p,x,6
 l,x,0,5,4-4*exp(-8)
 
 analysis: tr
-note: Find i(t) for t ≥ 4 s, and calculate i for t = 5 s. (Time is measured from the closing of switch 2.)
+note: (a) Find i(t) for t ≥ 4 s, and (b) calculate i for t = 5 s. (Time is measured from the closing of switch 2.)
 image: https://learn.symbulator.com/assets/circuit/as7-ex7-13.jpg
 rounding: 4
 si: no
@@ -878,7 +878,7 @@ omega: omega
 solve_equations: abs(v_2/vi)=1/sqrt(2)
 solve_unknowns: omega
 solve_real_only: yes
-note: Determine what type of filter is shown in the figure. Calculate the corner or cutoff frequency. Take R = 2 kΩ, L = 2 H, and C = 2 μF.
+note: (a) Determine what type of filter is shown in the figure. (b) Calculate the corner or cutoff frequency. Take R = 2 kΩ, L = 2 H, and C = 2 μF.
 image: https://learn.symbulator.com/assets/circuit/as7-ex14-10.jpg
 rounding: 4
 si: no
@@ -898,7 +898,7 @@ omega: omega
 solve_equations: abs(v_o/vi)=1/(2*sqrt(2))
 solve_unknowns: omega
 solve_real_only: yes
-note: For the circuit in the figure, obtain the transfer function V_o(\omega)/V_i(\omega). Identify the type of filter the circuit represents and determine the corner frequency. Take R_1 = 100 Ω = R_2, L = 2 mH.
+note: For the circuit in the figure, (a) obtain the transfer function V_o(\omega)/V_i(\omega). (b) Identify the type of filter the circuit represents and (c) determine the corner frequency. Take R_1 = 100 Ω = R_2, L = 2 mH.
 image: https://learn.symbulator.com/assets/circuit/as7-pp14-10.jpg
 rounding: 4
 si: no
@@ -914,7 +914,7 @@ l,a,0,2
 c,1,0,1/2
 
 analysis: fd
-note: For the circuit in the figure, calculate the gain I_o(\omega)/I_i(\omega) and its poles and zeros.
+note: For the circuit in the figure, calculate (a) the gain I_o(\omega)/I_i(\omega) and (b) its poles and zeros.
 image: https://learn.symbulator.com/assets/circuit/as7-ex14-2.jpg
 rounding: exact
 si: no

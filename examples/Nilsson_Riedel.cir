@@ -51,7 +51,7 @@ r5,3,0,40
 r6,4,0,37.5
 
 analysis: dc
-note: Find the current and power supplied by the 40 V source in the circuit shown in the figure.
+note: Find a) the current and b) the power supplied by the 40 V source in the circuit shown in the figure.
 image: https://learn.symbulator.com/assets/circuit/nr12-ex3-11.jpg
 rounding: exact
 si: no
