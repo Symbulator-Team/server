@@ -104,6 +104,7 @@
  "femto.c8c4": "femto, ×10<sup>−15</sup>",
  "fields.e8b6": "Ruas",
  "find-equivalent.fcc3": "Cari rangkaian ekuivalen",
+ "flip-the-mesh-currents.8269": "Balik arah arus mesh",
  "fold-every-card-shut.691f": "Lipat semua kartu",
  "for-the-two-port.ffe1": "Pada alat dua-port, port yang terminal bawahnya bukan tanah ditulis sebagai pasangan, <code>[atas,bawah]</code>, di kolom simpulnya (dan di sini pada <code>n1</code>/<code>n2</code>); bagian rangkaian yang tidak punya jalur ke simpul 0 diukur terhadap acuannya sendiri, dan jawabannya menyebutkan yang mana.",
  "full.52e6": "penuh",

@@ -104,6 +104,7 @@
  "femto.c8c4": "飞，×10<sup>−15</sup>",
  "fields.e8b6": "字段",
  "find-equivalent.fcc3": "求等效电路",
+ "flip-the-mesh-currents.8269": "反转网孔电流方向",
  "fold-every-card-shut.691f": "收起所有卡片",
  "for-the-two-port.ffe1": "在二端口工具中，下端子不接地的端口在其节点栏中写成一对 <code>[上,下]</code>（此处写在 <code>n1</code>/<code>n2</code> 中）；电路中没有通路到达节点 0 的部分，以其自身的参考节点为基准测量，答案会说明是哪一个。",
  "full.52e6": "完整",
