@@ -800,7 +800,7 @@ units: yes
 
 [NR12's Example 13.6 (Thévenin)]
 
-e,1,0,480/s
+e,1,0,{480u(t)}
 r1,1,2,20
 l,2,0,0.002
 r2,2,a,60

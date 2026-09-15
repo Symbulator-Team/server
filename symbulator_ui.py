@@ -2569,11 +2569,15 @@ def solve_ui(desc: str, domain: str, omega: str, variables,
             # nothing in the physics asked for that. See th()'s docstring
             # for the one case where per-round is the wrong reading.
             if extra_equations:
-                tkw["equations"] = extra_equations
+                tkw["equations"] = [_tool_desc(e, domain) for e in extra_equations]
             if extra_unknowns:
                 tkw["unknowns"] = extra_unknowns
             if extra_conditions:
-                tkw["conditions"] = extra_conditions
+                tkw["conditions"] = [_tool_desc(c, domain) for c in extra_conditions]
+            # #458: `fd()` expands a value written in time in curly brackets,
+            # `{480u(t)}`, on its way in; `th()`, `er()` and `port()` never
+            # did, so Find equivalent refused in FD what a plain solve took.
+            desc = _tool_desc(desc, domain)
             named = []          # [(display key, expr)]
             load_named = []     # #292: the same, for a load on the port
             if tool == "th":
@@ -4063,6 +4067,13 @@ def _unbrace_for(text: str, domain: str) -> str:
     from symbulator.si_prefix import expand_time_domain_braces
 
     return expand_time_domain_braces(text)
+
+
+def _tool_desc(text: str, domain: str) -> str:
+    """#458: the Find equivalent tools' inputs, brackets expanded as `fd()`
+    expands them for a plain solve. A name of its own so the guard
+    (`tools/check_fd_braces_tools.py --prove-red`) can undo it."""
+    return _unbrace_for(text, domain)
 
 
 def _sympify_input(text: str):
