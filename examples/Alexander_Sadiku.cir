@@ -139,7 +139,7 @@ n2: 0
 note: Find the Thevenin equivalent circuit of the circuit in the figure to the left of the terminals.
 image: https://learn.symbulator.com/assets/circuit/as7-pp4-9.jpg
 rounding: 4
-si: no
+si: yes
 units: yes
 
 [AS7's Example 4.10 (equivalent)]
@@ -207,7 +207,7 @@ analysis: dc
 note: The circuit in the figure represents an unbalanced bridge. If the galvanometer has a resistance of 40 Ω, find the current through the galvanometer.
 image: https://learn.symbulator.com/assets/circuit/as7-ex4-18.jpg
 rounding: 4
-si: no
+si: yes
 units: yes
 
 [AS7's Example 5.1 (DC)]
@@ -223,7 +223,7 @@ analysis: dc
 note: A 741 op amp has an open-loop voltage gain of 2 × 10⁵, input resistance of 2 MΩ, and output resistance of 50 Ω. The op amp is used in the circuit of the figure. (a) Find the closed-loop gain v_o/v_s. (b) Determine current i when v_s = 2 V.
 image: https://learn.symbulator.com/assets/circuit/as7-ex5-1.jpg
 rounding: approx
-si: no
+si: yes
 units: yes
 
 [AS7's Example 5.10 (DC)]
@@ -344,7 +344,7 @@ analysis: dc
 note: Consider the common-emitter amplifier circuit of the figure. Determine (a) the voltage gain, (b) current gain, (c) input impedance, and (d) output impedance using these h parameters: h_ie = 1 kΩ, h_re = 2.5 × 10⁻⁴, h_fe = 50, h_oe = 20 μS. (e) Find the output voltage V_o.
 image: https://learn.symbulator.com/assets/circuit/as7-ex19-17.jpg
 rounding: 4
-si: no
+si: yes
 units: yes
 
 [AS7's Example 19.17 output impedance (Thévenin)]
@@ -360,7 +360,7 @@ n2: 0
 note: (d) Determine the output impedance of the amplifier.
 image: https://learn.symbulator.com/assets/circuit/as7-ex19-17.jpg
 rounding: 4
-si: no
+si: yes
 units: yes
 
 [AS7's Example 7.5 (DC, switch open)]
@@ -767,7 +767,7 @@ omega: 3000
 note: Obtain v_o and i_o in the circuit of the figure.
 image: https://learn.symbulator.com/assets/circuit/as7-pp10-13.jpg
 rounding: 4
-si: no
+si: yes
 units: yes
 rms: no
 polar: yes
@@ -922,7 +922,7 @@ units: yes
 
 [AS7's Example 16.4 (FD)]
 
-e,1,0,10/s
+e,1,0,{10u(t)}
 r,1,2,10/3
 l,2,0,5,-1
 c,2,0,1/10,5
@@ -936,7 +936,7 @@ units: yes
 
 [AS7's Example 16.6 (FD)]
 
-j,0,a,10/s
+j,0,a,{10u(t)}
 l,a,b,2
 e,a,m,2*il
 r5a,m,0,5
@@ -951,7 +951,7 @@ units: yes
 
 [AS7's Practice Problem 16.6 (FD)]
 
-e1,1,0,30/s
+e1,1,0,{30u(t)}
 r1,1,m,1
 r2,m,0,2
 c,m,r,1
