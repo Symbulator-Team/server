@@ -31,7 +31,7 @@ import time
 from flask import (Flask, jsonify, render_template, request,
                    send_from_directory)
 
-from circuitbook import parse_book
+from circuitbook import book_sort_key, parse_book
 
 app = Flask(__name__)
 
@@ -404,10 +404,11 @@ def _example_files() -> list:
 
     Filename order is the reader-visible order, which is why the files are
     named Lesson_01 and not Lesson1: it is what puts lesson 10 after
-    lesson 9 rather than after lesson 1."""
+    lesson 9 rather than after lesson 1. circuitbook.book_sort_key holds
+    the exceptions."""
     out = []
     try:
-        names = sorted(os.listdir(EXAMPLES_DIR))
+        names = sorted(os.listdir(EXAMPLES_DIR), key=book_sort_key)
     except OSError:
         return out
     for name in names:
