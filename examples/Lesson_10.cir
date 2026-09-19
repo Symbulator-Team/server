@@ -308,7 +308,7 @@ plotmax: 2.5
 plotpoints: 300
 
 
-[NR11's capacitor shorted by a switch and coupled 0.8 H and 1.6 H coils (DC, t < 0)]
+[NR11's capacitor shorted by a switch, coupled 0.8 H and 1.6 H coils (DC, t < 0)]
 
 e,1,0,48
 r4,1,3,4
@@ -325,7 +325,7 @@ si: no
 units: yes
 
 
-[NR11's capacitor shorted by a switch and coupled 0.8 H and 1.6 H coils (TR, t > 0)]
+[NR11's capacitor shorted by a switch, coupled 0.8 H and 1.6 H coils (TR, t > 0)]
 
 e,1,0,48
 c,1,2,10'm,0

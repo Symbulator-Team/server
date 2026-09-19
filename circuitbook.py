@@ -225,6 +225,18 @@ def clean_circuits(raw_circuits, *, desc_len=None, extra_len=None,
     return circuits
 
 
+# The built-in books appear in filename order, bar the ones named here,
+# each of which follows the book it names. Both menus sort with
+# book_sort_key -- app.py's listing and build_local.py's examples.json --
+# so the hosted and the offline picker cannot disagree.
+_BOOK_FOLLOWS = {"Alexander_Sadiku.cir": "Nilsson_Riedel.cir"}
+
+
+def book_sort_key(name: str) -> tuple:
+    """Sort key for a built-in book's filename, in the menu's order."""
+    return (_BOOK_FOLLOWS.get(name, name), name in _BOOK_FOLLOWS, name)
+
+
 def _truthy(val: str) -> bool:
     """Read a hand-typeable "yes"/"no"-style value as a bool."""
     return val.strip().lower() in _TRUE_WORDS
