@@ -245,7 +245,7 @@ n1: [a,f]
 n2: [e,j]
 note: Find the z parameters of the ladder. Neither port has a grounded terminal -- the lower rail carries resistors too -- so each port is written as a pair, [a,f] and [e,j], in the node boxes. z11 = z22 = 41/15 = 2.733 ohm and z12 = z21 = 1/15 = 0.06667 ohm. Grounding both bottoms instead shorts out the lower rail and gives a different circuit's answer, 11/5 and 3/5.
 note: The network has no node 0 at all; the tool takes each port's lower terminal as its reference for the measurement, which is what the definition of the parameters does.
-image: https://learn.symbulator.com/assets/circuit/sym_as7_p1902.png
+image: https://learn.symbulator.com/assets/circuit/as7-prob19-2.jpg [342px]
 rounding: 4
 si: no
 units: yes
